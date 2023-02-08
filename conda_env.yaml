@@ -1,0 +1,29 @@
+name: cnv-pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  ## General ##
+  - python >= 3.9 #sensible default
+  - snakemake
+  - r-base >=4.0 #sensible default
+  - r-tidyverse
+  - r-optparse
+  - r-knitr
+  - r-rmarkdown
+  - r-yaml
+  ## Algorithms ##
+  # CBS
+  - bioconductor-dnacopy
+  ## Postprocessing ##
+  - bioconductor-plyranges
+  #-bioconductor-genomicranges
+  ## Report ##
+  - r-ggpubr
+  - r-dendextend
+  - r-rideogram
+  - r-rcolorbrewer
+  - r-DT
+  - r-plotly
+  - r-patchwork

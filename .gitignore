@@ -1,0 +1,27 @@
+
+#Input/Output folders
+data/*
+RAW_DATA/*
+incoming/*
+logs/*
+static-data/*
+.snakemake/*
+
+#Only for now
+tests/*
+
+#Rstudio
+.RData
+.Rhistory
+.Rproj.user
+CNV-pipeline.Rproj
+
+#Misc
+*.xlsx
+*.png
+.git/*
+*.test
+*.pdf
+supplemental_scripts/*
+Notes.txt
+**/*.pyc

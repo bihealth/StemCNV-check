@@ -1,0 +1,66 @@
+static_data:
+    bpm_manifest_file: '' #REQUIRED
+    csv_manifest_file: '' #REQUIRED
+    egt_cluster_file: '' #REQUIRED
+    genome_fasta_file: '' #REQUIRED
+    pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb  #REQUIRED
+    GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
+    
+sample_table: ''  #REQUIRED
+raw_data_folder: ''  #REQUIRED
+
+settings:
+  filter:
+    use-filterset: 'full' # basic|highGT|highGC|full [=highGT+GC]
+  CBS:
+    SDundo: 1
+  # Settings only for reporting, not processing data
+  postprocessing:
+		CBS.seg.value.th: 0.2
+		CBS.seg.value.th.Xadj: -0.2 #TODO: find a better solution? what about Y ?
+		min.snp.density: 10 #in snps per Mb / kb ?
+		merge.distance: 500
+		merge.before.filter: TRUE
+		# These could maybe be hardcoded? they are very low level filters
+		min.snp: 5
+		min.length: 100
+		min.snp.or.length: 10
+		min.length.or.snp: 2000
+  report: 
+    thresholds:
+      # Include these sizes in the main tables of the report
+      reportable.loh: 2.5e6
+      reportable.cnv: 4e5
+      # Classify samples as failed from these sizes on
+      fail.loh: 5e6
+      fail.cnv: 2e6
+      #enrlage reference CNVs by this factor to check overlap with new ones
+      ref.factor: 2
+    # Thresholds for colored table / rec action [orange, red]
+    QCwarnings:
+      total_CNV: [10, 50]
+      total_LOH: [30, 75]
+      loss_gain_ratio: [2, 4]
+      sizable_CNV: [5, 10]
+      sizable_LOH: [5, 10]
+
+
+wildcard_constraints:
+  chr: "chry|chrx"
+  filter: "basic|highGT|highGT|full"
+  sample_id: '[0-9]+_R[0-9]{2}C[0-9]{2}'
+  chip_name: '[0-9]+'
+
+tools:
+  GenCall:
+    threads: 4
+    memory: "8000M"
+    runtime: "4:00:00"
+    cmd-line-params: "--gender-estimate-call-rate-threshold -0.1" #maybe remove?
+  gtc2vcf:
+    cmd-line-params: "" #"--do-not-check-eof"
+    memory: "10000M"
+    runtime: "4:00:00"
+  knitr:
+    memory: "30000M"
+    runtime: "30:00"
