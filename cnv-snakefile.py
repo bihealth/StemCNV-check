@@ -30,6 +30,7 @@ localrules:
 	relink_gencall,
 
 sample_data = read_sample_table(SAMPLETABLE)
+#print(sample_data)
 
 # Rules ========================================================================
 
@@ -238,9 +239,9 @@ rule run_CBS:
 # 
 # rule process_CNV_calls:
 #   -> currently done in report; move out ?
-   
-def get_report_sample_input(wildcards):
-  sex, ref_name = [(s, r) for name,(c, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
+
+def get_ids(wildcards):
+	sex, ref_name = [(s, r) for name,(c, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
   sample_id = wildcards.sample_id
   if ref_name and ref_name in sample_data:
     _, ref_id, ref_sex, _ = sample_data[ref_name]
@@ -250,13 +251,15 @@ def get_report_sample_input(wildcards):
     raise Exception(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
   else:
     ref_id = False
-    
+  
+  return sample_id, ref_id
+
+def get_combined_CNVs(wildcards):
+	sample_id, ref_id = get_ref_id(wildcards)
   files = expand(
           [os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-autosomes.{filter}.tsv"),
            os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-chrx.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", "{ids}", "{ids}.CBS.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", "{ids}", "{ids}.stats.txt"),
-           os.path.join(BASEPATH, "data", "{ids}", "{ids}.processed-data.tsv"),],
+           os.path.join(BASEPATH, "data", "{ids}", "{ids}.CBS.{filter}.tsv"),],
            ids = (sample_id, ref_id) if ref_id else (sample_id,),
            filter = config['settings']['filter']['use-filterset']
           )
@@ -266,10 +269,35 @@ def get_report_sample_input(wildcards):
 
   return files
 
+rule process_CNV_calls:
+	input:
+		get_combined_CNVs
+	output:
+		os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.rds")
+ resources:
+    time=config['tools']['CNV.process']['runtime'],
+    mem_mb=config['tools']['CNV.process']['memory'],
+    partition='medium'
+  log:
+    err=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "error.log"),
+    out=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "out.log")
+  shell:
+    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R -p -c {wildcards.sample_id} {BASEPATH} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+
+
+def get_report_sample_input(wildcards):
+	sample_id, ref_id = get_ref_id(wildcards)
+  return expand(
+          [os.path.join(BASEPATH, "data", "{ids}", "{ids}.combined-cnv-calls.{filter}.rds"),
+           os.path.join(BASEPATH, "data", "{ids}", "{ids}.stats.txt"),
+           os.path.join(BASEPATH, "data", "{ids}", "{ids}.processed-data.tsv"),],
+           ids = (sample_id, ref_id) if ref_id else (sample_id,),
+           filter = config['settings']['filter']['use-filterset']
+          )
 
 rule knit_report:
   input:
-    get_report_sample_input
+  	get_report_sample_input
   output:
     html=os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.CNV-report.html"),
     plots=directory(os.path.join(BASEPATH, "data", "{sample_id}", "report_images"))

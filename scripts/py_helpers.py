@@ -5,9 +5,10 @@ def read_sample_table(filename):
   samples = {}
   cols = ('SampleName', 'Chip_Name', 'Sample_ID', 'Sex', 'ReferenceSample')
   with open(filename, 'r') as f:
-    header_index = {h: cols.index(h) for h in next(f).split() if h in cols}
+    header = next(f).split('\t')
+    header_index = {col: header.index(col) for col in cols if col in header}
     if len(header_index) < 5:
-      raise Error('Not all require sample_table columns found: SampleName, Chip_Name, Sample_ID, Sex, ReferenceSample')
+      raise Exception('Not all require sample_table columns found: SampleName, Chip_Name, Sample_ID, Sex, ReferenceSample')
     for line in f:
       if line.startswith('#'):
         continue

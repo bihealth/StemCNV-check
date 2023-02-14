@@ -3,14 +3,15 @@ title: "CNV report"
 output: 
   html_document:
     df_print: paged
-    code_folding: hide
+    code_folding: none
     toc: true
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: ''  #'GSM2538923_9371579017'
-  reference_id: ''
-  sampletable: 'sample_table_CytoSNP.txt'
+  sample_id: '206210670080_R09C02'  #'GSM2538923_9371579017'
+  #Don't pull from here? pull from sampletable instead -> easier to test report
+  #reference_id: '204362030005_R07C01'
+  sampletable: 'sample_table.txt' #'sample_table_CytoSNP.txt'
   configfile: 'config.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/tests/data/GSM2538923_9371579017'
 ---
@@ -25,8 +26,9 @@ params:
 
 ```{r setup, include=FALSE}
 #setwd(file.path(params$base_path, "data", params$sample_id))
-library(plyranges)
-library(GenomicRanges)
+#library(plyranges)
+#library(GenomicRanges)
+# -> probably will need it again for plotting of gene tracks
 library(tidyverse)
 library(dendextend)
 library(ggpubr)
@@ -54,12 +56,14 @@ sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$SampleName
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
+ref_name <- samples.tb[samples.tb$Sample_ID == sample_id, ]$ReferenceSample
+ref_id <- ifelse(is.na(ref_name), '', samples.tb[samples.tb$SampleName == ref_name, ]$Sample_ID)
+
 use_ids <- c(sample_id )
-ref_id <- NA
-if (params$reference_id != ''){
-  ref_id <- params$reference_id
+#ref_id <- NA
+if (!is.na(ref_id)){ #params$reference_id != ''
+  #ref_id <- params$reference_id
   use_ids <- c(sample_id, ref_id)
-  ref_name <- sampletable[sampletable$Sample_ID == ref_id, ]$SampleName
   sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
   	tolower() %>% substr(1,1)
  
@@ -79,27 +83,9 @@ config_val <- function(value, section, default=NULL) {
 	}
 }
 
-# CBS gain/loss
-#TODO: look at WiseCOndor etc ?
-CBS.seg.value.th <- config_val('CBS.seg.value.th', 'postprocessing', 0.2)
-CBS.seg.value.th.sexAdj <- config_val('CBS.seg.value.th.Xadj', 'postprocessing', -0.2)
-
-
-# Merging & pre-filtering
-# -> should we filter after merge ??
-# -> unsure
-# Minial conditiopns to be considered
-min.snp					<- config_val('min.snp', 'postprocessing', 10)
-min.length			<- config_val('min.length', 'postprocessing', 100)
-min.snp.density <- config_val('min.snp.density', 'postprocessing', 10) #in snps per Mb
-min.snp.or.length	<- config_val('min.snp.or.length', 'postprocessing', 10) # no.snps needed if length < min.length
-min.length.or.snp	<- config_val('min.length.or.snp', 'postprocessing', 2000) #  length needed if no.snps < min.snp
-merge.distance  <- config_val('merge.distance', 'postprocessing', 500) # max. distance for merging of small nearby calls
-
 #Reportable thresholds
 reportable.loh = config_val('min.snp', 'thresholds', 2.5e6)
 reportable.cnv = config_val('min.snp', 'thresholds', 4e5)
-ref.factor = config_val('min.snp', 'thresholds', 2)
 fail.loh = config_val('min.snp', 'thresholds', 5e6)
 fail.cnv = config_val('min.snp', 'thresholds', 2e6)
 
@@ -110,9 +96,7 @@ ratio_CNV_warnings = config_val('ratio_CNV_warnings', 'QCwarnings', c(2, 4))
 sizable_CNV_warnings = config_val('sizable_CNV_warnings', 'QCwarnings', c(5, 10))
 sizable_LOH_warnings = config_val('sizable_LOH_warnings', 'QCwarnings', c(5, 10))
 
-
 # Misc #
-
 subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
 
@@ -128,13 +112,12 @@ subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
 
 ```{r read.data}
 
-
 # Read Data
 
 ## Raw (BAF / LRR)
 valid_name=config$wildcard_constraints$sample_id
 valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
-if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
+if (!all(str_detect(use_ids, valid_name))) {stop('Sample id does not match supplied or default wildcard constraints!')}
 
 read_raw <- function(filename) {
 	read_tsv(filename, show_col_types = FALSE) %>%
@@ -158,70 +141,27 @@ raw_LRR_BAF <- file.path(basepath, 'data', use_ids, paste0(use_ids, '.processed-
 	bind_rows() %>%
 	mutate(filter.passed = filter_functions[[config$settings$filter$`use-filterset`]](`GenTrain Score`, Score))
 
-## PennCNV
-read_PennCNV <- function(filename) {
-  read.table(filename, sep='', header = F, fill=T,
-           col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'conf')) %>% 
-    separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
-	dplyr::rename(start = start_pos, end = end_pos, sample_id = input) %>%
-    mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
-           across(c(4,10), ~as.numeric(.)),  
-           Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-           length = str_remove_all(length, ',') %>% as.integer(),
-    			 snp.density = numsnp / length * 1e6,
-           copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
-           hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
-    	   CNV.state = ifelse(copynumber < 2, 'loss', NA),
-    	   CNV.state = ifelse(copynumber == 2, 'LOH', CNV.state),
-    	   CNV.state = ifelse(copynumber > 2, 'gain', CNV.state),
-    	   CNV.state = as.character(CNV.state),
-    	   tool = 'PennCNV',
-    	   sample_id = str_extract(sample_id, valid_name),
-    )
+## CNV calls
+
+load_annotate_cnv <- function(fname){
+	readRDS(fname) %>%
+		mutate(
+			main.state = sapply(CNV.state, "[[", 1),
+			call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
+			reportable = case_when(
+				tool.overlap.state == 'pre-overlap'                               ~ NA_character_,
+				main.state == 'LOH' & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
+				main.state != 'LOH' & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
+				main.state == 'LOH' & length >= fail.loh                           ~ 'critical',
+				main.state != 'LOH' & length >= fail.cnv                           ~ 'critical',
+				main.state == 'LOH' & length >= reportable.loh                     ~ 'yes',
+				main.state != 'LOH' & length >= reportable.cnv                     ~ 'yes',
+				call.in.reference                                                 ~ 'no, in ref.',
+				TRUE                                                              ~ 'no')
+		)
 }
 
-pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-autosomes.', use.filter, '.tsv'),
-                  paste0(sample_id, '/', sample_id, '.penncnv-chrx.', use.filter, '.tsv'))
-if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_id, '.penncnv-chry.', use.filter, '.tsv')) }
-if (!is.na(ref_id)) {
-  pennCNVfiles <- c(pennCNVfiles,
-                    paste0(ref_id, '/', ref_id, '.penncnv-autosomes.', use.filter, '.tsv'),
-                    paste0(ref_id, '/', ref_id, '.penncnv-chrx.', use.filter, '.tsv'))
-  if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(ref_id, '/', ref_id, '.penncnv-chry.', use.filter, '.tsv')) }
-}
-
-PennCNV_results <- file.path(basepath, 'data', pennCNVfiles) %>%
-  lapply(read_PennCNV) %>%
-  bind_rows()
-
-## CBS
-read_CBS <- function(filename) {
-  tb <- read_tsv(filename, show_col_types = F) %>%
-    dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
-                  numsnp = num.mark, sample_id = ID) %>%
-    mutate(
-      sample_id = str_remove(sample_id, '^X'),
-      length = end - start, # TODO: open / half open / +- 1 ??
-      Chr = paste0('chr', Chr),
-      Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-      snp.density = numsnp / length * 1e6,
-      CNV.state = ifelse(seg.median < -CBS.seg.value.th, 'loss', NA),
-      CNV.state = ifelse(seg.median > CBS.seg.value.th, 'gain', CNV.state),
-      #TODO: might be male only?
-      CNV.state = ifelse(Chr == 'chrX' & seg.median < -CBS.seg.value.th + ifelse(sex == 'm', 1, -1) * CBS.seg.value.th.sexAdj, 'loss', CNV.state),
-      CNV.state = ifelse(Chr == 'chrX' & seg.median > CBS.seg.value.th + ifelse(sex == 'm', 1, -1) * CBS.seg.value.th.sexAdj, 'gain', CNV.state),
-      tool = 'CBS'
-    ) %>%
-    filter(!is.na(CNV.state) & !is.na(Chr))
-	if (sex == 'f') {
-  	tb <- filter(tb, Chr != 'chrY')
-	}
-  tb
-}
-
-CBS_results <- file.path(basepath, 'data', use_ids, paste0(use_ids, '.CBS.', use.filter, '.tsv')) %>%
-  lapply(read_CBS) %>%
-  bind_rows()
+cnv_calls <- lapply(file.path(basepath, 'data', use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.rds')), load_annotate_cnv)
 
 ## GenCall logs
 GenCall.stats <-  file.path(basepath, 'data', use_ids, paste0(use_ids, '.stats.txt')) %>%
@@ -232,106 +172,17 @@ GenCall.stats <-  file.path(basepath, 'data', use_ids, paste0(use_ids, '.stats.t
 	mutate(gtc = str_remove(gtc, '.gencall.gtc')) %>%
 	dplyr::rename(sample_id = gtc)
 
-```
+## PennCNV logs & stats
 
-```{r combine.data}
+#TODO
+# -> could be exported by the preprocess script? (better than loading & summarizing here at least ...)
 
+## CBS logs & stats
 
-penncnv.GR.merged <- PennCNV_results %>%
-  filter(numsnp > min.snp & length > min.length & 
-  	   		(numsnp > min.snp.or.length | length > min.length.or.snp)) %>%
-  makeGRangesFromDataFrame(keep.extra.columns = T, ignore.strand = T, seqnames.field = 'Chr', start.field = 'start', end.field = 'end') %>%
-  # Merge 
-    # could use % of width instead of absolute distance (harder to calculate back though)
-  group_by(CNV.state, sample_id, tool) %>%
-  stretch(merge.distance) %>%
-  reduce_ranges(
-  	n_merged = plyranges::n(),
-  	numsnp = sum(numsnp),
-  	copynumbers = paste(unique(copynumber), collapse = ','),
-  	mean_conf = mean(conf), median_conf = median(conf)
-  ) %>%
-  stretch(-1*merge.distance)
-
-CBS.GR.merged <- CBS_results %>%
-	  filter(numsnp > min.snp & length > min.length & snp.density > min.snp.density &
-  	   		(numsnp > min.snp.or.length | length > min.length.or.snp)) %>%
-  makeGRangesFromDataFrame(keep.extra.columns = T, ignore.strand = T, seqnames.field = 'Chr', start.field = 'start', end.field = 'end') %>%
-  # Merge - mostly to collapse multiple regions above gain/loss 
-  # TODO: this will merge borders of different losses/gains (unlikely but possible)
-  # -> may need to assign CN & merge based on that?
-  # TODO: better to merge on a fixed width here, since only want to merge nearby areas with same designation
-  # Question: are we inflating results here? If segmentation produces many areas then maybe believe that?
-  group_by(CNV.state, sample_id, tool) %>%
-  stretch(merge.distance) %>%
-  reduce_ranges(
-  	n_merged = plyranges::n(),
-  	numsnp = sum(numsnp),
-  	mean_seg = mean(seg.mean), median_seg = median(seg.median)
-  ) %>%
-  stretch(-1*merge.distance)
-
-all.GR <- bind_ranges(penncnv.GR.merged, CBS.GR.merged) 
-
-reference_calls <- all.GR %>%
-	filter(sample_id == ref_id) %>%
-	group_by(CNV.state) %>%
-	reduce_ranges(n_calls = plyranges::n(),
-				  #n_tools = length(unique(tool)),
-				  tools = paste(unique(tool), collapse = ','),
-				  mean_no_snps = mean(numsnp),
-				  median_no_snps = median(numsnp),
-				  min_no_snps = min(numsnp),
-				  max_no_snps = max(numsnp),
-				  pennCNV.conf = mean(mean_conf, na.rm=T),
-				  #ROH_median.qual = median(qual.phred, na.rm=T),
-				  merge_events = sum(n_merged)
-	)
-
-sample_calls <- all.GR %>%
-	filter(sample_id == !!sample_id) %>%
-	group_by(CNV.state) %>%
-	reduce_ranges(n_calls = plyranges::n(),
-				  #n_tools = length(unique(tool)),
-				  tools = paste(unique(tool), collapse = ','),
-				  mean_no_snps = mean(numsnp),
-				  median_no_snps = median(numsnp),
-				  min_no_snps = min(numsnp),
-				  max_no_snps = max(numsnp),
-				  pennCNV.conf = mean(mean_conf, na.rm=T),
-				  #ROH_median.qual = median(qual.phred, na.rm=T),
-				  merge_events = sum(n_merged)
-				  )
-
-# sort calls by reportable thresholds & overlap with ref
-
-#TODO right now this would also retrun an loss that overlaps with an LOH or gain
-reportable.in.ref <- filter_by_overlaps(
-	sample_calls %>% 
-		plyranges::filter((width >= reportable.cnv & CNV.state != 'LOH') | width >= reportable.loh),
-	reference_calls %>% 
-		plyranges::filter((width >= reportable.cnv/ref.factor & CNV.state != 'LOH') | width >= reportable.loh/ref.factor)
-	) %>%
-	as_tibble() %>%
-	dplyr::rename(size = width, Chr = seqnames) %>%
-	mutate(CNV.state = factor(CNV.state, levels = c('gain', 'loss', 'LOH')),
-		   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),) %>%
-	arrange(CNV.state, desc(n_calls), desc(size))
-
-reportable.new <- filter_by_non_overlaps(
-	sample_calls %>% 
-		plyranges::filter((width > reportable.cnv & CNV.state != 'LOH') | width > reportable.loh),
-	reference_calls %>% 
-		plyranges::filter((width > reportable.cnv/ref.factor & CNV.state != 'LOH') | width > reportable.loh/ref.factor)
-	) %>%
-	as_tibble() %>%
-	dplyr::rename(size = width, Chr = seqnames) %>%
-	mutate(CNV.state = factor(CNV.state, levels = c('gain', 'loss', 'LOH')),
-		   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),) %>%
-	arrange(CNV.state, desc(n_calls), desc(size))
-
+#TODO
 
 ```
+
 
 # Sample Overview
 
@@ -369,8 +220,11 @@ tr_tibble <- function(tb) {
 Combined.metrics <- bind_rows(
 	GenCall.stats %>%
 		dplyr::select(sample_id, call_rate, computed_gender) %>%
-		mutate(filter_settings = config$settings$filter$`use-filterset`) %>%
+		#TODO: Filter settings don't belong here
+		#mutate(filter_settings = config$settings$filter$`use-filterset`) %>%
 		tr_tibble(),
+	#Do color annotation here -> use extra cols/rows
+	
 	raw_LRR_BAF %>%
 		group_by(sample_id) %>%
 		summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / GenCall.stats$number_snps ) %>%
@@ -378,42 +232,14 @@ Combined.metrics <- bind_rows(
 				  	#format(big.mark = '.')
 				  ) %>%
 		tr_tibble(),
-	penncnv.GR.merged %>%
-		as_tibble() %>%
-		group_by(sample_id, CNV.state) %>%
-		summarise(total = n(),
-				  reportable = sum(width > report.ths[[unique(CNV.state)]], na.rm=T),
-				  failed = sum(width > fail.ths[[unique(CNV.state)]], na.rm=T)
-				  ) %>%
-	  mutate(CNV.state = factor(CNV.state, levels = c('gain', 'loss', 'LOH'))) %>%
-		pivot_wider(names_from = CNV.state, values_from = c(total, reportable, failed), values_fill = 0, names_expand=T) %>%
-		mutate(reportable_CNV = pmap_dbl(list(reportable_loss, reportable_gain), sum),
-			   total_CNV = pmap_dbl(list(total_loss, total_gain), sum),
-			   balance_log2ratio = pmap_dbl(list(total_loss, total_gain), ~ log2(..1  / ..2)) %>%
-			                  ifelse(is.infinite(.), NA, .) %>%
-			   							 	format(nsmall=2, digits=2)
-			   ) %>%
-		dplyr::select(sample_id, total_CNV, total_LOH, balance_log2ratio, 
-					  reportable_CNV, reportable_LOH, contains('failed')) %>%
-		rename_with(~ paste('PennCNV', .), -1) %>%
-		tr_tibble(),
-	CBS.GR.merged %>%
-		as_tibble() %>%
-		group_by(sample_id, CNV.state) %>%
-		summarise(total = n(),
-				  reportable = sum(width > report.ths[[unique(CNV.state)]], na.rm=T),
-				  failed = sum(width > fail.ths[[unique(CNV.state)]], na.rm=T)
-				  ) %>%
-	  mutate(CNV.state = factor(CNV.state, levels = c('gain', 'loss'))) %>%
-		pivot_wider(names_from = CNV.state, values_from = c(total, reportable, failed), values_fill = 0, names_expand=T) %>%
-		mutate(reportable_CNV = pmap_dbl(list(reportable_loss, reportable_gain), sum),
-			   total_CNV = pmap_dbl(list(total_loss, total_gain), sum),
-			   balance_log2ratio = pmap_dbl(list(total_loss, total_gain), ~ log2(..1  / ..2)) %>%
-			   							 	format(nsmall=2, digits=2)
-			   ) %>%
-		dplyr::select(sample_id, total_CNV, balance_log2ratio, reportable_CNV, contains('failed')) %>%
-		rename_with(~ paste('CBS', .), -1) %>%
-		tr_tibble()
+
+	cnv_calls %>%
+		#don't do individual tools here -> move to per tool section!
+		filter(tool.overlap.state != 'pre-overlap') %>%
+		group_by(sample_id, reportable, main.state) %>%
+		summarise(n_calls = n())
+	
+	
 )
 
 #reorder, so CBS & PennCNV are interleafed 

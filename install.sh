@@ -62,6 +62,7 @@ cd $start_path
 # # R-package is too old / not found by conda, so use github
 # Rscript -e 'devtools::install_github("isglobal-brge/R-GADA")'
 # Rscript -e 'devtools::install_github("isglobal-brge/R-MAD")'
+# + add Gviz
 
 ## Set Conda env vars
 cd $CONDA_PREFIX

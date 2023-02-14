@@ -39,7 +39,7 @@ rmarkdown::render(
   output_options = list(self_contained = TRUE), # base.dir = figure.dir ?
   params = list(base_path = basepath,
                 sample_id = sample_id,
-                reference_id = reference_id,
+                #reference_id = reference_id,
                 sampletable = sampletable,
                 configfile = configfile,
                 workdir = workdir

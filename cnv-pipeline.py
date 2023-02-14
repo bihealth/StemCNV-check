@@ -89,7 +89,7 @@ def make_penncnv_files(args):
 		
 	argv = [os.path.join(os.getenv('CONDA_PREFIX'), 'pipeline/PennCNV-1.0.5/cal_gc_snp.pl'),
 					penncnv_gcfile, args.pfb_out, '-out', args.gc_out]
-	print(' '.join(argv))
+	#print(' '.join(argv))
 	ret = subprocess.call(argv)				
 	
 	if ret:
@@ -130,6 +130,8 @@ def run_snakemake(args):
 	
 	if args.snake_options:
 		argv += args.snake_options
+		
+	#print(argv)
 	
 	return snakemake_main(argv)
 
@@ -141,25 +143,25 @@ def setup_argparse():
 
 	group_basic = parser.add_argument_group("General", "Genera pipeline arguments")
 
-	group_basic.add_argument('--action', '-a', default= 'run', choices = ('run', 'make-penncnv-files'), help = 'Action to perform. Default: %(default)')
-	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)")
-	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)")
-	
-	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
-	
-	group_snake.add_argument('--cluster', '-c', action='store_true', help="Use slurm submission to run on cluster")
-	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)")
-	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
-	group_snake.add_argument('snake_options', nargs=argparse.REMAINDER, help="Options to pass to snakemake (...)")
-
+	group_basic.add_argument('--action', '-a', default= 'run', choices = ('run', 'make-penncnv-files'), help = 'Action to perform. Default: %(default)s')
+	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
+	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
 	
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default = 'GRCh38', choices = ('GRCh37', 'GRCh38'), 
-														 help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)")
+														 help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
 	group_penncnv.add_argument('--pfb-out', default = 'static-data/PennCNV-PFB_from_clusterfile-stats.pfb',
-														 help="Filename for generated PFB file. Default: %(default)")
+														 help="Filename for generated PFB file. Default: %(default)s")
 	group_penncnv.add_argument('--gc-out', default = 'static-data/PennCNV-GCmodel-GRCh38.gcmodel',
-														 help="Filename for generated GCmodel file. Default: %(default)")
+														 help="Filename for generated GCmodel file. Default: %(default)s")
+														 
+	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
+	
+	group_snake.add_argument('--cluster', '-c', action='store_true', help="Use slurm submission to run on cluster")
+	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
+	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
+	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER, 
+														help="Options to pass to snakemake. Use seprate with '--'")
 	
 	return parser
 	
