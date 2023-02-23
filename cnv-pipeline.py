@@ -103,7 +103,7 @@ def make_penncnv_files(args):
 def run_snakemake(args):
 	
 	argv = [
-		"-s", os.path.join(SNAKEDIR, "cnv-snakefile.py"),
+		"-s", os.path.join(SNAKEDIR, "cnv-snakefile"),
 		"-p", "-r",
 		#"--keep-incomplete",
 		"--rerun-incomplete"

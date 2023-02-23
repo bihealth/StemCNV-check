@@ -10,11 +10,12 @@ static-data/*
 #Only for now
 tests/*
 
-#Rstudio
+#Rstudio & PyCharm
 .RData
 .Rhistory
 .Rproj.user
 CNV-pipeline.Rproj
+.idea/
 
 #Misc
 *.xlsx

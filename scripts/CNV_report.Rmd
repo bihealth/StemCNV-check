@@ -3,15 +3,14 @@ title: "CNV report"
 output: 
   html_document:
     df_print: paged
-    code_folding: none
     toc: true
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: '206210670080_R09C02'  #'GSM2538923_9371579017'
+  sample_id: '206216960062_R09C01'  #'GSM2538923_9371579017'
   #Don't pull from here? pull from sampletable instead -> easier to test report
   #reference_id: '204362030005_R07C01'
-  sampletable: 'sample_table.txt' #'sample_table_CytoSNP.txt'
+  sampletable: 'sample_table_example.txt' #'sample_table.txt'
   configfile: 'config.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/tests/data/GSM2538923_9371579017'
 ---
@@ -40,7 +39,7 @@ library(patchwork)
 
 basepath <- params$base_path
 workdir <- ifelse(params$workdir == '', getwd(), params$workdir)
-knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, #cache=FALSE, 
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, #cache=FALSE, 
                       fig.path = file.path(workdir, 'report_images/')#,
 											#dev = "cairo_pdf"
 											)
@@ -56,17 +55,15 @@ sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$SampleName
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
-ref_name <- samples.tb[samples.tb$Sample_ID == sample_id, ]$ReferenceSample
-ref_id <- ifelse(is.na(ref_name), '', samples.tb[samples.tb$SampleName == ref_name, ]$Sample_ID)
+ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$ReferenceSample
+ref_id <- ifelse(is.na(ref_name), NA, sampletable[sampletable$SampleName == ref_name, ]$Sample_ID)
 
 use_ids <- c(sample_id )
-#ref_id <- NA
-if (!is.na(ref_id)){ #params$reference_id != ''
-  #ref_id <- params$reference_id
+if (!is.na(ref_id)){ 
   use_ids <- c(sample_id, ref_id)
   sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
   	tolower() %>% substr(1,1)
- 
+  
   if(sex.ref != sex) {
   	stop('Sex of sample and reference does not match!')
   } 
@@ -79,7 +76,7 @@ config_val <- function(value, section, default=NULL) {
 	if (is.null(val)) {
 		return(default)
 	} else {
-		return(cal)
+		return(val)
 	}
 }
 
@@ -90,11 +87,12 @@ fail.loh = config_val('min.snp', 'thresholds', 5e6)
 fail.cnv = config_val('min.snp', 'thresholds', 2e6)
 
 #Warning tresholds
-total_CNV_warnings = config_val('total_CNV_warnings', 'QCwarnings', c(10, 50))
-total_LOH_warnings = config_val('total_LOH_warnings', 'QCwarnings', c(30, 75))
-ratio_CNV_warnings = config_val('ratio_CNV_warnings', 'QCwarnings', c(2, 4))
-sizable_CNV_warnings = config_val('sizable_CNV_warnings', 'QCwarnings', c(5, 10))
-sizable_LOH_warnings = config_val('sizable_LOH_warnings', 'QCwarnings', c(5, 10))
+callrate_warnings = config_val('callrate', 'QCwarnings', c(0.99, 0.99))
+total_CNV_warnings = config_val('total_CNV', 'QCwarnings', c(10, 50))
+total_LOH_warnings = config_val('total_LOH', 'QCwarnings', c(30, 75))
+ratio_CNV_warnings = config_val('ratio_CNV', 'QCwarnings', c(2, 4))
+sizable_CNV_warnings = config_val('sizable_CNV', 'QCwarnings', c(5, 10))
+sizable_LOH_warnings = config_val('sizable_LOH', 'QCwarnings', c(5, 10))
 
 # Misc #
 subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
@@ -149,7 +147,7 @@ load_annotate_cnv <- function(fname){
 			main.state = sapply(CNV.state, "[[", 1),
 			call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
 			reportable = case_when(
-				tool.overlap.state == 'pre-overlap'                               ~ NA_character_,
+				tool.overlap.state == 'pre-overlap'                                ~ NA_character_,
 				main.state == 'LOH' & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
 				main.state != 'LOH' & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
 				main.state == 'LOH' & length >= fail.loh                           ~ 'critical',
@@ -157,11 +155,13 @@ load_annotate_cnv <- function(fname){
 				main.state == 'LOH' & length >= reportable.loh                     ~ 'yes',
 				main.state != 'LOH' & length >= reportable.cnv                     ~ 'yes',
 				call.in.reference                                                 ~ 'no, in ref.',
-				TRUE                                                              ~ 'no')
+				TRUE                                                              ~ 'no') %>%
+				factor(levels = c('critical', 'yes', 'yes, in ref.', 'no', 'no, in ref.'))
 		)
 }
 
-cnv_calls <- lapply(file.path(basepath, 'data', use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.rds')), load_annotate_cnv)
+cnv_calls <- lapply(file.path(basepath, 'data', use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.rds')), load_annotate_cnv) %>%
+	bind_rows()
 
 ## GenCall logs
 GenCall.stats <-  file.path(basepath, 'data', use_ids, paste0(use_ids, '.stats.txt')) %>%
@@ -190,18 +190,6 @@ GenCall.stats <-  file.path(basepath, 'data', use_ids, paste0(use_ids, '.stats.t
 
 ```{r qc.metrics}
 
-report.ths = list(
-	'loss' = reportable.cnv,
-	'gain' = reportable.cnv,
-	'LOH'  = reportable.loh
-)
-
-fail.ths = list(
-	'loss' = fail.cnv,
-	'gain' = fail.cnv,
-	'LOH'  = fail.loh
-)
-
 if (!is.na(ref_id)) {
   sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
   names(sample_headers) <- c(sample_id, ref_id)
@@ -217,83 +205,77 @@ tr_tibble <- function(tb) {
 	tb[2:nrow(tb),]
 }
 
-Combined.metrics <- bind_rows(
+apply_warnings <- function(tb, ...){
+	
+	
+}
+
+metrics <- list(
 	GenCall.stats %>%
 		dplyr::select(sample_id, call_rate, computed_gender) %>%
-		#TODO: Filter settings don't belong here
-		#mutate(filter_settings = config$settings$filter$`use-filterset`) %>%
-		tr_tibble(),
-	#Do color annotation here -> use extra cols/rows
-	
+		mutate(call_rate = round(call_rate, 3)),
 	raw_LRR_BAF %>%
 		group_by(sample_id) %>%
-		summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / GenCall.stats$number_snps ) %>%
-				  	format(digits = 2, nsmall=2) %>% paste('%')
-				  	#format(big.mark = '.')
-				  ) %>%
-		tr_tibble(),
-
+		#TODO: if different chips are used that will be an issue. Should be catched earlier somehow
+		summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / unique(GenCall.stats$number_snps) ) %>%
+																		format(digits = 2, nsmall=2) %>% paste('%')),
 	cnv_calls %>%
 		#don't do individual tools here -> move to per tool section!
 		filter(tool.overlap.state != 'pre-overlap') %>%
-		group_by(sample_id, reportable, main.state) %>%
-		summarise(n_calls = n())
-	
-	
+		group_by(sample_id) %>%
+		mutate(class = factor(ifelse(main.state == 'LOH', 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
+					 loss.gain_log2ratio = log2(sum(main.state == 'gain') / sum(main.state == 'loss')) %>% round(digits = 2),
+					 loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
+		) %>%
+		group_by(sample_id, loss.gain_log2ratio, class, .drop = F) %>%
+		summarise(total_calls = n(),
+							reportable_new_calls = sum(str_detect(reportable, 'critical|yes$')),
+							critical_new_calls = sum(reportable == 'critical'),
+							) %>%
+		pivot_wider(names_from = class, values_from = contains('calls')) 
 )
 
-#reorder, so CBS & PennCNV are interleafed 
-Combined.metrics <- Combined.metrics[c(1:5, 13, 6:7, 14, 8, 15, 9:10, 16, 12, 17, 11),]
-
-# Determine which numbers are above warning levels
-# TODO: all of those numbers need considerable fine tuning ?
-# TODO get from config:
-# total_CNV_warnings: 10, 50
-# total_LOH_warnings: 30, 75
-# ratio_CNV_warnings: 2, 4
-# sizable_CNV_warnings: 5, 10
-# sizable_LOH_warnings: 5, 10
-
-check_vals = Combined.metrics[c(5:17), sample_name] %>%
-	as.double() %>% abs()
-orange_lvl = c(
-	10, 10, 30, # total CNVs: PennCNV, CBS, LOH
-	2, 2,       # abs(ratio): PennCNV, CBS
-	5, 5, 5,    # reportable CNVs: PennCNV, CBS, LOH
-	.5,.5,.5,   # failed -> red right away
-	.5,.5       # failed -> red right away
-)
-red_lvl = c(
-	50, 50, 75, # total CNS: PennCNV, CBS, LOH
-	4, 4,       # abs(ratio): penNCNV, CBS
-	10, 10, 10, # reportable CNVs: PennCNV, CBS, LOH
-	1,1,1,1,1   # failed -> red right away
-)
-warn_colors = ifelse(check_vals >= orange_lvl, 'orange', 'green')
-warn_colors = ifelse(check_vals >= red_lvl, 'red', warn_colors)
-# This alone needs '<' check
-callrate_c = ifelse(as.double(Combined.metrics[1, sample_name]) < 0.99, 'orange', 'green')
-callrate_c = ifelse(as.double(Combined.metrics[1, sample_name]) < 0.99, 'red', callrate_c)
-
-
-sex_check = tolower(Combined.metrics[2, sample_name]) != sex
-if (!is.na(ref_id)) {
-  sex_check = sex_check |
-    Combined.metrics[2, sample_name] != Combined.metrics[2, paste0('Reference (', ref_name, ')')]
+apply_gr_th <- function(data, warning_levels){
+	case_when(
+		data > warning_levels[[2]] ~ 'orange',
+		data > warning_levels[[1]] ~ 'yellow',
+		TRUE                       ~ 'green',
+	)
 }
 
-warn_colors <- c(callrate_c, ifelse(sex_check,'red', 'green'), 'white' ,'white', warn_colors)	
+metric.colors <- list(
+	mutate(metrics[[1]],
+				 call_rate = case_when(
+				 	call_rate < callrate_warnings[[2]]  ~ 'red',
+					call_rate < callrate_warnings[[1]]  ~ 'yellow',
+					TRUE ~ 'green'),
+				 computed_gender = ifelse(tolower(computed_gender) != sex, 'red', 'green')),
+	mutate(metrics[[2]],
+				 SNPs_post_filter = 'white'),
+	mutate(metrics[[3]], 
+				 loss.gain_log2ratio = apply_gr_th(abs(loss.gain_log2ratio), ratio_CNV_warnings),
+				 total_calls_CNV = apply_gr_th(total_calls_CNV, total_CNV_warnings),
+				 total_calls_LOH = apply_gr_th(total_calls_LOH, total_LOH_warnings),
+				 reportable_new_calls_CNV = apply_gr_th(reportable_new_calls_CNV, sizable_CNV_warnings),
+				 reportable_new_calls_LOH = apply_gr_th(reportable_new_calls_LOH, sizable_LOH_warnings),
+				 critical_new_calls_CNV = ifelse(critical_new_calls_CNV >= 1, 'red', 'green'),
+				 critical_new_calls_LOH = ifelse(critical_new_calls_LOH >= 1, 'red', 'green'),
+				)
+		)
 
+Combined.metrics <- lapply(metrics, tr_tibble) %>% bind_rows()
+Combined.colors <-  lapply(metric.colors, tr_tibble) %>% bind_rows()
 
 ```
 
 ### Summary
 
 ```{r qc.summary, echo=FALSE}
-#TODO: add right justify
 datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined.metrics)),
           rownames = FALSE) %>%
-	formatStyle(1, backgroundColor = styleRow(1:length(warn_colors),warn_colors))
+	formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[1]]]), textAlign = 'center') %>%
+	# DT can take specification of non-existing columns - just need a workaround for the sample_header call
+	formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[length(sample_headers)]]]), textAlign = 'center')
 ```
 
 
@@ -313,31 +295,26 @@ TODO: what can be extracted from log files
 
 ### Pipeline settings
 
-make a table with all settings used for the analysis (final version: read snakemake config)
+make a table with all settings used for the analysis (from snakemake config, patch with defaults?)
 
 ?? put the R version/package info output here ?
 
-## Recommended action:
+<!-- ## Recommended action: -->
 
-.Pass/Fail/Check recommendation (Steps: Data QC, CNV calling)
+<!-- .Pass/Fail/Check recommendation (Steps: Data QC, CNV calling) -->
 
-TODO (how?): Sample similarity)
+<!-- TODO (how?): Sample similarity) -->
 
-```{r recommendation}
-
-
-```
+<!-- ```{r recommendation} -->
 
 
+<!-- ``` -->
 
 # CNV calling
 
 ## Reportable calls {.tabset}
 
-List of all reportable calls (summarised over all input samples and tools used), 
-separated by those overlapping with reference calls (at least `r round(100/ref.factor)`% reportable size) and new calls.
-
-Note: Currently checks against reference calls do *not* take the CNV state (gain/loss/LOH) of the reference call into account.
+List of all reportable calls (summarised over all input samples and tools used).
 
 ```{r reportable}
 
@@ -346,44 +323,30 @@ Note: Currently checks against reference calls do *not* take the CNV state (gain
 # - hide/remove strand
 # - hide/remove merge events
 # - move selector down; move search bar?
-# - column selector?
-# - export extension
 
-datatable(reportable.new, caption = 'Newly identified reportable calls',
+reportable.calls <- cnv_calls %>% 
+	filter(sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
+	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
+	dplyr::select(5, 1:4, reportable, main.state, call.in.reference, 6:14, 16:17) %>%
+	mutate(call.in.reference = factor(call.in.reference),
+				 main.state = factor(main.state))
+
+datatable(reportable.calls, caption = 'Critical & reportable calls',
 		  rownames = F,
 		  extensions = c('Buttons', 'Scroller'),
 		  filter = 'top',
 		  options = list(
-		  	scrollY = FALSE,
-	        scrollX =  TRUE,
-	        scroller = TRUE,
-	        dom = 'Bt', #TODO -> change this
+		  	scrollY = 300, scrollCollapse = TRUE,
+        scrollX =  TRUE,
+        scroller = TRUE,
+        dom = 'Bftilp', #TODO -> change this
 		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
-			columnDefs = list(
-		  		list(targets = c(4,9:13), visible = FALSE)
-		  		)
+				columnDefs = list(
+		  		list(targets = c(0,10:18), visible = FALSE)
+		  	)
 			)
-		  ) %>%
-	formatRound(c('start', 'end', 'size'), digits = 0, mark = '.')
-
-datatable(reportable.in.ref, caption = 'Reportable calls also found in reference',
-		  rownames = F,
-		  extensions = c('Buttons', 'Scroller'),
-		  filter = 'top',
-		  options = list(
-		  	scrollY = FALSE,
-	        scrollX =  TRUE,
-	        scroller = TRUE,
-	        dom = 'Bt',
-		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
-			columnDefs = list(
-		  		list(targets = c(4,9:13), visible = FALSE)
-		  		)
-			)
-		  ) %>%
-	formatRound(c('start', 'end', 'size'), digits = 0, mark = '.')
-
-	
+		) %>%
+	formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
 
 ```
 
@@ -400,38 +363,39 @@ color_map <- c(
 	`-1.45` = '#f46d43'  #PennCNV loss
 )
 
-make_LRR_BAF_plots <- function(chr, start, end, size) {
+make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 	# chr, start, end, samples = row %>% unpack()
 	
 	#minimum 1Mb to each side of the merged call
 	size = max(size, 1e6)
+	#Max size of Chr covered by probes
+	chr_max = raw_LRR_BAF %>% filter(Chr == chr) %>% pull(Position) %>% max()
+	win_start = max(start -size, 0)
+	win_end = min(end + size, chr_max)
 	
 	# get raw LRR & BAF data; mark filtered points
 	plot.data <- raw_LRR_BAF %>%
-		filter(Chr == chr & Position >= max(start -size, 0) & Position <= end + size)
-			   	# TODO: get chr max sizes & adjust accoridingly
+		filter(Chr == chr & Position >= win_start & Position <= win_end) %>%
+		mutate(SampleName = sapply(sample_id, function(x) sample_headers[x]))
 			   
-		
-	#Include *all* individual calls (but merged per tool/sample)
-	# TODO: this plots sample & ref calls over one-another
-	calls <- all.GR %>% plyranges::filter(seqnames == chr) %>%
-		filter_by_overlaps(GRanges(chr, IRanges(max(start -size, 0), end+size), strand = '*')) %>%
-		as_tibble() %>%
+	calls <- cnv_calls %>%
+		filter(tool.overlap.state != 'post-overlap' & seqnames == chr & end >= win_start & start < win_end) %>%
 		mutate(x_pos = (end + start) / 2, 
-			   y_pos = ifelse(CNV.state == 'gain', 1.4, -1.4) + ifelse(tool == 'PennCNV', 0.05, -0.05),
-			   y_pos_baf = ifelse(CNV.state == 'gain', 1.025, -0.075) + ifelse(tool == 'PennCNV', 0.05, 0),
+			   y_pos = ifelse(main.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tool, 'PennCNV'), 0.05, -0.05),
+			   y_pos_baf = ifelse(main.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tool, 'PennCNV'), 0.05, 0),
 			   color = color_map[as.character(y_pos)],
-			   color = ifelse(CNV.state == 'LOH', 'grey50', color),
-			   col_label = paste(tool, CNV.state),
+			   color = ifelse(main.state == 'LOH', 'grey50', color),
+			   col_label = paste(tool, main.state),
+				 SampleName = sapply(sample_id, function(x) sample_headers[x])
 			   )
-
-	message('..plot data loaded')
-	write("..plot data loaded", stderr())
+		
+	#message('..plot data loaded')
+	#write("..plot data loaded", stderr())
 	
 	# Make the plots
 	lrr <- 	ggplot(plot.data) + 
 		geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) + 
-		geom_tile(data = calls, aes(x = x_pos, y = y_pos, width = width, height = 0.1, fill = color)) + 
+		geom_tile(data = calls, aes(x = x_pos, y = y_pos, width = length, height = 0.1, fill = color)) + 
 		scale_fill_identity() + 
 		geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
 				   size = 0.5, shape = 20, show.legend = F) + 
@@ -439,17 +403,18 @@ make_LRR_BAF_plots <- function(chr, start, end, size) {
 		geom_text(data = calls, aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos),
 				  vjust = 0.5, hjust = 0.5, size = 2.5) +
 		theme_classic() +
-		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ',')) +
+		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
 		scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
-		labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')'))
+		labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) + 
+		facet_wrap(~SampleName, ncol = 1)
 	
-	message('..lrr done')
-	write("..lrr done", stderr())
+	#message('..lrr done')
+	#write("..lrr done", stderr())
 	
 	baf <- 	ggplot(plot.data) + 
 		geom_hline(yintercept = 0, col = 'black', linewidth=0.5) + 
 		geom_hline(yintercept = 1, col = 'black', linewidth=0.5) + 
-		geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = width, height = 0.05, fill = color)) + 
+		geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = length, height = 0.05, fill = color)) + 
 		scale_fill_identity() + 
 		geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
 				   size = 0.5, shape = 20, show.legend = F) + 
@@ -457,23 +422,23 @@ make_LRR_BAF_plots <- function(chr, start, end, size) {
 		geom_text(data = calls, aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos_baf), 
 				  vjust = 0.5, hjust = 0.5, size = 2.5) + 
 		theme_classic() + 
-		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ',')) + 
+		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) + 
 		scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) + 
-		labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')'))
+		labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) + 
+		facet_wrap(~SampleName, ncol = 1)
 	
-	message('..baf done')
-	write("..baf done", stderr())
+	#message('..baf done')
+	#write("..baf done", stderr())
 	
-
 	# this crashes somehow?
 	# --> first point where image ggplot image is calculated
 	#gg <- ggarrange(lrr, baf, nrow = 1, common.legend = T, legend = 'bottom')
 	gg <- lrr | baf
 	
-	message('..ggarange done')
-	write("..ggarange done", stderr())
+	#message('..ggarange done')
+	#write("..ggarange done", stderr())
 	
-	calls <- calls %>% dplyr::select(-strand, -x_pos, -y_pos, -y_pos_baf, -color, -col_label)
+	calls <- calls %>% dplyr::select(SampleName, 1:4, reportable, call.in.reference, CNV.state, tool)
 
 	list('gg' = gg, 'calls' = calls)
 	
@@ -500,24 +465,14 @@ make_LRR_BAF_plotly <- function() {
 	# (crosstalk package)
 	
 	
-	calls <- reportable.new %>% as_tibble() %>%
-			mutate(call.state = 'new')
-	
-	if (!is.na(ref_id)) {
-		calls <- bind_rows(
-			calls,
-			reportable.in.ref %>% as_tibble() %>%
-				mutate(call.state = 'in reference')
-		)
-	}
-	
-	calls <- calls %>%
+	calls <- cnv_calls %>%
+		filter(tool.overlap.state != 'post-overlap') %>%
 		mutate(x_pos = (end + start) / 2, 
-			   y_pos = ifelse(CNV.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tools, 'PennCNV'), 0.05, -0.05),
-			   y_pos_baf = ifelse(CNV.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tools, 'PennCNV'), 0.05, 0),
+			   y_pos = ifelse(main.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tools, 'PennCNV'), 0.05, -0.05),
+			   y_pos_baf = ifelse(main.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tools, 'PennCNV'), 0.05, 0),
 			   color = color_map[as.character(y_pos)],
-			   color = ifelse(CNV.state == 'LOH', 'grey50', color),
-			   col_label = paste(tools, CNV.state),
+			   color = ifelse(main.state == 'LOH', 'grey50', color),
+			   col_label = paste(tools, main.state),
 			   )
 	# -> some way to use calls 
 	
@@ -542,7 +497,7 @@ make_LRR_BAF_plotly <- function() {
 	baf <- 	ggplot(plot.data) + 
 		geom_hline(yintercept = 0, col = 'black', linewidth=0.5) + 
 		geom_hline(yintercept = 1, col = 'black', linewidth=0.5) + 
-		geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = width, height = 0.05, fill = color)) + 
+		geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = size, height = 0.05, fill = color)) + 
 		scale_fill_identity() + 
 		geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
 				   size = 0.5, shape = 20, show.legend = F) + 
@@ -569,10 +524,6 @@ make_LRR_BAF_plotly <- function() {
 
 ```{r indiv.plots, results='asis'}
 
-
-reportable.calls <- bind_rows(reportable.new %>% mutate(call = 'new'),
-							  reportable.in.ref %>% mutate(call = 'in.ref'))
-
 # initialize ggplot somehow?
 dummy <- ggplot(reportable.calls) +
 	geom_bar(aes(y = mean_no_snps))
@@ -584,9 +535,9 @@ if (nrow(reportable.calls)>0) {
 		
 		row = reportable.calls[i,]
 		
-		cat(paste0('### ', row$CNV.state, ' (', row$call, '): ', row$Chr, ' - ', round(row$size/1e6, 1), 'Mb\n\n'))
+		cat(paste0('### ', row$main.state, ' (', row$reportable, '): ', row$Chr, ' - ', round(row$Size/1e6, 1), 'Mb\n\n'))
 		
-		res <- make_LRR_BAF_plots(row$Chr, row$start, row$end, row$size)
+		res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size)
 		subchunkify(res$gg, paste0('plot.reportable.call.',i), 5, 10)
 		
 		subchunkify(res$call, paste0('table.reportable.call.',i))
@@ -610,41 +561,38 @@ i.e. numsnp > 5 & length > 100 & (numsnp > 10 | length > 2000)
 
 ```{r non.reportable, results='asis', cache=FALSE}
 
-non.reportable <- sample_calls %>% 
-	plyranges::filter((width < reportable.cnv & CNV.state != 'LOH') | width < reportable.loh) %>%
-	# annotate if something overlaps a reference call
-	plyranges::mutate(call = ifelse(count_overlaps(., reference_calls) > 0, 'in ref', 'new')) %>%
-	as_tibble() %>%
-	dplyr::rename(size = width, Chr = seqnames) %>%
-	mutate(CNV.state = factor(CNV.state, levels = c('gain', 'loss', 'LOH')),
-		   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),) %>%
-	arrange(desc(n_calls), CNV.state, Chr, desc(size))
+non.reportable.calls <- cnv_calls %>% 
+	filter(sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
+	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
+	dplyr::select(5, 1:4, reportable, main.state, call.in.reference, 6:14, 16:17) %>%
+	mutate(call.in.reference = factor(call.in.reference),
+				 main.state = factor(main.state))
 
-datatable(non.reportable,
+datatable(non.reportable.calls, caption = 'Non reportable calls',
 		  rownames = F,
 		  extensions = c('Buttons', 'Scroller'),
 		  filter = 'top',
 		  options = list(
-		  	scrollY = FALSE,
-	        scrollX =  TRUE,
-	        scroller = TRUE,
-	        dom = 'Bt',
+		  	scrollY = 300, scrollCollapse = TRUE,
+	      scrollX =  TRUE,
+	      scroller = TRUE,
+	      dom = 'Bftilp', #TODO -> change this
 		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
-			columnDefs = list(
-		  		list(targets = c(4,9:13), visible = FALSE)
-		  		)
+				columnDefs = list(
+		  		list(targets = c(0,9:18), visible = FALSE)
+		  	)
 			)
-		  ) %>%
-	formatRound(c('start', 'end', 'size'), digits = 0, mark = '.')
+		) %>%
+	formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
 
-if (nrow(non.reportable)>0) {
-	for (i in 1:nrow(non.reportable)) {
+if (nrow(non.reportable.calls)>0) {
+	for (i in 1:nrow(non.reportable.calls)) {
 		
-		row = non.reportable[i,]
+		row = non.reportable.calls[i,]
 		
-		cat(paste0('### ', row$Chr, ' - ', round(row$size/1e3, 1), 'kb: ', row$CNV.state, ' (', row$call, ')\n\n'))
+		cat(paste0('### ', row$Chr, ' - ', round(row$size/1e3, 1), 'kb: ', row$main.state, ' (', row$reportable, ')\n\n'))
 	
-		res <- make_LRR_BAF_plots(row$Chr, row$start, row$end, row$size)
+		res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size)
 		subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
 		
 		subchunkify(res$call, paste0('table.nonreportable.call.',i))
@@ -652,9 +600,10 @@ if (nrow(non.reportable)>0) {
 		cat('\n\n')
 		
 	}
-} else {
-	cat('No CNV calls present.')
-}
+} 
+# else {
+# 	cat('No CNV calls present.')
+# }
 
 
 ```
@@ -673,13 +622,12 @@ Direct comparison to the first reference sample () is shown side by side (left: 
 # This os supposedly GRCh38
 data(human_karyotype, package="RIdeogram")
 
-sample.calls <- all.GR %>% as_tibble() %>%
-
-	dplyr::select(seqnames, start, end, CNV.state, sample_id) %>%
+sample.calls <- cnv_calls %>%
+	dplyr::select(seqnames, start, end, main.state, sample_id) %>%
 	dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
-	mutate(Value = ifelse(CNV.state == 'LOH', 0, 1),
-		   Value = ifelse(CNV.state == 'loss', -1, Value),
-		   Chr = str_remove(Chr, 'chr')) 
+	mutate(Value = ifelse(main.state == 'LOH', 0, 1),
+		   Value = ifelse(main.state == 'loss', -1, Value),
+		   Chr = str_remove(Chr, 'chr'))
 overlay.tb <- sample.calls %>%
 	filter(sample_id == !!sample_id) %>%
 	dplyr::select(Chr, Start, End, Value)
@@ -687,7 +635,7 @@ overlay.tb <- sample.calls %>%
 #TODO: output needs to be checked
 svg_file1 = tempfile(fileext = '.svg')
 #somehow 'convertSVG' can't deal with absolute paths
-png_file1 = file.path('report_images', 'chunk_ideogram_virtualKaryotype.png') 
+png_file1 = file.path('report_images', 'chunk_ideogram_virtualKaryotype.png')
 
 ideogram(human_karyotype, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
 convertSVG(svg_file1, file = png_file1)
@@ -698,14 +646,14 @@ if (!is.na(ref_id)) {
   refdata <- sample.calls %>%
 		filter(sample_id == ref_id) %>%
 		dplyr::select(Chr, Start, End, Value)
-  
+
   svg_file2 = tempfile(fileext = '.svg')
   png_file2 = file.path('report_images', 'chunk_ideogram_virtualKaryotype_vsRef.png')
-  
+
   ideogram(human_karyotype, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
   		 colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
   convertSVG(svg_file2, file = png_file2)
-  
+
   cat(paste0('<img src="', png_file2, '" width="800" />'))
 }
 

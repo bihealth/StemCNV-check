@@ -53,6 +53,7 @@ settings:
       ref.factor: 2
     # Thresholds for colored table / rec action [orange, red]
     QCwarnings:
+      callrate: [0.99, 0.99]
       total_CNV: [10, 50]
       total_LOH: [30, 75]
       loss_gain_ratio: [2, 4]

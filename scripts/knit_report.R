@@ -6,8 +6,8 @@ parser <- OptionParser(
   usage = "usage: %prog [options] <sample_id> <basepath> <snakedir> /path/to/sample_table.tsv /path/to/config.yaml"
 )
 
-parser <- add_option(parser, c("-n", "--no-reference"), action="store_true",
-                     default=FALSE, help="Ignore reference sample regardless of samplesheet")
+# parser <- add_option(parser, c("-n", "--no-reference"), action="store_true",
+#                      default=FALSE, help="Ignore reference sample regardless of samplesheet")
 
 args <- parse_args(parser, positional_arguments = 5)
 
@@ -21,9 +21,9 @@ reportfile  <- file.path(snakedir, "scripts", "CNV_report.Rmd")
 workdir     <- file.path(basepath, 'data', sample_id)
 outfile     <- paste0(sample_id, ".CNV-report.html")
 
-samples.tb <- read_tsv(sampletable, col_types = 'cccccc')
-reference <- samples.tb[samples.tb$Sample_ID == sample_id, ]$ReferenceSample
-reference_id <- ifelse(is.na(reference), '', samples.tb[samples.tb$SampleName == reference, ]$Sample_ID)
+# samples.tb <- read_tsv(sampletable, col_types = 'cccccc')
+# reference <- samples.tb[samples.tb$Sample_ID == sample_id, ]$ReferenceSample
+# reference_id <- ifelse(is.na(reference), '', samples.tb[samples.tb$SampleName == reference, ]$Sample_ID)
 
 setwd(workdir)
 

@@ -14,7 +14,7 @@ parser <- add_option(parser, c("-c", "--cbs"), default = F,
 										 action="store_true", help="Use CBS calls")
 
 args <- parse_args(parser, positional_arguments = 4)
-args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "config.yaml", "sample_table_example.txt", "206210670080_R09C02", "data"))
+#args <- parse_args(parser, positional_arguments = 4, c("-p", "-c",  "data", "206210670080_R09C02", "config.yaml", "sample_table_example.txt"))
 
 ##################
 # Variable setup #
@@ -30,6 +30,8 @@ sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
 ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$ReferenceSample
+ref_id <- NA
+
 if (!is.na(ref_name)){
 	ref_id <- sampletable[sampletable$SampleName == ref_name, ]$Sample_ID
 	sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
@@ -38,6 +40,7 @@ if (!is.na(ref_name)){
 		stop('Sex of sample and reference does not match!')
 	} 
 }
+
 
 #TODO: might be easier to use a patched temp config file?
 # Report only reads the actual config file, not the default one, so we need default values here as well
@@ -112,8 +115,8 @@ read_CBS <- function(filename) {
 			CNV.state = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state),
 			#TODO: does Y need adjustment as well?
 			CNV.state = ifelse(Chr == 'chrX', NA, CNV.state),
-			CNV.state = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', 1, -1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state),
-			CNV.state = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', 1, -1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state),
+			CNV.state = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state), #  ...
+			CNV.state = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state), #+ ifelse(sex == 'm', 1, -1) * ...
 			tool = 'CBS',
 			conf = NA,
 			#TODO could try double / 3x / ... cutoff for 0/4 CN ?
@@ -320,51 +323,59 @@ if (length(tool.overlap.order) > 1) {
 } else {
 	message('Only 1 CNV calling tools used, no overlaps')
 	#TODO:
-	# probably need to convert the meta_cols into lists, to assure things work downstream
+	# may need to convert the meta_cols into lists, to assure things work downstream
 }
 
 
 #TODO:
-# maybe don't use overlapped ref calls, but the individual calls?
-# & then do group_by
-gr <- pair_overlaps(
-							filter(overlapped_tools_sample, tool.overlap.state != 'pre-overlap'),
-							bind_ranges(results[paste0('ref_', tool.overlap.order)])
-							) %>% 
-	as_tibble() %>% rowwise() %>%
-	mutate(width.combined = max(granges.x.end, granges.y.end) - min(granges.x.start, granges.y.start) + 1,
-				 width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
-				 coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
-				 cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
-				 ref.tool = list(tool.y),
-				 ref.state = CNV.state.y[1],
-				 sample.state = CNV.state.x[1]
-				 ) %>%
-	dplyr::select(-contains('.y'), -contains('width')) %>%
-	filter(coverage.by.ref >= min.cnv.coverage.by.ref & 
-				 	sample.state == ref.state) %>%
-	group_by(granges.x.seqnames, granges.x.start, granges.x.end) %>%
-	summarise(across(ends_with('.x'), ~ unique(.)),
-						#tool.calls = unique(tool.calls),
-						across(contains('overlap'), ~ unique(.)),
-						call.in.reference = TRUE,
-						coverage.by.ref = list(coverage.by.ref),
-						ref.tool = list(ref.tool),
-						) %>%
-	dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
-	makeGRangesFromDataFrame(keep.extra.columns = T)
+# maybe instead individual ref calls also use the overlap (can just load the rds / gr object from the ref run)
+if (!is.na(ref_id)) {
+	gr <- pair_overlaps(
+								filter(overlapped_tools_sample, tool.overlap.state != 'pre-overlap'),
+								bind_ranges(results[paste0('ref_', tool.overlap.order)])
+								) %>% 
+		as_tibble() %>% rowwise() %>%
+		mutate(width.combined = max(granges.x.end, granges.y.end) - min(granges.x.start, granges.y.start) + 1,
+					 width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
+					 coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
+					 cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
+					 ref.tool = list(tool.y),
+					 ref.state = CNV.state.y[1],
+					 sample.state = CNV.state.x[1]
+					 ) %>%
+		dplyr::select(-contains('.y'), -contains('width')) %>%
+		filter(coverage.by.ref >= min.cnv.coverage.by.ref & 
+					 	sample.state == ref.state) %>%
+		group_by(granges.x.seqnames, granges.x.start, granges.x.end) %>%
+		summarise(across(ends_with('.x'), ~ unique(.)),
+							#tool.calls = unique(tool.calls),
+							across(contains('overlap'), ~ unique(.)),
+							call.in.reference = TRUE,
+							coverage.by.ref = list(coverage.by.ref),
+							ref.tool = list(ref.tool),
+							) %>%
+		dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
+		makeGRangesFromDataFrame(keep.extra.columns = T)
 
-cnvs <- bind_ranges(
-	gr,
-	filter_by_non_overlaps(
-		filter(overlapped_tools_sample, tool.overlap.state != 'pre-overlap'),
-		gr ),
-	filter(overlapped_tools_sample, tool.overlap.state == 'pre-overlap'),
-	) %>%
-	as_tibble() %>%
-	dplyr::rename(length = width) %>%
-	dplyr::select(-strand)
-
+	cnvs <- bind_ranges(
+		gr,
+		filter_by_non_overlaps(
+			filter(overlapped_tools_sample, tool.overlap.state != 'pre-overlap'),
+			gr ),
+		filter(overlapped_tools_sample, tool.overlap.state == 'pre-overlap'),
+		) %>%
+		as_tibble() %>%
+		dplyr::rename(length = width) %>%
+		dplyr::select(-strand)
+} else {
+	cnvs <- overlapped_tools_sample %>% 
+		mutate(call.in.reference = NA,
+					 coverage.by.ref = NA,
+					 ref.tool = NA)  %>%
+		as_tibble() %>%
+		dplyr::rename(length = width) %>%
+		dplyr::select(-strand)
+}
 
 #TODO: the list cols make saving a tsv cumbersome, though a tsv might be useful for export?
 outname <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.rds'))

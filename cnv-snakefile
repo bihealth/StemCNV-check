@@ -6,10 +6,10 @@ from scripts.py_helpers import read_sample_table
 
 #ONLY load if somehow manually started
 if not config:
-	CONFIGFILE = "config.yaml"
-	configfile: CONFIGFILE
+  CONFIGFILE = "config.yaml"
+  configfile: CONFIGFILE
 else:
-	CONFIGFILE = config['configfile']
+  CONFIGFILE = config['configfile']
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
 SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.getcwd() #Defined by wrapper 
@@ -20,17 +20,19 @@ IDAT_INPUT = config['raw_data_folder']
 # -> think of a more flexible way to define files ?
 #TODO load this from config
 wildcard_constraints: 
-	chr=config['wildcard_constraints']['chr'],
-	filter=config['wildcard_constraints']['filter'],
-	sample_id=config['wildcard_constraints']['sample_id'],
-	chip_name=config['wildcard_constraints']['chip_name'],
-	
+  chr=config['wildcard_constraints']['chr'],
+  filter=config['wildcard_constraints']['filter'],
+  sample_id=config['wildcard_constraints']['sample_id'],
+  chip_name=config['wildcard_constraints']['chip_name'],
+
 #Never submit these to cluster
 localrules:
-	relink_gencall,
+  relink_gencall,
 
 sample_data = read_sample_table(SAMPLETABLE)
 #print(sample_data)
+
+
 
 # Rules ========================================================================
 
@@ -87,10 +89,10 @@ rule run_gencall:
 
 
 def get_gtc_path(wildcards):
-	"Get the chip name from  a sample_id"
-	chip_name = [n for _,(n, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
-	return  os.path.join(BASEPATH, 'data', 'gtc', chip_name)
-	
+  "Get the chip name from  a sample_id"
+  chip_name = [n for _,(n, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
+  return  os.path.join(BASEPATH, 'data', 'gtc', chip_name)
+
 rule relink_gencall:
   input:
     lambda wildcards: os.path.join(get_gtc_path(wildcards), '_done')
@@ -240,8 +242,8 @@ rule run_CBS:
 # rule process_CNV_calls:
 #   -> currently done in report; move out ?
 
-def get_ids(wildcards):
-	sex, ref_name = [(s, r) for name,(c, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
+def get_ref_id(wildcards, get_sex=False):
+  sex, ref_name = [(s, r) for name,(c, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
   sample_id = wildcards.sample_id
   if ref_name and ref_name in sample_data:
     _, ref_id, ref_sex, _ = sample_data[ref_name]
@@ -251,11 +253,15 @@ def get_ids(wildcards):
     raise Exception(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
   else:
     ref_id = False
-  
-  return sample_id, ref_id
+    ref_sex = False
+
+  if get_sex:
+    return sample_id, ref_id, sex, ref_sex
+  else:
+    return sample_id, ref_id
 
 def get_combined_CNVs(wildcards):
-	sample_id, ref_id = get_ref_id(wildcards)
+  sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   files = expand(
           [os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-autosomes.{filter}.tsv"),
            os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-chrx.{filter}.tsv"),
@@ -270,23 +276,23 @@ def get_combined_CNVs(wildcards):
   return files
 
 rule process_CNV_calls:
-	input:
-		get_combined_CNVs
-	output:
-		os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.rds")
- resources:
+  input:
+    get_combined_CNVs
+  output:
+    os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.rds")
+  resources:
     time=config['tools']['CNV.process']['runtime'],
     mem_mb=config['tools']['CNV.process']['memory'],
     partition='medium'
   log:
-    err=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "error.log"),
-    out=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "out.log")
+    err=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "{filter}.error.log"),
+    out=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "{filter}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R -p -c {wildcards.sample_id} {BASEPATH} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R -p -c {BASEPATH}/data {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 
 def get_report_sample_input(wildcards):
-	sample_id, ref_id = get_ref_id(wildcards)
+  sample_id, ref_id = get_ref_id(wildcards)
   return expand(
           [os.path.join(BASEPATH, "data", "{ids}", "{ids}.combined-cnv-calls.{filter}.rds"),
            os.path.join(BASEPATH, "data", "{ids}", "{ids}.stats.txt"),
@@ -297,7 +303,7 @@ def get_report_sample_input(wildcards):
 
 rule knit_report:
   input:
-  	get_report_sample_input
+    get_report_sample_input
   output:
     html=os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.CNV-report.html"),
     plots=directory(os.path.join(BASEPATH, "data", "{sample_id}", "report_images"))
