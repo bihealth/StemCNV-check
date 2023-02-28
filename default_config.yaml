@@ -3,6 +3,7 @@ static_data:
     csv_manifest_file: '' #REQUIRED
     egt_cluster_file: '' #REQUIRED
     genome_fasta_file: '' #REQUIRED
+    genome_gtf_file: '' #REQUIRED
     pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb  #REQUIRED
     GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
     
@@ -32,8 +33,9 @@ settings:
     merge.distance: 500
     merge.before.filter: TRUE
     ## Overlapping of CNV calls from different tools
+    # Call state will be assigned be tool priority if necessary.
     # Note: all tools used *must* be given here
-    tool.overlap.order: ['PennCNV', 'CBS']
+    tool.order: ['PennCNV', 'CBS']
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80

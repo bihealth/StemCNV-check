@@ -7,10 +7,10 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: '206216960062_R09C01'  #'GSM2538923_9371579017'
+  sample_id: '206819830066_R12C02'  #'GSM2538923_9371579017'
   #Don't pull from here? pull from sampletable instead -> easier to test report
   #reference_id: '204362030005_R07C01'
-  sampletable: 'sample_table_example.txt' #'sample_table.txt'
+  sampletable: 'sample_table.txt' #'sample_table.txt'
   configfile: 'config.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/tests/data/GSM2538923_9371579017'
 ---
@@ -29,11 +29,11 @@ params:
 #library(GenomicRanges)
 # -> probably will need it again for plotting of gene tracks
 library(tidyverse)
-library(dendextend)
+#library(dendextend)
 library(ggpubr)
 library(scales)
-library(RIdeogram)
-library(DT)
+#library(RIdeogram)
+#library(DT)
 library(yaml)
 library(patchwork)
 
@@ -143,8 +143,9 @@ raw_LRR_BAF <- file.path(basepath, 'data', use_ids, paste0(use_ids, '.processed-
 
 load_annotate_cnv <- function(fname){
 	readRDS(fname) %>%
+		rowwise() %>%
 		mutate(
-			main.state = sapply(CNV.state, "[[", 1),
+			main.state = CNV.state[[1]],
 			call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
 			reportable = case_when(
 				tool.overlap.state == 'pre-overlap'                                ~ NA_character_,
@@ -282,7 +283,7 @@ datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined
 ### GenCall
 
 ```{r qc.gencall, echo=FALSE}
-datatable(GenCall.stats %>% tr_tibble(), options = list(dom = 't', pageLength = ncol(GenCall.stats)))
+datatable(GenCall.stats %>% tr_tibble(), options = list(dom = 't', pageLength = ncol(GenCall.stats)), rownames = FALSE)
 ```
 
 ### PennCNV
@@ -327,9 +328,10 @@ List of all reportable calls (summarised over all input samples and tools used).
 reportable.calls <- cnv_calls %>% 
 	filter(sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
 	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-	dplyr::select(5, 1:4, reportable, main.state, call.in.reference, 6:14, 16:17) %>%
+	dplyr::select(1:5, reportable, main.state, 6:17) %>%
 	mutate(call.in.reference = factor(call.in.reference),
-				 main.state = factor(main.state))
+				 main.state = factor(main.state)) %>%
+	arrange(reportable, Chr, Start)
 
 datatable(reportable.calls, caption = 'Critical & reportable calls',
 		  rownames = F,
@@ -376,7 +378,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 	# get raw LRR & BAF data; mark filtered points
 	plot.data <- raw_LRR_BAF %>%
 		filter(Chr == chr & Position >= win_start & Position <= win_end) %>%
-		mutate(SampleName = sapply(sample_id, function(x) sample_headers[x]))
+		mutate(SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
 			   
 	calls <- cnv_calls %>%
 		filter(tool.overlap.state != 'post-overlap' & seqnames == chr & end >= win_start & start < win_end) %>%
@@ -386,7 +388,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 			   color = color_map[as.character(y_pos)],
 			   color = ifelse(main.state == 'LOH', 'grey50', color),
 			   col_label = paste(tool, main.state),
-				 SampleName = sapply(sample_id, function(x) sample_headers[x])
+				 SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
 			   )
 		
 	#message('..plot data loaded')
@@ -406,7 +408,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
 		scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
 		labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, ncol = 1)
+		facet_wrap(~SampleName, nrow = 1)
 	
 	#message('..lrr done')
 	#write("..lrr done", stderr())
@@ -425,7 +427,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) + 
 		scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) + 
 		labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, ncol = 1)
+		facet_wrap(~SampleName, nrow = 1)
 	
 	#message('..baf done')
 	#write("..baf done", stderr())
@@ -433,12 +435,16 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 	# this crashes somehow?
 	# --> first point where image ggplot image is calculated
 	#gg <- ggarrange(lrr, baf, nrow = 1, common.legend = T, legend = 'bottom')
-	gg <- lrr | baf
+	gg <- lrr / baf
 	
 	#message('..ggarange done')
 	#write("..ggarange done", stderr())
 	
-	calls <- calls %>% dplyr::select(SampleName, 1:4, reportable, call.in.reference, CNV.state, tool)
+	calls <- calls %>% dplyr::select(SampleName, 1:4, reportable, call.in.reference, CNV.state, tool) %>%
+		dplyr::rename(Chr = seqnames) %>%
+		arrange(SampleName, Chr, start) %>%
+		rowwise() %>%
+		mutate(across(c(CNV.state, tool), ~paste(., collapse = ',')))
 
 	list('gg' = gg, 'calls' = calls)
 	
@@ -564,9 +570,10 @@ i.e. numsnp > 5 & length > 100 & (numsnp > 10 | length > 2000)
 non.reportable.calls <- cnv_calls %>% 
 	filter(sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
 	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-	dplyr::select(5, 1:4, reportable, main.state, call.in.reference, 6:14, 16:17) %>%
+	dplyr::select(1:5, reportable, main.state, 6:17) %>%
 	mutate(call.in.reference = factor(call.in.reference),
-				 main.state = factor(main.state))
+				 main.state = factor(main.state)) %>%
+	arrange(reportable, Chr, Start)
 
 datatable(non.reportable.calls, caption = 'Non reportable calls',
 		  rownames = F,
@@ -579,7 +586,7 @@ datatable(non.reportable.calls, caption = 'Non reportable calls',
 	      dom = 'Bftilp', #TODO -> change this
 		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
 				columnDefs = list(
-		  		list(targets = c(0,9:18), visible = FALSE)
+		  		list(targets = c(0,10:18), visible = FALSE)
 		  	)
 			)
 		) %>%

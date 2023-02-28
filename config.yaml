@@ -3,11 +3,10 @@ static_data:
     csv_manifest_file: static-data/GSAMD-24v3-0-EA_20034606_A2.csv
     egt_cluster_file: static-data/GSAMD-24v3-0-EA_20034606_A1.egt
     genome_fasta_file: static-data/GRCh38.p13.genome.chr_scaff.fa
-    # are these static? I guess
-    #TODO: rename them (accoridng to TODO setup scripts)
+    genome_gtf_file: static-data/gencode.v42.basic.annotation.gtf
+    #TODO: rename these accoridng to setup scripts
     pfb_file: static-data/pfb_from_egtAF.pfb
     GCmodel_file: static-data/gcmodel_hg38PennCNV_pfbEGTaf.tsv
-    #AF_file: static-data/AF_file_from_vcf.txt.gz
     
 
 raw_data_folder: RAW_DATA
@@ -35,8 +34,9 @@ settings:
     merge.distance: 500
     merge.before.filter: TRUE
     ## Overlapping of CNV calls from different tools
+    # Call state will be assigned be tool priority if necessary.
     # Note: all tools used *must* be given here
-    tool.overlap.order: ['PennCNV', 'CBS']
+    tool.order: ['PennCNV', 'CBS']
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80

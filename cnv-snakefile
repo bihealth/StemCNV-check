@@ -260,24 +260,21 @@ def get_ref_id(wildcards, get_sex=False):
   else:
     return sample_id, ref_id
 
-def get_combined_CNVs(wildcards):
+def get_preproces_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
-  files = expand(
-          [os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-autosomes.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", "{ids}", "{ids}.penncnv-chrx.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", "{ids}", "{ids}.CBS.{filter}.tsv"),],
-           ids = (sample_id, ref_id) if ref_id else (sample_id,),
-           filter = config['settings']['filter']['use-filterset']
-          )
   filter = config['settings']['filter']['use-filterset']
-  files = files + [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv")] if sex[0].lower() == 'm' else files 
-  files = files + [os.path.join(BASEPATH, "data", f"{ref_id}", f"{ref_id}.penncnv-chry.{filter}.tsv")] if (ref_id and ref_sex[0].lower() == 'm') else files
+  files = [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv"),
+           os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv"),
+           os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv"),]
+  files = files + [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv")] if sex[0].lower() == 'm' else files
+
+  files = files + [os.path.join(BASEPATH, "data", f"{ref_id}", f"{ref_id}.combined-cnv-calls.{filter}.rds")] if ref_id else files
 
   return files
 
 rule process_CNV_calls:
   input:
-    get_combined_CNVs
+    get_preproces_input
   output:
     os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.rds")
   resources:
