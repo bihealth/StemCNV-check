@@ -14,7 +14,7 @@ parser <- add_option(parser, c("-c", "--cbs"), default = F,
 										 action="store_true", help="Use CBS calls")
 
 args <- parse_args(parser, positional_arguments = 4)
-#args <- parse_args(parser, positional_arguments = 4, c("-p", "-c",  "data", "206210670080_R09C02", "config.yaml", "sample_table_example.txt"))
+#args <- parse_args(parser, positional_arguments = 4, c("-p", "-c",  "data", "206764550040_R06C01", "config.yaml", "sample_table.txt"))
 
 ##################
 # Variable setup #
@@ -217,25 +217,39 @@ overlap_tools <- function(tools, min.greater.region.overlap = 50) {
 	gr <- results[tools] %>%
 		bind_ranges()
 	
-	#Merge any number of overlaps for the same CNV.state together, summarise metadata into list cols
-	# & calculate coverage of the final merged call by individual ones
-	ov <- gr %>%
+	ov_test <- gr %>%
 		group_by(sample_id, CNV.state) %>%
-		reduce_ranges(tool = tool,
-									individual_calls = individual_calls,
-									numsnp = numsnp,
-									copynumbers = copynumbers,
-									conf = conf,
-									widths = width,
-									tool.overlap.state = ifelse(plyranges::n() > 1, 'post-overlap', 'no-overlap'),
-									) %>%
-		mutate( overlap.coverage =  round(widths / width * 100, 2),
-						max.ov = sapply(overlap.coverage, max) )  %>%
-		ensure_list_cols()
-	ov[ov$tool.overlap.state == 'no-overlap',]$overlap.coverage <- NA
+		reduce_ranges()
+
+	# If overlaps exist (if not reduce_ranges can't make proper list cols):
+	# Merge any number of overlaps for the same CNV.state together, summarise metadata into list cols
+	# & calculate coverage of the final merged call by individual ones	
+	if (length(ov_test) < length(gr))  {
+		ov <- gr %>%
+			group_by(sample_id, CNV.state) %>%
+			reduce_ranges(tool = tool,
+										individual_calls = individual_calls,
+										numsnp = numsnp,
+										copynumbers = copynumbers,
+										conf = conf,
+										widths = width,
+										tool.overlap.state = ifelse(plyranges::n() > 1, 'post-overlap', 'no-overlap'),
+										) %>%
+			mutate( overlap.coverage =  round(widths / width * 100, 2),
+							max.ov = sapply(overlap.coverage, max) ) %>%
+			ensure_list_cols()
+		ov[ov$tool.overlap.state == 'no-overlap',]$overlap.coverage <- NA
+	} else {
+		ov <- gr %>% 
+			mutate(tool.overlap.state = 'no-overlap',
+						 widths = NA,
+						 overlap.coverage = NA,
+						 max.ov = NA) %>%
+			ensure_list_cols()
+	}
 
 	#Now filter based on (reciprocal) overlap to check if the overlap can be accepted
-	# TODO: does the max(overlap.coverage) [i.e. not quite reciprocal] make sense?:
+	# TODO: does the max(overlap.coverage) [i.e. not reciprocal] make sense?:
 	# - reciprocal is hard to asses (we want to retain & check against final?)
 	# - could only accept overlap if *all* tools have at least X% overlap with final (prevents ov chains)
 	gr.not.changed <- ov %>% 
@@ -308,7 +322,7 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 		) 
 		
 	} else {
-		gr_out <- gr %>%
+		gr_out <- gr_in %>%
 			mutate(call.in.reference = FALSE,
 						 coverage.by.ref = list(NA),
 						 ref.tool = list(NA))
@@ -368,9 +382,9 @@ if (merge.before.filter) {
 }
 
 
-# check which calls overlap between tools, calculate coverage & convert cols to lost, so they can store values from each tool post-overlap
+# check which calls overlap between tools, calculate coverage & convert cols to list, so they can store values from each tool post-overlap
 # > for plotting original calls are still needed; these are retained (overlap.state == 'pre-overlap')
-tools <- names(results) #%>% str_subset('^ref_', negate = T)
+tools <- names(results)
 if (!all(tool.order %in% tools)) {
 	quit('"tool.order" contains tools that are not available')
 } else if (!all(tools %in% tool.order)) {

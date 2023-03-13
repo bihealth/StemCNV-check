@@ -58,6 +58,20 @@ settings:
       loss_gain_ratio: [2, 4]
       sizable_CNV: [5, 10]
       sizable_LOH: [5, 10]
+      SNP_distance_reference: [5, 10]
+      # # This is hard to set thresholds for, since currentlöy all types of genes are used
+      # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
+      # overlapping_genes: []
+    SNP_comparison:
+      include_dendrogram: TRUE
+      ignore_filters: FALSE
+      #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
+      # enries with __[column] will use all other samples with the same value in [column]
+      # entries with _[column] expect a column that contains additional (, separated) sample_ids
+      extra_samples: ['__Chip_Name']
+      # You can also use additional metadata columns from the sample table
+      dendrogram.color.by: 'SampleGroup'
+      dendrogram.shape.by: 'Chip_Name'
 
 
 wildcard_constraints:

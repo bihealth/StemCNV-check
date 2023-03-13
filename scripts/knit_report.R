@@ -21,15 +21,13 @@ reportfile  <- file.path(snakedir, "scripts", "CNV_report.Rmd")
 workdir     <- file.path(basepath, 'data', sample_id)
 outfile     <- paste0(sample_id, ".CNV-report.html")
 
-# samples.tb <- read_tsv(sampletable, col_types = 'cccccc')
-# reference <- samples.tb[samples.tb$Sample_ID == sample_id, ]$ReferenceSample
-# reference_id <- ifelse(is.na(reference), '', samples.tb[samples.tb$SampleName == reference, ]$Sample_ID)
+# clear previously generated images
+if (dir.exists(file.path(workdir, 'report_images'))) {
+	system(str_glue('rm {workdir}/report_images/*'))
+}
 
+# Run Rmd - all files should be stored in the final output folder (== workdir)
 setwd(workdir)
-
-# message(getwd())
-# message(reference_id)
-
 rmarkdown::render(
   input = reportfile, 
   output_dir = workdir,

@@ -6,18 +6,19 @@ channels:
 dependencies:
   ## General ##
   - python >= 3.9 #sensible default
-  - snakemake
+  - snakemake 
   - r-base >=4.0 #sensible default
   - r-tidyverse
   - r-optparse
   - r-knitr
   - r-rmarkdown
   - r-yaml
+  - r-sessioninfo
   ## Algorithms ##
   # CBS
-  - bioconductor-dnacopy
+  - bioconductor-dnacopy = 1.68.0
   ## Postprocessing ##
-  - bioconductor-plyranges
+  - bioconductor-plyranges = 1.14.0
   #-bioconductor-genomicranges
   ## Report ##
   - r-ggpubr
@@ -25,5 +26,5 @@ dependencies:
   - r-rideogram
   - r-rcolorbrewer
   - r-DT
-  - r-plotly
+  #- r-plotly
   - r-patchwork

@@ -7,12 +7,12 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: '206819830066_R12C02'  #'GSM2538923_9371579017'
+  sample_id: '207172180149_R02C02'  #'GSM2538923_9371579017'
   #Don't pull from here? pull from sampletable instead -> easier to test report
   #reference_id: '204362030005_R07C01'
   sampletable: 'sample_table.txt' #'sample_table.txt'
   configfile: 'config.yaml' #'CytoSNP-config.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/tests/data/GSM2538923_9371579017'
+  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/data/207172180149_R02C02'
 ---
 
 <style type="text/css">
@@ -24,18 +24,19 @@ params:
 
 
 ```{r setup, include=FALSE}
-#setwd(file.path(params$base_path, "data", params$sample_id))
-#library(plyranges)
+#setwd(params$workdir)
+library(plyranges)
 #library(GenomicRanges)
 # -> probably will need it again for plotting of gene tracks
 library(tidyverse)
-#library(dendextend)
+library(dendextend)
 library(ggpubr)
 library(scales)
-#library(RIdeogram)
-#library(DT)
+library(RIdeogram)
+library(DT)
 library(yaml)
 library(patchwork)
+library(sessioninfo)
 
 basepath <- params$base_path
 workdir <- ifelse(params$workdir == '', getwd(), params$workdir)
@@ -67,12 +68,11 @@ if (!is.na(ref_id)){
   if(sex.ref != sex) {
   	stop('Sex of sample and reference does not match!')
   } 
-  
 }
 
 # Report only reads the actual config file, not the default one, so we need default values here as well
-config_val <- function(value, section, default=NULL) {
-	val=config$settings$report[[section]][[value]]
+config_val <- function(value, section, default=NULL, category = 'report') {
+	val=config$settings[[category]][[section]][[value]]
 	if (is.null(val)) {
 		return(default)
 	} else {
@@ -93,8 +93,55 @@ total_LOH_warnings = config_val('total_LOH', 'QCwarnings', c(30, 75))
 ratio_CNV_warnings = config_val('ratio_CNV', 'QCwarnings', c(2, 4))
 sizable_CNV_warnings = config_val('sizable_CNV', 'QCwarnings', c(5, 10))
 sizable_LOH_warnings = config_val('sizable_LOH', 'QCwarnings', c(5, 10))
+SNP_distance_reference = config_val('SNP_distance_reference', 'QCwarnings', c(1, 5))
 
-# Misc #
+cnv_tool_order = config$settings$postprocessing$tool.order
+cnv_tool_order = ifelse(is.null(cnv_tool_order), list(c('PennCNV', 'CBS')), list(c(cnv_tool_order))) %>% unlist()
+
+valid_name=config$wildcard_constraints$sample_id
+valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
+if (!all(str_detect(use_ids, valid_name))) {stop('Sample id does not match supplied or default wildcard constraints!')}
+
+check_cols_exits <- function(cols){
+	if (all(cols %in% colnames(sampletable))) {
+		return(cols)
+	}
+	missing <- cols[! cols %in% colnames(sampletable)]
+	warning(str_glue('The following columns mentioned in the config do not exist and will be ignored: {paste(missing, collapse = ", ")}'))
+	return(cols[cols %in% colnames(sampletable)])
+}
+
+SNP.extra.ids = c()
+do.SNP.clustering = config_val('include_dendrogram', 'SNP_comparison', FALSE)
+SNP.ignore.filters = config_val('ignore_filters', 'SNP_comparison', TRUE)
+if (do.SNP.clustering) {
+	extra_samples = config_val('extra_samples', 'SNP_comparison', c('__Chip_Name'))
+	# '__[column]' entry: take all sample_ids with the same value in '[column]'
+	same_value_cols = str_subset(extra_samples, '^__') %>% str_remove('^__') %>% check_cols_exits()
+	SNP.extra.ids <- sapply(same_value_cols, function(x) {
+		sample_value = unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
+		sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
+	}) %>% unlist()
+	# '_[column]' entry: take all sample_ids from '[column]'
+	id_cols = str_subset(extra_samples, '^_[^_]') %>% str_remove('^_') %>% check_cols_exits()
+	SNP.extra.ids <- c(SNP.extra.ids, sapply(id_cols, function(x) {
+		sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
+	}) %>% unlist() )
+	# other entries: assume they are sample_ids & take the existing ones. No warning since this is discouraged
+	ids = str_subset(extra_samples, '^[^_]')
+	SNP.extra.ids <- c(SNP.extra.ids, ids[ids %in% sampletable$Sample_ID])
+} 
+
+#TODO need to ensure path is absolute, since rmd might have changed wd ?
+gtf_file <- config$static_data$genome_gtf_file
+if (!file.exists(gtf_file)) {
+	gtf_file = file.path(basepath, gtf_file)
+}
+gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
+	filter(type == 'gene') 
+
+
+# Misc 
 subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
 
@@ -113,17 +160,15 @@ subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
 # Read Data
 
 ## Raw (BAF / LRR)
-valid_name=config$wildcard_constraints$sample_id
-valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
-if (!all(str_detect(use_ids, valid_name))) {stop('Sample id does not match supplied or default wildcard constraints!')}
-
 read_raw <- function(filename) {
 	read_tsv(filename, show_col_types = FALSE) %>%
 				rename_with(~ str_remove(., '.*\\.')) %>%
 		dplyr::select(-any_of(c('Index', 'Address', 'Name', 'R', 'Theta')),
 									-contains('Frac'), -contains('X'), -contains('Y')) %>%
 		mutate(sample_id = str_extract(filename, valid_name),
-			   Chr = paste0('chr', Chr))
+					 Chr = paste0('chr', Chr),
+					 Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)) %>%
+		separate_rows(Chr, sep=',')
 }
 
 filter_functions = list(
@@ -137,7 +182,31 @@ filter_functions = list(
 raw_LRR_BAF <- file.path(basepath, 'data', use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
 	bind_rows() %>%
-	mutate(filter.passed = filter_functions[[config$settings$filter$`use-filterset`]](`GenTrain Score`, Score))
+	mutate(filter.passed = filter_functions[[use.filter]](`GenTrain Score`, Score))
+
+## RAW Genotype info
+read_snps <- function(fname) {
+  read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
+		rename_with(~ str_remove(., '^.*\\.gencall\\.'), c(3)) %>%
+    mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
+    			 sample_id = str_extract(fname, valid_name)) 
+}
+
+snp.ids <- unique(c(use_ids, SNP.extra.ids))
+snp_file_pattern = ifelse(SNP.ignore.filters,
+													'.processed-data.tsv',
+													paste0('.filtered-data.', use.filter, '.tsv'))
+
+SNP.genotype.distances <- file.path(basepath, 'data', snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
+  lapply(read_snps) %>%
+	bind_rows() %>%
+	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
+	filter(if_all(everything(), ~!is.na(.))) %>%
+	dplyr::select(-Index, -Name) %>%
+	rename_with(~ sampletable[match(., sampletable$Sample_ID),]$SampleName ) %>%
+	t() %>%
+	dist(method = 'manhattan')
+
 
 ## CNV calls
 
@@ -145,16 +214,16 @@ load_annotate_cnv <- function(fname){
 	readRDS(fname) %>%
 		rowwise() %>%
 		mutate(
-			main.state = CNV.state[[1]],
-			call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
+			#main.state = CNV.state[which.min(match(tool, tool.overlap.order))],
+			#call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
 			reportable = case_when(
-				tool.overlap.state == 'pre-overlap'                                ~ NA_character_,
-				main.state == 'LOH' & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
-				main.state != 'LOH' & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
-				main.state == 'LOH' & length >= fail.loh                           ~ 'critical',
-				main.state != 'LOH' & length >= fail.cnv                           ~ 'critical',
-				main.state == 'LOH' & length >= reportable.loh                     ~ 'yes',
-				main.state != 'LOH' & length >= reportable.cnv                     ~ 'yes',
+				#tool.overlap.state == 'pre-overlap'                                ~ NA_character_,
+				CNV.state == 'LOH' & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
+				CNV.state != 'LOH' & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
+				CNV.state == 'LOH' & length >= fail.loh                           ~ 'critical',
+				CNV.state != 'LOH' & length >= fail.cnv                           ~ 'critical',
+				CNV.state == 'LOH' & length >= reportable.loh                     ~ 'yes',
+				CNV.state != 'LOH' & length >= reportable.cnv                     ~ 'yes',
 				call.in.reference                                                 ~ 'no, in ref.',
 				TRUE                                                              ~ 'no') %>%
 				factor(levels = c('critical', 'yes', 'yes, in ref.', 'no', 'no, in ref.'))
@@ -206,11 +275,6 @@ tr_tibble <- function(tb) {
 	tb[2:nrow(tb),]
 }
 
-apply_warnings <- function(tb, ...){
-	
-	
-}
-
 metrics <- list(
 	GenCall.stats %>%
 		dplyr::select(sample_id, call_rate, computed_gender) %>%
@@ -220,12 +284,15 @@ metrics <- list(
 		#TODO: if different chips are used that will be an issue. Should be catched earlier somehow
 		summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / unique(GenCall.stats$number_snps) ) %>%
 																		format(digits = 2, nsmall=2) %>% paste('%')),
+	tibble(sample_id = use_ids,
+				 SNP.distance.to.ref = unlist(ifelse(is.na(ref_id), list('-'), list(c(SNP.genotype.distances[1], '-'))))
+	),
 	cnv_calls %>%
 		#don't do individual tools here -> move to per tool section!
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		group_by(sample_id) %>%
-		mutate(class = factor(ifelse(main.state == 'LOH', 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
-					 loss.gain_log2ratio = log2(sum(main.state == 'gain') / sum(main.state == 'loss')) %>% round(digits = 2),
+		mutate(class = factor(ifelse(CNV.state == 'LOH', 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
+					 loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
 					 loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
 		) %>%
 		group_by(sample_id, loss.gain_log2ratio, class, .drop = F) %>%
@@ -253,7 +320,10 @@ metric.colors <- list(
 				 computed_gender = ifelse(tolower(computed_gender) != sex, 'red', 'green')),
 	mutate(metrics[[2]],
 				 SNPs_post_filter = 'white'),
-	mutate(metrics[[3]], 
+	mutate(metrics[[3]],
+				 SNP.distance.to.ref = ifelse(SNP.distance.to.ref == '-', 'white',
+				 														 apply_gr_th(SNP.distance.to.ref, SNP_distance_reference))),
+	mutate(metrics[[4]], 
 				 loss.gain_log2ratio = apply_gr_th(abs(loss.gain_log2ratio), ratio_CNV_warnings),
 				 total_calls_CNV = apply_gr_th(total_calls_CNV, total_CNV_warnings),
 				 total_calls_LOH = apply_gr_th(total_calls_LOH, total_LOH_warnings),
@@ -296,41 +366,33 @@ TODO: what can be extracted from log files
 
 ### Pipeline settings
 
-make a table with all settings used for the analysis (from snakemake config, patch with defaults?)
+TODO: use a patched yaml that includes default values
 
-?? put the R version/package info output here ?
-
-<!-- ## Recommended action: -->
-
-<!-- .Pass/Fail/Check recommendation (Steps: Data QC, CNV calling) -->
-
-<!-- TODO (how?): Sample similarity) -->
-
-<!-- ```{r recommendation} -->
+```yaml
+`r xfun::file_string(file.path(basepath, params$configfile))`
+```
 
 
-<!-- ``` -->
+```{r sessioninfo}
+session_info()
+```
+
 
 # CNV calling
 
 ## Reportable calls {.tabset}
 
-List of all reportable calls (summarised over all input samples and tools used).
+List of all reportable calls of the input samples. Overlapping calls from multiple tools with the same CNV.state (i.e. loss/gain) are merged.
 
 ```{r reportable}
 
-# TODO - DT defaults
-# - format number 000.000.000
-# - hide/remove strand
-# - hide/remove merge events
-# - move selector down; move search bar?
-
 reportable.calls <- cnv_calls %>% 
-	filter(sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
+	filter(tool.overlap.state != 'pre-overlap' & 
+				 	sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
 	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-	dplyr::select(1:5, reportable, main.state, 6:17) %>%
+	dplyr::select(1:5, reportable, 6:9, 17:18, 10:16) %>%
 	mutate(call.in.reference = factor(call.in.reference),
-				 main.state = factor(main.state)) %>%
+				 CNV.state = factor(CNV.state)) %>%
 	arrange(reportable, Chr, Start)
 
 datatable(reportable.calls, caption = 'Critical & reportable calls',
@@ -344,7 +406,7 @@ datatable(reportable.calls, caption = 'Critical & reportable calls',
         dom = 'Bftilp', #TODO -> change this
 		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
 				columnDefs = list(
-		  		list(targets = c(0,10:18), visible = FALSE)
+		  		list(targets = c(0,12:18), visible = FALSE)
 		  	)
 			)
 		) %>%
@@ -354,22 +416,28 @@ datatable(reportable.calls, caption = 'Critical & reportable calls',
 
 ```{r plot.functions}
 
-# TODO
-# Add coloring by weight / GenCall score ?
-# -> wouldn't work for PennCNV?
+# color_map <- c(
+# 	 `1.45` = '#1a9850', #PennCNV gain
+# 	 `1.35` = '#66bd63', #CBS gain
+# 	`-1.35` = '#d73027', #CBS loss
+# 	`-1.45` = '#f46d43'  #PennCNV loss
+# )
 
-color_map <- c(
-	 `1.45` = '#1a9850', #PennCNV gain
-	 `1.35` = '#66bd63', #CBS gain
-	`-1.35` = '#d73027', #PennCNV loss
-	`-1.45` = '#f46d43'  #PennCNV loss
-)
+get_cnv_y <- function(cnv.state, tool) {
+	# Go by tool order (start from 1)
+	out <- match(tool, cnv_tool_order)
+	# For PennCNV LOH & gain/loss may overlap and need separate tracks
+	# TODO: maybe better to set PennCNV.LOH as tool at some point ?
+	out <- ifelse(cnv.state == 'LOH' & tool == 'PennCNV', 0, out)
+	out
+}
 
-make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
+
+make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 	# chr, start, end, samples = row %>% unpack()
 	
 	#minimum 1Mb to each side of the merged call
-	size = max(size, 1e6)
+	size = max(size, min_size)
 	#Max size of Chr covered by probes
 	chr_max = raw_LRR_BAF %>% filter(Chr == chr) %>% pull(Position) %>% max()
 	win_start = max(start -size, 0)
@@ -379,36 +447,85 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 	plot.data <- raw_LRR_BAF %>%
 		filter(Chr == chr & Position >= win_start & Position <= win_end) %>%
 		mutate(SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
-			   
+	
 	calls <- cnv_calls %>%
 		filter(tool.overlap.state != 'post-overlap' & seqnames == chr & end >= win_start & start < win_end) %>%
 		mutate(x_pos = (end + start) / 2, 
-			   y_pos = ifelse(main.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tool, 'PennCNV'), 0.05, -0.05),
-			   y_pos_baf = ifelse(main.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tool, 'PennCNV'), 0.05, 0),
-			   color = color_map[as.character(y_pos)],
-			   color = ifelse(main.state == 'LOH', 'grey50', color),
-			   col_label = paste(tool, main.state),
-				 SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
-			   )
+					 y_pos = map2_int(CNV.state, tool, get_cnv_y),
+					 #TODO could use different greens/reds for different tools? (on top of different y)
+					 color = ifelse(CNV.state == 'loss', '#f46d43', '#1a9850'),
+					 color = ifelse(CNV.state == 'LOH', 'grey50', color),
+					 SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
+			   ) %>%
+		# Need to ensure table contains reference so everything is properly facet_wrapped
+		bind_rows(tibble(SampleName = factor(sample_headers, levels = sample_headers),
+										 x_pos = NA_integer_, y_pos = NA_integer_))
+	
+	gene.data <- gr_genes %>%
+		filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
+		as_tibble() %>%
+		mutate(x_pos = (end + start) / 2,
+					 y_pos = ifelse(strand == '+', 1, 0),
+					 SampleName = paste(sample_headers, collapse = '---')) %>%
+		separate_rows(SampleName, sep = '---') %>%
+		# Need to ensure table contains reference so everything is properly facet_wrapped
+		bind_rows(tibble(SampleName = factor(sample_headers, levels = sample_headers),
+										 x_pos = NA_integer_, y_pos = NA_integer_))
 		
-	#message('..plot data loaded')
-	#write("..plot data loaded", stderr())
+	panel_space_val = unit(5, units = 'mm')
+	
+	cnv_track <- ggplot(calls) +
+		geom_tile(aes(x = x_pos, y = y_pos, width = length, height = .9, fill = color)) + # height = 1,
+		scale_fill_identity() + 
+		geom_text(aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos),
+				  vjust = 0.5, hjust = 0.5, size = 2.5) +
+		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+		scale_y_continuous(expand = expansion()) + 
+		facet_wrap(~SampleName, nrow = 1) + 
+		theme_classic() + 
+		theme(axis.title = element_blank(),
+					axis.line = element_blank(),
+					axis.text = element_blank(),
+					axis.ticks = element_blank(),
+					strip.background = element_blank(),
+					strip.text.x = element_blank(),
+					panel.spacing = panel_space_val) + 
+		labs(y = 'Calls')
+	
+	gene_track <- ggplot(gene.data) +
+		geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9), fill = 'grey30') + # height = 1,
+		# Not readable most of the time
+		# geom_text(aes(label = ID, x = x_pos, y = y_pos),
+		# 		  vjust = 0.5, hjust = 0.5, size = 2.5) +
+		scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
+		scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) + 
+		facet_wrap(~SampleName, nrow = 1) + 
+		theme_void() + 
+		theme(
+			strip.background = element_blank(),
+			strip.text.x = element_blank(),
+			axis.title.y = element_text(angle = 90, vjust = 1),
+			panel.spacing = panel_space_val
+		) + 
+		labs(y = 'Genes')
 	
 	# Make the plots
 	lrr <- 	ggplot(plot.data) + 
 		geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) + 
-		geom_tile(data = calls, aes(x = x_pos, y = y_pos, width = length, height = 0.1, fill = color)) + 
-		scale_fill_identity() + 
 		geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
 				   size = 0.5, shape = 20, show.legend = F) + 
 		scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) + 
-		geom_text(data = calls, aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos),
-				  vjust = 0.5, hjust = 0.5, size = 2.5) +
 		theme_classic() +
-		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), 
+											 limits = c(win_start, win_end), position = 'top') +
 		scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
 		labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, nrow = 1)
+		facet_wrap(~SampleName, nrow = 1) + 
+		theme(
+			strip.background = element_blank(),
+			strip.text.x = element_blank(),
+			panel.spacing = panel_space_val
+		)
 	
 	#message('..lrr done')
 	#write("..lrr done", stderr())
@@ -416,37 +533,49 @@ make_LRR_BAF_plots <- function(chr, start, end, size=1e6) {
 	baf <- 	ggplot(plot.data) + 
 		geom_hline(yintercept = 0, col = 'black', linewidth=0.5) + 
 		geom_hline(yintercept = 1, col = 'black', linewidth=0.5) + 
-		geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = length, height = 0.05, fill = color)) + 
+		#geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = length, height = 0.05, fill = color)) + 
 		scale_fill_identity() + 
 		geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
 				   size = 0.5, shape = 20, show.legend = F) + 
 		scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) + 
-		geom_text(data = calls, aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos_baf), 
-				  vjust = 0.5, hjust = 0.5, size = 2.5) + 
+		# geom_text(data = calls, aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos_baf), 
+		# 		  vjust = 0.5, hjust = 0.5, size = 2.5) + 
 		theme_classic() + 
 		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) + 
 		scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) + 
 		labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, nrow = 1)
+		facet_wrap(~SampleName, nrow = 1) + 
+		theme(
+			strip.background = element_blank(),
+			strip.text.x = element_blank(),
+			panel.spacing = panel_space_val
+		)
 	
-	#message('..baf done')
-	#write("..baf done", stderr())
+	# This still creates and empty plot area - not sure how to get rid of it
+	header <- ggplot(calls) + facet_wrap(~SampleName, nrow=1) + theme_classic() + 
+		theme(axis.line = element_blank(), plot.background = element_blank(),
+					panel.background = element_blank(), panel.border = element_blank())
 	
-	# this crashes somehow?
-	# --> first point where image ggplot image is calculated
-	#gg <- ggarrange(lrr, baf, nrow = 1, common.legend = T, legend = 'bottom')
-	gg <- lrr / baf
+	n_cnvs = length(na.omit(unique(calls$CNV.state)))
+	gg <- header / cnv_track / lrr / baf / cnv_track / gene_track + plot_layout(heights = c(1, n_cnvs, 10, 10, n_cnvs, 2))
 	
 	#message('..ggarange done')
 	#write("..ggarange done", stderr())
 	
-	calls <- calls %>% dplyr::select(SampleName, 1:4, reportable, call.in.reference, CNV.state, tool) %>%
-		dplyr::rename(Chr = seqnames) %>%
-		arrange(SampleName, Chr, start) %>%
+	calls <- calls %>% 
+		filter(!is.na(x_pos)) %>%
+		dplyr::select(SampleName, 1, 3:4, reportable, call.in.reference, CNV.state, tool) %>%
+		#dplyr::rename(Chr = seqnames) %>%
+		arrange(SampleName, start) %>% #Chr
 		rowwise() %>%
 		mutate(across(c(CNV.state, tool), ~paste(., collapse = ',')))
 
-	list('gg' = gg, 'calls' = calls)
+	gene.data <- gene.data %>% 
+		filter(!is.na(x_pos)) %>%
+		dplyr::select(start, end, strand, gene_name, gene_type, gene_id) %>%
+		unique()
+	
+	list('gg' = gg, 'calls' = calls, 'genes' = gene.data)
 	
 }
 
@@ -474,11 +603,11 @@ make_LRR_BAF_plotly <- function() {
 	calls <- cnv_calls %>%
 		filter(tool.overlap.state != 'post-overlap') %>%
 		mutate(x_pos = (end + start) / 2, 
-			   y_pos = ifelse(main.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tools, 'PennCNV'), 0.05, -0.05),
-			   y_pos_baf = ifelse(main.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tools, 'PennCNV'), 0.05, 0),
+			   y_pos = ifelse(CNV.state == 'gain', 1.4, -1.4) + ifelse(str_detect(tools, 'PennCNV'), 0.05, -0.05),
+			   y_pos_baf = ifelse(CNV.state == 'gain', 1.025, -0.075) + ifelse(str_detect(tools, 'PennCNV'), 0.05, 0),
 			   color = color_map[as.character(y_pos)],
-			   color = ifelse(main.state == 'LOH', 'grey50', color),
-			   col_label = paste(tools, main.state),
+			   color = ifelse(CNV.state == 'LOH', 'grey50', color),
+			   col_label = paste(tools, CNV.state),
 			   )
 	# -> some way to use calls 
 	
@@ -530,24 +659,29 @@ make_LRR_BAF_plotly <- function() {
 
 ```{r indiv.plots, results='asis'}
 
-# initialize ggplot somehow?
-dummy <- ggplot(reportable.calls) +
-	geom_bar(aes(y = mean_no_snps))
-
-write("starting plots", stderr())
+# # initialize ggplot somehow?
+# dummy <- ggplot(reportable.calls) +
+# 	geom_bar(aes(y = mean_no_snps))
+# 
+# write("starting plots", stderr())
 
 if (nrow(reportable.calls)>0) {
 	for (i in 1:nrow(reportable.calls)) {
 		
 		row = reportable.calls[i,]
 		
-		cat(paste0('### ', row$main.state, ' (', row$reportable, '): ', row$Chr, ' - ', round(row$Size/1e6, 1), 'Mb\n\n'))
+		state.str = ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
+											 paste0('(', str_remove(row$reportable, '(yes|no), '), ')'),
+											 '')
+		cat(paste0('### ', row$CNV.state, ' ', state.str, ': ', row$Chr, ' - ', round(row$Size/1e6, 1), 'Mb\n\n'))
 		
 		res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size)
 		subchunkify(res$gg, paste0('plot.reportable.call.',i), 5, 10)
 		
-		subchunkify(res$call, paste0('table.reportable.call.',i))
-		message(paste("plot", i , "done"))
+		subchunkify(res$calls, paste0('table.reportable.calls.',i))
+		
+		subchunkify(res$genes, paste0('table.reportable.genes.',i))
+		#message(paste("plot", i , "done"))
 		
 		cat('\n\n')
 		
@@ -560,20 +694,20 @@ if (nrow(reportable.calls)>0) {
 
 ## Non Reportable calls {.tabset}
 
-Second (less strict filter set for CNV calls)
-but not everything! 
-i.e. numsnp > 5 & length > 100 & (numsnp > 10 | length > 2000)
+All calls after pre-filtering
 
 
 ```{r non.reportable, results='asis', cache=FALSE}
 
 non.reportable.calls <- cnv_calls %>% 
-	filter(sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
+	filter(tool.overlap.state != 'pre-overlap' & 
+				 sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
 	dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-	dplyr::select(1:5, reportable, main.state, 6:17) %>%
+	dplyr::select(1:5, reportable, 6:9, 17:18, 10:16) %>%
 	mutate(call.in.reference = factor(call.in.reference),
-				 main.state = factor(main.state)) %>%
+				 CNV.state = factor(CNV.state)) %>%
 	arrange(reportable, Chr, Start)
+
 
 datatable(non.reportable.calls, caption = 'Non reportable calls',
 		  rownames = F,
@@ -583,26 +717,31 @@ datatable(non.reportable.calls, caption = 'Non reportable calls',
 		  	scrollY = 300, scrollCollapse = TRUE,
 	      scrollX =  TRUE,
 	      scroller = TRUE,
-	      dom = 'Bftilp', #TODO -> change this
+	      dom = 'Bftilp',
 		  	buttons = c('colvis', 'copy', 'csv', 'excel'),
 				columnDefs = list(
-		  		list(targets = c(0,10:18), visible = FALSE)
+		  		list(targets = c(0,12:18), visible = FALSE)
 		  	)
 			)
 		) %>%
 	formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
+
 
 if (nrow(non.reportable.calls)>0) {
 	for (i in 1:nrow(non.reportable.calls)) {
 		
 		row = non.reportable.calls[i,]
 		
-		cat(paste0('### ', row$Chr, ' - ', round(row$size/1e3, 1), 'kb: ', row$main.state, ' (', row$reportable, ')\n\n'))
+		state.str = ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
+									 paste0(' (', str_remove(row$reportable, '(yes|no), '), ')'),
+									 '')
+		cat(paste0('### ', row$Chr, ' - ', round(row$Size/1e3, 1), 'kb: ', row$CNV.state, state.str, '\n\n'))
 	
-		res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size)
+		res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size, 5e5)
 		subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
 		
-		subchunkify(res$call, paste0('table.nonreportable.call.',i))
+		subchunkify(res$calls, paste0('table.nonreportable.calls.',i))
+		subchunkify(res$genes, paste0('table.nonreportable.genes.',i))
 		
 		cat('\n\n')
 		
@@ -616,11 +755,11 @@ if (nrow(non.reportable.calls)>0) {
 ```
 
 
-## Virtual Karyotype {.tabset}
+# Sample comparison  {.tabset}
 
-Virtual Karyotype for each sample.
+## Virtual Karyotype
 
-Direct comparison to the first reference sample () is shown side by side (left: sample; right: reference).
+If a reference sample exists, a side by side comparison is also generated (left: sample; right: reference).
 
 ```{r rideogram, results='asis'}
 # TODO: need to get the proper data from somewhere else, fasta maybe?
@@ -630,14 +769,19 @@ Direct comparison to the first reference sample () is shown side by side (left: 
 data(human_karyotype, package="RIdeogram")
 
 sample.calls <- cnv_calls %>%
-	dplyr::select(seqnames, start, end, main.state, sample_id) %>%
+	dplyr::select(seqnames, start, end, CNV.state, sample_id) %>%
 	dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
-	mutate(Value = ifelse(main.state == 'LOH', 0, 1),
-		   Value = ifelse(main.state == 'loss', -1, Value),
+	mutate(Value = ifelse(CNV.state == 'LOH', 0, 1),
+		   Value = ifelse(CNV.state == 'loss', -1, Value),
 		   Chr = str_remove(Chr, 'chr'))
 overlay.tb <- sample.calls %>%
 	filter(sample_id == !!sample_id) %>%
 	dplyr::select(Chr, Start, End, Value)
+
+#This should not be the case unless there are 0 calls that generated images
+if (!dir.exists(file.path(workdir, 'report_images'))) {
+	dir.create(file.path(workdir, 'report_images'))
+}
 
 #TODO: output needs to be checked
 svg_file1 = tempfile(fileext = '.svg')
@@ -668,21 +812,157 @@ if (!is.na(ref_id)) {
 
 
 
+## CNV level /Circo plots
 
-# Sample comparison
-
-## CNV level
-
-- side by side plot over all chromosomes here ?
-
-## SNP level
+TBD / TODO
 
 
-- dendrogram
+```{r snp.dendrogram, results='asis', eval = do.SNP.clustering}
 
+cat('## SNP dendrogram\n\n')
 
-# R sessioninfo
+#Build annotation table
+color_by = config_val('dendrogram.color.by', 'SNP_comparison', 'SampleGroup') %>% check_cols_exits()
+shape_by = config_val('dendrogram.shape.by', 'SNP_comparison', 'Chip_Name') %>% check_cols_exits()
+dend.format.df <- sampletable %>%
+	filter(Sample_ID %in% snp.ids)
 
-```{r sessioninfo}
-sessionInfo()
+if (length(color_by) == 1) {
+	
+	if (nrow(unique(dend.format.df[, color_by])) > 10) {
+		warn_str <- str_glue('More than 10 colors are needed to use "{color_by}" for coloring. Consider using fewer unqiue entries.')
+		cat(warn_str, '\n\n')
+		warning(warn_str)
+	}
+	
+	dend.format.df <- dend.format.df %>%
+		mutate(across(one_of(color_by), ~ factor(., levels = sort(unique(.))))	) %>%
+		arrange(!!sym(color_by)) %>%
+		mutate(col = viridis_pal(option='H')(length(unique(!!sym(color_by))))[match(!!sym(color_by), unique(!!sym(color_by)))],
+					 col = ifelse(is.na(!!sym(color_by)), 'grey90', col)
+					 )
+	
+	col_map = dend.format.df$col %>% unique()
+	names(col_map) <- levels(pull(dend.format.df, !!sym(color_by)))
+
+	
+} else {
+	warning('No matching column to use for coloring!')
+	cat('No matching column to use for coloring!\n')
+	
+	dend.format.df <- dend.format.df %>%
+		mutate(col = 'black',
+					 `_dummy_color` = 'bar')
+	
+	col_map = c('bar' = 'black')
+	color_by = '_dummy_color'
+}
+
+if (length(shape_by) == 1) {
+	
+	dend.format.df <- dend.format.df %>%
+		mutate(across(one_of(shape_by), ~ factor(., levels = sort(unique(.), na.last = T))),
+					 #across(one_of(shape_by), ~ ifelse(is.na(.), 'Unknown', .))
+					 ) %>%
+		arrange(!!sym(shape_by)) 
+
+	if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 5) {
+		use.shapes = 15:18
+		na.shape = 1
+	} else if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 15) {
+		use.shapes = 0:14
+		na.shape = 16
+	} else {
+		others = dend.format.df[pull(dend.format.df, !!sym(shape_by)) %>% as.integer() > 15, shape_by] %>% na.omit() %>% unlist()
+		warn_str = str_glue('Only 15 shapes are available, but "{shape_by}" would need {length(unique(pull(dend.format.df, !!sym(shape_by))))}. ',
+												'Consider using fewer unqiue entries. These values are summarised as "Other": {paste(others, collapse = ", ")}')
+		cat(warn_str, '\n\n')
+		warning(warn_str)
+		
+		use.shapes = 0:14
+		na.shape = 16
+		
+		dend.format.df <- dend.format.df %>%
+			mutate(across(one_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
+						 across(one_of(shape_by), ~ factor(., levels = unique(.))) )
+	}
+	
+	dend.format.df <- dend.format.df %>% 
+		mutate(shape = use.shapes[match(!!sym(shape_by), unique(!!sym(shape_by)))],
+					 shape = ifelse(is.na(!!sym(shape_by)), na.shape, shape)
+					 )
+
+	shape_map = dend.format.df$shape %>% unique()
+	names(shape_map) <- levels(pull(dend.format.df, !!sym(shape_by)))
+
+	
+} else {
+	warning('No matching column to use for shapes!')
+	cat('No matching column to use for shapes!\n\n')
+	
+	dend.format.df <- dend.format.df %>%
+		mutate(shape = 16, `_dummy_shape` = 'foo')
+	
+	shape_map = c('foo' = 16)
+	shape_by = '_dummy_shape'
+	
+}
+
+# Build dendrogram & sort annotation table by it
+hc <- hclust(SNP.genotype.distances)
+dd <- as.dendrogram(hc) 
+dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$SampleName),] 
+
+dend <- dd %>%
+  set('labels_col', dend.format.df$col) %>%
+  set('leaves_col', dend.format.df$col) %>%
+  set('leaves_pch', dend.format.df$shape) 
+
+gg1 <- dend %>%
+  raise.dendrogram (max(SNP.genotype.distances)/50) %>% 
+  set('labels_cex', .8) %>%
+  set('leaves_cex', 2) %>%
+  set('branches_lwd', .5) %>%
+  as.ggdend() %>%
+  ggplot(offset_labels = -max(SNP.genotype.distances)/25,
+  			 theme = theme_classic()) + 
+	scale_y_continuous(name = 'SNP distance (manhattan method)',
+										 breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
+										 labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','), 
+										 limits = c(-max(SNP.genotype.distances)/3, NA),
+										 expand = expansion()) + 
+	scale_x_continuous(limits = c(0, NA), expand = expansion(add = c(0, .5))) + 
+	geom_line(data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
+						aes(x=x, y=y)) +
+  theme(legend.position = "bottom",
+  			axis.text.x = element_blank(),
+  			axis.title.x = element_blank(),
+  			axis.line.x = element_blank(),
+  			axis.ticks.x = element_blank(),
+  			axis.line.y = element_blank(),
+  			axis.title.y = element_text(angle = 90, hjust = .75)
+  			)
+
+# make legend
+gg2 <- dend.format.df %>%
+  #arrange(SampleGroup) %>%
+  ggplot(aes(x = SampleName, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) + 
+  geom_point() + 
+  scale_color_manual(values = col_map, guide = ifelse(color_by == '_dummy_color', list('none'),
+  										list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] )  + 
+  scale_shape_manual(values = shape_map, guide = ifelse(shape_by == '_dummy_shape', list('none'),
+  							      list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] ) +
+  theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
+
+gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(4, 1))
+
+subchunkify(gg, 'snp.dendrogram', 7.5, 10)
+
 ```
+
+
+
+
+
+
+

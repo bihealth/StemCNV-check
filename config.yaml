@@ -4,9 +4,8 @@ static_data:
     egt_cluster_file: static-data/GSAMD-24v3-0-EA_20034606_A1.egt
     genome_fasta_file: static-data/GRCh38.p13.genome.chr_scaff.fa
     genome_gtf_file: static-data/gencode.v42.basic.annotation.gtf
-    #TODO: rename these accoridng to setup scripts
-    pfb_file: static-data/pfb_from_egtAF.pfb
-    GCmodel_file: static-data/gcmodel_hg38PennCNV_pfbEGTaf.tsv
+    pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb
+    GCmodel_file: static-data/PennCNV-GCmodel-GRCh38.gcmodel
     
 
 raw_data_folder: RAW_DATA
@@ -59,6 +58,21 @@ settings:
       loss_gain_ratio: [2, 4]
       sizable_CNV: [5, 10]
       sizable_LOH: [5, 10]
+      SNP_distance_reference: [1, 5]
+      # # This is hard to set thresholds for, since currentlöy all types of genes are used
+      # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
+      # overlapping_genes: []
+    SNP_comparison:
+      include_dendrogram: TRUE
+      ignore_filters: FALSE
+      #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
+      # enries with __[column] will use all other samples with the same value in [column]
+      # entries with _[column] expect a column that contains additional (, separated) sample_ids
+      extra_samples: ['__Chip_Name', '__SampleGroup']
+      # You can also use additional metadata columns from the sample table
+      dendrogram.color.by: 'SampleGroup'
+      dendrogram.shape.by: 'Chip_Name'
+      
 
     
 tools:

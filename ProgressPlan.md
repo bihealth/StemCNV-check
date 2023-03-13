@@ -6,7 +6,6 @@
 	- fix all current issues
 	- decide on parts of whishlist to incorporate:
 		- moasacism? (if possible without to much effort)
-		- SNP distance between samples
 	- show that it works // test expectations:
 		- comparison with WGS calls?
 		- comparison with expert knowledge
@@ -33,30 +32,16 @@
 
 ## Known Issues / Bugs:
 
-- tables for individual calls miss reportable & reference annotation
-	-> annotation needs to be done also for the 'pre-overlap' calls which are plotted OR they need inherit annotation somehow (better, but harder)
-- There may be some calls without probes? / position mismatches?
-- column selection in report tables & Chr should be factor
-
-- multi-overlaps lead to probelms
-	-> need better merging &/ tool-overlap
-
+- None
 
 ## Current state / TODO
 
-- preprocessing & report need gene track overlay
-	- use a bed file? where to get it from?
-- SNP clustering step (only run if enabled in config?)
-	- add SNP distance to reference into QC overview table
-	
 ? unclear prio -> maybe needed for good output ?
 - merge by probe distance
-- improve tool overlap (need at least tools for testing?)
 - ref (& tool?) overlap with min 80% (reciprocal?) overlap
 - define hotspots / regions of interest
 - mosaicism (R-GADA / others)
 - individual tool stats
-- hotspot regions / regions of interest
 - circO plots
 - installation procedure: as much as possible should be in bioconda
 
