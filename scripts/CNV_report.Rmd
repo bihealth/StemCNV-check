@@ -81,10 +81,10 @@ config_val <- function(value, section, default=NULL, category = 'report') {
 }
 
 #Reportable thresholds
-reportable.loh = config_val('min.snp', 'thresholds', 2.5e6)
-reportable.cnv = config_val('min.snp', 'thresholds', 4e5)
-fail.loh = config_val('min.snp', 'thresholds', 5e6)
-fail.cnv = config_val('min.snp', 'thresholds', 2e6)
+reportable.loh = config_val('reportable.loh', 'thresholds', 2.5e6)
+reportable.cnv = config_val('reportable.cnv', 'thresholds', 4e5)
+fail.loh = config_val('fail.loh', 'thresholds', 5e6)
+fail.cnv = config_val('fail.cnv', 'thresholds', 2e6)
 
 #Warning tresholds
 callrate_warnings = config_val('callrate', 'QCwarnings', c(0.99, 0.99))
