@@ -6,41 +6,11 @@ static_data:
     genome_gtf_file: static-data/gencode.v42.basic.annotation.gtf
     pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb
     GCmodel_file: static-data/PennCNV-GCmodel-GRCh38.gcmodel
-    
 
 raw_data_folder: RAW_DATA
 
 settings:
-  filter:
-    use-filterset: 'full' # basic|highGT|highGC|full [=highGT+GC]
-  CBS:
-    SDundo: 1
-    # LRR threshold for identifying CBS segments as gain/loss 
-    LRR.th.value: 0.2
-    # adjustment of threshold for X chromosome (female: down, male: up)
-    LRR.th.value.Xadj: 0.2 #TODO: find a better solution? what about Y ?
-  postprocessing:
-    ## Prefiltering is done as follows:
-    # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density & 
-    #  ( [snps] >= min.snp.or.length | [length] > min.length.or.snp )
-    ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merge
-    # either before or after filtering (merge.before.filter)
-    min.snp: 5
-    min.length: 100
-    min.snp.density: 10 #snps per Mb 
-    min.snp.or.length: 10
-    min.length.or.snp: 2000
-    merge.distance: 500
-    merge.before.filter: TRUE
-    ## Overlapping of CNV calls from different tools
-    # Call state will be assigned be tool priority if necessary.
-    # Note: all tools used *must* be given here
-    tool.order: ['PennCNV', 'CBS']
-    tool.overlap.min.perc: 50
-    ## Reference comparison
-    min.cnv.coverage.by.ref: 80
-    
-  report: 
+  report:
     thresholds:
       # Include these sizes in the main tables of the report
       reportable.loh: 2.5e6
@@ -48,8 +18,6 @@ settings:
       # Classify samples as failed from these sizes on
       fail.loh: 5e6
       fail.cnv: 2e6
-      #enrlage reference CNVs by this factor to check overlap with new ones
-      ref.factor: 2
     # Thresholds for colored table / rec action [orange, red]
     QCwarnings:
       callrate: [0.99, 0.99]

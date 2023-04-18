@@ -7,18 +7,21 @@ dependencies:
   ## General ##
   - python >= 3.9 #sensible default
   - snakemake 
-  - r-base >=4.0 #sensible default
+  - r-base >=4.1 #sensible default; maybe pin this?
   - r-tidyverse
   - r-optparse
   - r-knitr
   - r-rmarkdown
   - r-yaml
   - r-sessioninfo
+  - r-devtools 
   ## Algorithms ##
   # CBS
   - bioconductor-dnacopy = 1.68.0
   ## Postprocessing ##
   - bioconductor-plyranges = 1.14.0
+  ## R-GADA dependency
+  - bioconductor-gviz
   #-bioconductor-genomicranges
   ## Report ##
   - r-ggpubr

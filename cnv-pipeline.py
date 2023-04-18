@@ -4,8 +4,8 @@
 """
 
 import argparse
-#import datetime
-#import logging
+# import datetime
+# import logging
 import os
 import subprocess
 import sys
@@ -14,7 +14,6 @@ import sys
 # from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
 from scripts.py_helpers import read_sample_table
-
 
 SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -93,7 +92,7 @@ def make_penncnv_files(args):
 	ret = subprocess.call(argv)				
 	
 	if ret:
-		raise Exception('Generation of GCmodel file with PennCNV')
+		raise Exception('Generation of GCmodel file with PennCNV failed')
 	else:
 		print('Created GCmodel file: {}'.format(args.gc_out))
 
@@ -103,7 +102,7 @@ def make_penncnv_files(args):
 def run_snakemake(args):
 	
 	argv = [
-		"-s", os.path.join(SNAKEDIR, "cnv-snakefile"),
+		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
 		"-p", "-r",
 		#"--keep-incomplete",
 		"--rerun-incomplete"
@@ -141,27 +140,27 @@ def run_snakemake(args):
 def setup_argparse():
 	parser = argparse.ArgumentParser(description="run CNV pipeline and helpers")
 
-	group_basic = parser.add_argument_group("General", "Genera pipeline arguments")
+	group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
-	group_basic.add_argument('--action', '-a', default= 'run', choices = ('run', 'make-penncnv-files'), help = 'Action to perform. Default: %(default)s')
+	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
 	
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
-	group_penncnv.add_argument('--genome', default = 'GRCh38', choices = ('GRCh37', 'GRCh38'), 
-														 help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
-	group_penncnv.add_argument('--pfb-out', default = 'static-data/PennCNV-PFB_from_clusterfile-stats.pfb',
-														 help="Filename for generated PFB file. Default: %(default)s")
-	group_penncnv.add_argument('--gc-out', default = 'static-data/PennCNV-GCmodel-GRCh38.gcmodel',
-														 help="Filename for generated GCmodel file. Default: %(default)s")
+	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
+							   help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
+	group_penncnv.add_argument('--pfb-out', default='static-data/PennCNV-PFB_from_clusterfile-stats.pfb',
+							   help="Filename for generated PFB file. Default: %(default)s")
+	group_penncnv.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-GRCh38.gcmodel',
+							   help="Filename for generated GCmodel file. Default: %(default)s")
 														 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
 	
 	group_snake.add_argument('--cluster', '-c', action='store_true', help="Use slurm submission to run on cluster")
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
 	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
-	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER, 
-														help="Options to pass to snakemake. Use seprate with '--'")
+	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
+							 help="Options to pass to snakemake. Use seperate with '--'")
 	
 	return parser
 	
@@ -177,8 +176,8 @@ if __name__ == '__main__':
 	if args.action == 'run':
 		check_sample_table(args.sample_table)
 		ret = run_snakemake(args)
-	elif args.action == 'setup':
-		ret = run_config_setup(args)
+	elif args.action == 'setup-files':
+		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':
 		ret = make_penncnv_files(args)
 

@@ -57,12 +57,10 @@ ln -s $CONDA_PREFIX/pipeline/PennCNV-1.0.5/detect_cnv.pl PennCNV_detect
 ln -s $CONDA_PREFIX/pipeline/PennCNV-1.0.5/kext
 cd $start_path
 
-
-# # Another segmentation algorithm - specifically for array data
-# # R-package is too old / not found by conda, so use github
-# Rscript -e 'devtools::install_github("isglobal-brge/R-GADA")'
-# Rscript -e 'devtools::install_github("isglobal-brge/R-MAD")'
-# + add Gviz
+# Another segmentation algorithm - specifically for array data
+# R-package is too old / not found by conda, so use github
+Rscript -e 'devtools::install_github("isglobal-brge/R-GADA")'
+Rscript -e 'devtools::install_github("isglobal-brge/R-MAD")'
 
 ## Set Conda env vars
 cd $CONDA_PREFIX

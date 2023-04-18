@@ -12,9 +12,11 @@ parser <- add_option(parser, c("-p", "--penncnv"), default = F,
 										 action="store_true", help="Use PennCNV calls")
 parser <- add_option(parser, c("-c", "--cbs"), default = F,
 										 action="store_true", help="Use CBS calls")
+parser <- add_option(parser, c("-g", "--gada"), default = F,
+										 action="store_true", help="Use GADA calls")
 
 args <- parse_args(parser, positional_arguments = 4)
-#args <- parse_args(parser, positional_arguments = 4, c("-p", "-c",  "data", "206764550040_R06C01", "config.yaml", "sample_table.txt"))
+# args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "-g", "data", "206210670080_R09C02", "/tmp/tmp1mgp988l.yaml", "sample_table_example.txt"))
 
 ##################
 # Variable setup #
@@ -42,8 +44,6 @@ if (!is.na(ref_name)){
 }
 
 
-#TODO: might be easier to use a patched temp config file?
-# Report only reads the actual config file, not the default one, so we need default values here as well
 config_val <- function(value, default=NULL, section = 'postprocessing') {
 	val=config$settings[[section]][[value]]
 	if (is.null(val)) {
@@ -54,24 +54,24 @@ config_val <- function(value, default=NULL, section = 'postprocessing') {
 }
 
 # CBS gain/loss
-CBS.LRR.th.value <- config_val('LRR.th.value', 0.2, 'CBS')
-CBS.LRR.th.value.Xadj <- config_val('LRR.th.value.Xadj', 0.2, 'CBS')
+CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
+CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
 # Call merging & pre-filtering
-min.snp					<- config_val('min.snp', 5)
-min.length			<- config_val('min.length', 100)
-min.snp.density <- config_val('min.snp.density', 10) #in snps per Mb
-min.snp.or.length	<- config_val('min.snp.or.length', 10) # no.snps needed if length < min.length
-min.length.or.snp	<- config_val('min.length.or.snp', 2000) #  length needed if no.snps < min.snp
-merge.distance  <- config_val('merge.distance', 500) # max. distance for merging of small nearby calls
-merge.before.filter  <- config_val('merge.before.filter', TRUE) # order of merging and filtering
+min.snp				<- config$settings$postprocessing$min.snp
+min.length			<- config$settings$postprocessing$min.length
+min.snp.density 	<- config$settings$postprocessing$min.snp.density
+min.snp.or.length	<- config$settings$postprocessing$min.snp.or.length
+min.length.or.snp	<- config$settings$postprocessing$min.length.or.snp
+merge.distance  	<- config$settings$postprocessing$merge.distance
+merge.before.filter <- config$settings$postprocessing$merge.before.filter
 # Tool overlapping
-tool.order <- config_val('tool.order', c('PennCNV', 'CBS'))
-tool.overlap.min.perc <- config_val('tool.overlap.min.perc', 50)
+tool.order <- config$settings$CNV.calling.tools
+tool.overlap.min.perc <- config$settings$postprocessing$tool.overlap.min.perc
 # Compare to reference
-min.cnv.coverage.by.ref <- config_val('min.cnv.coverage.by.ref', 80)
+min.cnv.coverage.by.ref <- config$settings$postprocessing$min.cnv.coverage.by.ref
 
-valid_name=config$wildcard_constraints$sample_id
-valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
+valid_name <- config$wildcard_constraints$sample_id
+# valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
 if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
 
 use_chr <- paste0('chr', c(1:22, 'X', 'Y'))
@@ -111,6 +111,7 @@ read_CBS <- function(filename) {
 	tb <- read_tsv(filename, show_col_types = F) %>%
 		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
 									numsnp = num.mark, sample_id = ID) %>%
+		# TODO -> most of this should probably be moved into the CBS script
 		mutate(
 			sample_id = str_remove(sample_id, '^X'),
 			length = end - start, # TODO: open / half open / +- 1 ??
@@ -136,6 +137,17 @@ read_CBS <- function(filename) {
 	}
 	tb
 }
+
+## GADA / MAD
+
+read_GADA <- function(filename) {
+	read_tsv(filename, show_col_types = F) %>%
+		mutate(conf = NA,
+			   snp.density = numsnp / length * 1e6,
+			   copynumber = ifelse(!CNV.state %in% c('gain', 'loss'), 2, 3),
+			   copynumber = ifelse(CNV.state == 'loss', 1, copynumber),)
+}
+
 
 ## Merge
 
@@ -175,7 +187,7 @@ prefilter_calls <- function(df.or.GR) {
 	df.or.GR
 }
 
-#TODO: move this to another script?
+#TODO: move this + input function defs to another script?
 # Harmonize output
 expected_final_tb = tibble(
 	sample_id = character(),
@@ -198,7 +210,7 @@ expected_final_tb = tibble(
 	n_genes = integer(),
 	overlapping.genes = character()
 	)
-list_cols = colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
+list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
 
 ensure_list_cols <- function(tb.or.gr){ 
 	
@@ -277,14 +289,14 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 	gr <- pair_overlaps(gr_in, gr_ref) 
 	
 	if (nrow(gr) > 0) {
-		gr <- gr %>% 
+		gr <- gr %>%
 			as_tibble() %>% rowwise() %>%
 			mutate(width.combined = max(granges.x.end, granges.y.end) - min(granges.x.start, granges.y.start) + 1,
-						 width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
-						 coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
-						 cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
-						 ref.tool = list(tool.y),
-						 ref.state = CNV.state.y
+					 width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
+					 coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
+					 cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
+					 ref.tool = list(tool.y),
+					 ref.state = CNV.state.y
 			) %>%
 			dplyr::select(-contains('.y'), -contains('width')) %>%
 			filter(coverage.by.ref >= min.cnv.coverage.by.ref & 
@@ -299,16 +311,14 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 			makeGRangesFromDataFrame(keep.extra.columns = T)
 		
 		#Rebuild result if matching ref calls were found
-		gr_out <- bind_ranges(
-			# Calls with matching reference
-			gr,
-			# Calls not overlapping _any_ reference
-			filter_by_non_overlaps(
-				overlapped_tools_sample,
-				gr) %>%
-				mutate(call.in.reference = FALSE),
-			# Call overlapping a reference, but without any matching CNV.state
-			group_by_overlaps(overlapped_tools_sample, gr) %>% 
+
+		non.ovs <- filter_by_non_overlaps(gr_ref, gr)
+		# mutate fails on empty GRanges object
+		if (length(non.ovs) > 0) { non.ovs <- non.ovs %>% mutate(call.in.reference = FALSE) }
+
+		ovs.noStateMatch <- group_by_overlaps(gr_ref, gr)
+		if (length(ovs.noStateMatch) > 0) {
+			ovs.noStateMatch <- ovs.noStateMatch %>%
 				group_by(query, CNV.state.query) %>%
 				mutate(any_match = any(CNV.state.query %in% CNV.state.subject)) %>%
 				filter(!any_match) %>%
@@ -319,6 +329,15 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 							 coverage.by.ref = list(NA),
 							 ref.tool = list(NA)) %>%
 				makeGRangesFromDataFrame(keep.extra.columns = T)
+		}
+
+		gr_out <- bind_ranges(
+			# Calls with matching reference
+			gr,
+			# Calls not overlapping _any_ reference
+			non.ovs,
+			# Call overlapping a reference, but without any matching CNV.state
+			ovs.noStateMatch
 		) 
 		
 	} else {
@@ -372,6 +391,12 @@ if (args$options$cbs) {
 		lapply(read_CBS) %>%
 		bind_rows()
 }
+if (args$options$gada) {
+	results[['GADA']] <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.', use.filter, '.tsv')) %>%
+		lapply(read_GADA) %>%
+		bind_rows()
+}
+
 
 if (merge.before.filter) {
 	results <- lapply(results, merge_calls) %>%
@@ -412,6 +437,14 @@ if (!is.na(ref_id)) {
 		finalise_tb()	
 }
 		
+# outname <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.rds'))
+# saveRDS(cnvs, outname)
+
 #TODO: the list cols make saving a tsv cumbersome, though a tsv might be useful for export?
-outname <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.rds'))
-saveRDS(cnvs, outname)
+outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv'))
+cnvs.tb <- cnvs %>%
+	rowwise() %>%
+	mutate(across(one_of(list_cols), ~paste(., collapse=';')))
+write_tsv(cnvs.tb, outname.tsv)
+
+
