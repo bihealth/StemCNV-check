@@ -1,25 +1,35 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tempfile
+import yaml
 from scripts.py_helpers import read_sample_table
 # Configuration ================================================================
 
-#ONLY load if somehow manually started
+
 if not config:
+  # This should not happen unless the snakefile is invoked directly
+  # try to load a baseline config file
   CONFIGFILE = "config.yaml"
   configfile: CONFIGFILE
+  removetempconfig = False
 else:
-  CONFIGFILE = config['configfile']
+  # Save config to tempfile & use that instead, this ensure the combined default + user configs are used
+  # CONFIGFILE = config['configfile']
+  f, CONFIGFILE = tempfile.mkstemp(suffix = '.yaml', text=True)
+  os.close(f)
+  removetempconfig = True
+  with open(CONFIGFILE, 'w') as yamlout:
+    yaml.dump(config, yamlout)
+
+
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
 SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.getcwd() #Defined by wrapper 
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper 
 IDAT_INPUT = config['raw_data_folder']
 
-#TODO enforcin chip_no & pos could be problematic for people?
-# -> think of a more flexible way to define files ?
-#TODO load this from config
-wildcard_constraints: 
+wildcard_constraints:
   chr=config['wildcard_constraints']['chr'],
   filter=config['wildcard_constraints']['filter'],
   sample_id=config['wildcard_constraints']['sample_id'],
@@ -28,6 +38,7 @@ wildcard_constraints:
 #Never submit these to cluster
 localrules:
   relink_gencall,
+  all
 
 sample_data = read_sample_table(SAMPLETABLE)
 #print(sample_data)
@@ -37,7 +48,7 @@ sample_data = read_sample_table(SAMPLETABLE)
 # Rules ========================================================================
 
 rule all:
-  input: 
+  input:
     # Final / Report
     [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CNV-report.html") for
       _, sample_id, _, _ in sample_data.values()] 
@@ -56,6 +67,9 @@ rule all:
     #   chip_no, chip_pos, _, _ in sample_data.values()] +
     # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
     #   chip_no, chip_pos, _, _ in sample_data.values()]
+  run:
+    if removetempconfig:
+      os.remove(CONFIGFILE)
     
 
 # TODO: make he gtc files intermediate? tehy are only needed once really
@@ -81,7 +95,7 @@ rule run_gencall:
   log:
     err=os.path.join(BASEPATH, "logs", "GenCall", "{chip_name}", "error.log"),
     out=os.path.join(BASEPATH, "logs", "GenCall", "{chip_name}", "out.log")
-  shell: 
+  shell:
     #TODO: check how imporant definition of the ICU version & LANG is here
     # CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
     'LANG="en_US.UTF-8" iaap-cli gencall {input.bpm} {input.egt} {params.outpath} --idat-folder {input.idat_path} --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
@@ -89,7 +103,7 @@ rule run_gencall:
 
 
 def get_gtc_path(wildcards):
-  "Get the chip name from  a sample_id"
+  """Get the chip name from  a sample_id"""
   chip_name = [n for _,(n, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
   return  os.path.join(BASEPATH, 'data', 'gtc', chip_name)
 
@@ -236,9 +250,23 @@ rule run_CBS:
   shell:
     "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} > {log.out} 2> {log.err}"
 
-# rule run_GADA:
-#   another CNV algorithm; also mosaicism?
-# 
+rule run_GADA:
+  input:
+    tsv = os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
+  output:
+    tsv = os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.GADA.{filter}.tsv")
+  threads: 1
+  params:
+    alpha = config['settings']['GADA']['aAlpha'],
+    gadaT = config['settings']['GADA']['gada.T'],
+    madT = config['settings']['GADA']['mad.T'],
+    minLen = config['settings']['GADA']['MinSegLen']
+  log:
+    err=os.path.join(BASEPATH, "logs", "GADA", "{sample_id}", "{filter}.err.log"),
+    out=os.path.join(BASEPATH, "logs", "GADA", "{sample_id}", "{filter}.out.log")
+  shell:
+    "Rscript {SNAKEDIR}/scripts/run_GADA.R -a {params.alpha} -g {params.gadaT} -m {params.madT} -l {params.minLen} {input.tsv} {output.tsv} > {log.out} 2> {log.err}"
+
 # rule process_CNV_calls:
 #   -> currently done in report; move out ?
 
@@ -263,12 +291,15 @@ def get_ref_id(wildcards, get_sex=False):
 def get_preproces_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   filter = config['settings']['filter']['use-filterset']
-  files = [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv"),
-           os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv"),]
-  files = files + [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv")] if sex[0].lower() == 'm' else files
+  tools = config['settings']['CNV.calling.tools']
+  files = []
+  files += [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv"),
+            os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv")] if 'PennCNV' in tools else []
+  files += [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
+  files += [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv")] if 'CBS' in tools else []
+  files += [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv")] if 'GADA' in tools else []
 
-  files = files + [os.path.join(BASEPATH, "data", f"{ref_id}", f"{ref_id}.combined-cnv-calls.{filter}.rds")] if ref_id else files
+  files += [os.path.join(BASEPATH, "data", f"{ref_id}", f"{ref_id}.combined-cnv-calls.{filter}.tsv")] if ref_id else []
 
   return files
 
@@ -276,22 +307,26 @@ rule process_CNV_calls:
   input:
     get_preproces_input
   output:
-    os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.rds")
+    os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.tsv")
   resources:
     time=config['tools']['CNV.process']['runtime'],
     mem_mb=config['tools']['CNV.process']['memory'],
     partition='medium'
+  params:
+    gada = '-g' if 'GADA' in config['settings']['CNV.calling.tools'] else '',
+    penncnv = '-p' if 'PennCNV' in config['settings']['CNV.calling.tools'] else '',
+    cbs = '-c' if 'CBS' in config['settings']['CNV.calling.tools'] else ''
   log:
     err=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(BASEPATH, "logs", "CNV_process", "{sample_id}", "{filter}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R -p -c {BASEPATH}/data {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.gada} {params.cbs} {BASEPATH}/data {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 
 def get_report_sample_input(wildcards):
   sample_id, ref_id = get_ref_id(wildcards)
   return expand(
-          [os.path.join(BASEPATH, "data", "{ids}", "{ids}.combined-cnv-calls.{filter}.rds"),
+          [os.path.join(BASEPATH, "data", "{ids}", "{ids}.combined-cnv-calls.{filter}.tsv"),
            os.path.join(BASEPATH, "data", "{ids}", "{ids}.stats.txt"),
            os.path.join(BASEPATH, "data", "{ids}", "{ids}.processed-data.tsv"),],
            ids = (sample_id, ref_id) if ref_id else (sample_id,),

@@ -11,15 +11,18 @@ parser <- OptionParser(
 
 args <- parse_args(parser, positional_arguments = 5)
 
-sample_id   <- args$args[1]
-basepath    <- args$args[2]
-snakedir    <- args$args[3]
-sampletable <- args$args[4]
-configfile  <- args$args[5]
 
-reportfile  <- file.path(snakedir, "scripts", "CNV_report.Rmd")
-workdir     <- file.path(basepath, 'data', sample_id)
-outfile     <- paste0(sample_id, ".CNV-report.html")
+#TODO make all paths absolute
+
+sample_id   <- args$args[1]
+basepath    <- args$args[2] %>% normalizePath
+snakedir    <- args$args[3] %>% normalizePath
+sampletable <- args$args[4] %>% normalizePath
+configfile  <- args$args[5] %>% normalizePath
+
+reportfile  <- file.path(snakedir, "scripts", "CNV_report.Rmd") %>% normalizePath
+workdir     <- file.path(basepath, 'data', sample_id) %>% normalizePath
+outfile     <- paste0(sample_id, ".CNV-report.html") #%>% normalizePath
 
 # clear previously generated images
 if (dir.exists(file.path(workdir, 'report_images'))) {

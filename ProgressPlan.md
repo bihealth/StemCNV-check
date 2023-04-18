@@ -36,11 +36,11 @@
 
 ## Current state / TODO
 
+- define hotspots / regions of interest
+
 ? unclear prio -> maybe needed for good output ?
 - merge by probe distance
 - ref (& tool?) overlap with min 80% (reciprocal?) overlap
-- define hotspots / regions of interest
-- mosaicism (R-GADA / others)
 - individual tool stats
 - circO plots
 - installation procedure: as much as possible should be in bioconda
@@ -52,9 +52,7 @@
 
 Lower Priority goals:
 - PennCNV trio calling
-- make certain tools optional
-- DT import to HTML
-- outout of CNV vcf // IGV readble files
+- output of CNV vcf // IGV readable files
 - ensure rerun (of report? of everything?) on parameter change in config ?!
 - other filter options?
 - additional / more modern CNV callers

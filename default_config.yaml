@@ -11,6 +11,12 @@ sample_table: ''  #REQUIRED
 raw_data_folder: ''  #REQUIRED
 
 settings:
+  # Select tools to use and specify order of 'trust' in case of overlapping calls with different states
+  # Currently implemented tools (=valid options): PennCNV, GADA, CBS
+  CNV.calling.tools:
+    - PennCNV
+    - GADA
+    - CBS
   filter:
     use-filterset: 'full' # basic|highGT|highGC|full [=highGT+GC]
   CBS:
@@ -18,13 +24,21 @@ settings:
     # LRR threshold for identifying CBS segments as gain/loss 
     LRR.th.value: 0.2
     # adjustment of threshold for X chromosome (female: down, male: up)
-    LRR.th.value.Xadj: 0.2 #TODO: find a better solution? what about Y ?
+    LRR.th.value.Xadj: 0.2
+  GADA:
+    # Sparsness of bayesian model; higher value gives faster, but fewer results; mostly irrelevant with hig T value
+    aAlpha: 0.2
+    # Critical parameters of backwards eliminations, sets arbitrary significance level, higher T <> higher significance
+    gada.T: 15
+    mad.T: 5
+    # Minimum required probes in a CNV / LOH call
+    MinSegLen: 5
   postprocessing:
     ## Prefiltering is done as follows:
     # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density & 
     #  ( [snps] >= min.snp.or.length | [length] > min.length.or.snp )
-    ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merge
-    # either before or after filtering (merge.before.filter)
+    ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
+    # either before or after filtering (based on merge.before.filter)
     min.snp: 5
     min.length: 100
     min.snp.density: 10 #snps per Mb 
@@ -32,14 +46,9 @@ settings:
     min.length.or.snp: 2000
     merge.distance: 500
     merge.before.filter: TRUE
-    ## Overlapping of CNV calls from different tools
-    # Call state will be assigned be tool priority if necessary.
-    # Note: all tools used *must* be given here
-    tool.order: ['PennCNV', 'CBS']
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
-    
   report: 
     thresholds:
       # Include these sizes in the main tables of the report
@@ -48,8 +57,6 @@ settings:
       # Classify samples as failed from these sizes on
       fail.loh: 5e6
       fail.cnv: 2e6
-      #enrlage reference CNVs by this factor to check overlap with new ones
-      ref.factor: 2
     # Thresholds for colored table / rec action [orange, red]
     QCwarnings:
       callrate: [0.99, 0.99]
@@ -58,8 +65,8 @@ settings:
       loss_gain_ratio: [2, 4]
       sizable_CNV: [5, 10]
       sizable_LOH: [5, 10]
-      SNP_distance_reference: [5, 10]
-      # # This is hard to set thresholds for, since currentlöy all types of genes are used
+      SNP_distance_reference: [1, 5]
+      # # This is hard to set thresholds for, since currently all types of genes are used
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
     SNP_comparison:
