@@ -8,14 +8,14 @@ from scripts.py_helpers import read_sample_table
 
 
 if not config:
-  # This should not happen unless the snakefile is invoked directly
+  # This should not happen unless the snakefile is invoked directly from cmd-line
   # try to load a baseline config file
   CONFIGFILE = "config.yaml"
   configfile: CONFIGFILE
   removetempconfig = False
 else:
-  # Save config to tempfile & use that instead, this ensure the combined default + user configs are used
-  # CONFIGFILE = config['configfile']
+  # Save config to tempfile & use that instead, this ensures the combined default + user configs are used
+  # It also archives all options passed by command line and allows them all to be displayed in report
   f, CONFIGFILE = tempfile.mkstemp(suffix = '.yaml', text=True)
   os.close(f)
   removetempconfig = True
@@ -23,12 +23,14 @@ else:
     yaml.dump(config, yamlout)
 
 
-
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
 SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.getcwd() #Defined by wrapper 
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper 
+TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
 
+
+#TODO if samples don't match this there will be no clear error message!
 wildcard_constraints:
   chr=config['wildcard_constraints']['chr'],
   filter=config['wildcard_constraints']['filter'],
@@ -44,35 +46,59 @@ sample_data = read_sample_table(SAMPLETABLE)
 #print(sample_data)
 
 
-
 # Rules ========================================================================
+
+def get_target_files():
+  #('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+  filter = config['settings']['filter']['use-filterset']
+  # Report
+  if TARGET == 'report':
+    return [os.path.join(BASEPATH,"data",f"{sample_id}",f"{sample_id}.CNV-report.html") for
+     _, sample_id, _, _ in sample_data.values()]
+  # Target Processed-calls
+  if TARGET == 'processed-calls':
+    return [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()]
+  # Target PennCNV
+  if TARGET == 'PennCNV':
+    return [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()] +\
+      [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()] +\
+    [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
+      _, sample_id, sex, _ in sample_data.values() if sex.lower()[0] == 'm']
+  # Target CBS
+  if TARGET == 'CBS':
+    return [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()]
+  # Target CBS
+  if TARGET == 'GADA':
+    return [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()]
+  #Target: filtered-data
+  if TARGET == 'filtered-data':
+    return  [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv") for
+      _, sample_id, _, _ in sample_data.values()] #+\
+      # TODO: add filtered vcf file!
+      # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.filtered.{filter}.vcf") for
+      # _, sample_id, _, _ in sample_data.values()]
+  #Target: unfiltered-data
+  if TARGET == 'unfiltered-data':
+    return  [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.processed-data.tsv") for
+      _, sample_id, _, _ in sample_data.values()] +\
+      [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
+      _, sample_id, _, _ in sample_data.values()]
+
 
 rule all:
   input:
-    # Final / Report
-    [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CNV-report.html") for
-      _, sample_id, _, _ in sample_data.values()] 
-    # # Target PennCNV
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-autosomes.tsv") for
-    #   _, sample_id, _, _ in sample_data.values()] + 
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv") for
-    #   _, sample_id, _, _ in sample_data.values()] +  
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.penncnv-chry.tsv") for
-    #   _, sample_id, _, _ in sample_data.values() if sex == 'Male'] + 
-    # # Target CBS
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.CBS.tsv") for
-    #   chip_no, chip_pos, _, _ in sample_data.values()] +
-    # #Target: processed data
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.processed-data.tsv") for
-    #   chip_no, chip_pos, _, _ in sample_data.values()] +
-    # [os.path.join(BASEPATH, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
-    #   chip_no, chip_pos, _, _ in sample_data.values()]
+    get_target_files()
   run:
     if removetempconfig:
       os.remove(CONFIGFILE)
     
 
-# TODO: make he gtc files intermediate? tehy are only needed once really
+# MAYBE: make the gtc files intermediate? they are only needed once really
 # -> would allow an easier structure for output data
 # Optional(/Alternative?) TODO:
 # - make temp folder that link to specific idat files only so that gencall is only run a one a sample at a time
@@ -101,7 +127,8 @@ rule run_gencall:
     'LANG="en_US.UTF-8" iaap-cli gencall {input.bpm} {input.egt} {params.outpath} --idat-folder {input.idat_path} --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
 
 
-
+#TODO: this NEEDS ot be sentrix Name_Pos (always!)
+# If sample ID is something else it can only be used *after* the link
 def get_gtc_path(wildcards):
   """Get the chip name from  a sample_id"""
   chip_name = [n for _,(n, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
@@ -288,7 +315,7 @@ def get_ref_id(wildcards, get_sex=False):
   else:
     return sample_id, ref_id
 
-def get_preproces_input(wildcards):
+def get_preprocess_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   filter = config['settings']['filter']['use-filterset']
   tools = config['settings']['CNV.calling.tools']
@@ -305,7 +332,7 @@ def get_preproces_input(wildcards):
 
 rule process_CNV_calls:
   input:
-    get_preproces_input
+    get_preprocess_input
   output:
     os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.tsv")
   resources:

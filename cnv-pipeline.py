@@ -25,6 +25,7 @@ SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 # - gender is allowed values
 # - FUTURE: sample_id / chip_No/Pos conversion/check
 def check_sample_table(filename):
+	# TODO if samples don't match wildcard constraint regex there will be no clear error message!
 	pass
 
 def check_config(filename):
@@ -62,12 +63,17 @@ def make_penncnv_files(args):
 			#'run_gencall', 'relink_gencall', 'all'
 		]
 		ret = run_snakemake(args)
+		#TODO: why does the code terminate here (cluster mode only?)?
 		
 		if ret:
 			raise Exception('Snakemake run to get vcf failed')
 	
 	#TODO logger calls
 	print('Making PFB file')
+	outdir = os.path.dirname(args.pfb_out)
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
+
 	argv = ['Rscript', f"{SNAKEDIR}/scripts/make_PFB_from_vcf.R", use_vcf, args.pfb_out]
 	print(' '.join(argv))
 	ret = subprocess.call(argv)
@@ -78,6 +84,9 @@ def make_penncnv_files(args):
 		print('Created PFB file: {}'.format(args.pfb_out))
 	
 	print('Making GC model file')
+	outdir = os.path.dirname(args.gc_out)
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
 	gc_base = 'hg38.gc5Base.txt' if args.genome == 'GRCh38' else 'hg19.gc5Base.txt'
 	penncnv_gcfile = os.path.join(os.getenv('CONDA_PREFIX'), 'pipeline/PennCNV-1.0.5/gc_file', gc_base)
 	
@@ -111,15 +120,16 @@ def run_snakemake(args):
 	argv += [
 		'-d', args.directory,
 		'--configfile', os.path.join(SNAKEDIR, 'default_config.yaml'), args.config,
-		'--config', 'sample_table={}'.format(args.sample_table),
-			'snakedir={}'.format(SNAKEDIR), 
-			'basedir={}'.format(args.directory), 
-			'configfile={}'.format(args.config),
+		'--config', f'sample_table={args.sample_table}',
+			f'snakedir={SNAKEDIR}',
+			f'basedir={args.directory}',
+			f'configfile={args.config}',
+			f'target={args.target}',
 	]
 	
-	if args.cluster:
+	if args.cluster_profile:
 		argv += [
-			"--profile", "cubi-dev",
+			"--profile", args.cluster_profile,
 			"-j", "20"
 		]
 	else:
@@ -145,6 +155,8 @@ def setup_argparse():
 	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
+	group_basic.add_argument('--target', '-t', default='report', choices=('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+							 help="Final target of the pipeline. Warning: setting one of the tools here will override tool selection from config. Default: %(default)s")
 	
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
@@ -153,14 +165,16 @@ def setup_argparse():
 							   help="Filename for generated PFB file. Default: %(default)s")
 	group_penncnv.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-GRCh38.gcmodel',
 							   help="Filename for generated GCmodel file. Default: %(default)s")
-														 
+
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
 	
-	group_snake.add_argument('--cluster', '-c', action='store_true', help="Use slurm submission to run on cluster")
+	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if active: %(const)s")
+	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default if active: %(default)s")
+
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
 	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
 	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
-							 help="Options to pass to snakemake. Use seperate with '--'")
+							 help="Options to pass to snakemake; separate from normal options with '--'")
 	
 	return parser
 	
