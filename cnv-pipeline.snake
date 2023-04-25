@@ -29,13 +29,12 @@ BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by
 TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
 
-
-#TODO if samples don't match this there will be no clear error message!
 wildcard_constraints:
   chr=config['wildcard_constraints']['chr'],
   filter=config['wildcard_constraints']['filter'],
-  sample_id=config['wildcard_constraints']['sample_id'],
-  chip_name=config['wildcard_constraints']['chip_name'],
+  #sample_id=config['wildcard_constraints']['sample_id'],
+  #sentrix_name=config['wildcard_constraints']['sentrix_name'],
+  #sentrix_pos=config['wildcard_constraints']['sentrix_pos'],
 
 #Never submit these to cluster
 localrules:
@@ -100,15 +99,15 @@ rule all:
 
 # MAYBE: make the gtc files intermediate? they are only needed once really
 # -> would allow an easier structure for output data
-# Optional(/Alternative?) TODO:
+# Optional(/Alternative?):
 # - make temp folder that link to specific idat files only so that gencall is only run a one a sample at a time
 rule run_gencall:
   input:
     bpm=config['static_data']['bpm_manifest_file'],
     egt=config['static_data']['egt_cluster_file'],
-    idat_path = os.path.join(IDAT_INPUT, "{chip_name}")
+    idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
   output:
-    os.path.join(BASEPATH, "data", "gtc", "{chip_name}", "_done")
+    os.path.join(BASEPATH, "data", "gtc", "{sentrix_name}", "_done")
   threads: config['tools']['GenCall']['threads']
   resources:
     time=config['tools']['GenCall']['runtime'],
@@ -117,32 +116,37 @@ rule run_gencall:
   params:
     #TODO: check which options make sense here
     options = config['tools']['GenCall']['cmd-line-params'],
-    outpath = os.path.join(BASEPATH, "data", "gtc", "{chip_name}")
+    outpath = os.path.join(BASEPATH, "data", "gtc", "{sentrix_name}")
   log:
-    err=os.path.join(BASEPATH, "logs", "GenCall", "{chip_name}", "error.log"),
-    out=os.path.join(BASEPATH, "logs", "GenCall", "{chip_name}", "out.log")
+    err=os.path.join(BASEPATH, "logs", "GenCall", "{sentrix_name}", "error.log"),
+    out=os.path.join(BASEPATH, "logs", "GenCall", "{sentrix_name}", "out.log")
   shell:
     #TODO: check how imporant definition of the ICU version & LANG is here
     # CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
     'LANG="en_US.UTF-8" iaap-cli gencall {input.bpm} {input.egt} {params.outpath} --idat-folder {input.idat_path} --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
 
 
-#TODO: this NEEDS ot be sentrix Name_Pos (always!)
-# If sample ID is something else it can only be used *after* the link
-def get_gtc_path(wildcards):
-  """Get the chip name from  a sample_id"""
-  chip_name = [n for _,(n, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
-  return  os.path.join(BASEPATH, 'data', 'gtc', chip_name)
+# The iaap-cli will *always* generate filenames bderived from the sentrix name & pos
+def get_chip(wildcards, outtype = 'dir_path'):
+  """Get the chip name from a sample_id
+  Values for outtype: 'dirpath' | 'file'"""
+  chip_name, chip_pos = [n for _,(n, p, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
+  if outtype == 'dir_path':
+    return os.path.join(BASEPATH, 'data', 'gtc', chip_name)
+  elif outtype == 'file':
+    return os.path.join(chip_name, chip_name + '_', + chip_pos + '.gtc')
+
 
 rule relink_gencall:
   input:
-    lambda wildcards: os.path.join(get_gtc_path(wildcards), '_done')
+    lambda wildcards: os.path.join(get_chip(wildcards), '_done')
   output:
     os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.gencall.gtc")
   params:
-    gtc_file = lambda wildcards: os.path.join(get_gtc_path(wildcards), f"{wildcards.sample_id}.gtc")
+    #TODO test relative link
+    gtc_link_path = lambda wildcards: os.path.join('../gtc/data', get_chip(wildcards, outtype='file'))
   shell:
-    "ln -s {params.gtc_file} {output}"
+    "ln -s {params.gtc_link_path} {output}"
   
 
 rule run_gtc2vcf_tsv:
@@ -221,6 +225,7 @@ rule make_PennCNV_sexfile:
         sex = sex.lower()[0]
         f.write(f"{inputfile}\t{sex}\n")
 
+#TODO: set PennCNV ressources &/ set defaults
 rule run_PennCNV_auto:
   input:
     tsv = os.path.join(BASEPATH, "data", "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
@@ -298,7 +303,7 @@ rule run_GADA:
 #   -> currently done in report; move out ?
 
 def get_ref_id(wildcards, get_sex=False):
-  sex, ref_name = [(s, r) for name,(c, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
+  sex, ref_name = [(s, r) for name,(_, _, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
   sample_id = wildcards.sample_id
   if ref_name and ref_name in sample_data:
     _, ref_id, ref_sex, _ = sample_data[ref_name]

@@ -212,16 +212,11 @@ expected_final_tb = tibble(
 	)
 list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
 
-ensure_list_cols <- function(tb.or.gr){ 
-	
+ensure_list_cols <- function(tb.or.gr){
 	as_tibble(tb.or.gr) %>%
 		rowwise() %>%
-		mutate(	across(one_of(list_cols), ~ list(.)),
-						#This needs to happen inside rowwise
-						#main.state = CNV.state[which.min(match(tool, tool.order))],
-						) %>%
+		mutate(across(one_of(list_cols), ~ list(.))) %>%
 		makeGRangesFromDataFrame(keep.extra.columns = T)
-
 }
 
 overlap_tools <- function(tools, min.greater.region.overlap = 50) {
@@ -382,19 +377,34 @@ if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_
 results = list()
 
 if (args$options$penncnv) {
-	results[['PennCNV']] <- file.path(datapath, pennCNVfiles) %>%
+	res <- file.path(datapath, pennCNVfiles) %>%
 		lapply(read_PennCNV) %>%
 		bind_rows()
+	if (nrow(res) > 0) {
+	  results[['PennCNV']] <- res
+	} else {
+	  tool.order <- tool.order[tool.order != 'PennCNV']
+	}
 }
 if (args$options$cbs) {
-	results[['CBS']] <- file.path(datapath, sample_id, paste0(sample_id, '.CBS.', use.filter, '.tsv')) %>%
+	res <- file.path(datapath, sample_id, paste0(sample_id, '.CBS.', use.filter, '.tsv')) %>%
 		lapply(read_CBS) %>%
 		bind_rows()
+	if (nrow(res) > 0) {
+	  results[['CBS']] <- res
+	} else {
+	  tool.order <- tool.order[tool.order != 'CBS']
+	}
 }
 if (args$options$gada) {
-	results[['GADA']] <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.', use.filter, '.tsv')) %>%
+	res <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.', use.filter, '.tsv')) %>%
 		lapply(read_GADA) %>%
 		bind_rows()
+	if (nrow(res) > 0) {
+	  results[['GADA']] <- res
+	} else {
+	  tool.order <- tool.order[tool.order != 'GADA']
+	}
 }
 
 

@@ -7,8 +7,10 @@ import argparse
 # import datetime
 # import logging
 import os
+import re
 import subprocess
 import sys
+import yaml
 
 # import ruamel.yaml as ruamel_yaml
 # from snakemake import RERUN_TRIGGERS
@@ -19,16 +21,40 @@ SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 
 ### Sanity checks ###
 
-#TODO:
-# sanity check of sample table (fail early)
-# - all reference samples exist
-# - gender is allowed values
-# - FUTURE: sample_id / chip_No/Pos conversion/check
-def check_sample_table(filename):
-	# TODO if samples don't match wildcard constraint regex there will be no clear error message!
-	pass
+#TODO: don't use value error, make an extra errorClass
+def check_sample_table(args):
+	sample_data = read_sample_table(args.sample_table)
 
-def check_config(filename):
+	samples = {sid: sex for _, _, sid, sex, _ in sample_data.values()}
+	ref_samples = {rid: sex for _, _, _, sex, rid in sample_data.values() if rid}
+
+	#Check sex values
+	if not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
+		raise ValueError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
+	#Check that all reference samples exist
+	missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
+	if missing_refs:
+		raise ValueError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
+	# Give warning if sex of reference and sample don't match
+	sex_mismatch = [f"{s} ({sex})" for _, _, s, sex, ref in sample_data.values() if ref and sex[0].lower() != samples[ref][0].lower()]
+	if sex_mismatch:
+		sys.stderr.write("Warning: the following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
+		def_config = yaml.safe_load(f)
+	sentrix_name = config['wildcard_constraints']['sentrix_name'] if 'wildcard_constraints' in config and 'sentrix_name' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_name']
+	sentrix_pos = config['wildcard_constraints']['sentrix_pos'] if 'wildcard_constraints' in config and 'sentrix_pos' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_pos']
+	name_mismatch = [f"{s} ({n})" for n, _, s, _, _ in sample_data.values() if not re.match('^' + sentrix_name + '$', n)]
+	pos_mismatch = [f"{s} ({p})" for _, p, s, _, _ in sample_data.values() if not re.match('^' + sentrix_pos + '$', p)]
+	if name_mismatch:
+		raise ValueError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
+	if pos_mismatch:
+		raise ValueError("The 'Chip_Pos' values for these samples not fit the expected constraints: " + ', '.join(pos_mismatch))
+
+
+def check_config(args):
 	pass
 
 def check_installation():
@@ -48,7 +74,7 @@ def make_penncnv_files(args):
 	# Check if any vcf file is present
 	sample_data = read_sample_table(args.sample_table)
 	
-	vcf_files = [os.path.join(args.directory, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, sample_id, _, _ in sample_data.values()]
+	vcf_files = [os.path.join(args.directory, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, _, sample_id, _, _ in sample_data.values()]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 	
 	if vcf_present:
@@ -130,7 +156,7 @@ def run_snakemake(args):
 	if args.cluster_profile:
 		argv += [
 			"--profile", args.cluster_profile,
-			"-j", "20"
+			"-j", args.jobs
 		]
 	else:
 		argv += [
@@ -155,9 +181,7 @@ def setup_argparse():
 	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
-	group_basic.add_argument('--target', '-t', default='report', choices=('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
-							 help="Final target of the pipeline. Warning: setting one of the tools here will override tool selection from config. Default: %(default)s")
-	
+
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
 							   help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
@@ -167,10 +191,11 @@ def setup_argparse():
 							   help="Filename for generated GCmodel file. Default: %(default)s")
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
-	
-	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if active: %(const)s")
-	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default if active: %(default)s")
 
+	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+							 help="Final target of the pipeline. Default: %(default)s")
+	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
+	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
 	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
 	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
@@ -188,8 +213,9 @@ if __name__ == '__main__':
 	# check that conda & PennCNV are set up ?!
 	
 	if args.action == 'run':
-		check_sample_table(args.sample_table)
-		ret = run_snakemake(args)
+		check_sample_table(args)
+		ret = 1
+		#ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':
