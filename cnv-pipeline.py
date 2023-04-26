@@ -73,8 +73,13 @@ def make_penncnv_files(args):
 	
 	# Check if any vcf file is present
 	sample_data = read_sample_table(args.sample_table)
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
+		def_config = yaml.safe_load(f)
+	datapath = config['data_path'] if 'data_path' in config and else def_config['data_path']
 	
-	vcf_files = [os.path.join(args.directory, "data", f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, _, sample_id, _, _ in sample_data.values()]
+	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, _, sample_id, _, _ in sample_data.values()]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 	
 	if vcf_present:
@@ -181,6 +186,7 @@ def setup_argparse():
 	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
+	#group_basic.add_argument('--data-path', '-p', default='data', help="Filepath to were results are written inside the run directrory. Default: %(default)s")
 
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
@@ -214,8 +220,7 @@ if __name__ == '__main__':
 	
 	if args.action == 'run':
 		check_sample_table(args)
-		ret = 1
-		#ret = run_snakemake(args)
+		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':

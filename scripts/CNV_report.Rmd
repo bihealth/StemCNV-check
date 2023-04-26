@@ -48,6 +48,7 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, #cache=FALSE,
 
 config <- read_yaml(params$configfile)
 use.filter <- config$settings$filter$`use-filterset`
+datapath <- config$data_path
 
 sampletable <- read_tsv(params$sampletable, col_types = 'cccccc')
 
@@ -169,7 +170,7 @@ filter_functions <- list(
 	'highGT+GC' = function(GT, GC) GT > 0.8 & GC > 0.8
 )
 
-raw_LRR_BAF <- file.path(basepath, 'data', use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
+raw_LRR_BAF <- file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
 	bind_rows() %>%
 	mutate(filter.passed = filter_functions[[use.filter]](`GenTrain Score`, Score))
@@ -187,7 +188,7 @@ snp_file_pattern <- ifelse(SNP.ignore.filters,
 						   '.processed-data.tsv',
 						   paste0('.filtered-data.', use.filter, '.tsv'))
 
-SNP.genotype.distances <- file.path(basepath, 'data', snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
+SNP.genotype.distances <- file.path(basepath, DATAPATH, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
   lapply(read_snps) %>%
 	bind_rows() %>%
 	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
@@ -225,11 +226,11 @@ load_annotate_cnv <- function(fname){
 		)
 }
 
-cnv_calls <- lapply(file.path(basepath, 'data', use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.tsv')), load_annotate_cnv) %>%
+cnv_calls <- lapply(file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.tsv')), load_annotate_cnv) %>%
 	bind_rows()
 
 ## GenCall logs
-GenCall.stats <-  file.path(basepath, 'data', use_ids, paste0(use_ids, '.stats.txt')) %>%
+GenCall.stats <-  file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.stats.txt')) %>%
 	lapply(read_tsv, show_col_types = FALSE, col_types = cols(computed_gender = col_character(),
 	                                                          sentrix_barcode = col_character())) %>%
 	bind_rows() %>%

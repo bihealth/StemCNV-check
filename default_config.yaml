@@ -1,14 +1,17 @@
 static_data:
     bpm_manifest_file: '' #REQUIRED
-    csv_manifest_file: '' #REQUIRED
+    csv_manifest_file: '' #Optional (leave empty if not used)
     egt_cluster_file: '' #REQUIRED
     genome_fasta_file: '' #REQUIRED
     genome_gtf_file: '' #REQUIRED
     pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb  #REQUIRED
     GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
-    
-sample_table: ''  #REQUIRED
+
+#TODO group/sort these better?
+#sample_table: ''  #Set by wrapper?!
 raw_data_folder: ''  #REQUIRED
+data_path: data
+log_path: logs
 
 settings:
   # Select tools to use and specify order of 'trust' in case of overlapping calls with different states
@@ -101,5 +104,8 @@ tools:
     memory: "30000M"
     runtime: "30:00"
   CNV.process:
+    memory: "4000M"
+    runtime: "30:00"
+  PennCNV:
     memory: "4000M"
     runtime: "30:00"
