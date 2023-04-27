@@ -77,7 +77,7 @@ def make_penncnv_files(args):
 		config = yaml.safe_load(f)
 	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
 		def_config = yaml.safe_load(f)
-	datapath = config['data_path'] if 'data_path' in config and else def_config['data_path']
+	datapath = config['data_path'] if 'data_path' in config else def_config['data_path']
 	
 	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, _, sample_id, _, _ in sample_data.values()]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
@@ -161,7 +161,7 @@ def run_snakemake(args):
 	if args.cluster_profile:
 		argv += [
 			"--profile", args.cluster_profile,
-			"-j", args.jobs
+			"-j", str(args.jobs)
 		]
 	else:
 		argv += [

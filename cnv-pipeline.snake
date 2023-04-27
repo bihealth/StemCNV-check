@@ -41,6 +41,7 @@ wildcard_constraints:
 #Never submit these to cluster
 localrules:
   relink_gencall,
+  make_PennCNV_sexfile,
   all
 
 sample_data = read_sample_table(SAMPLETABLE)
@@ -55,40 +56,40 @@ def get_target_files():
   # Report
   if TARGET == 'report':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CNV-report.html") for
-     _, sample_id, _, _ in sample_data.values()]
+     _, _, sample_id, _, _ in sample_data.values()]
   # Target Processed-calls
   if TARGET == 'processed-calls':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()]
+      _, _, sample_id, _, _ in sample_data.values()]
   # Target PennCNV
   if TARGET == 'PennCNV':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()] +\
+      _, _, sample_id, _, _ in sample_data.values()] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()] +\
+      _, _, sample_id, _, _ in sample_data.values()] +\
     [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
-      _, sample_id, sex, _ in sample_data.values() if sex.lower()[0] == 'm']
+      _, _, sample_id, sex, _ in sample_data.values() if sex.lower()[0] == 'm']
   # Target CBS
   if TARGET == 'CBS':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()]
+      _, _, sample_id, _, _ in sample_data.values()]
   # Target CBS
   if TARGET == 'GADA':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()]
+      _, _, sample_id, _, _ in sample_data.values()]
   #Target: filtered-data
   if TARGET == 'filtered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv") for
-      _, sample_id, _, _ in sample_data.values()] #+\
+      _, _, sample_id, _, _ in sample_data.values()] #+\
       # TODO: add filtered vcf file!
       # [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered.{filter}.vcf") for
-      # _, sample_id, _, _ in sample_data.values()]
+      # _, _, sample_id, _, _ in sample_data.values()]
   #Target: unfiltered-data
   if TARGET == 'unfiltered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.processed-data.tsv") for
-      _, sample_id, _, _ in sample_data.values()] +\
+      _, _, sample_id, _, _ in sample_data.values()] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
-      _, sample_id, _, _ in sample_data.values()]
+      _, _, sample_id, _, _ in sample_data.values()]
 
 
 rule all:
@@ -132,11 +133,11 @@ rule run_gencall:
 def get_chip(wildcards, outtype = 'dir_path'):
   """Get the chip name from a sample_id
   Values for outtype: 'dirpath' | 'file'"""
-  chip_name, chip_pos = [n for _,(n, p, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
+  chip_name, chip_pos = [(n, p) for _, (n, p, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
   if outtype == 'dir_path':
-    return os.path.join(BASEPATH, 'data', 'gtc', chip_name)
+    return os.path.join(BASEPATH, DATAPATH, 'gtc', chip_name)
   elif outtype == 'file':
-    return os.path.join(chip_name, chip_name + '_', + chip_pos + '.gtc')
+    return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
 
 
 rule relink_gencall:
@@ -146,7 +147,7 @@ rule relink_gencall:
     os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   params:
     #TODO test relative link
-    gtc_link_path = lambda wildcards: os.path.join('../gtc/data', get_chip(wildcards, outtype='file'))
+    gtc_link_path = lambda wildcards: os.path.join('..', 'gtc', get_chip(wildcards, outtype='file'))
   shell:
     "ln -s {params.gtc_link_path} {output}"
   
@@ -221,7 +222,7 @@ rule make_PennCNV_sexfile:
     filter = config['settings']['filter']['use-filterset']
   run:
     with open(output.filename, 'w') as f:
-      for _, sample_id, sex, _ in sample_data.values():
+      for _, _, sample_id, sex, _ in sample_data.values():
         inputfile = os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{params.filter}.tsv")
         #ensure its consistently 'm'/'f'
         sex = sex.lower()[0]

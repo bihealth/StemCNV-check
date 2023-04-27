@@ -9,7 +9,7 @@ extra_packages=$CONDA_PREFIX/pipeline
 mkdir $extra_packages
 start_path=$PWD
 
-
+# this probably can not be added to bioconda
 # Illumina Gencall software
 cd $extra_packages
 wget ftp://webdata2:webdata2@ussd-ftp.illumina.com/downloads/software/iaap/iaap-cli-linux-x64-1.1.0.tar.gz
@@ -18,6 +18,9 @@ cd $CONDA_PREFIX/bin
 ln -s $CONDA_PREFIX/pipeline/iaap-cli/iaap-cli
 cd $start_path
 
+#TODO
+# bioconda now seems to have the bcftools 1.16 version available
+# -> test that
 
 # Build HTSlib & bcftools (incl gtc2vcf) from source. This is needed for gtc2vcf ( polysomy would be nice but doesn't work)
 # Could also use bcftools from bioconda, but plugin is not up-do-date there & polysomy doesn't work either
@@ -44,7 +47,7 @@ cd bin
 ln -s $CONDA_PREFIX/pipeline/bcftools/bcftools
 cd $start_path
 
-
+#TODO: maybe go ahead and add this to bioconda ?
 ## PennCNV - install algorithms from source
 cd $extra_packages
 wget https://github.com/WGLab/PennCNV/archive/v1.0.5.tar.gz
