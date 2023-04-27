@@ -26,7 +26,7 @@ SNP.matrix <- full.snp.data %>%
   # remove all SNP probes with any NA values (wont work properly)
 	# TODO ?? and with the same value across all samples (uninformative)
   filter(if_all(everything(), ~!is.na(.)))
-colnames(SNP.matrix) <- sampletable[ match(colnames(SNP.matrix), sampletable$sample_id),]$SampleName
+colnames(SNP.matrix) <- sampletable[ match(colnames(SNP.matrix), sampletable$sample_id),]$Sample_Name
 
 #large table takes considerably longer -> don't do this for general report
 d <- dist(SNP.matrix %>% t(), method = 'manhattan')
@@ -46,7 +46,7 @@ dend.format.df <- sampletable %>%
   			 col = ifelse(is.na(SampleGroup), 'grey90', col),
          raw_na = sapply(sample_id, function(n) ifelse(n %in% colnames(full.snp.data), full.snp.data[,n] %>% is.na() %>% sum(), NA))
   )
-dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$SampleName),] 
+dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$Sample_Name),]
 
 dend <- dd %>%
   set('labels_col', dend.format.df$col) %>%
@@ -78,7 +78,7 @@ gg1 <- dend %>%
 # make legend
 gg2 <- dend.format.df %>%
   arrange(SampleGroup) %>%
-  ggplot(aes(x = SampleName, y= 1, col = SampleGroup, shape = Celltype)) + 
+  ggplot(aes(x = Sample_Name, y= 1, col = SampleGroup, shape = Celltype)) +
   geom_point() + 
   scale_color_manual(values = col_map, guide = guide_legend(direction = 'horizontal',title.position = 'top', ncol = 10, byrow=T))  + 
   scale_shape_manual(values = shape_map, guide = guide_legend(direction = 'horizontal', title.position = 'top')) +
@@ -138,7 +138,7 @@ ggsave('clustered_samples.png', gg, height = 10, width = 12)
 #   #scale_col_manual(values = col_map, name = 'Base cellline') + 
 #   theme(legend.position = "bottom")
 # # make legend
-# gg2 <- ggplot(dend.format.df, aes(x = sample_name, y= 1, col = ReferenceSample, shape = Celltype)) + 
+# gg2 <- ggplot(dend.format.df, aes(x = sample_name, y= 1, col = Reference_Sample, shape = Celltype)) +
 #   geom_point() + 
 #   scale_color_manual(values = col_map, guide = guide_legend(direction = 'horizontal',title.position = 'top'))  + 
 #   scale_shape_manual(values = shape_map, guide = guide_legend(direction = 'horizontal',title.position = 'top')) +

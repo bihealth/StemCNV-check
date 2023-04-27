@@ -31,11 +31,11 @@ use.filter <- config$settings$filter$`use-filterset`
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
-ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$ReferenceSample
+ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
 ref_id <- NA
 
 if (!is.na(ref_name)){
-	ref_id <- sampletable[sampletable$SampleName == ref_name, ]$Sample_ID
+	ref_id <- sampletable[sampletable$Sample_Name == ref_name, ]$Sample_ID
 	sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
 		tolower() %>% substr(1,1)
 	if(sex.ref != sex) {

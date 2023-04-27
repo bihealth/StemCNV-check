@@ -53,12 +53,12 @@ datapath <- config$data_path
 sampletable <- read_tsv(params$sampletable, col_types = 'cccccc')
 
 sample_id <- params$sample_id
-sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$SampleName
+sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
-ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$ReferenceSample
-ref_id <- ifelse(is.na(ref_name), NA, sampletable[sampletable$SampleName == ref_name, ]$Sample_ID)
+ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
+ref_id <- ifelse(is.na(ref_name), NA, sampletable[sampletable$Sample_Name == ref_name, ]$Sample_ID)
 
 use_ids <- c(sample_id )
 if (!is.na(ref_id)){ 
@@ -194,7 +194,7 @@ SNP.genotype.distances <- file.path(basepath, DATAPATH, snp.ids, paste0(snp.ids,
 	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
 	filter(if_all(everything(), ~!is.na(.))) %>%
 	dplyr::select(-Index, -Name) %>%
-	rename_with(~ sampletable[match(., sampletable$Sample_ID),]$SampleName ) %>%
+	rename_with(~ sampletable[match(., sampletable$Sample_ID),]$Sample_Name ) %>%
 	t() %>%
 	dist(method = 'manhattan')
 
@@ -442,7 +442,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 	# get raw LRR & BAF data; mark filtered points
 	plot.data <- raw_LRR_BAF %>%
 		filter(Chr == chr & Position >= win_start & Position <= win_end) %>%
-		mutate(SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
+		mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
 	
 	calls <- cnv_calls %>%
 		filter(tool.overlap.state != 'post-overlap' & seqnames == chr & end >= win_start & start < win_end) %>%
@@ -451,10 +451,10 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 			   #TODO could use different greens/reds for different tools? (on top of different y)
 			   color = ifelse(CNV.state %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
 			   color = ifelse(CNV.state == 'loss', '#f46d43', color),
-			   SampleName = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
+			   Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
 			   ) %>%
 		# Need to ensure table contains reference so everything is properly facet_wrapped
-		bind_rows(tibble(SampleName = factor(sample_headers, levels = sample_headers),
+		bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
 										 x_pos = NA_integer_, y_pos = NA_integer_))
 	
 	gene.data <- gr_genes %>%
@@ -462,10 +462,10 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 		as_tibble() %>%
 		mutate(x_pos = (end + start) / 2,
 					 y_pos = ifelse(strand == '+', 1, 0),
-					 SampleName = paste(sample_headers, collapse = '---')) %>%
-		separate_rows(SampleName, sep = '---') %>%
+					 Sample_Name = paste(sample_headers, collapse = '---')) %>%
+		separate_rows(Sample_Name, sep = '---') %>%
 		# Need to ensure table contains reference so everything is properly facet_wrapped
-		bind_rows(tibble(SampleName = factor(sample_headers, levels = sample_headers),
+		bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
 										 x_pos = NA_integer_, y_pos = NA_integer_))
 		
 	panel_space_val = unit(5, units = 'mm')
@@ -478,7 +478,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
 						   limits = c(win_start, win_end), oob = oob_keep) +
 		scale_y_continuous(expand = expansion()) + 
-		facet_wrap(~SampleName, nrow = 1) + 
+		facet_wrap(~Sample_Name, nrow = 1) +
 		theme_classic() + 
 		theme(axis.title = element_blank(),
 					axis.line = element_blank(),
@@ -496,7 +496,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 		# 		  vjust = 0.5, hjust = 0.5, size = 2.5) +
 		scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
 		scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) + 
-		facet_wrap(~SampleName, nrow = 1) + 
+		facet_wrap(~Sample_Name, nrow = 1) +
 		theme_void() + 
 		theme(
 			strip.background = element_blank(),
@@ -517,7 +517,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 						   limits = c(win_start, win_end), position = 'top') +
 		scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
 		labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, nrow = 1) + 
+		facet_wrap(~Sample_Name, nrow = 1) +
 		theme(
 			strip.background = element_blank(),
 			strip.text.x = element_blank(),
