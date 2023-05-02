@@ -16,12 +16,11 @@ import yaml
 # from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
 from scripts.py_helpers import read_sample_table
+from scripts.py_exceptions import *
 
 SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 
 ### Sanity checks ###
-
-#TODO: don't use value error, make an extra errorClass
 def check_sample_table(args):
 	sample_data = read_sample_table(args.sample_table)
 
@@ -30,11 +29,11 @@ def check_sample_table(args):
 
 	#Check sex values
 	if not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
-		raise ValueError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
+		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
 	#Check that all reference samples exist
 	missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
 	if missing_refs:
-		raise ValueError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
+		raise SampletableReferenceError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
 	# Give warning if sex of reference and sample don't match
 	sex_mismatch = [f"{s} ({sex})" for _, _, s, sex, ref in sample_data.values() if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
@@ -49,9 +48,9 @@ def check_sample_table(args):
 	name_mismatch = [f"{s} ({n})" for n, _, s, _, _ in sample_data.values() if not re.match('^' + sentrix_name + '$', n)]
 	pos_mismatch = [f"{s} ({p})" for _, p, s, _, _ in sample_data.values() if not re.match('^' + sentrix_pos + '$', p)]
 	if name_mismatch:
-		raise ValueError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
+		raise SampleConstraintError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
 	if pos_mismatch:
-		raise ValueError("The 'Chip_Pos' values for these samples not fit the expected constraints: " + ', '.join(pos_mismatch))
+		raise SampleConstraintError("The 'Chip_Pos' values for these samples not fit the expected constraints: " + ', '.join(pos_mismatch))
 
 
 def check_config(args):

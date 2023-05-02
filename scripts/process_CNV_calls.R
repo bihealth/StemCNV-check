@@ -5,7 +5,7 @@ suppressMessages(library(optparse))
 suppressMessages(library(yaml))
 
 parser <- OptionParser(
-	usage = "usage: %prog [options] data_path sample_id /path/to/config.yaml /path/to/sampletable.txt  "
+	usage = "usage: %prog [options] data_path sample_id /path/to/config.yaml /path/to/sampletable.txt"
 )
 
 parser <- add_option(parser, c("-p", "--penncnv"), default = F,
@@ -17,6 +17,7 @@ parser <- add_option(parser, c("-g", "--gada"), default = F,
 
 args <- parse_args(parser, positional_arguments = 4)
 # args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "-g", "data", "206210670080_R09C02", "/tmp/tmp1mgp988l.yaml", "sample_table_example.txt"))
+# args <- parse_args(parser, positional_arguments = 4, c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
 
 ##################
 # Variable setup #

@@ -4,6 +4,7 @@ import os
 import tempfile
 import yaml
 from scripts.py_helpers import read_sample_table
+from scripts.py_exceptions import *
 # Configuration ================================================================
 
 
@@ -146,7 +147,6 @@ rule relink_gencall:
   output:
     os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   params:
-    #TODO test relative link
     gtc_link_path = lambda wildcards: os.path.join('..', 'gtc', get_chip(wildcards, outtype='file'))
   shell:
     "ln -s {params.gtc_link_path} {output}"
@@ -228,7 +228,6 @@ rule make_PennCNV_sexfile:
         sex = sex.lower()[0]
         f.write(f"{inputfile}\t{sex}\n")
 
-#TODO: set PennCNV ressources &/ set defaults
 rule run_PennCNV_auto:
   input:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
@@ -237,10 +236,10 @@ rule run_PennCNV_auto:
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.{filter}.tsv")
   threads: 1
-  # resources:
-  #   time=...
-  #   memory=...
-  #   partition=...
+  resources:
+    time=config['tools']['PennCNV']['runtime'],
+    mem_mb=config['tools']['PennCNV']['memory'],
+    partition='medium'
   log:
     err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.{filter}.out.log")
@@ -257,10 +256,10 @@ rule run_PennCNV_sex:
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.{filter}.tsv")
   threads: 1
-  # resources:
-  #   time=...
-  #   memory=...
-  #   partition=...
+  resources:
+    time=config['tools']['PennCNV']['runtime'],
+    mem_mb=config['tools']['PennCNV']['memory'],
+    partition='medium'
   log:
     err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.{filter}.out.log")
@@ -312,8 +311,7 @@ def get_ref_id(wildcards, get_sex=False):
     _, ref_id, ref_sex, _ = sample_data[ref_name]
   elif ref_name:
     # listed reference does not exist in sampletable
-    # TODO make a nicer exception class
-    raise Exception(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
+    raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
   else:
     ref_id = False
     ref_sex = False
@@ -355,7 +353,7 @@ rule process_CNV_calls:
     err=os.path.join(BASEPATH, LOGPATH, "CNV_process", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "CNV_process", "{sample_id}", "{filter}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.gada} {params.cbs} {BASEPATH}/data {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.gada} {params.cbs} {BASEPATH}/{DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 
 def get_report_sample_input(wildcards):

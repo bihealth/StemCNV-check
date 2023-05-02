@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper functions for pipeline"""
+from py_exceptions import *
+
 
 def read_sample_table(filename):
     samples = {}
@@ -11,7 +13,7 @@ def read_sample_table(filename):
         header = header.split('\t')
         header_index = {col: header.index(col) for col in cols if col in header}
         if len(header_index) < len(cols):
-            raise Exception('Not all required sample_table columns found: ' + ', '.join(cols))
+            raise SampletableDefaultColError('Not all required sample_table columns found: ' + ', '.join(cols))
         for line in f:
             if line.startswith('#'):
                 continue
