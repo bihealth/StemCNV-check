@@ -89,6 +89,7 @@ wildcard_constraints:
   filter: "basic|highGT|highGT|full"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
   sentrix_name: '[0-9]+'
+  sample_id: '[a-zA-Z0-9-_]+'
 
 tools:
   GenCall:

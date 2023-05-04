@@ -24,16 +24,16 @@ SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 def check_sample_table(args):
 	sample_data = read_sample_table(args.sample_table)
 
-	# all_ids = [sid for sid, _, _, _, _, _ in sample_data]
-	# excl = ('no data', 'reference', 'waiting for data')
-	# sample_data = [[i, n, p, s, r if r not in excl else '', sn] for i, n, p, s, r, sn in sample_data] #if all_ids.count(i) == 1
+	all_ids = [sid for sid, _, _, _, _, _ in sample_data]
+	excl = ('no data', 'reference', 'waiting for data')
+	sample_data = [[i, n, p, s, r if r not in excl else '', sn] for i, n, p, s, r, sn in sample_data] #if all_ids.count(i) == 1
 
 	# Check sample_ids are unique
 	#The way the sample_table is read in means that non-unique sample_names will be silently overwrite one another ...
 	all_ids = [sid for sid, _, _, _, _, _ in sample_data]
 	non_unique_ids = [sid for sid in all_ids if all_ids.count(sid) > 1]
-	if non_unique_ids:
-		raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
+	# if non_unique_ids:
+	# 	raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
 
 	# Check sex values
 	samples = {sid: sex for sid, _, _, sex, _, _ in sample_data}
@@ -56,14 +56,15 @@ def check_sample_table(args):
 		config = yaml.safe_load(f)
 	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
 		def_config = yaml.safe_load(f)
-	sentrix_name = config['wildcard_constraints']['sentrix_name'] if 'wildcard_constraints' in config and 'sentrix_name' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_name']
-	sentrix_pos = config['wildcard_constraints']['sentrix_pos'] if 'wildcard_constraints' in config and 'sentrix_pos' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_pos']
-	name_mismatch = [f"{sid} ({n})" for sid, n, p, _, _, _ in sample_data if not re.match('^' + sentrix_name + '$', n)]
-	pos_mismatch = [f"{sid} ({p})" for sid, n, p, _, _, _ in sample_data if not re.match('^' + sentrix_pos + '$', p)]
-	if name_mismatch:
-		raise SampleConstraintError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
-	if pos_mismatch:
-		raise SampleConstraintError("The 'Chip_Pos' values for these samples not fit the expected constraints: " + ', '.join(pos_mismatch))
+
+	for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
+		pattern = config['wildcard_constraints'][constraint] if 'wildcard_constraints' in config and constraint in config['wildcard_constraints'] else def_config['wildcard_constraints'][constraint]
+		# print(constraint)
+		# test = ["{} {}: {}".format(sid, eval(val), re.match('^' + pattern + '$', eval(val))) for sid, n, p, s, _, _ in sample_data[0:3]]
+		# print('\n'.join(test))
+		mismatch = [sid for sid, n, p, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
+		if mismatch:
+			raise SampleConstraintError(f"The '{constraint}' values for these samples not fit the expected constraints: " + ', '.join(mismatch))
 
 
 def check_config(args):
