@@ -45,15 +45,6 @@ if (!is.na(ref_name)){
 }
 
 
-config_val <- function(value, default=NULL, section = 'postprocessing') {
-	val=config$settings[[section]][[value]]
-	if (is.null(val)) {
-		return(default)
-	} else {
-		return(val)
-	}
-}
-
 # CBS gain/loss
 CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
 CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
@@ -190,13 +181,12 @@ prefilter_calls <- function(df.or.GR) {
 
 #TODO: move this + input function defs to another script?
 # Harmonize output
-expected_final_tb = tibble(
+expected_final_tb <- tibble(
 	sample_id = character(),
 	seqnames = factor(c(), levels = use_chr),
 	start = integer(),
 	end = integer(),
 	length = integer(),
-	#main.state = character(),
 	CNV.state = character(),
 	call.in.reference = logical(),
 	coverage.by.ref = list(),
@@ -432,7 +422,7 @@ overlapped_tools_sample <- overlap_tools(tools, tool.overlap.min.perc)
  
 if (!is.na(ref_id)) {
 	
-	fname = file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.', use.filter, '.rds'))
+	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.', use.filter, '.rds'))
 	overlapped_tools_ref <- readRDS(fname) %>%
 		# These cols will interefere
 		dplyr::select(-length, -call.in.reference, -coverage.by.ref, -ref.tool,
@@ -448,10 +438,6 @@ if (!is.na(ref_id)) {
 		finalise_tb()	
 }
 		
-# outname <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.rds'))
-# saveRDS(cnvs, outname)
-
-#TODO: the list cols make saving a tsv cumbersome, though a tsv might be useful for export?
 outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv'))
 cnvs.tb <- cnvs %>%
 	rowwise() %>%

@@ -43,14 +43,12 @@ def check_sample_table(args):
 		config = yaml.safe_load(f)
 	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
 		def_config = yaml.safe_load(f)
-	sentrix_name = config['wildcard_constraints']['sentrix_name'] if 'wildcard_constraints' in config and 'sentrix_name' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_name']
-	sentrix_pos = config['wildcard_constraints']['sentrix_pos'] if 'wildcard_constraints' in config and 'sentrix_pos' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_pos']
-	name_mismatch = [f"{s} ({n})" for n, _, s, _, _ in sample_data.values() if not re.match('^' + sentrix_name + '$', n)]
-	pos_mismatch = [f"{s} ({p})" for _, p, s, _, _ in sample_data.values() if not re.match('^' + sentrix_pos + '$', p)]
-	if name_mismatch:
-		raise SampleConstraintError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
-	if pos_mismatch:
-		raise SampleConstraintError("The 'Chip_Pos' values for these samples not fit the expected constraints: " + ', '.join(pos_mismatch))
+
+	for constraint, val in (('sample_id', 's'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
+		pattern = config['wildcard_constraints'][constraint] if 'wildcard_constraints' in config and constraint in config['wildcard_constraints'] else def_config['wildcard_constraints'][constraint]
+		mismatch = ["{} ({})".format(sn, eval(val)) for sn, (n, p, s, _, _) in sample_data.items() if not re.match('^' + pattern + '$', n)]
+		if mismatch:
+			raise SampleConstraintError(f"The '{constraint}' values for these samples not fit the expected constraints: " + ', '.join(mismatch))
 
 
 def check_config(args):

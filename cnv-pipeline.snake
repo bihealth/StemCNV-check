@@ -35,7 +35,7 @@ IDAT_INPUT = config['raw_data_folder']
 wildcard_constraints:
   chr=config['wildcard_constraints']['chr'],
   filter=config['wildcard_constraints']['filter'],
-  #sample_id=config['wildcard_constraints']['sample_id'],
+  sample_id=config['wildcard_constraints']['sample_id'],
   #sentrix_name=config['wildcard_constraints']['sentrix_name'],
   #sentrix_pos=config['wildcard_constraints']['sentrix_pos'],
 
