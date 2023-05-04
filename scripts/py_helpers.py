@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Helper functions for pipeline"""
-from py_exceptions import *
+from .py_exceptions import *
 
 
 def read_sample_table(filename):
@@ -16,9 +16,12 @@ def read_sample_table(filename):
             missing = [c for c in cols if c not in header_index.keys()]
             raise SampletableDefaultColError('Not all required sample_table columns found. Missing columns: ' + ', '.join(missing))
         for line in f:
+            line = line.rstrip('\n')
+            if not line:
+                continue
             if line.startswith('#'):
                 continue
-            line = line.rstrip('\n').split('\t')
+            line = line.split('\t')
             line = {col: line[header_index[col]] for col in cols}
             samples.append([line['Sample_ID'],
                             line['Chip_Name'],

@@ -24,16 +24,23 @@ SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 def check_sample_table(args):
 	sample_data = read_sample_table(args.sample_table)
 
+	# all_ids = [sid for sid, _, _, _, _, _ in sample_data]
+	# excl = ('no data', 'reference', 'waiting for data')
+	# sample_data = [[i, n, p, s, r if r not in excl else '', sn] for i, n, p, s, r, sn in sample_data] #if all_ids.count(i) == 1
+
 	# Check sample_ids are unique
 	#The way the sample_table is read in means that non-unique sample_names will be silently overwrite one another ...
 	all_ids = [sid for sid, _, _, _, _, _ in sample_data]
 	non_unique_ids = [sid for sid in all_ids if all_ids.count(sid) > 1]
 	if non_unique_ids:
-		raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ', ', '.join(non_unique_ids))
+		raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
 
 	# Check sex values
 	samples = {sid: sex for sid, _, _, sex, _, _ in sample_data}
-	if not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
+	if any(not s for s in samples.values()):
+		missing = [sid for sid, s in samples.items() if not s]
+		raise SampleConstraintError("Missing values for 'Sex' in the samplesheet. Affected samples: " + ', '.join(missing))
+	elif not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
 		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
 	#Check that all reference samples exist
 	ref_samples = {rid: sex for _, _, _, sex, rid, _ in sample_data if rid}
@@ -41,7 +48,7 @@ def check_sample_table(args):
 	if missing_refs:
 		raise SampletableReferenceError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
 	# Give warning if sex of reference and sample don't match
-	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref, _ in sample_data.values() if ref and sex[0].lower() != samples[ref][0].lower()]
+	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref, _ in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
 		sys.stderr.write("Warning: the following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
@@ -51,8 +58,8 @@ def check_sample_table(args):
 		def_config = yaml.safe_load(f)
 	sentrix_name = config['wildcard_constraints']['sentrix_name'] if 'wildcard_constraints' in config and 'sentrix_name' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_name']
 	sentrix_pos = config['wildcard_constraints']['sentrix_pos'] if 'wildcard_constraints' in config and 'sentrix_pos' in config['wildcard_constraints'] else def_config['wildcard_constraints']['sentrix_pos']
-	name_mismatch = [f"{sid} ({n})" for sid, n, p, _, _, _ in sample_data.values() if not re.match('^' + sentrix_name + '$', n)]
-	pos_mismatch = [f"{sid} ({p})" for sid, n, p, _, _, _ in sample_data.values() if not re.match('^' + sentrix_pos + '$', p)]
+	name_mismatch = [f"{sid} ({n})" for sid, n, p, _, _, _ in sample_data if not re.match('^' + sentrix_name + '$', n)]
+	pos_mismatch = [f"{sid} ({p})" for sid, n, p, _, _, _ in sample_data if not re.match('^' + sentrix_pos + '$', p)]
 	if name_mismatch:
 		raise SampleConstraintError("The 'Chip_Name' values for these samples not fit the expected constraints: " + ', '.join(name_mismatch))
 	if pos_mismatch:
