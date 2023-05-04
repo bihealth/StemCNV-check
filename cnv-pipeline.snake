@@ -57,40 +57,38 @@ def get_target_files():
   # Report
   if TARGET == 'report':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CNV-report.html") for
-     _, _, sample_id, _, _ in sample_data.values()]
+            sample_id, _, _, _, _, _ in sample_data]
   # Target Processed-calls
   if TARGET == 'processed-calls':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()]
+            sample_id, _, _, _, _, _ in sample_data]
   # Target PennCNV
   if TARGET == 'PennCNV':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()] +\
+            sample_id, _, _, _, _, _ in sample_data] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()] +\
-    [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
-      _, _, sample_id, sex, _ in sample_data.values() if sex.lower()[0] == 'm']
+       sample_id, _, _, _, _, _ in sample_data] +\
+      [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
+       sample_id, _, _, sex, _, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
   if TARGET == 'CBS':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()]
+            sample_id, _, _, _, _, _ in sample_data]
   # Target CBS
   if TARGET == 'GADA':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()]
+            sample_id, _, _, _, _, _ in sample_data]
   #Target: filtered-data
   if TARGET == 'filtered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()] #+\
-      # TODO: add filtered vcf file!
-      # [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered.{filter}.vcf") for
-      # _, _, sample_id, _, _ in sample_data.values()]
+             sample_id, _, _, _, _, _ in sample_data] #+\
+      # TODO: add soft-filter to vcf file!
   #Target: unfiltered-data
   if TARGET == 'unfiltered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.processed-data.tsv") for
-      _, _, sample_id, _, _ in sample_data.values()] +\
+             sample_id, _, _, _, _, _ in sample_data] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
-      _, _, sample_id, _, _ in sample_data.values()]
+       sample_id, _, _, _, _, _ in sample_data]
 
 
 rule all:
@@ -134,7 +132,7 @@ rule run_gencall:
 def get_chip(wildcards, outtype = 'dir_path'):
   """Get the chip name from a sample_id
   Values for outtype: 'dirpath' | 'file'"""
-  chip_name, chip_pos = [(n, p) for _, (n, p, i, _, _) in sample_data.items() if i == wildcards.sample_id][0]
+  chip_name, chip_pos = [(n, p) for sid, n, p, _, _, _ in sample_data if sid == wildcards.sample_id][0]
   if outtype == 'dir_path':
     return os.path.join(BASEPATH, DATAPATH, 'gtc', chip_name)
   elif outtype == 'file':
@@ -222,7 +220,7 @@ rule make_PennCNV_sexfile:
     filter = config['settings']['filter']['use-filterset']
   run:
     with open(output.filename, 'w') as f:
-      for _, _, sample_id, sex, _ in sample_data.values():
+      for sample_id, _, _, sex, _, _ in sample_data:
         inputfile = os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{params.filter}.tsv")
         #ensure its consistently 'm'/'f'
         sex = sex.lower()[0]
@@ -305,13 +303,16 @@ rule run_GADA:
 #   -> currently done in report; move out ?
 
 def get_ref_id(wildcards, get_sex=False):
-  sex, ref_name = [(s, r) for name,(_, _, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
   sample_id = wildcards.sample_id
-  if ref_name and ref_name in sample_data:
-    _, ref_id, ref_sex, _ = sample_data[ref_name]
-  elif ref_name:
-    # listed reference does not exist in sampletable
-    raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
+  sex, ref_id = [(s, r) for sid, _, _, s, r, _ in sample_data if sid == sample_id][0]
+
+  if ref_id:
+    try:
+      #Assume existing match -> wrapper should have done a check
+      ref_sex = [s for sid, _, _, s, _, _ in sample_data if sid == ref_id][0]
+    except IndexError:
+      # Somehow no match
+      raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
   else:
     ref_id = False
     ref_sex = False
