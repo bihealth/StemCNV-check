@@ -35,7 +35,7 @@ IDAT_INPUT = config['raw_data_folder']
 wildcard_constraints:
   chr=config['wildcard_constraints']['chr'],
   filter=config['wildcard_constraints']['filter'],
-  #sample_id=config['wildcard_constraints']['sample_id'],
+  sample_id=config['wildcard_constraints']['sample_id'],
   #sentrix_name=config['wildcard_constraints']['sentrix_name'],
   #sentrix_pos=config['wildcard_constraints']['sentrix_pos'],
 
@@ -52,43 +52,51 @@ sample_data = read_sample_table(SAMPLETABLE)
 # Rules ========================================================================
 
 def get_target_files():
-  #('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+  #TODO/maybe:
+  # allow multiple targets to be specified?
+  #
+  #Target options: ('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
   filter = config['settings']['filter']['use-filterset']
   # Report
   if TARGET == 'report':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CNV-report.html") for
-            sample_id, _, _, _, _, _ in sample_data]
+            sample_id, _, _, _, _ in sample_data]
+  # cnv-vcf
+  if TARGET == 'cnv-vcf':
+    return expand([os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.{{tool}}-cnv-calls.{filter}.vcf") for
+                   sample_id, _, _, _, _ in sample_data],
+                  tool = 'combined' if config['settings']['make_cnv_vcf']['mode'] == 'combined-calls' else config['settings']['CNV.calling.tools'])
   # Target Processed-calls
   if TARGET == 'processed-calls':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
-            sample_id, _, _, _, _, _ in sample_data]
+            sample_id, _, _, _, _ in sample_data]
   # Target PennCNV
   if TARGET == 'PennCNV':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv") for
-            sample_id, _, _, _, _, _ in sample_data] +\
+            sample_id, _, _, _, _ in sample_data] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv") for
-       sample_id, _, _, _, _, _ in sample_data] +\
+       sample_id, _, _, _, _ in sample_data] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
-       sample_id, _, _, sex, _, _ in sample_data if sex.lower()[0] == 'm']
+       sample_id, _, _, sex, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
   if TARGET == 'CBS':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv") for
-            sample_id, _, _, _, _, _ in sample_data]
+            sample_id, _, _, _, _ in sample_data]
   # Target CBS
   if TARGET == 'GADA':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv") for
-            sample_id, _, _, _, _, _ in sample_data]
+            sample_id, _, _, _, _ in sample_data]
   #Target: filtered-data
   if TARGET == 'filtered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv") for
-             sample_id, _, _, _, _, _ in sample_data] #+\
+             sample_id, _, _, _, _ in sample_data] #+\
       # TODO: add soft-filter to vcf file!
   #Target: unfiltered-data
   if TARGET == 'unfiltered-data':
     return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.processed-data.tsv") for
-             sample_id, _, _, _, _, _ in sample_data] +\
+             sample_id, _, _, _, _ in sample_data] +\
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
-       sample_id, _, _, _, _, _ in sample_data]
+       sample_id, _, _, _, _ in sample_data]
 
 
 rule all:
@@ -132,7 +140,7 @@ rule run_gencall:
 def get_chip(wildcards, outtype = 'dir_path'):
   """Get the chip name from a sample_id
   Values for outtype: 'dirpath' | 'file'"""
-  chip_name, chip_pos = [(n, p) for sid, n, p, _, _, _ in sample_data if sid == wildcards.sample_id][0]
+  chip_name, chip_pos = [(n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id][0]
   if outtype == 'dir_path':
     return os.path.join(BASEPATH, DATAPATH, 'gtc', chip_name)
   elif outtype == 'file':
@@ -195,7 +203,7 @@ rule run_gtc2vcf_vcf:
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
  
-rule filter_tsv:
+rule run_filter_tsv:
   input:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
   output:
@@ -220,7 +228,7 @@ rule make_PennCNV_sexfile:
     filter = config['settings']['filter']['use-filterset']
   run:
     with open(output.filename, 'w') as f:
-      for sample_id, _, _, sex, _, _ in sample_data:
+      for sample_id, _, _, sex, _ in sample_data:
         inputfile = os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{params.filter}.tsv")
         #ensure its consistently 'm'/'f'
         sex = sex.lower()[0]
@@ -304,15 +312,22 @@ rule run_GADA:
 
 def get_ref_id(wildcards, get_sex=False):
   sample_id = wildcards.sample_id
-  sex, ref_id = [(s, r) for sid, _, _, s, r, _ in sample_data if sid == sample_id][0]
+  sex, ref_id = [(s, r) for sid, _, _, s, r in sample_data if sid == sample_id][0]
 
   if ref_id:
     try:
       #Assume existing match -> wrapper should have done a check
-      ref_sex = [s for sid, _, _, s, _, _ in sample_data if sid == ref_id][0]
+      ref_sex = [s for sid, _, _, s, _ in sample_data if sid == ref_id][0]
     except IndexError:
       # Somehow no match
       raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
+# =======
+#   if ref_name and ref_name in sample_data:
+#     _, _, ref_id, ref_sex = sample_data[ref_name]
+#   elif ref_name:
+#     # listed reference does not exist in sampletable
+#     raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
+# >>>>>>> make_vcf
   else:
     ref_id = False
     ref_sex = False
@@ -337,7 +352,7 @@ def get_preprocess_input(wildcards):
 
   return files
 
-rule process_CNV_calls:
+rule run_process_CNV_calls:
   input:
     get_preprocess_input
   output:
@@ -382,3 +397,28 @@ rule knit_report:
     out=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "out.log")
   shell:
     "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {CONFIGFILE} > {log.out} 2> {log.err}"
+
+
+def get_cnv_vcf_output(mode):
+  if mode == 'combined-calls':
+    return os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.vcf")
+  elif mode == 'split-tools':
+    return [os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{{filter}}.vcf")
+            for tool in config['settings']['CNV.calling.tools']]
+  else:
+    raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
+
+rule run_make_cnv_vcf:
+  input:
+    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.combined-cnv-calls.{filter}.tsv"),
+    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
+  output:
+    get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
+  params:
+    include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),
+    mode = config['settings']['make_cnv_vcf']['mode']
+  log:
+    err=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","{filter}.error.log"),
+    out=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","{filter}.out.log")
+  shell:
+    "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {BASEPATH}/{DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"

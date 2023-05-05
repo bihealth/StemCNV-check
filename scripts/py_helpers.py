@@ -5,7 +5,7 @@ from .py_exceptions import *
 
 def read_sample_table(filename):
     samples = []
-    cols = ('Sample_ID', 'Chip_Name', 'Chip_Pos', 'Sex', 'Reference_Sample',  'Sample_Name')
+    cols = ('Sample_ID', 'Chip_Name', 'Chip_Pos', 'Sex', 'Reference_Sample')
     with open(filename, 'r') as f:
         header = next(f).rstrip('\n')
         while header.startswith('#'):
@@ -27,7 +27,6 @@ def read_sample_table(filename):
                             line['Chip_Name'],
                             line['Chip_Pos'],
                             line['Sex'],
-                            line['Reference_Sample'],
-                            line['Sample_Name']
+                            line['Reference_Sample']
                             ])
     return samples

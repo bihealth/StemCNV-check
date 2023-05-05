@@ -9,13 +9,17 @@ dependencies:
   - snakemake 
   - r-base >=4.1 #sensible default; maybe pin this?
   - r-tidyverse
-  - r-optparse
+  - r-optparse #replace?!
+  - r-argparse
   - r-knitr
   - r-rmarkdown
   - r-yaml
   - r-sessioninfo
-  - r-devtools 
+  - r-devtools
+  - r-vcfr
   ## Algorithms ##
+  # gtc2vcf
+  - gtc2vcf = 1.16 # new/untested
   # CBS
   - bioconductor-dnacopy = 1.68.0
   ## Postprocessing ##
@@ -31,3 +35,6 @@ dependencies:
   - r-DT
   #- r-plotly
   - r-patchwork
+  - r-circlize # new/untested
+  #- r-biocircos # requires r4.2? new/untested
+  - r-rcircos # new/untested

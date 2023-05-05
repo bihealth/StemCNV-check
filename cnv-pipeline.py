@@ -24,31 +24,31 @@ SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 def check_sample_table(args):
 	sample_data = read_sample_table(args.sample_table)
 
-	all_ids = [sid for sid, _, _, _, _, _ in sample_data]
-	excl = ('no data', 'reference', 'waiting for data')
-	sample_data = [[i, n, p, s, r if r not in excl else '', sn] for i, n, p, s, r, sn in sample_data] #if all_ids.count(i) == 1
+	# all_ids = [sid for sid, _, _, _, _ in sample_data]
+	# excl = ('no data', 'reference', 'waiting for data')
+	# sample_data = [[i, n, p, s, r if r not in excl else ''] for i, n, p, s, r in sample_data] #if all_ids.count(i) == 1
 
 	# Check sample_ids are unique
 	#The way the sample_table is read in means that non-unique sample_names will be silently overwrite one another ...
-	all_ids = [sid for sid, _, _, _, _, _ in sample_data]
+	all_ids = [sid for sid, _, _, _, _ in sample_data]
 	non_unique_ids = [sid for sid in all_ids if all_ids.count(sid) > 1]
-	# if non_unique_ids:
-	# 	raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
+	if non_unique_ids:
+		raise SampleIDNonuniqueError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
 
 	# Check sex values
-	samples = {sid: sex for sid, _, _, sex, _, _ in sample_data}
+	samples = {sid: sex for sid, _, _, sex, _ in sample_data}
 	if any(not s for s in samples.values()):
 		missing = [sid for sid, s in samples.items() if not s]
 		raise SampleConstraintError("Missing values for 'Sex' in the samplesheet. Affected samples: " + ', '.join(missing))
 	elif not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
 		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
 	#Check that all reference samples exist
-	ref_samples = {rid: sex for _, _, _, sex, rid, _ in sample_data if rid}
+	ref_samples = {rid: sex for _, _, _, sex, rid in sample_data if rid}
 	missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
 	if missing_refs:
 		raise SampletableReferenceError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
 	# Give warning if sex of reference and sample don't match
-	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref, _ in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
+	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
 		sys.stderr.write("Warning: the following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
@@ -59,16 +59,29 @@ def check_sample_table(args):
 
 	for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
 		pattern = config['wildcard_constraints'][constraint] if 'wildcard_constraints' in config and constraint in config['wildcard_constraints'] else def_config['wildcard_constraints'][constraint]
-		# print(constraint)
-		# test = ["{} {}: {}".format(sid, eval(val), re.match('^' + pattern + '$', eval(val))) for sid, n, p, s, _, _ in sample_data[0:3]]
-		# print('\n'.join(test))
-		mismatch = [sid for sid, n, p, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
+		mismatch = [sid for sid, n, p, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
 		if mismatch:
-			raise SampleConstraintError(f"The '{constraint}' values for these samples not fit the expected constraints: " + ', '.join(mismatch))
+			raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
 
 
+
+# Assume that the default_config hasn't been altered & is correct
 def check_config(args):
-	pass
+
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+
+	#TODO: need helper function to ignore values omitted from user config
+
+	if config['settings']['make_cnv_vcf']['mode'] not in c('combined-calls', 'split-tools'):
+		raise ConfigValueError(
+			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
+
+	#TODO:
+	# - check that required values are filled in
+	# - check that value types are correct / match config (incl list len?)
+	# - maybe: us the same apprach that seasnap has for this?
+
 
 def check_installation():
 	pass
@@ -211,7 +224,7 @@ def setup_argparse():
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
 
-	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
@@ -233,6 +246,7 @@ if __name__ == '__main__':
 	
 	if args.action == 'run':
 		check_sample_table(args)
+		#check_config(args)
 		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)

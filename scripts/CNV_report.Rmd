@@ -8,8 +8,6 @@ output:
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
   sample_id: '205857150048_R01C01'  #'GSM2538923_9371579017'
-  #Don't pull from here? pull from sampletable instead -> easier to test report
-  #reference_id: '204362030005_R07C01'
   sampletable: 'sample_table.txt' #'sample_table.txt'
   configfile: 'default_config.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/data/205857150048_R01C01'
@@ -53,12 +51,10 @@ datapath <- config$data_path
 sampletable <- read_tsv(params$sampletable, col_types = 'cccccc')
 
 sample_id <- params$sample_id
-sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
-ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
-ref_id <- ifelse(is.na(ref_name), NA, sampletable[sampletable$Sample_Name == ref_name, ]$Sample_ID)
+ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
 
 use_ids <- c(sample_id )
 if (!is.na(ref_id)){ 
@@ -69,6 +65,17 @@ if (!is.na(ref_id)){
   if(sex.ref != sex) {
   	stop('Sex of sample and reference does not match!')
   } 
+}
+
+#Sample_Name is now an optional column
+if ('Sample_Name' in colnames(sampletable)) {
+	sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
+	ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
+	rename_by = 'Sample_Name'
+} else {
+	sample_name <- sample_id
+	ref_name <- ifelse(is.na(ref_id), NA, ref_id)
+	rename_by = 'Sample_ID'
 }
 
 #Reportable thresholds
@@ -123,7 +130,7 @@ if (do.SNP.clustering) {
 	SNP.extra.ids <- c(SNP.extra.ids, ids[ids %in% sampletable$Sample_ID])
 } 
 
-#TODO need to ensure path is absolute, since rmd might have changed wd ?
+#?? may need to ensure path is absolute, since rmd might have changed wd ?
 gtf_file <- config$static_data$genome_gtf_file
 if (!file.exists(gtf_file)) {
 	gtf_file <- file.path(basepath, gtf_file)
@@ -156,9 +163,9 @@ read_raw <- function(filename) {
 				rename_with(~ str_remove(., '.*\\.')) %>%
 		dplyr::select(-any_of(c('Index', 'Address', 'Name', 'R', 'Theta')),
 									-contains('Frac'), -contains('X'), -contains('Y')) %>%
-		mutate(sample_id = str_extract(filename, valid_name),
-					 Chr = paste0('chr', Chr),
-					 Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)) %>%
+		mutate(sample_id = basename(filename) %>% str_extract(paste0('^', valid_name)),
+			   Chr = paste0('chr', Chr),
+			   Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)) %>%
 		separate_rows(Chr, sep=',')
 }
 
@@ -170,17 +177,17 @@ filter_functions <- list(
 	'highGT+GC' = function(GT, GC) GT > 0.8 & GC > 0.8
 )
 
-raw_LRR_BAF <- file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
+raw_LRR_BAF <- file.path(basepath, datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
 	bind_rows() %>%
 	mutate(filter.passed = filter_functions[[use.filter]](`GenTrain Score`, Score))
 
 ## RAW Genotype info
 read_snps <- function(fname) {
-  read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
+	read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
 		rename_with(~ str_remove(., '^.*\\.gencall\\.'), c(3)) %>%
-    mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
-    			 sample_id = str_extract(fname, valid_name)) 
+		mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
+			   sample_id = basename(fname) %>% str_extract(paste0('^', valid_name)))
 }
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
@@ -188,13 +195,14 @@ snp_file_pattern <- ifelse(SNP.ignore.filters,
 						   '.processed-data.tsv',
 						   paste0('.filtered-data.', use.filter, '.tsv'))
 
-SNP.genotype.distances <- file.path(basepath, DATAPATH, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
+SNP.genotype.distances <- file.path(basepath, datapath, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
   lapply(read_snps) %>%
 	bind_rows() %>%
 	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
 	filter(if_all(everything(), ~!is.na(.))) %>%
 	dplyr::select(-Index, -Name) %>%
-	rename_with(~ sampletable[match(., sampletable$Sample_ID),]$Sample_Name ) %>%
+	#TODO: test `rename_by`
+	rename_with(~ sampletable[match(., sampletable$Sample_ID), rename_by] ) %>%
 	t() %>%
 	dist(method = 'manhattan')
 
@@ -226,11 +234,11 @@ load_annotate_cnv <- function(fname){
 		)
 }
 
-cnv_calls <- lapply(file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.tsv')), load_annotate_cnv) %>%
+cnv_calls <- lapply(file.path(basepath, datapath, use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.tsv')), load_annotate_cnv) %>%
 	bind_rows()
 
 ## GenCall logs
-GenCall.stats <-  file.path(basepath, DATAPATH, use_ids, paste0(use_ids, '.stats.txt')) %>%
+GenCall.stats <-  file.path(basepath, datapath, use_ids, paste0(use_ids, '.stats.txt')) %>%
 	lapply(read_tsv, show_col_types = FALSE, col_types = cols(computed_gender = col_character(),
 	                                                          sentrix_barcode = col_character())) %>%
 	bind_rows() %>%
@@ -333,6 +341,23 @@ metric.colors <- list(
 Combined.metrics <- lapply(metrics, tr_tibble) %>% bind_rows()
 Combined.colors <-  lapply(metric.colors, tr_tibble) %>% bind_rows()
 
+get_call_stats_tool <- function(use.tool) {
+	cnv_calls %>%
+		#don't do individual tools here -> move to per tool section!
+		filter(tool.overlap.state != 'post-overlap' & use.tool %in% tool) %>%
+		group_by(sample_id) %>%
+		mutate(loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
+			   loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
+		) %>%
+		group_by(sample_id, CNV.state, loss.gain_log2ratio) %>%
+		summarise(total_calls = n(),
+				  reportable_new_calls = sum(str_detect(reportable, 'critical|yes$')),
+				  critical_new_calls = sum(reportable == 'critical')
+		) %>%
+		pivot_wider(names_from = CNV.state, values_from = contains('calls')) %>%
+		tr_tibble()
+}
+
 ```
 
 ### Summary
@@ -352,17 +377,77 @@ datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined
 datatable(GenCall.stats %>% tr_tibble(), options = list(dom = 't', pageLength = ncol(GenCall.stats)), rownames = FALSE)
 ```
 
-### PennCNV
+```{r qc.penncnv, eval='PennCNV' %in% cnv_tool_order, results='asis'}
 
-TODO: what can be extracted from log files
+cat('### PennCNV')
 
-### CBS
+# Extract qc summary stats from PennCNV log files
+logfiles <- list.files(file.path(basepath, config$log_path, 'PennCNV', sample_id),
+					   pattern = paste0(use.filter, '.error.log'), full.names = T)
 
-TODO: what can be extracted from log files
+penncnv.stats <- lapply(logfiles, function(fname) {
+	chrs <- basename(fname) %>% str_extract('^[^\\.]+')
+	lines <- readLines(fname)
+	# Extract from last line
+	tb <- lines[[length(lines)]] %>% str_remove('.*: ') %>%
+			str_split(' ') %>%
+			unlist() %>%
+			as_tibble_col(column_name = 'dummy') %>%
+			separate(dummy, c('Name', 'value'), sep = '=') %>%
+			filter(Name %!in% c('WF', 'GCWF')) %>%
+			mutate(Name = str_remove(Name, '[XY]'))
+	# Get wave correction
+	tb <- bind_rows(tb, lines %>%
+			str_subset('Adjusting LRR by GC model') %>%
+			str_remove('.*: ') %>%
+			str_split(', ') %>%
+			unlist() %>%
+			as_tibble_col(column_name = 'dummy') %>%
+			separate(dummy, c('Name', 'value'), sep = ' changes from ') %>%
+			mutate(Name = paste(Name, '(adjusted)'))
+	)
+	# Get median correction BAF & LRR (auto only)
+	if (chrs == 'auto') {
+		tb[str_detect(tb$Name, 'median' ),] <- lines %>%
+				str_subset('Median-adjusting') %>%
+				str_replace('.*(LRR|BAF).*( -?[0-9]\\.[0-9]{4})', '\\1_median;0-adjusted by\\2') %>%
+				as_tibble() %>%
+				separate(value, c('Name', 'value'), sep = ';')
+	}
+
+	mutate(tb, chr = ifelse(chrs == 'auto', 'chr1:22', chrs))
+	}) %>%
+	bind_rows() %>%
+	pivot_wider(names_from = chr, values_from = value) %>%
+	dplyr::rename(` ` = Name)
+datatable(penncnv.stats, options = list(dom = 't', pageLength = ncol(penncnv.stats)), rownames = FALSE)
+
+# Number of CNVs, LOHs called at which thresholds
+tbout <- get_call_stats_tool('PennCNV')
+datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+
+cat('\n\n')
+```
+```{r qc.CBS, eval='CBS' %in% cnv_tool_order, results='asis'}
+cat('### CBS\n\n')
+
+tbout <- get_call_stats_tool('CBS')
+datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+
+cat('\n\n')
+```
+
+```{r qc.GADA, eval='GADA' %in% cnv_tool_order, results='asis'}
+cat('### GADA\n\n')
+
+tbout <- get_call_stats_tool('GADA')
+datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+
+cat('\n\n')
+```
+
 
 ### Pipeline settings
-
-TODO: use a patched yaml that includes default values
 
 ```yaml
 `r xfun::file_string(params$configfile)`
@@ -683,8 +768,9 @@ if (nrow(non.reportable.calls)>0) {
 If a reference sample exists, a side by side comparison is also generated (left: sample; right: reference).
 
 ```{r rideogram, results='asis'}
-# TODO: need to get the proper data from somewhere else, fasta maybe?
-# -> needs to contain centromer positions as well
+# TODO: need to get the proper data from somewhere else, fasta or vcf headers maybe?
+# -> centromer positions would be needed as well
+# -> maybe some bioconductor packages
 
 # This os supposedly GRCh38
 data(human_karyotype, package="RIdeogram")
