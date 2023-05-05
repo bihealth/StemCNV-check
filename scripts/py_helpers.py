@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Helper functions for pipeline"""
-from py_exceptions import *
+from .py_exceptions import *
 
 
 def read_sample_table(filename):

@@ -26,6 +26,7 @@ args <- parser$parse_args()
 sample_id <- args$sample_id
 config <- read_yaml(args$config_path)
 use.filter <- config$settings$filter$`use-filterset`
+data_path <- args$data_path
 
 # necessary info
 # vcf contig headers -> can be taken from SNP vcf file (that way the genome model should be correct)
@@ -55,7 +56,7 @@ get_REF_entry <- function(seqname, pos) {
 
 
 
-processed.calls <- file.path(args$data_path, sample_id,
+processed.calls <- file.path(data_path, sample_id,
 							 paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv')) %>%
 	read_tsv(show_col_types = FALSE) %>%
 	# Maybe needed for the list col redoing
@@ -64,29 +65,29 @@ processed.calls <- file.path(args$data_path, sample_id,
 	mutate(
 		#Need to reduce listcols somehow
 		#TODO:
-		# Using sum here will be less accurate, this is not solvalble with the given information
-		# Accurate number would need to be derived while merging, requires loading the SNP subsests & doing a set merge on them
-		numsnp = numsnp %>% str_split(';') %>% max(),
-		tool = tool %>% str_split(';') %>% unique() %>% sort %>% paste(collapse='&'),
+		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
+		# Accurate number would need to be derived in parallel merging, requires loading the SNP subsets & doing a set merge on them
+		numsnp = numsnp %>% str_split(';') %>% unlist() %>% max(),
+		tool = tool %>% str_split(';') %>% unlist() %>%unique() %>% sort %>% paste(collapse='&'),
 		# Only difference here will by 3/4/... or 0/1
 		# -> should maybe take the PennCNV one (instead of majority / 3 or 0)?
 		# -> Actually 3 or 0 are better assumptions if both 3/4 and 0/1 are the options.
-		copynumber = copynumbers %>% str_split(';') %>% table() %>% which.max %>% names(),
+		copynumber = copynumbers %>% str_split(';') %>% unlist() %>%table() %>% which.max %>% names(),
 		CNV.type = ifelse(CNV.state == 'gain', 'DUP', 'DEL'),
 		CNV.type = ifelse(CNV.state == 'LOH', 'LOH', CNV.type),
-		CHROM = seqnames,
+		CHROM = factor(seqnames, levels = paste0('chr', c(1:22, 'X', 'Y'))),
 		POS = start, #TODO not sure if this is also 1-indexed
 		ID = str_glue("CNV_{seqnames}_{start}_{end}"),
-		REF = map2(seqnames, start, get_REF_entry),
+		REF = map2_chr(seqnames, start, get_REF_entry),
 		ALT = str_glue('<{CNV.type}>'),
 	    QUAL = '.',
 		FILTER = '.',
 		INFO = str_glue("END={end};SVTYPE={CNV.type};SVLEN={length}"),
-		genotype = ifelse(CNV.state == 'LOH', '1/0', '1/1')
+		genotype = ifelse(CNV.state == 'LOH', '0/1', '1/1')
 	 )
 
 # MAYBE:
-# If the processed table would contains start 8&end) Probe of a CNV, a faster lookup than `filter_by_overlaps` could be used
+# If the processed table would contain start (&end) Probe of a CNV, a faster lookup than `filter_by_overlaps` could be used
 # -> PennCNV would give that info as is; CBS not, can't know for future tools
 # -> Therefore would require doing this probe matching step in the CBS &/ CNV processing steps
 # -> Reading SNP probe data in CNV processing might allow easier merging by probe distance
@@ -105,7 +106,7 @@ use.cols <- list(c('genotype', 'GT', "Segment genotype"),
 				 c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
 				 c('tool', 'TO', "Segment called as CNV by these tools")
 )
-vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', sample_id)
+vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT')
 
 write_to_vcf <- function(tb, outvcf) {
 
@@ -116,7 +117,8 @@ write_to_vcf <- function(tb, outvcf) {
 		str_glue('##FORMAT=<ID={shorthand},NUMBER=1,Type={type},Description="{desc}">')
 	})
 
-	writeLines(c(vcf.header, info.lines, format.lines), con = outvcf)
+	writeLines(c(vcf.header, info.lines, format.lines,
+	             paste0('#', paste(c(vcf_cols, sample_id), collapse = '\t'))), con = outvcf)
 
 
 	tb %>%
@@ -124,40 +126,30 @@ write_to_vcf <- function(tb, outvcf) {
 		rowwise() %>%
 		mutate(
 			FORMAT = paste(sapply(use.cols, function (x) x[2]), collapse = ':'),
-			sample_formatted = paste(sapply(use.cols, function (x) !!sym(x[1])), collapse = ':'),
+			#TODO this should be possibl dynamically somehow
+			#sample_formatted = paste(sapply(use.cols, function (x) x[1]), collapse = ':'),
+			sample_formatted = paste(genotype, copynumber, numsnp, tool, sep = ':'),
 		) %>%
-		dplyr::select(one_of(vcf_cols)) %>%
-		write_tsv(outvcf, append=T, header = F)
+		dplyr::select(one_of(c(vcf_cols, 'sample_formatted', 'sample_id'))) %>%
+		pivot_wider(names_from = sample_id, values_from = sample_formatted) %>%
+		arrange(CHROM, POS) %>%
+		write_tsv(outvcf, append=T)
 
 	}
 
 
 if (args$mode == 'split-tools') {
-	processed.calls %>%
-		filter( ...state != 'post-processing') %>%
-		group_by(tool) %>%
-		#some purrr walk function instead?
-		do(write_to_vcf(.))
+	lapply(config$settings$CNV.calling.tools, function(use.tool) {
+		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{use.filter}.vcf')
+		processed.calls %>%
+			filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
+			write_to_vcf(., outvcf = outvcf)
+	})
 } else {
+	#TODO This should work, but there are some issues with duplicted calls? might only be GADA, unclear
+	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls.{use.filter}.vcf')
 	processed.calls %>%
-		filter( ...state != 'pre-processing') %>%
+		filter(tool.overlap.state != 'pre-overlap') %>%
 		#some purrr walk function instead?
-		do(write_to_vcf(., extra.cols = c('tool', ...)))
+		write_to_vcf(., outvcf = outvcf)
 }
-
-# Info header cols should be static ?!
-
-# INFO fields should hold what is in teh extra cols of the preprocess script
-# -> option to determine which fields are included?
-# -> GT probably always 1/1 -> <DEL> / >DUP>; for LOH might be 1/0 <CNV> ?)
-
-##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Segment most-likely copy-number call">
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Segment genotype">
-##FORMAT=<ID=NP,Number=1,Type=Integer,Description="Number of probes in the segment">
-
-#CHROM POS ID REF ALT QUAL FILTER INFO FORMAT 1004492DEZ-N1-DNA1-WES1
-1 3387921 . T <DEL> . . END=3388605;SVTYPE=DEL GT:CN:NP 1/1:0:1
-
-
-
-

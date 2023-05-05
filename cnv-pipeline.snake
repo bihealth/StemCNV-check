@@ -52,12 +52,20 @@ sample_data = read_sample_table(SAMPLETABLE)
 # Rules ========================================================================
 
 def get_target_files():
-  #('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+  #TODO/maybe:
+  # allow multiple targets to be specified?
+  #
+  #Target options: ('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
   filter = config['settings']['filter']['use-filterset']
   # Report
   if TARGET == 'report':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CNV-report.html") for
      _, _, sample_id, _, _ in sample_data.values()]
+  # cnv-vcf
+  if TARGET == 'cnv-vcf':
+    return expand([os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.{{tool}}-cnv-calls.{filter}.vcf") for
+                   _, _, sample_id, _, _ in sample_data.values()],
+                  tool = 'combined' if config['settings']['make_cnv_vcf']['mode'] == 'combined-calls' else config['settings']['CNV.calling.tools'])
   # Target Processed-calls
   if TARGET == 'processed-calls':
     return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
@@ -197,7 +205,7 @@ rule run_gtc2vcf_vcf:
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
  
-rule filter_tsv:
+rule run_filter_tsv:
   input:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
   output:
@@ -308,7 +316,7 @@ def get_ref_id(wildcards, get_sex=False):
   sex, ref_name = [(s, r) for name,(_, _, i, s, r) in sample_data.items() if i == wildcards.sample_id][0]
   sample_id = wildcards.sample_id
   if ref_name and ref_name in sample_data:
-    _, ref_id, ref_sex, _ = sample_data[ref_name]
+    _, _, ref_id, ref_sex, _ = sample_data[ref_name]
   elif ref_name:
     # listed reference does not exist in sampletable
     raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
@@ -336,7 +344,7 @@ def get_preprocess_input(wildcards):
 
   return files
 
-rule process_CNV_calls:
+rule run_process_CNV_calls:
   input:
     get_preprocess_input
   output:
@@ -381,3 +389,28 @@ rule knit_report:
     out=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "out.log")
   shell:
     "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {CONFIGFILE} > {log.out} 2> {log.err}"
+
+
+def get_cnv_vcf_output(mode):
+  if mode == 'combined-calls':
+    return os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.vcf")
+  elif mode == 'split-tools':
+    return [os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{{filter}}.vcf")
+            for tool in config['settings']['CNV.calling.tools']]
+  else:
+    raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
+
+rule run_make_cnv_vcf:
+  input:
+    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.combined-cnv-calls.{filter}.tsv"),
+    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
+  output:
+    get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
+  params:
+    include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),
+    mode = config['settings']['make_cnv_vcf']['mode']
+  log:
+    err=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","{filter}.error.log"),
+    out=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","{filter}.out.log")
+  shell:
+    "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {BASEPATH}/{DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"

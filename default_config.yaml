@@ -52,6 +52,10 @@ settings:
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
+  make_cnv_vcf:
+    # mode can be 'combined-calls' or 'split-tools'
+    mode: combined-calls
+    include_states: ['gain', 'loss', 'LOH']
   report: 
     thresholds:
       # Include these sizes in the main tables of the report

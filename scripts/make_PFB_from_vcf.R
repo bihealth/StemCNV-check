@@ -12,6 +12,7 @@ args <- parse_args(parser, positional_arguments = 2)
 inputfile <- args$args[1]
 outputfile <- args$args[2]
 
+#TODO: use vcfR instead
 
 vcf.info <- read_delim(inputfile, comment = '#', delim = '\t', 
                               col_names = c('Chr', 'Position', 'Name', 'Ref', 'Alt', 'x1', 'x2', 'INFO', 'FORMAT', 'SAMPLE')) %>%

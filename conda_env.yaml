@@ -16,7 +16,7 @@ dependencies:
   - r-yaml
   - r-sessioninfo
   - r-devtools
-  #- r-vcfr # mostly good for reading
+  - r-vcfr
   ## Algorithms ##
   # gtc2vcf
   - gtc2vcf = 1.16 # new/untested

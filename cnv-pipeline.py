@@ -46,13 +46,28 @@ def check_sample_table(args):
 
 	for constraint, val in (('sample_id', 's'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
 		pattern = config['wildcard_constraints'][constraint] if 'wildcard_constraints' in config and constraint in config['wildcard_constraints'] else def_config['wildcard_constraints'][constraint]
-		mismatch = ["{} ({})".format(sn, eval(val)) for sn, (n, p, s, _, _) in sample_data.items() if not re.match('^' + pattern + '$', n)]
+		mismatch = ["{} ({})".format(sn, eval(val)) for sn, (n, p, s, _, _) in sample_data.items() if not re.match('^' + pattern + '$', eval(val))]
 		if mismatch:
-			raise SampleConstraintError(f"The '{constraint}' values for these samples not fit the expected constraints: " + ', '.join(mismatch))
+			raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
 
 
+# Assume that the default_config hasn't been altered & is correct
 def check_config(args):
-	pass
+
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+
+	#TODO: need helper function to ignore values omitted from user config
+
+	if config['settings']['make_cnv_vcf']['mode'] not in c('combined-calls', 'split-tools'):
+		raise ConfigValueError(
+			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
+
+	#TODO:
+	# - check that required values are filled in
+	# - check that value types are correct / match config (incl list len?)
+	# - maybe: us the same apprach that seasnap has for this?
+
 
 def check_installation():
 	pass
@@ -195,7 +210,7 @@ def setup_argparse():
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
 
-	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
@@ -217,6 +232,7 @@ if __name__ == '__main__':
 	
 	if args.action == 'run':
 		check_sample_table(args)
+		#check_config(args)
 		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
