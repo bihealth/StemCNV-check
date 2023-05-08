@@ -26,6 +26,7 @@ args <- parser$parse_args()
 sample_id <- args$sample_id
 config <- read_yaml(args$config_path)
 use.filter <- config$settings$filter$`use-filterset`
+name_addition <- config$settings$make_cnv_vcf$name_addition
 data_path <- args$data_path
 
 # necessary info
@@ -140,14 +141,14 @@ write_to_vcf <- function(tb, outvcf) {
 
 if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
-		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{use.filter}.vcf')
+		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{name_addition}{use.filter}.vcf')
 		processed.calls %>%
 			filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {
 	#TODO This should work, but there are some issues with duplicted calls? might only be GADA, unclear
-	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls.{use.filter}.vcf')
+	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls.{name_addition}{use.filter}.vcf')
 	processed.calls %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		#some purrr walk function instead?

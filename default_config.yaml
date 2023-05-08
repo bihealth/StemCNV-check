@@ -53,9 +53,12 @@ settings:
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
   make_cnv_vcf:
-    # mode can be 'combined-calls' or 'split-tools'
+    # mode can be 'combined-calls' (one vcf with overlapped calls) or 'split-tools' (once vcf per tool, with non-overlapped calls)
     mode: combined-calls
+    # Which CNV types to be included in vcf
     include_states: ['gain', 'loss', 'LOH']
+    # Use this to create distinct vcf files, for i.e. different CNV types
+    name_addition: ''
   report: 
     thresholds:
       # Include these sizes in the main tables of the report
@@ -94,7 +97,6 @@ wildcard_constraints:
   sample_id: "[a-zA-Z0-9-_]+"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
   sentrix_name: '[0-9]+'
-  sample_id: '[a-zA-Z0-9-_]+'
 
 tools:
   GenCall:

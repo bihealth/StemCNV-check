@@ -51,52 +51,65 @@ sample_data = read_sample_table(SAMPLETABLE)
 
 # Rules ========================================================================
 
+def get_cnv_vcf_output(mode):
+  addition = config['settings']['make_cnv_vcf']['name_addition']
+  if mode == 'combined-calls':
+    return os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls.{addition}{{filter}}.vcf")
+  elif mode == 'split-tools':
+    return [os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{addition}{{filter}}.vcf")
+            for tool in config['settings']['CNV.calling.tools']]
+  else:
+    raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make_cnv_vcf']['mode']))
+
 def get_target_files():
   #TODO/maybe:
   # allow multiple targets to be specified?
   #
   #Target options: ('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
-  filter = config['settings']['filter']['use-filterset']
+  use_filter = config['settings']['filter']['use-filterset']
+  all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
   # Report
   if TARGET == 'report':
-    return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CNV-report.html") for
-            sample_id, _, _, _, _ in sample_data]
+    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
+                  sample_id = all_samples, filter = use_filter)
   # cnv-vcf
   if TARGET == 'cnv-vcf':
-    return expand([os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.{{tool}}-cnv-calls.{filter}.vcf") for
-                   sample_id, _, _, _, _ in sample_data],
-                  tool = 'combined' if config['settings']['make_cnv_vcf']['mode'] == 'combined-calls' else config['settings']['CNV.calling.tools'])
+    #TODO: this might break if expand can't handle lists
+    return expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']),
+                  sample_id = all_samples, filter = use_filter)
+      #      )
+      #
+      # [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.{{tool}}-cnv-calls.{filter}.vcf") for
+      #              sample_id, _, _, _, _ in sample_data],
+      #             tool = 'combined' if config['settings']['make_cnv_vcf']['mode'] == 'combined-calls' else config['settings']['CNV.calling.tools'])
+
   # Target Processed-calls
   if TARGET == 'processed-calls':
-    return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.combined-cnv-calls.{filter}.tsv") for
-            sample_id, _, _, _, _ in sample_data]
+    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.tsv"),
+                  sample_id = all_samples, filter = use_filter)
   # Target PennCNV
   if TARGET == 'PennCNV':
-    return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv") for
-            sample_id, _, _, _, _ in sample_data] +\
-      [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv") for
-       sample_id, _, _, _, _ in sample_data] +\
+    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.{filter}.tsv"),
+                  sample_id = all_samples, filter = use.filter, chr = ('autosomes', 'chrx')) + \
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
        sample_id, _, _, sex, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
   if TARGET == 'CBS':
-    return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv") for
-            sample_id, _, _, _, _ in sample_data]
+    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.{filter}.tsv"),
+                  sample_id = all_samples, filter = use_filter)
   # Target CBS
   if TARGET == 'GADA':
-    return [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv") for
-            sample_id, _, _, _, _ in sample_data]
+    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.GADA.{filter}.tsv"),
+                  sample_id = all_samples, filter = use_filter)
   #Target: filtered-data
   if TARGET == 'filtered-data':
-    return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv") for
-             sample_id, _, _, _, _ in sample_data] #+\
+    return  expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
+                  sample_id = all_samples, filter = use_filter)
       # TODO: add soft-filter to vcf file!
   #Target: unfiltered-data
   if TARGET == 'unfiltered-data':
-    return  [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.processed-data.tsv") for
-             sample_id, _, _, _, _ in sample_data] +\
-      [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
-       sample_id, _, _, _, _ in sample_data]
+    return  expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"), sample_id = all_samples) + \
+      expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"), sample_id = all_samples)
 
 
 rule all:
@@ -398,15 +411,6 @@ rule knit_report:
   shell:
     "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {CONFIGFILE} > {log.out} 2> {log.err}"
 
-
-def get_cnv_vcf_output(mode):
-  if mode == 'combined-calls':
-    return os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.vcf")
-  elif mode == 'split-tools':
-    return [os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{{filter}}.vcf")
-            for tool in config['settings']['CNV.calling.tools']]
-  else:
-    raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
 
 rule run_make_cnv_vcf:
   input:
