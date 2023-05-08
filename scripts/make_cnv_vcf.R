@@ -135,11 +135,6 @@ write_to_vcf <- function(tb, outvcf) {
 		pivot_wider(names_from = sample_id, values_from = sample_formatted) %>%
 		arrange(CHROM, POS) %>%
 		write_tsv(outvcf, append=T)
-
-	}
-
-
-if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{name_addition}{use.filter}.vcf')
 		processed.calls %>%

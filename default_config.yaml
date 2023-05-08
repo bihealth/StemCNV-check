@@ -99,6 +99,12 @@ wildcard_constraints:
   sentrix_name: '[0-9]+'
 
 tools:
+  __default__:
+    threads: 1
+    memory: "2000M"
+    runtime: "2:00:00"
+    cmd-line-params: ""
+    partition: 'medium'
   GenCall:
     threads: 4
     memory: "8000M"

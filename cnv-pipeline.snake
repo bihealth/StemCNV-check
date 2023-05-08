@@ -90,7 +90,7 @@ def get_target_files():
   # Target PennCNV
   if TARGET == 'PennCNV':
     return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.{filter}.tsv"),
-                  sample_id = all_samples, filter = use.filter, chr = ('autosomes', 'chrx')) + \
+                  sample_id = all_samples, filter = use_filter, chr = ('autosomes', 'chrx')) + \
       [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv") for
        sample_id, _, _, sex, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
@@ -118,7 +118,17 @@ rule all:
   run:
     if removetempconfig:
       os.remove(CONFIGFILE)
-    
+
+def get_tool_resource(tool ,resource):
+  if not resource in ('threads', 'memory', 'runtime', 'partition', 'cmd-line-params'):
+    raise KeyError(f"This resource can not be defined: {resource}")
+  if not tool in config['tools']:
+    return config['tools']['__default__'][resource]
+  else:
+    if resource in config['tools'][tool]:
+      return config['tools'][tool][resource]
+    else:
+      return config['tools']['__default__'][resource]
 
 # MAYBE: make the gtc files intermediate? they are only needed once really
 # -> would allow an easier structure for output data
@@ -131,14 +141,14 @@ rule run_gencall:
     idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
   output:
     os.path.join(BASEPATH, DATAPATH, "gtc", "{sentrix_name}", "_done")
-  threads: config['tools']['GenCall']['threads']
+  threads: get_tool_resource('GenCall', 'threads')
   resources:
-    time=config['tools']['GenCall']['runtime'],
-    mem_mb=config['tools']['GenCall']['memory'],
-    partition='medium'
+    time=get_tool_resource('GenCall', 'runtime'),
+    mem_mb=get_tool_resource('GenCall', 'memory'),
+    partition=get_tool_resource('GenCall', 'partition')
   params:
     #TODO: check which options make sense here
-    options = config['tools']['GenCall']['cmd-line-params'],
+    options = get_tool_resource('GenCall', 'cmd-line-params'),
     outpath = os.path.join(BASEPATH, DATAPATH, "gtc", "{sentrix_name}")
   log:
     err=os.path.join(BASEPATH, LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
@@ -179,13 +189,13 @@ rule run_gtc2vcf_tsv:
     gtc = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"),
-  threads: 1
+  threads: get_tool_resource('gtc2vcf', 'threads')
   resources:
-    time=config['tools']['gtc2vcf']['runtime'],
-    mem_mb=config['tools']['gtc2vcf']['memory'],
-    partition='medium'
+    time=get_tool_resource('gtc2vcf', 'runtime'),
+    mem_mb=get_tool_resource('gtc2vcf', 'memory'),
+    partition=get_tool_resource('gtc2vcf', 'partition')
   params:
-    options = config['tools']['gtc2vcf']['cmd-line-params'],
+    options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
     csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
     err=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
@@ -202,26 +212,29 @@ rule run_gtc2vcf_vcf:
   output:
     vcf = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
     metatxt = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
-  threads: 1
+  threads: get_tool_resource('gtc2vcf', 'threads')
   resources:
-    time=config['tools']['gtc2vcf']['runtime'],
-    mem_mb=config['tools']['gtc2vcf']['memory'],
-    partition='medium',
+    time=get_tool_resource('gtc2vcf', 'runtime'),
+    mem_mb=get_tool_resource('gtc2vcf', 'memory'),
+    partition=get_tool_resource('gtc2vcf', 'partition')
   params:
-    options = config['tools']['gtc2vcf']['cmd-line-params'],
+    options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
     csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
     err=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
-  shell:
-    'bcftools plugin gtc2vcf {params.options} --no-version -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
- 
+  shell: 'bcftools plugin gtc2vcf {params.options} --no-version -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
+
 rule run_filter_tsv:
   input:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
-  threads: 1
+  threads: get_tool_resource('filter_tsv', 'threads')
+  resources:
+    time=get_tool_resource('filter_tsv', 'runtime'),
+    mem_mb=get_tool_resource('filter_tsv', 'memory'),
+    partition=get_tool_resource('filter_tsv', 'partition')
   log:
     err=os.path.join(BASEPATH, LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
@@ -254,11 +267,11 @@ rule run_PennCNV_auto:
     gcmodel = config['static_data']['GCmodel_file']
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.{filter}.tsv")
-  threads: 1
+  threads: get_tool_resource('PennCNV', 'threads')
   resources:
-    time=config['tools']['PennCNV']['runtime'],
-    mem_mb=config['tools']['PennCNV']['memory'],
-    partition='medium'
+    time=get_tool_resource('PennCNV', 'runtime'),
+    mem_mb=get_tool_resource('PennCNV', 'memory'),
+    partition=get_tool_resource('PennCNV', 'partition')
   log:
     err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.{filter}.out.log")
@@ -274,11 +287,11 @@ rule run_PennCNV_sex:
     gcmodel = config['static_data']['GCmodel_file']
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.{filter}.tsv")
-  threads: 1
+  threads: get_tool_resource('PennCNV', 'threads')
   resources:
-    time=config['tools']['PennCNV']['runtime'],
-    mem_mb=config['tools']['PennCNV']['memory'],
-    partition='medium'
+    time=get_tool_resource('PennCNV', 'runtime'),
+    mem_mb=get_tool_resource('PennCNV', 'memory'),
+    partition=get_tool_resource('PennCNV', 'partition')
   log:
     err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.{filter}.out.log")
@@ -294,7 +307,11 @@ rule run_CBS:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.{filter}.tsv")
-  threads: 1
+  threads: get_tool_resource('CBS', 'threads')
+  resources:
+    time=get_tool_resource('CBS', 'runtime'),
+    mem_mb=get_tool_resource('CBS', 'memory'),
+    partition=get_tool_resource('CBS', 'partition')
   params:
     SDundo = config['settings']['CBS']['SDundo']
   log:
@@ -308,7 +325,11 @@ rule run_GADA:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.GADA.{filter}.tsv")
-  threads: 1
+  threads: get_tool_resource('GADA', 'threads')
+  resources:
+    time=get_tool_resource('GADA', 'runtime'),
+    mem_mb=get_tool_resource('GADA', 'memory'),
+    partition=get_tool_resource('GADA', 'partition')
   params:
     alpha = config['settings']['GADA']['aAlpha'],
     gadaT = config['settings']['GADA']['gada.T'],
@@ -370,10 +391,11 @@ rule run_process_CNV_calls:
     get_preprocess_input
   output:
     os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.{filter}.tsv")
+  threads: get_tool_resource('CNV.process', 'threads')
   resources:
-    time=config['tools']['CNV.process']['runtime'],
-    mem_mb=config['tools']['CNV.process']['memory'],
-    partition='medium'
+    time=get_tool_resource('CNV.process', 'runtime'),
+    mem_mb=get_tool_resource('CNV.process', 'memory'),
+    partition=get_tool_resource('CNV.process', 'partition')
   params:
     gada = '-g' if 'GADA' in config['settings']['CNV.calling.tools'] else '',
     penncnv = '-p' if 'PennCNV' in config['settings']['CNV.calling.tools'] else '',
@@ -401,10 +423,11 @@ rule knit_report:
   output:
     html=os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
     plots=directory(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "report_images"))
+  threads: get_tool_resource('knitr', 'threads')
   resources:
-    time=config['tools']['knitr']['runtime'],
-    mem_mb=config['tools']['knitr']['memory'],
-    partition='medium'
+    time=get_tool_resource('knitr', 'runtime'),
+    mem_mb=get_tool_resource('knitr', 'memory'),
+    partition=get_tool_resource('knitr', 'partition')
   log:
     err=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "out.log")
@@ -418,6 +441,11 @@ rule run_make_cnv_vcf:
     os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
   output:
     get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
+  threads: get_tool_resource('make_cnv_vcf', 'threads')
+  resources:
+    time=get_tool_resource('make_cnv_vcf', 'runtime'),
+    mem_mb=get_tool_resource('make_cnv_vcf', 'memory'),
+    partition=get_tool_resource('make_cnv_vcf', 'partition')
   params:
     include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),
     mode = config['settings']['make_cnv_vcf']['mode']
