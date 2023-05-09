@@ -60,19 +60,24 @@ get_REF_entry <- function(seqname, pos) {
 processed.calls <- file.path(data_path, sample_id,
 							 paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv')) %>%
 	read_tsv(show_col_types = FALSE) %>%
+	# TODO: this should not be necessary
+	unique() %>%
 	# Maybe needed for the list col redoing
 	rowwise() %>%
 	#Function to Get REF allele is not fast, but works
 	mutate(
-		#Need to reduce listcols somehow
+		## Need to reduce listcols to a single value for vcf
+		# Use highest conf of single call
+		conf = suppressWarnings(conf %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
 		#TODO:
 		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
-		# Accurate number would need to be derived in parallel merging, requires loading the SNP subsets & doing a set merge on them
-		numsnp = numsnp %>% str_split(';') %>% unlist() %>% max(),
-		tool = tool %>% str_split(';') %>% unlist() %>%unique() %>% sort %>% paste(collapse='&'),
+		# Accurate number would need to be derived parallel to merging, requires loading the SNP subsets & doing a set merge on them
+		numsnp = numsnp %>% str_split(';') %>% unlist() %>% as.integer() %>% max(),
+		tool = tool %>% str_split(';') %>% unlist() %>% unique() %>% sort %>% paste(collapse='&'),
+		# No good way to decied if multiple copynumbers are predicted
 		# Only difference here will by 3/4/... or 0/1
 		# -> should maybe take the PennCNV one (instead of majority / 3 or 0)?
-		# -> Actually 3 or 0 are better assumptions if both 3/4 and 0/1 are the options.
+		# -> Maybe 3 or 0 are better assumptions if both 3/4 and 0/1 are the options.
 		copynumber = copynumbers %>% str_split(';') %>% unlist() %>%table() %>% which.max %>% names(),
 		CNV.type = ifelse(CNV.state == 'gain', 'DUP', 'DEL'),
 		CNV.type = ifelse(CNV.state == 'LOH', 'LOH', CNV.type),
@@ -84,6 +89,7 @@ processed.calls <- file.path(data_path, sample_id,
 	    QUAL = '.',
 		FILTER = '.',
 		INFO = str_glue("END={end};SVTYPE={CNV.type};SVLEN={length}"),
+		#TODO: is this the correct way?
 		genotype = ifelse(CNV.state == 'LOH', '0/1', '1/1')
 	 )
 
@@ -102,17 +108,21 @@ info.lines <- c('##INFO=<ID=END,Number=1,Type=Integer,Description="End coordinat
 				'##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">',
 				'##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">')
 
-use.cols <- list(c('genotype', 'GT', "Segment genotype"),
-				 c('copynumber', 'CN', "Segment most-likely or estimated copy-number call"),
-				 c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
-				 c('tool', 'TO', "Segment called as CNV by these tools")
+#TODO make it possible to configure this somewhat?
+vcf.format.content <- list(
+	c('genotype', 'GT', "Segment genotype"),
+	c('copynumber', 'CN', "Segment most-likely or estimated copy-number call"),
+	c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
+	c('tool', 'TO', "Segment called as CNV by these tools"),
+	c('conf', 'CO', "Tool dependent confidence score segment call (if available)")
 )
 vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT')
 
 write_to_vcf <- function(tb, outvcf) {
 
 	format.lines <- sapply(use.cols, function (x) {
-		type <- ifelse(is.numeric(tb[[x[1]]]), 'Integer', 'String')
+		#Integer vs numeric ?!
+		type <- ifelse(is.integer(tb[[x[1]]]), 'Integer', 'String')
 		shorthand <- x[2]
 		desc <- x[3]
 		str_glue('##FORMAT=<ID={shorthand},NUMBER=1,Type={type},Description="{desc}">')
@@ -121,20 +131,34 @@ write_to_vcf <- function(tb, outvcf) {
 	writeLines(c(vcf.header, info.lines, format.lines,
 	             paste0('#', paste(c(vcf_cols, sample_id), collapse = '\t'))), con = outvcf)
 
+	# CHROM comes from GRanges and is alwayas 'chr1..22' -> need to adapt to format used in vcf header
+	remove_str <- ifelse(any(str_detect(vcf.header, '##contig=<ID=[0-9],')), 'chr', '---')
 
-	tb %>%
+	format_str <- paste(sapply(vcf.format.content, function (x) x[2]), collapse = ':')
+	use.cols <- sapply(vcf.format.content, function (x) x[1])
+
+	test <- tb %>%
 		filter(CNV.state %in% args$include_state) %>%
 		rowwise() %>%
 		mutate(
-			FORMAT = paste(sapply(use.cols, function (x) x[2]), collapse = ':'),
-			#TODO this should be possibl dynamically somehow
-			#sample_formatted = paste(sapply(use.cols, function (x) x[1]), collapse = ':'),
-			sample_formatted = paste(genotype, copynumber, numsnp, tool, sep = ':'),
+			CHROM = str_remove(CHROM, remove_str),
+			ID = str_glue("CNV_{CHROM}_{start}_{end}"),
+			FORMAT = format_str,
 		) %>%
+		do({
+			out = as.data.frame(.)
+			out$sample_formatted = out[,use.cols] %>% paste(collapse = ':')
+			out
+		}) %>%
 		dplyr::select(one_of(c(vcf_cols, 'sample_formatted', 'sample_id'))) %>%
 		pivot_wider(names_from = sample_id, values_from = sample_formatted) %>%
 		arrange(CHROM, POS) %>%
 		write_tsv(outvcf, append=T)
+
+	}
+
+
+if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{name_addition}{use.filter}.vcf')
 		processed.calls %>%
@@ -142,8 +166,8 @@ write_to_vcf <- function(tb, outvcf) {
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {
-	#TODO This should work, but there are some issues with duplicted calls? might only be GADA, unclear
 	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls.{name_addition}{use.filter}.vcf')
+	outvcf <- 'test.vcf'
 	processed.calls %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		#some purrr walk function instead?
