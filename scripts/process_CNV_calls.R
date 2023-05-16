@@ -16,7 +16,7 @@ parser <- add_option(parser, c("-g", "--gada"), default = F,
 										 action="store_true", help="Use GADA calls")
 
 args <- parse_args(parser, positional_arguments = 4)
-# args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "-g", "data", "206210670080_R09C02", "/tmp/tmp1mgp988l.yaml", "sample_table_example.txt"))
+# args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "data_new", "BIHi001-B_WB02", "/tmp/tmpewl9ym4n.yaml", "sample_table.txt"))
 # args <- parse_args(parser, positional_arguments = 4, c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
 
 ##################
@@ -32,16 +32,15 @@ use.filter <- config$settings$filter$`use-filterset`
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
-ref_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
-ref_id <- NA
+ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
 
-if (!is.na(ref_name)){
-	ref_id <- sampletable[sampletable$Sample_Name == ref_name, ]$Sample_ID
-	sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
-		tolower() %>% substr(1,1)
-	if(sex.ref != sex) {
-		stop('Sex of sample and reference does not match!')
-	} 
+if (!is.na(ref_id)){
+  sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
+  	tolower() %>% substr(1,1)
+
+  if(sex.ref != sex) {
+  	stop('Sex of sample and reference does not match!')
+  }
 }
 
 
@@ -94,7 +93,8 @@ read_PennCNV <- function(filename) {
 					 CNV.state = ifelse(copynumber > 2, 'gain', CNV.state),
 					 CNV.state = as.character(CNV.state),
 					 tool = 'PennCNV',
-					 sample_id = str_extract(sample_id, valid_name),
+			         # basename can't handly empty input ...
+					 sample_id = str_remove(sample_id, '.*/') %>% str_extract(valid_name),
 		)
 }
 
@@ -105,7 +105,9 @@ read_CBS <- function(filename) {
 									numsnp = num.mark, sample_id = ID) %>%
 		# TODO -> most of this should probably be moved into the CBS script
 		mutate(
+			#TODO: R / CBS replaced '-' with '.' here
 			sample_id = str_remove(sample_id, '^X'),
+			sample_id = str_remove(filename, '.*/') %>% str_extract(valid_name),
 			length = end - start, # TODO: open / half open / +- 1 ??
 			Chr = paste0('chr', Chr),
 			Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
@@ -295,14 +297,16 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 			) %>%
 			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
 			makeGRangesFromDataFrame(keep.extra.columns = T)
-		
-		#Rebuild result if matching ref calls were found
 
-		non.ovs <- filter_by_non_overlaps(gr_ref, gr)
+		# This keeps only (certain) overlaps, now
+		# need to rebuild result if matching ref calls were found
+		#1) Original regions not overlapping any merged call
+		non.ovs <- filter_by_non_overlaps(gr_in, gr)
 		# mutate fails on empty GRanges object
 		if (length(non.ovs) > 0) { non.ovs <- non.ovs %>% mutate(call.in.reference = FALSE) }
 
-		ovs.noStateMatch <- group_by_overlaps(gr_ref, gr)
+		#2) Original regions overlapping that do overlap merged call (=in ref), but don't match the same call state.
+		ovs.noStateMatch <- group_by_overlaps(gr_in, gr)
 		if (length(ovs.noStateMatch) > 0) {
 			ovs.noStateMatch <- ovs.noStateMatch %>%
 				group_by(query, CNV.state.query) %>%
@@ -422,11 +426,12 @@ overlapped_tools_sample <- overlap_tools(tools, tool.overlap.min.perc)
  
 if (!is.na(ref_id)) {
 	
-	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.', use.filter, '.rds'))
-	overlapped_tools_ref <- readRDS(fname) %>%
+	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.', use.filter, '.tsv'))
+	overlapped_tools_ref <- read_tsv(fname) %>%
 		# These cols will interefere
 		dplyr::select(-length, -call.in.reference, -coverage.by.ref, -ref.tool,
 									-n_genes, -overlapping.genes) %>%
+		mutate(across(one_of(list_cols), ~ str_split(., ';'))) %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		makeGRangesFromDataFrame(keep.extra.columns = T) 
 	

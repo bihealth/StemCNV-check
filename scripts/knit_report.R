@@ -1,11 +1,9 @@
 suppressMessages(library(knitr))
 suppressMessages(library(tidyverse))
 suppressMessages(library(optparse))
-suppressMessages(library(yaml)
+suppressMessages(library(yaml))
 
-parser <- OptionParser(
-  usage = "usage: %prog [options] <sample_id> /path/to/config.yaml"
-)
+parser <- OptionParser(usage = "usage: %prog [options] <sample_id> /path/to/config.yaml")
 
 # parser <- add_option(parser, c("-n", "--no-reference"), action="store_true",
 #                      default=FALSE, help="Ignore reference sample regardless of samplesheet")

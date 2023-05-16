@@ -7,10 +7,10 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: '205857150048_R01C01'  #'GSM2538923_9371579017'
+  sample_id: 'BIHi001-B-7_MB01'  #'GSM2538923_9371579017'
   sampletable: 'sample_table.txt' #'sample_table.txt'
-  configfile: 'default_config.yaml' #'CytoSNP-config.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/data/205857150048_R01C01'
+  configfile: '/tmp/tmpewl9ym4n.yaml' #'CytoSNP-config.yaml'
+  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/data_new/BIHi280-A_MB01'
 ---
 
 <style type="text/css">
@@ -68,7 +68,7 @@ if (!is.na(ref_id)){
 }
 
 #Sample_Name is now an optional column
-if ('Sample_Name' in colnames(sampletable)) {
+if ('Sample_Name' %in% colnames(sampletable)) {
 	sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
 	ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
 	rename_by = 'Sample_Name'
@@ -79,19 +79,19 @@ if ('Sample_Name' in colnames(sampletable)) {
 }
 
 #Reportable thresholds
-reportable.loh <- config$settings$report$thresholds$reportable.loh
-reportable.cnv <- config$settings$report$thresholds$reportable.cnv
-fail.loh <- config$settings$report$thresholds$fail.loh
-fail.cnv <- config$settings$report$thresholds$fail.cnv
+reportable.loh <- config$settings$report$thresholds$reportable.loh %>% as.numeric()
+reportable.cnv <- config$settings$report$thresholds$reportable.cnv %>% as.numeric()
+fail.loh <- config$settings$report$thresholds$fail.loh %>% as.numeric()
+fail.cnv <- config$settings$report$thresholds$fail.cnv %>% as.numeric()
 
 #Warning tresholds
-callrate_warnings <- config$settings$report$QCwarnings$callrate
-total_CNV_warnings <- config$settings$report$QCwarnings$total_CNV
-total_LOH_warnings <- config$settings$report$QCwarnings$total_LOH
-ratio_CNV_warnings <- config$settings$report$QCwarnings$loss_gain_ratio
-sizable_CNV_warnings <- config$settings$report$QCwarnings$sizable_CNV
-sizable_LOH_warnings <- config$settings$report$QCwarnings$sizable_LOH
-SNP_distance_reference <- config$settings$report$QCwarnings$SNP_distance_reference
+callrate_warnings <- config$settings$report$QCwarnings$callrate %>% as.numeric()
+total_CNV_warnings <- config$settings$report$QCwarnings$total_CNV %>% as.numeric()
+total_LOH_warnings <- config$settings$report$QCwarnings$total_LOH %>% as.numeric()
+ratio_CNV_warnings <- config$settings$report$QCwarnings$loss_gain_ratio %>% as.numeric()
+sizable_CNV_warnings <- config$settings$report$QCwarnings$sizable_CNV %>% as.numeric()
+sizable_LOH_warnings <- config$settings$report$QCwarnings$sizable_LOH %>% as.numeric()
+SNP_distance_reference <- config$settings$report$QCwarnings$SNP_distance_reference %>% as.numeric()
 
 cnv_tool_order <- config$settings$CNV.calling.tools
 # cnv_tool_order <- ifelse(is.null(cnv_tool_order), list(c('PennCNV', 'GADA', 'CBS')), list(c(cnv_tool_order))) %>% unlist()
@@ -201,8 +201,8 @@ SNP.genotype.distances <- file.path(basepath, datapath, snp.ids, paste0(snp.ids,
 	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
 	filter(if_all(everything(), ~!is.na(.))) %>%
 	dplyr::select(-Index, -Name) %>%
-	#TODO: test `rename_by`
-	rename_with(~ sampletable[match(., sampletable$Sample_ID), rename_by] ) %>%
+	# #TODO: test `rename_by`
+	# rename_with(~ sampletable[match(., sampletable$Sample_ID), rename_by] ) %>%
 	t() %>%
 	dist(method = 'manhattan')
 
@@ -246,15 +246,6 @@ GenCall.stats <-  file.path(basepath, datapath, use_ids, paste0(use_ids, '.stats
 	mutate(gtc = str_remove(gtc, '.gencall.gtc')) %>%
 	dplyr::rename(sample_id = gtc)
 
-## PennCNV logs & stats
-
-#TODO
-# -> could be exported by the preprocess script? (better than loading & summarizing here at least ...)
-
-## CBS logs & stats
-
-#TODO
-
 ```
 
 
@@ -265,11 +256,12 @@ GenCall.stats <-  file.path(basepath, datapath, use_ids, paste0(use_ids, '.stats
 ```{r qc.metrics}
 
 if (!is.na(ref_id)) {
-  sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
-  names(sample_headers) <- c(sample_id, ref_id)
+	#TODO: use the - now optional - Sample_Name column here, if available
+	sample_headers <- c(sample_id, paste0('Reference (', ref_id, ')'))
+	names(sample_headers) <- c(sample_id, ref_id)
 } else {
-  sample_headers <- c(sample_name )
-  names(sample_headers) <- c(sample_id )
+	sample_headers <- c(sample_id )
+	names(sample_headers) <- c(sample_id )
 }
 
 tr_tibble <- function(tb) {
@@ -385,11 +377,16 @@ cat('### PennCNV')
 logfiles <- list.files(file.path(basepath, config$log_path, 'PennCNV', sample_id),
 					   pattern = paste0(use.filter, '.error.log'), full.names = T)
 
+#TODO:
+# Check for Warning lines !!
+
 penncnv.stats <- lapply(logfiles, function(fname) {
 	chrs <- basename(fname) %>% str_extract('^[^\\.]+')
 	lines <- readLines(fname)
+	notice_lines <- str_subset(lines, 'NOTICE:')
 	# Extract from last line
-	tb <- lines[[length(lines)]] %>% str_remove('.*: ') %>%
+	tb <- notice_lines[[length(notice_lines)]] %>%
+			str_remove('.*: ') %>%
 			str_split(' ') %>%
 			unlist() %>%
 			as_tibble_col(column_name = 'dummy') %>%
@@ -626,7 +623,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 		scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) + 
 		scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) + 
 		labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) + 
-		facet_wrap(~SampleName, nrow = 1) + 
+		facet_wrap(~Sample_Name, nrow = 1) +
 		theme(
 			strip.background = element_blank(),
 			strip.text.x = element_blank(),
@@ -634,7 +631,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 		)
 	
 	# This still creates and empty plot area - not sure how to get rid of it
-	header <- ggplot(calls) + facet_wrap(~SampleName, nrow=1) + theme_classic() + 
+	header <- ggplot(calls) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
 		theme(axis.line = element_blank(), plot.background = element_blank(),
 					panel.background = element_blank(), panel.border = element_blank())
 	
@@ -646,9 +643,9 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
 	
 	calls <- calls %>% 
 		filter(!is.na(x_pos)) %>%
-		dplyr::select(SampleName, 1, 3:4, reportable, call.in.reference, CNV.state, tool) %>%
+		dplyr::select(Sample_Name, 1, 3:4, reportable, call.in.reference, CNV.state, tool) %>%
 		#dplyr::rename(Chr = seqnames) %>%
-		arrange(SampleName, start) %>% #Chr
+		arrange(Sample_Name, start) %>% #Chr
 		rowwise() %>%
 		mutate(across(c(CNV.state, tool), ~paste(., collapse = ',')))
 
@@ -918,7 +915,7 @@ if (length(shape_by) == 1) {
 # Build dendrogram & sort annotation table by it
 hc <- hclust(SNP.genotype.distances)
 dd <- as.dendrogram(hc) 
-dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$SampleName),] 
+dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$Sample_ID),]
 
 dend <- dd %>%
   set('labels_col', dend.format.df$col) %>%
@@ -953,7 +950,7 @@ gg1 <- dend %>%
 # make legend
 gg2 <- dend.format.df %>%
   #arrange(SampleGroup) %>%
-  ggplot(aes(x = SampleName, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) + 
+  ggplot(aes(x = Sample_ID, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) +
   geom_point() + 
   scale_color_manual(values = col_map, guide = ifelse(color_by == '_dummy_color', list('none'),
   										list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] )  + 

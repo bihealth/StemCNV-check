@@ -41,7 +41,6 @@
 ? unclear prio -> maybe needed for good output ?
 - merge by probe distance
 - ref (& tool?) overlap with min 80% (reciprocal?) overlap
-- individual tool stats
 - circO plots
 - installation procedure: as much as possible should be in bioconda
 

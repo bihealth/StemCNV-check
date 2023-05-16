@@ -165,8 +165,8 @@ write_to_vcf <- function(tb, outvcf) {
 if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{name_addition}{use.filter}.vcf')
-		# processed.calls %>%
-		# 	filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
+		processed.calls %>%
+			filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {
