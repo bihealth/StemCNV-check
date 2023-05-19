@@ -128,7 +128,7 @@ write_to_vcf <- function(tb, outvcf) {
 	format_str <- paste(sapply(vcf.format.content, function (x) x[2]), collapse = ':')
 	use.cols <- sapply(vcf.format.content, function (x) x[1])
 
-	format.lines <- sapply(use.cols, function (x) {
+	format.lines <- sapply(vcf.format.content, function (x) {q
 		#Integer vs numeric ?!
 		type <- ifelse(is.integer(tb[[x[1]]]), 'Integer', 'String')
 		shorthand <- x[2]
