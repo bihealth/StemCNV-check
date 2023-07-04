@@ -25,10 +25,30 @@ settings:
     use-filterset: 'full' # basic|highGT|highGC|full [=highGT+GC]
   CBS:
     SDundo: 1
-    # LRR threshold for identifying CBS segments as gain/loss 
+    # one-size-fits-all cutoff
     LRR.th.value: 0.2
-    # adjustment of threshold for X chromosome (female: down, male: up)
+    # with adjustment of threshold for X chromosome (female: down, male: up)
     LRR.th.value.Xadj: 0.2
+    #
+    #equals: (X only - Y like autosome)
+    # female X LRR: loss < 0  ; gain > 0.4
+    #   male X LRR: loss <-0.4; gain > 0
+    #
+    # LRR thresholds for identifying CBS segments as gain/loss on autosomes
+    LRR.loss: -0.25      #CN1
+    LRR.loss.large: -1.1 #CN0
+    LRR.gain: 0.2        #CN3
+    LRR.gain.large: 0.75 #CN4+
+    # plus specifics for sex chromosomes
+    LRR.male.XorY.loss: -0.5    #CN0
+    LRR.male.XorY.gain:       0.28    #CN2
+    LRR.male.XorY.gain.large: 0.75    #CN3+
+    LRR.female.X.loss: 0.25     #CN1
+    LRR.female.XX.loss: -1.1    #CN0; kinda strange?
+    LRR.female.X.gain:       0.75    #CN3
+    LRR.female.X.gain.large: 1.5     #CN4+
+
+
   GADA:
     # Sparsness of bayesian model; higher value gives faster, but fewer results; mostly irrelevant with hig T value
     aAlpha: 0.2
@@ -86,9 +106,9 @@ settings:
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
       # enries with __[column] will use all other samples with the same value in [column]
       # entries with _[column] expect a column that contains additional (, separated) sample_ids
-      extra_samples: ['__Chip_Name']
+      extra_samples: ['__Chip_Name', '__Sample_Group']
       # You can also use additional metadata columns from the sample table
-      dendrogram.color.by: 'SampleGroup'
+      dendrogram.color.by: 'Sample_Group'
       dendrogram.shape.by: 'Chip_Name'
 
 

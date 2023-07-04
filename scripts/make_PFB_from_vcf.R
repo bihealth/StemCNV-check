@@ -1,21 +1,23 @@
-suppressMessages(library(tidyverse))
-suppressMessages(library(optparse))
-
+#! /usr/bin/Rscript
 # Script to make PFB file based on information in vcf file (derived from Illumina cluster file)
+suppressMessages(library(argparse))
 
-parser <- OptionParser(
-	usage = "usage: %prog /path/to/inputfile.vcf /path/to/outputfile.pfb"
-)
+parser <- ArgumentParser(description="Script to make PFB file based on information in vcf file (derived from Illumina cluster file)")
 
-args <- parse_args(parser, positional_arguments = 2)
+parser$add_argument('inputfile', type = 'character', help='Path to input file')
+parser$add_argument('outputfile', type = 'character', help='Path to output file')
 
-inputfile <- args$args[1]
-outputfile <- args$args[2]
+args <- parser$parse_args()
 
-#TODO: use vcfR instead
+suppressMessages(library(tidyverse))
+suppressMessages(library(vcfR))
 
-vcf.info <- read_delim(inputfile, comment = '#', delim = '\t', 
-                              col_names = c('Chr', 'Position', 'Name', 'Ref', 'Alt', 'x1', 'x2', 'INFO', 'FORMAT', 'SAMPLE')) %>%
+inputfile <- args$inputfile
+outputfile <- args$outputfile
+
+snp.vcf <- read.vcfR(inputfile, verbose = F)
+
+vcf.info <- as_tibble(snp.vcf@fix) %>%
   select(Name, Chr, Position, Ref, Alt, INFO) %>%
   separate(INFO, 
            .$INFO[[1]] %>% str_remove_all('=[0-9.]+') %>% str_split(';') %>% unlist(),

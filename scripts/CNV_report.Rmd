@@ -7,16 +7,20 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: 'BIHi001-B-7_MB01'  #'GSM2538923_9371579017'
-  sampletable: 'sample_table.txt' #'sample_table.txt'
-  configfile: '/tmp/tmpewl9ym4n.yaml' #'CytoSNP-config.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/data_new/BIHi280-A_MB01'
+  sample_id: 'BIHi005-A-13'  #'GSM2538923_9371579017'
+  sampletable: 'sample_table_example.txt' #'sample_table.txt'
+  configfile: 'config_test.yaml' #'CytoSNP-config.yaml'
+  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
 ---
 
 <style type="text/css">
 .main-container {
   max-width: 100% !important;
   margin: auto;
+}
+[role=tab] {
+  height: 40px;
+  width: 250px;
 }
 </style>
 
@@ -758,11 +762,50 @@ if (nrow(non.reportable.calls)>0) {
 ```
 
 
+```{r plots.roi, eval='Regions_of_Interest' %in% colnames(sampletable), results='asis'}
+cat('## Regions of Interest {.tabset}\n\n')
+
+regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
+	str_split(';') %>% unlist()
+
+use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
+
+if (length(regions)>0) {
+	for (region in regions) {
+
+		Chr <- str_remove(region, ':.*')
+		Chr <- ifelse(use_chr_str & str_detect(Chr, regex('chr', ignore_case = T)),
+					   tolower(Chr), str_remove(Chr, regex('chr', ignore_case = T)))
+		Start <- str_extract(region, '(?<=:)[0-9]+') %>% as.numeric()
+		End <- str_extract(region, '(?<=-)[0-9]+$') %>% as.numeric()
+		Size <- End - Start
+
+		size_order <- ifelse(log10(Size) >= 6, 1e6, 1e3)
+		size_str <- ifelse(log10(Size) >= 6, 'Mb', 'kb')
+
+		cat(paste0('### Region:', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
+
+		res <- make_LRR_BAF_plots(Chr, Start, End, Size, 1e6)
+		subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
+
+		subchunkify(res$calls, paste0('table.nonreportable.calls.',i))
+		subchunkify(res$genes, paste0('table.nonreportable.genes.',i))
+
+		cat('\n\n')
+	}
+}
+
+cat('\n\n')
+```
+
 # Sample comparison  {.tabset}
 
 ## Virtual Karyotype
 
 If a reference sample exists, a side by side comparison is also generated (left: sample; right: reference).
+
+[//]: # (TODO: this could probably also be done with gosling)
+[//]: # (https://gosling-lang.github.io/gos/gallery/ideograms.html)
 
 ```{r rideogram, results='asis'}
 # TODO: need to get the proper data from somewhere else, fasta or vcf headers maybe?
@@ -816,9 +859,17 @@ if (!is.na(ref_id)) {
 
 
 
-## CNV level /Circo plots
+## Circo / Circular plots
 
-TBD / TODO
+Not added yet
+
+[//]: # ()
+[//]: # ()
+[//]: # (```{python gosling.plots})
+[//]: # (import gosling as gos)
+[//]: # ()
+[//]: # ()
+[//]: # (```)
 
 
 ```{r snp.dendrogram, results='asis', eval = do.SNP.clustering}

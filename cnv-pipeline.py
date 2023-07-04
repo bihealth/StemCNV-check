@@ -15,7 +15,7 @@ import yaml
 # import ruamel.yaml as ruamel_yaml
 # from snakemake import RERUN_TRIGGERS
 from snakemake import main as snakemake_main
-from scripts.py_helpers import read_sample_table
+from scripts.py_helpers import *
 from scripts.py_exceptions import *
 
 SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
@@ -41,7 +41,8 @@ def check_sample_table(args):
 		missing = [sid for sid, s in samples.items() if not s]
 		raise SampleConstraintError("Missing values for 'Sex' in the samplesheet. Affected samples: " + ', '.join(missing))
 	elif not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
-		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'")
+		missing = [f"{sid}: {s}" for sid, s in samples.items() if not s[0].lower() in ('m', 'f')]
+		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'. Affected samples: " + ', '.join(missing))
 	#Check that all reference samples exist
 	ref_samples = {rid: sex for _, _, _, sex, rid in sample_data if rid}
 	missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
@@ -62,6 +63,32 @@ def check_sample_table(args):
 		mismatch = [sid for sid, n, p, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
 		if mismatch:
 			raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
+
+	sample_data_full = read_sample_table(args.sample_table, with_opt=True)
+
+	# Check optional 'Regions of Interest' column
+	if 'Regions_of_Intertest' in sample_data_full[0].keys():
+		for data_dict in sample_data_full:
+			regions = data_dict['Regions_of_Intertest'].split(';')
+			checks = [re.match(region, '(chr)?[0-9XY]{1-2}:[0-9]+-[0-9]+') for region in regions]
+			if not all(checks):
+				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (chr)?[Number]:[start]-[end], separate multiple regions with only ';'.")
+
+
+	#Check SNP_clustering extra ids (if defined)
+	check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, def_config)
+	extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, def_config)
+	if check_snp_cluster:
+		for sample_id in samples.keys():
+			cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
+			missing = [sid for sid in cluster_ids if sid not in samples.keys()]
+			if missing:
+				raise SampletableReferenceError(
+					"These Sample_ID defined as controls for SNP clustering dendrogram (or derived from one of the columns there) do not exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(
+						missing))
+
+
+
 
 
 
@@ -105,7 +132,7 @@ def make_penncnv_files(args):
 		def_config = yaml.safe_load(f)
 	datapath = config['data_path'] if 'data_path' in config else def_config['data_path']
 	
-	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for _, _, sample_id, _, _ in sample_data.values()]
+	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for sample_id, _, _, _, _ in sample_data]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 	
 	if vcf_present:
@@ -210,7 +237,7 @@ def setup_argparse():
 	group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
 	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
-	group_basic.add_argument('--config', default='config.yaml', help="Filename of config file. Default: %(default)s")
+	group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
 	#group_basic.add_argument('--data-path', '-p', default='data', help="Filepath to were results are written inside the run directrory. Default: %(default)s")
 
@@ -226,7 +253,7 @@ def setup_argparse():
 
 	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
-	group_snake.add_argument('--cluster-profile', '-c', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
+	group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
 	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")

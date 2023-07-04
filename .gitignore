@@ -6,6 +6,10 @@ incoming/*
 logs/*
 static-data/*
 .snakemake/*
+test/*
+data_new/*
+external_data/*
+validation_data/*
 
 #Only for now
 tests/*

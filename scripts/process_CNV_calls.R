@@ -1,32 +1,37 @@
+#! /usr/bin/Rscript
+# Filter SNP probes by quality scores
+suppressMessages(library(argparse))
+
+parser <- ArgumentParser(description="Collect data from CNV-calling tools and merge them into a single output, with added overlap stats")
+
+parser$add_argument('data_path', type = 'character', help='Path to pipeline output data')
+parser$add_argument('sample_id', type = 'character', help='Sample_ID to use')
+parser$add_argument('configfile', type = 'character', help='Path to config file')
+parser$add_argument('sampletablefile', type = 'character', help='Path to sampletable file')
+
+parser$add_argument('-p', '--penncnv', action="store_true", help="Use PennCNV calls")
+parser$add_argument('-c', '--cbs', action="store_true", help="Use CBS calls")
+parser$add_argument('-g', '--gada', action="store_true", help="Use GADA calls")
+
+args <- parser$parse_args()
+# args <- parser$parse_args(c("-p", "-c", "data_new", "BIHi001-B_WB02", "/tmp/tmpewl9ym4n.yaml", "sample_table.txt"))
+# args <- parser$parse_args(c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
+
+
 suppressMessages(library(plyranges))
 suppressMessages(library(GenomicRanges))
 suppressMessages(library(tidyverse))
-suppressMessages(library(optparse))
 suppressMessages(library(yaml))
 
-parser <- OptionParser(
-	usage = "usage: %prog [options] data_path sample_id /path/to/config.yaml /path/to/sampletable.txt"
-)
-
-parser <- add_option(parser, c("-p", "--penncnv"), default = F,
-										 action="store_true", help="Use PennCNV calls")
-parser <- add_option(parser, c("-c", "--cbs"), default = F,
-										 action="store_true", help="Use CBS calls")
-parser <- add_option(parser, c("-g", "--gada"), default = F,
-										 action="store_true", help="Use GADA calls")
-
-args <- parse_args(parser, positional_arguments = 4)
-# args <- parse_args(parser, positional_arguments = 4, c("-p", "-c", "data_new", "BIHi001-B_WB02", "/tmp/tmpewl9ym4n.yaml", "sample_table.txt"))
-# args <- parse_args(parser, positional_arguments = 4, c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
 
 ##################
 # Variable setup #
 ##################
 
-datapath <- args$args[1]
-sample_id <- args$args[2]
-config <- read_yaml(args$args[3])
-sampletable <- read_tsv(args$args[4], col_types = 'cccccc') 
+datapath <- args$data_path
+sample_id <- args$sample_id
+config <- read_yaml(args$configfile)
+sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc')
 
 use.filter <- config$settings$filter$`use-filterset`
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
@@ -43,10 +48,6 @@ if (!is.na(ref_id)){
   }
 }
 
-
-# CBS gain/loss
-CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
-CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
 # Call merging & pre-filtering
 min.snp				<- config$settings$postprocessing$min.snp
 min.length			<- config$settings$postprocessing$min.length
@@ -100,37 +101,10 @@ read_PennCNV <- function(filename) {
 
 ## CBS
 read_CBS <- function(filename) {
-	tb <- read_tsv(filename, show_col_types = F) %>%
-		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
-									numsnp = num.mark, sample_id = ID) %>%
-		# TODO -> most of this should probably be moved into the CBS script
-		mutate(
-			#TODO: R / CBS replaced '-' with '.' here
-			sample_id = str_remove(sample_id, '^X'),
-			sample_id = str_remove(filename, '.*/') %>% str_extract(valid_name),
-			length = end - start, # TODO: open / half open / +- 1 ??
-			Chr = paste0('chr', Chr),
-			Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-			snp.density = numsnp / length * 1e6,
-			CNV.state = ifelse(seg.median < -CBS.LRR.th.value, 'loss', NA),
-			CNV.state = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state),
-			CNV.state = ifelse(Chr == 'chrX', NA, CNV.state),
-			CNV.state = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state), 
-			CNV.state = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state), 
-			tool = 'CBS',
-			conf = NA,
-			#TODO could try double / 3x / ... cutoff for 0/4 CN ?
-			# > 0 doesn't make sense though (would mean no detection == filtered out)
-			# > 4 maybe? very hard to tell & probably irrelevant
-			copynumber = ifelse(is.na(CNV.state), 2, 3),
-			copynumber = ifelse(CNV.state == 'loss', 1, copynumber),
-		) %>%
-		filter(!is.na(CNV.state) & !is.na(Chr))
-	if (sex == 'f') {
-		tb <- filter(tb, Chr != 'chrY')
-	}
+	tb <- read_tsv(filename, show_col_types = F)
 	tb
 }
+
 
 ## GADA / MAD
 
@@ -371,7 +345,7 @@ if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_
 
 results = list()
 
-if (args$options$penncnv) {
+if (args$penncnv) {
 	res <- file.path(datapath, pennCNVfiles) %>%
 		lapply(read_PennCNV) %>%
 		bind_rows()
@@ -381,9 +355,9 @@ if (args$options$penncnv) {
 	  tool.order <- tool.order[tool.order != 'PennCNV']
 	}
 }
-if (args$options$cbs) {
+if (args$cbs) {
 	res <- file.path(datapath, sample_id, paste0(sample_id, '.CBS.', use.filter, '.tsv')) %>%
-		lapply(read_CBS) %>%
+		lapply(read_tsv, show_col_types = F) %>%
 		bind_rows()
 	if (nrow(res) > 0) {
 	  results[['CBS']] <- res
@@ -391,7 +365,7 @@ if (args$options$cbs) {
 	  tool.order <- tool.order[tool.order != 'CBS']
 	}
 }
-if (args$options$gada) {
+if (args$gada) {
 	res <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.', use.filter, '.tsv')) %>%
 		lapply(read_GADA) %>%
 		bind_rows()
@@ -449,4 +423,5 @@ cnvs.tb <- cnvs %>%
 	mutate(across(one_of(list_cols), ~paste(., collapse=';')))
 write_tsv(cnvs.tb, outname.tsv)
 
-
+#TODO add standard vcf output here instead of it's own script?
+# -> can run another script to get different vcf, maybe?

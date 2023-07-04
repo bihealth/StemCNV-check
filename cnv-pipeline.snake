@@ -3,7 +3,7 @@
 import os
 import tempfile
 import yaml
-from scripts.py_helpers import read_sample_table
+from scripts.py_helpers import *
 from scripts.py_exceptions import *
 # Configuration ================================================================
 
@@ -46,6 +46,7 @@ localrules:
   all
 
 sample_data = read_sample_table(SAMPLETABLE)
+sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
 #print(sample_data)
 
 
@@ -304,7 +305,8 @@ rule run_PennCNV_sex:
 
 rule run_CBS:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
+    sexfile = ancient(os.path.join(BASEPATH,"penncnv-sexfile.txt")),
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.{filter}.tsv")
   threads: get_tool_resource('CBS', 'threads')
@@ -318,7 +320,7 @@ rule run_CBS:
     err=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "{filter}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {input.sexfile} > {log.out} 2> {log.err}"
 
 rule run_GADA:
   input:
@@ -355,13 +357,6 @@ def get_ref_id(wildcards, get_sex=False):
     except IndexError:
       # Somehow no match
       raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
-# =======
-#   if ref_name and ref_name in sample_data:
-#     _, _, ref_id, ref_sex = sample_data[ref_name]
-#   elif ref_name:
-#     # listed reference does not exist in sampletable
-#     raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_name}'")
-# >>>>>>> make_vcf
   else:
     ref_id = False
     ref_sex = False
@@ -417,7 +412,14 @@ def get_report_sample_input(wildcards):
            filter = config['settings']['filter']['use-filterset']
           )
   if config['settings']['report']['SNP_comparison']['include_dendrogram']:
-    raise NotImplementedError
+    extra_sample_def = config['settings']['report']['SNP_comparison']['extra_samples']
+    ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
+    sample_files += expand(
+          [os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.processed-data.tsv")],
+           ids = ids,
+           filter = config['settings']['filter']['use-filterset']
+          )
+
   return sample_files
 
 rule knit_report:

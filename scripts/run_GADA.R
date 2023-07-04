@@ -1,33 +1,35 @@
-#!/usr/bin/env Rscript
-suppressMessages(library(optparse))
+#! /usr/bin/Rscript
+# Run GADA & MAD CNV calling
+suppressMessages(library(argparse))
+
+parser <- ArgumentParser(description="Run GADA and MAD CNV calling")
+
+parser$add_argument('inputfile', type = 'character', help='Path to input file')
+parser$add_argument('outputfile', type = 'character', help='Path to output file')
+
+parser$add_argument("-a", "--aalpha", type = 'numeric', default = 0.2, help="aAlpha for SBL function")
+parser$add_argument("-g", "--gadat", default = 15, help="T for BE of GADA")
+parser$add_argument("-m", "--madt", default = 5, help="T for BE of MAD")
+parser$add_argument("-l", "--minseglen", default = 5, help="Min Probe number for calls")
+
+args <- parser$parse_args()
+#args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13/BIHi005-A-13.filtered-data.full.tsv', '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13/BIHi005-A-13.GADA.full.tsv'))
+
 suppressMessages(library(tidyverse))
 suppressMessages(library(gada))
 suppressMessages(library(mad))
 suppressMessages(library(plyranges))
 
-parser <- OptionParser(
-	usage = "usage: %prog [options] /path/to/inputfile.tsv /path/to/outputfile.tsv"
-)
-parser <- add_option(parser, c("-a", "--aalpha"), default = 0.2, help="aAlpha for SBL function")
-parser <- add_option(parser, c("-g", "--gadat"), default = 7, help="T for BE of GADA")
-parser <- add_option(parser, c("-m", "--madt"), default = 5, help="T for BE of MAD")
-parser <- add_option(parser, c("-l", "--minseglen"), default = 5, help="Min Probe number for calls")
-
-args <- parse_args(parser, positional_arguments = 2)
-# args <- parse_args(parser, positional_arguments = 2, args = c(
-# 	'/home/vonkunic_c/Misc-Projects/CNV-pipeline/data/206210670080_R09C02/206210670080_R09C02.filtered-data.full.tsv',
-# 	'R-GADA-test.txt'
-# ))
 
 # TODO might want to keep / capture the extra cols & printed messages for tool QC stats ?
 
-inputfile <- args$args[1]
-outputfile <- args$args[2]
+inputfile <- args$inputfile
+outputfile <- args$outputfile
 
-aalpha <- args$options$aalpha
-gada.T <- args$options$gadat
-mad.T <- args$options$madt
-minseglen <- args$options$minseglen
+aalpha <- args$aalpha
+gada.T <- args$gadat
+mad.T <- args$madt
+minseglen <- args$minseglen
 
 #GADA will have issues if some expexted chromosomes don't have data
 #Maybe this can be pulled from config?
@@ -69,7 +71,7 @@ tmp <- tempdir()
 oldwd <- getwd()
 setwd(tmp)
 dir.create("rawData")
-file.link(inputfile, file.path(tmp, 'rawData', basename(inputfile)))
+file.symlink(inputfile, file.path(tmp, 'rawData', basename(inputfile)))
 
 if (!all(all.chr %in% use.chr)) {
 	warning('MAD can only calculated mosaicism for both sex chromomsomes together, at least one is missing (Normal for filtered female data).')

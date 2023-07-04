@@ -1,17 +1,20 @@
+#! /usr/bin/Rscript
+# Wrapper to knit Rmd report
+suppressMessages(library(argparse))
+
+parser <- ArgumentParser(description="Wrapper to knit Rmd report")
+
+parser$add_argument('sample_id', type = 'character', help='Sample_ID to use')
+parser$add_argument('configfile', type = 'character', help='Path to config file')
+
+args <- parser$parse_args()
+
 suppressMessages(library(knitr))
 suppressMessages(library(tidyverse))
-suppressMessages(library(optparse))
 suppressMessages(library(yaml))
 
-parser <- OptionParser(usage = "usage: %prog [options] <sample_id> /path/to/config.yaml")
-
-# parser <- add_option(parser, c("-n", "--no-reference"), action="store_true",
-#                      default=FALSE, help="Ignore reference sample regardless of samplesheet")
-
-args <- parse_args(parser, positional_arguments = 2)
-
-sample_id   <- args$args[1]
-configfile  <- args$args[2] %>% normalizePath
+sample_id   <- args$sample_id
+configfile  <- args$configfile %>% normalizePath
 
 config <- read_yaml(configfile)
 

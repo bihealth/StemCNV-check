@@ -1,10 +1,6 @@
 #! /usr/bin/Rscript
 # Convert tabular cnv info into vcf format
-suppressMessages(library(tidyverse))
-suppressMessages(library(plyranges))
 suppressMessages(library(argparse))
-suppressMessages(library(vcfR))
-suppressMessages(library(yaml))
 
 parser <- ArgumentParser(description="Convert tsv file with CNV calls from process_CNV_calls to vcf")
 
@@ -22,6 +18,10 @@ parser$add_argument('-i', '--include-state', type = 'character', nargs = '+',
 args <- parser$parse_args()
 #args <- parser$parse_args(c('data', '206210670080_R09C02', 'default_config.yaml', '-m', 'split-tools', '-i', 'gain', 'loss'))
 
+suppressMessages(library(tidyverse))
+suppressMessages(library(plyranges))
+suppressMessages(library(vcfR))
+suppressMessages(library(yaml))
 
 sample_id <- args$sample_id
 config <- read_yaml(args$config_path)
@@ -136,6 +136,7 @@ write_to_vcf <- function(tb, outvcf) {
 		str_glue('##FORMAT=<ID={shorthand},NUMBER=1,Type={type},Description="{desc}">')
 	})
 
+	#TODO: maybe the format & info lines need to go above the contig info?
 	writeLines(c(vcf.header, info.lines, format.lines,
 	             paste0('#', paste(c(vcf_cols, sample_id), collapse = '\t'))), con = outvcf)
 

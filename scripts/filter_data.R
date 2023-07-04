@@ -1,18 +1,23 @@
+#! /usr/bin/Rscript
+# Filter SNP probes by quality scores
+suppressMessages(library(argparse))
+
+parser <- ArgumentParser(description="Filter SNP probes by quality scores")
+
+parser$add_argument('inputfile', type = 'character', help='Path to input file')
+parser$add_argument('outputfile', type = 'character', help='Path to output file')
+
+parser$add_argument('-f', '--filter-setting', type = 'character', default = 'full',
+					choices = c('basic', 'highGT', 'highGC', 'full'),
+					help="Value for split SD undo")
+
+args <- parser$parse_args()
+
 suppressMessages(library(tidyverse))
-suppressMessages(library(optparse))
 
-parser <- OptionParser(
-	usage = "usage: %prog /path/to/inputfile.tsv /path/to/outputfile.tsv"
-)
-
-parser <- add_option(parser, c("-f", "--filter-setting"), 
-					 default='full', help="Chose filter settings")
-
-args <- parse_args(parser, positional_arguments = 2)
-
-inputfile <- args$args[1]
-outputfile <- args$args[2]
-filter.settings <- args$options$`filter-setting`
+inputfile <- args$inputfile
+outputfile <- args$outputfile
+filter.settings <- args$filter_setting
 
 
 filters <- list(

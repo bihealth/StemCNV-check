@@ -6,10 +6,10 @@ channels:
 dependencies:
   ## General ##
   - python >= 3.9 #sensible default
-  - snakemake 
+  - snakemake
+  - perl = 5.32 #seems to be only version under which PennCNV build properly
   - r-base >=4.1 #sensible default; maybe pin this?
   - r-tidyverse
-  - r-optparse #replace?!
   - r-argparse
   - r-knitr
   - r-rmarkdown
@@ -19,7 +19,7 @@ dependencies:
   - r-vcfr
   ## Algorithms ##
   # gtc2vcf
-  - gtc2vcf = 1.16 # new/untested
+  - bcftools-gtc2vcf-plugin = 1.16 # new/untested
   # CBS
   - bioconductor-dnacopy = 1.68.0
   ## Postprocessing ##
@@ -35,6 +35,6 @@ dependencies:
   - r-DT
   #- r-plotly
   - r-patchwork
-  - r-circlize # new/untested
+  #- r-circlize # new/untested
   #- r-biocircos # requires r4.2? new/untested
-  - r-rcircos # new/untested
+  #- r-rcircos # new/untested
