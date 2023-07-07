@@ -70,9 +70,9 @@ def check_sample_table(args):
 	if 'Regions_of_Intertest' in sample_data_full[0].keys():
 		for data_dict in sample_data_full:
 			regions = data_dict['Regions_of_Intertest'].split(';')
-			checks = [re.match(region, '(chr)?[0-9XY]{1-2}:[0-9]+-[0-9]+') for region in regions]
+			checks = [re.match('^(.*\|)?(chr)?[0-9XY]{1,2}:[0-9]+-[0-9]+$', region) for region in regions]
 			if not all(checks):
-				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (chr)?[Number]:[start]-[end], separate multiple regions with only ';'.")
+				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
 	#Check SNP_clustering extra ids (if defined)

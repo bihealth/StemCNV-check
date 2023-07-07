@@ -75,11 +75,11 @@ if (!is.na(ref_id)){
 if ('Sample_Name' %in% colnames(sampletable)) {
 	sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
 	ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
-	rename_by = 'Sample_Name'
+	rename_by <- 'Sample_Name'
 } else {
 	sample_name <- sample_id
 	ref_name <- ifelse(is.na(ref_id), NA, ref_id)
-	rename_by = 'Sample_ID'
+	rename_by <- 'Sample_ID'
 }
 
 #Reportable thresholds
@@ -773,7 +773,10 @@ use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
 if (length(regions)>0) {
 	for (region in regions) {
 
-		Chr <- str_remove(region, ':.*')
+		region_name <- str_extract(region, '^[^|]+\\|') %>% str_remove('\\|')
+		region_name <- ifelse(is.na(region_name), 'Region', region_name)
+
+		Chr <- str_remove(region, '^[^|]+\\|') %>% str_remove(':.*')
 		Chr <- ifelse(use_chr_str & str_detect(Chr, regex('chr', ignore_case = T)),
 					   tolower(Chr), str_remove(Chr, regex('chr', ignore_case = T)))
 		Start <- str_extract(region, '(?<=:)[0-9]+') %>% as.numeric()
@@ -783,7 +786,7 @@ if (length(regions)>0) {
 		size_order <- ifelse(log10(Size) >= 6, 1e6, 1e3)
 		size_str <- ifelse(log10(Size) >= 6, 'Mb', 'kb')
 
-		cat(paste0('### Region:', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
+		cat(paste0('### ', region_name, ', ', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
 
 		res <- make_LRR_BAF_plots(Chr, Start, End, Size, 1e6)
 		subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
