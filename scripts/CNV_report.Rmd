@@ -7,7 +7,7 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: 'BIHi005-A-13'  #'GSM2538923_9371579017'
+  sample_id: 'BIHi250-A-2'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
   configfile: 'config_test.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
@@ -269,10 +269,10 @@ if ('Sample_Name' %in% colnames(sampletable)) {
 
 if (!is.na(ref_id)) {
 	sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
-	names(sample_headers) <- c(sample_name, ref_name)
+	names(sample_headers) <- c(sample_id, ref_id)
 } else {
 	sample_headers <- c(sample_name )
-	names(sample_headers) <- c(sample_name )
+	names(sample_headers) <- c(sample_id )
 }
 
 tr_tibble <- function(tb) {
@@ -341,8 +341,8 @@ metric.colors <- list(
 				)
 		)
 
-Combined.metrics <- reduce(metrics, full_join, by = 'sample_id') %>% tr_tibble() #lapply(metrics, tr_tibble) %>% bind_rows()
-Combined.colors <-  reduce(metric.colors, full_join, by = 'sample_id') %>% tr_tibble() #lapply(metric.colors, tr_tibble) %>% bind_rows()
+Combined.metrics <- purrr::reduce(metrics, full_join, by = 'sample_id') %>% tr_tibble()
+Combined.colors <-  purrr::reduce(metric.colors, full_join, by = 'sample_id') %>% tr_tibble()
 
 get_call_stats_tool <- function(use.tool) {
 	cnv_calls %>%
@@ -362,10 +362,10 @@ get_call_stats_tool <- function(use.tool) {
 }
 
 export.tb <- full_join(
-		reduce(metrics, full_join, by = 'sample_id') %>%
+		purrr::reduce(metrics, full_join, by = 'sample_id') %>%
 			mutate(across(.cols = everything(), ~as.character(.)))  %>%
 		pivot_longer(-sample_id, names_to = 'Measure', values_to = 'Value'),
-		reduce(metric.colors, full_join, by = 'sample_id') %>%
+		purrr::reduce(metric.colors, full_join, by = 'sample_id') %>%
 			mutate(across(-sample_id, ~str_replace(., 'white', 'NA') %>%
 									str_replace('green', 'OK') %>%
 									str_replace('yellow', 'unusual') %>%
@@ -831,8 +831,8 @@ cat('\n\n')
 
 If a reference sample exists, a side by side comparison is also generated (left: sample; right: reference).
 
-[//]: # (TODO: this could probably also be done with gosling)
-[//]: # (https://gosling-lang.github.io/gos/gallery/ideograms.html)
+<!-- TODO: this could probably also be done with gosling  -->
+<!-- https://gosling-lang.github.io/gos/gallery/ideograms.html  -->
 
 ```{r rideogram, results='asis'}
 # TODO: need to get the proper data from somewhere else, fasta or vcf headers maybe?
@@ -890,13 +890,9 @@ if (!is.na(ref_id)) {
 
 Not added yet
 
-[//]: # ()
-[//]: # ()
-[//]: # (```{python gosling.plots})
-[//]: # (import gosling as gos)
-[//]: # ()
-[//]: # ()
-[//]: # (```)
+<!-- ```{python gosling.plots} -->
+<!-- import gosling as gos -->
+<!-- ``` -->
 
 
 ```{r snp.dendrogram, results='asis', eval = do.SNP.clustering}
