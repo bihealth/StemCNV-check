@@ -52,7 +52,7 @@ config <- read_yaml(params$configfile)
 use.filter <- config$settings$filter$`use-filterset`
 datapath <- config$data_path
 
-sampletable <- read_tsv(params$sampletable, col_types = 'cccccc')
+sampletable <- read_tsv(params$sampletable, col_types = 'cccccc', comment = "#")
 
 sample_id <- params$sample_id
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
@@ -259,13 +259,20 @@ GenCall.stats <-  file.path(basepath, datapath, use_ids, paste0(use_ids, '.stats
 
 ```{r qc.metrics}
 
-if (!is.na(ref_id)) {
-	#TODO: use the - now optional - Sample_Name column here, if available
-	sample_headers <- c(sample_id, paste0('Reference (', ref_id, ')'))
-	names(sample_headers) <- c(sample_id, ref_id)
+if ('Sample_Name' %in% colnames(sampletable)) {
+	sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
+	ref_name <- sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name
 } else {
-	sample_headers <- c(sample_id )
-	names(sample_headers) <- c(sample_id )
+	sample_name <- sample_id
+	ref_name <- ref_id
+}
+
+if (!is.na(ref_id)) {
+	sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
+	names(sample_headers) <- c(sample_name, ref_name)
+} else {
+	sample_headers <- c(sample_name )
+	names(sample_headers) <- c(sample_name )
 }
 
 tr_tibble <- function(tb) {
@@ -334,8 +341,8 @@ metric.colors <- list(
 				)
 		)
 
-Combined.metrics <- lapply(metrics, tr_tibble) %>% bind_rows()
-Combined.colors <-  lapply(metric.colors, tr_tibble) %>% bind_rows()
+Combined.metrics <- reduce(metrics, full_join, by = 'sample_id') %>% tr_tibble() #lapply(metrics, tr_tibble) %>% bind_rows()
+Combined.colors <-  reduce(metric.colors, full_join, by = 'sample_id') %>% tr_tibble() #lapply(metric.colors, tr_tibble) %>% bind_rows()
 
 get_call_stats_tool <- function(use.tool) {
 	cnv_calls %>%
@@ -353,6 +360,23 @@ get_call_stats_tool <- function(use.tool) {
 		pivot_wider(names_from = CNV.state, values_from = contains('calls')) %>%
 		tr_tibble()
 }
+
+export.tb <- full_join(
+		reduce(metrics, full_join, by = 'sample_id') %>%
+			mutate(across(.cols = everything(), ~as.character(.)))  %>%
+		pivot_longer(-sample_id, names_to = 'Measure', values_to = 'Value'),
+		reduce(metric.colors, full_join, by = 'sample_id') %>%
+			mutate(across(-sample_id, ~str_replace(., 'white', 'NA') %>%
+									str_replace('green', 'OK') %>%
+									str_replace('yellow', 'unusual') %>%
+									str_replace('orange', 'warning') %>%
+									str_replace('red', 'failed'))) %>%
+		pivot_longer(-sample_id, names_to = 'Measure', values_to = 'Check'),
+		by = c('sample_id', 'Measure')
+		) %>%
+		filter(sample_id == !!sample_id)
+
+write_tsv(export.tb, file.path(workdir, str_glue('{sample_id}.summary-check.tsv')))
 
 ```
 

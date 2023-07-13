@@ -11,7 +11,7 @@ read_arraytsv <- function(fname) {
     mutate(across(everything(), ~ ifelse(. == 'NC', NA, str_count(., 'A'))))
 }
 
-sampletable <- read_tsv('sample_table.txt') %>%
+sampletable <- read_tsv('sample_table.txt', comment = '#') %>%
 	mutate(sample_id = paste0(Chip_No, '_', Chip_Pos),
 				 Celltype = str_remove(Celltype, 's$'))
 

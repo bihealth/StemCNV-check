@@ -31,7 +31,7 @@ suppressMessages(library(yaml))
 datapath <- args$data_path
 sample_id <- args$sample_id
 config <- read_yaml(args$configfile)
-sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc')
+sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc', comment = '#')
 
 use.filter <- config$settings$filter$`use-filterset`
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%

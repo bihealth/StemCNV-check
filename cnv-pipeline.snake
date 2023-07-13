@@ -72,6 +72,8 @@ def get_target_files():
   # Report
   if TARGET == 'report':
     return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
+                  sample_id = all_samples, filter = use_filter) + \
+           expand(os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
                   sample_id = all_samples, filter = use_filter)
   # cnv-vcf
   if TARGET == 'cnv-vcf':
@@ -119,6 +121,8 @@ rule all:
   run:
     if removetempconfig:
       os.remove(CONFIGFILE)
+    # TODO: merge all summary check files ?
+    # maybe make an extra rule for that ?
 
 def get_tool_resource(tool ,resource):
   if not resource in ('threads', 'memory', 'runtime', 'partition', 'cmd-line-params'):
@@ -427,7 +431,8 @@ rule knit_report:
     get_report_sample_input
   output:
     html=os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
-    plots=directory(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "report_images"))
+    plots=directory(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "report_images")),
+    summary=os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.summary-check.tsv")
   threads: get_tool_resource('knitr', 'threads')
   resources:
     time=get_tool_resource('knitr', 'runtime'),
