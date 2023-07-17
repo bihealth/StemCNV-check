@@ -37,7 +37,7 @@ tb <- read_tsv(inputfile, show_col_types = FALSE)
 all.chr <- c(1:22, 'X', 'Y')
 use.chr <- all.chr[all.chr %in% unique(tb$Chr)]
 
-sampleID <- basename(inputfile) %>% str_remove('\\..*$')
+sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
 
 gada.obj <- setupGADA(inputfile,
 							MarkerIdCol=2,

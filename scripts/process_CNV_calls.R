@@ -95,7 +95,7 @@ read_PennCNV <- function(filename) {
 					 CNV.state = as.character(CNV.state),
 					 tool = 'PennCNV',
 			         # basename can't handly empty input ...
-					 sample_id = str_remove(sample_id, '.*/') %>% str_extract(valid_name),
+					 sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data\\..*\\.tsv$'),
 		)
 }
 

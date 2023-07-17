@@ -167,7 +167,7 @@ read_raw <- function(filename) {
 				rename_with(~ str_remove(., '.*\\.')) %>%
 		dplyr::select(-any_of(c('Index', 'Address', 'Name', 'R', 'Theta')),
 									-contains('Frac'), -contains('X'), -contains('Y')) %>%
-		mutate(sample_id = basename(filename) %>% str_extract(paste0('^', valid_name)),
+		mutate(sample_id = basename(filename) %>% str_remove('.processed-data.tsv$'),
 			   Chr = paste0('chr', Chr),
 			   Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)) %>%
 		separate_rows(Chr, sep=',')
@@ -191,7 +191,7 @@ read_snps <- function(fname) {
 	read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
 		rename_with(~ str_remove(., '^.*\\.gencall\\.'), c(3)) %>%
 		mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
-			   sample_id = basename(fname) %>% str_extract(paste0('^', valid_name)))
+			   sample_id = basename(fname) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'))
 }
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
@@ -205,15 +205,13 @@ SNP.genotype.distances <- file.path(basepath, datapath, snp.ids, paste0(snp.ids,
 	pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
 	filter(if_all(everything(), ~!is.na(.))) %>%
 	dplyr::select(-Index, -Name) %>%
-	# #TODO: test `rename_by`
-	# rename_with(~ sampletable[match(., sampletable$Sample_ID), rename_by] ) %>%
 	t() %>%
 	dist(method = 'manhattan')
 
 
 ## CNV calls
 
-#TODO externalise & import this
+#TODO externalise & import this code
 list_cols <- c('coverage.by.ref', 'tool', 'individual_calls', 'numsnp',
                'copynumbers', 'conf', 'overlap.coverage', 'ref.tool')
 

@@ -7,7 +7,6 @@ dependencies:
   ## General ##
   - python >= 3.9 #sensible default
   - snakemake
-  - perl = 5.32 #seems to be only version under which PennCNV build properly
   - r-base >=4.1 #sensible default; maybe pin this?
   - r-tidyverse
   - r-argparse
@@ -18,6 +17,9 @@ dependencies:
   - r-devtools
   - r-vcfr
   ## Algorithms ##
+  # Needed to build PennCNV
+  - perl = 5.32 #seems to be only version under which PennCNV build properly
+  - gcc # in case not available, i.e. on some WSL distros
   # gtc2vcf
   - bcftools-gtc2vcf-plugin = 1.16 # new/untested
   # CBS

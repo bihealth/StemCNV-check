@@ -32,7 +32,7 @@ ffunc <- filters[[filter.settings]]
 read_tsv(inputfile, show_col_types = FALSE) %>%
 	ffunc() %>%
 	#TODO add splitting of the XY probes ?
-	# 	mutate(sample_id = str_extract(filename, valid_name),
+	# 	mutate(sample_id = str_remove(filename, ....),
 	# 			 Chr = paste0('chr', Chr),
 	# 			 Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)) %>%
 	# separate_rows(Chr, sep=',')
