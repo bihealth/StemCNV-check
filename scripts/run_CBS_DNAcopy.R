@@ -7,7 +7,7 @@ parser <- ArgumentParser(description="Run LRR segmentation with CBS/DNACopy")
 parser$add_argument('inputfile', type = 'character', help='Path to input file')
 parser$add_argument('outputfile', type = 'character', help='Path to output file')
 parser$add_argument('configfile', type = 'character', help='Path to config file')
-parser$add_argument('sexfile', type = 'character', help='Path to sexfile')
+parser$add_argument('sampletable', type = 'character', help='Path to sampletable')
 
 parser$add_argument('-s', '--sd-undo', type = 'numeric', default = 1,
 					help="Value for split SD undo")
@@ -24,8 +24,11 @@ inputfile <- args$inputfile
 outputfile <- args$outputfile
 config <- read_yaml(args$configfile)
 
-sextable <- read_tsv(args$sexfile, col_names=c('filename', 'sex'))
-sex <- sextable[sextable$filename == inputfile, ]$sex
+sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
+
+sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc', comment = '#')
+sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
+	tolower() %>% substr(1, 1)
 
 # CBS gain/loss
 CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
@@ -45,12 +48,9 @@ LRR.female.X.gain <- config$settings$CBS$LRR.female.X.gain
 LRR.female.X.gain.large <- config$settings$CBS$LRR.female.X.gain.large
 
 
-
 tb <- read_tsv(inputfile, show_col_types = FALSE) %>% 
   dplyr::select(-Index) %>%
   rename_with(~ str_remove(., '.*\\.'))
-
-sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
 
 cna.basic <- CNA(tb$`Log R Ratio`, tb$Chr, tb$Position, data.type = 'logratio', sampleid = sampleID)
 cna.basic.smoothed <- smooth.CNA(cna.basic)

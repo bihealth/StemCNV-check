@@ -309,8 +309,7 @@ rule run_PennCNV_sex:
 
 rule run_CBS:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
-    sexfile = ancient(os.path.join(BASEPATH,"penncnv-sexfile.txt")),
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.{filter}.tsv")
   threads: get_tool_resource('CBS', 'threads')
@@ -324,7 +323,7 @@ rule run_CBS:
     err=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "{filter}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {input.sexfile} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 rule run_GADA:
   input:
