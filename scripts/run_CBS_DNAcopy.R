@@ -26,7 +26,7 @@ config <- read_yaml(args$configfile)
 
 sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
 
-sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc', comment = '#')
+sampletable <- read_tsv(args$sampletable, col_types = 'cccccc', comment = '#')
 sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
 	tolower() %>% substr(1, 1)
 
