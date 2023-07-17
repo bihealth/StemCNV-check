@@ -50,7 +50,7 @@ tb <- read_tsv(inputfile, show_col_types = FALSE) %>%
   dplyr::select(-Index) %>%
   rename_with(~ str_remove(., '.*\\.'))
 
-sampleID <- basename(inputfile) %>% basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
+sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
 
 cna.basic <- CNA(tb$`Log R Ratio`, tb$Chr, tb$Position, data.type = 'logratio', sampleid = sampleID)
 cna.basic.smoothed <- smooth.CNA(cna.basic)
