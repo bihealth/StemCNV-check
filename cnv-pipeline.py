@@ -100,7 +100,7 @@ def check_config(args):
 
 	#TODO: need helper function to ignore values omitted from user config
 
-	if config['settings']['make_cnv_vcf']['mode'] not in c('combined-calls', 'split-tools'):
+	if config['settings']['make_cnv_vcf']['mode'] not in ('combined-calls', 'split-tools'):
 		raise ConfigValueError(
 			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
 

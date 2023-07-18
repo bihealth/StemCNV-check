@@ -145,9 +145,14 @@ gene_type_whitelist <- config$settings$report$CNV_plots$include_only_these_gene_
 
 gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
     filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
-if (!is.na(gene_type_whitelist) & length(gene_type_whitelist) > 0){
+if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
     gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
 }
+
+regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
+    str_split(';') %>% unlist()
+include_roi_plots <-  'Regions_of_Interest' %in% colnames(sampletable) & !is.na(regions)
+
 
 
 # Misc 
@@ -565,8 +570,9 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
         mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
 
     if (nrow(plot.data)==0){
-      warning(str_glue('No SNP probes found in primary plot area: {chr}:{start}-{end} +- {round(size/1e3)}kb'))
-      return(list('gg' = 'No plot to show, without SNP probes in area', 'calls' = tibble(), 'genes' = tibble()))
+      warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{start}-{end} +- {round(size/1e3)}kb')
+      warning(warn_msg)
+      return(list('gg' = warn_msg, 'calls' = tibble(), 'genes' = tibble()))
     }
 
     calls <- cnv_calls %>%
@@ -727,10 +733,12 @@ if (nrow(reportable.calls)>0) {
         cat(paste0('### ', row$CNV.state, ' ', state.str, ': ', row$Chr, ' - ', round(row$Size/1e6, 1), 'Mb\n\n'))
 
         res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size)
+        if (typeof(res$gg) == 'character') {
+          cat(res$gg, '\n\n')
+          next()
+        }
         subchunkify(res$gg, paste0('plot.reportable.call.',i), 5, 10)
-
         subchunkify(res$calls, paste0('table.reportable.calls.',i))
-
         subchunkify(res$genes, paste0('table.reportable.genes.',i))
         #message(paste("plot", i , "done"))
 
@@ -789,8 +797,11 @@ if (nrow(non.reportable.calls)>0) {
         cat(paste0('### ', row$Chr, ' - ', round(row$Size/1e3, 1), 'kb: ', row$CNV.state, state.str, '\n\n'))
 
         res <- make_LRR_BAF_plots(row$Chr, row$Start, row$End, row$Size, 5e5)
+        if (typeof(res$gg) == 'character') {
+          cat(res$gg, '\n\n')
+          next()
+        }
         subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
-
         subchunkify(res$calls, paste0('table.nonreportable.calls.',i))
         subchunkify(res$genes, paste0('table.nonreportable.genes.',i))
 
@@ -806,14 +817,14 @@ if (nrow(non.reportable.calls)>0) {
 ```
 
 
-```{r plots.roi, eval='Regions_of_Interest' %in% colnames(sampletable), results='asis'}
+```{r plots.roi, eval=include_roi_plots, results='asis'}
 cat('## Regions of Interest {.tabset}\n\n')
 
 regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
 
 use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
-roundup_oom <- function(x) {10(ceiling(log10(x)))}
+roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
 if (!is.na(regions) & length(regions)>0) {
     for (region in regions) {
@@ -834,8 +845,11 @@ if (!is.na(regions) & length(regions)>0) {
         cat(paste0('### ', region_name, ', ', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
 
         res <- make_LRR_BAF_plots(Chr, Start, End, Size, roundup_oom(Size))
+        if (typeof(res$gg) == 'character') {
+          cat(res$gg, '\n\n')
+          next()
+        }
         subchunkify(res$gg, paste0('plot.roi.',region), 5, 10)
-
         subchunkify(res$calls, paste0('table.roi.',region))
         subchunkify(res$genes, paste0('table.roi.',region))
 

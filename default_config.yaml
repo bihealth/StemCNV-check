@@ -40,13 +40,13 @@ settings:
     LRR.gain: 0.2        #CN3
     LRR.gain.large: 0.75 #CN4+
     # plus specifics for sex chromosomes
-    LRR.male.XorY.loss: -0.5    #CN0
-    LRR.male.XorY.gain:       0.28    #CN2
-    LRR.male.XorY.gain.large: 0.75    #CN3+
-    LRR.female.X.loss: 0.25     #CN1
-    LRR.female.XX.loss: -1.1    #CN0; kinda strange?
-    LRR.female.X.gain:       0.75    #CN3
-    LRR.female.X.gain.large: 1.5     #CN4+
+    LRR.male.XorY.loss:      -0.5   #CN0
+    LRR.male.XorY.gain:       0.28  #CN2
+    LRR.male.XorY.gain.large: 0.75  #CN3+
+    LRR.female.X.loss:      -0.05  #CN1
+    LRR.female.XX.loss:     -0.9   #CN0
+    LRR.female.X.gain:       0.5   #CN3
+    LRR.female.X.gain.large: 1.05  #CN4+
 
 
   GADA:
