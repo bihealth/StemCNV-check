@@ -76,11 +76,13 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median < LRR.male.XorY.loss       ~ 0,
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median > LRR.male.XorY.gain.large ~ 3,
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median > LRR.male.XorY.gain       ~ 2,
+			sex == 'm' & Chr %in% c('chrX', 'chrY')                                         ~ 1,
 			# Unique cutoffs for female X (behaves different from autosome)
 			sex == 'f' & Chr == 'chrX' & seg.median < LRR.female.XX.loss                    ~ 0,
 			sex == 'f' & Chr == 'chrX' & seg.median < LRR.female.X.loss                     ~ 1,
 			sex == 'f' & Chr == 'chrX' & seg.median > LRR.female.X.gain.large               ~ 4,
 			sex == 'f' & Chr == 'chrX' & seg.median > LRR.female.X.gain                     ~ 3,
+			sex == 'f' & Chr == 'chrX'                                                      ~ 2,
 			# Default cutoffs
 			seg.median < LRR.loss.large                                                     ~ 0,
 			seg.median < LRR.loss                                                           ~ 1,

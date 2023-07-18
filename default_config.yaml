@@ -100,6 +100,9 @@ settings:
       # # This is hard to set thresholds for, since currently all types of genes are used
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
+    CNV_plots:
+        exclude_gene_type_regex: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
+        include_only_these_gene_types: []
     SNP_comparison:
       include_dendrogram: TRUE
       ignore_filters: FALSE
