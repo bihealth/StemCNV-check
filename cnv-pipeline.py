@@ -140,26 +140,46 @@ def make_penncnv_files(args):
 	else:
 		use_vcf = vcf_files[0]
 		print('Running snakemake to get:', use_vcf)
-		args.snake_options += [
-			use_vcf
-			#'--until', use_vcf,
-			#'--allowed-rules', 'run_gtc2vcf_vcf', 
-			#'run_gencall', 'relink_gencall', 'all'
-		]
+		args.snake_options += [	use_vcf ]
+		
+		#TODO: The code terminate here because snakemake.main includes a sys.exit() call
+		# --> need to use snakemake.snakemake and parse args (manually?) instead
 		ret = run_snakemake(args)
-		#TODO: why does the code terminate here (cluster mode only?)?
+		
+		
+# 		snakemake(os.path.join(SNAKEDIR, "cnv-pipeline.snake"), 
+# 		
+# 		            cores=args.cores,
+#             local_cores=args.local_cores,
+#             nodes=args.jobs,
+#             
+#             config=config,
+#             configfiles=args.configfile,
+#             config_args=args.config,
+#             workdir=args.directory,
+#             
+#             		'--configfile', os.path.join(SNAKEDIR, 'default_config.yaml'), args.config,
+# 		'--config', f'sample_table={args.sample_table}',
+# 			f'snakedir={SNAKEDIR}',
+# 			f'basedir={args.directory}',
+# 			f'configfile={args.config}',
+# 			f'target={args.target}',
+#             
+#             
+#             targets= use_vcf,
+#             )
 		
 		if ret:
 			raise Exception('Snakemake run to get vcf failed')
 	
 	#TODO logger calls
-	print('Making PFB file')
+	print(f'Making PFB file: {args.pfb_out}')
 	outdir = os.path.dirname(args.pfb_out)
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 
 	argv = ['Rscript', f"{SNAKEDIR}/scripts/make_PFB_from_vcf.R", use_vcf, args.pfb_out]
-	print(' '.join(argv))
+	print( 'Executing: `'  + ' '.join(argv) + '`')
 	ret = subprocess.call(argv)
 	
 	if ret:
@@ -167,23 +187,23 @@ def make_penncnv_files(args):
 	else:
 		print('Created PFB file: {}'.format(args.pfb_out))
 	
-	print('Making GC model file')
+	print(f'Making GC model file: {args.gc_out}')
 	outdir = os.path.dirname(args.gc_out)
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	gc_base = 'hg38.gc5Base.txt' if args.genome == 'GRCh38' else 'hg19.gc5Base.txt'
 	penncnv_gcfile = os.path.join(os.getenv('CONDA_PREFIX'), 'pipeline/PennCNV-1.0.5/gc_file', gc_base)
-	
+
 	if not os.path.exists(penncnv_gcfile) and os.path.exists(penncnv_gcfile + '.gz'):
 		subprocess.call(['gunzip', penncnv_gcfile + '.gz'])
 	elif not os.path.exists(penncnv_gcfile):
 		raise Exception('Could not find PennCNV GC files - did you activate the cnv-pipeline conda env?')
-		
+
 	argv = [os.path.join(os.getenv('CONDA_PREFIX'), 'pipeline/PennCNV-1.0.5/cal_gc_snp.pl'),
 					penncnv_gcfile, args.pfb_out, '-out', args.gc_out]
-	#print(' '.join(argv))
-	ret = subprocess.call(argv)				
-	
+	print( 'Executing: `'  + ' '.join(argv) + '`')
+	ret = subprocess.call(argv)
+
 	if ret:
 		raise Exception('Generation of GCmodel file with PennCNV failed')
 	else:
@@ -279,7 +299,7 @@ if __name__ == '__main__':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':
 		args.pfb_out = args.pfb_out.format(genome=args.genome)
-		args.gc_out = args.pfb_out.format(genome=args.genome)
+		args.gc_out = args.gc_out.format(genome=args.genome)
 		ret = make_penncnv_files(args)
 
 	sys.exit(ret)
