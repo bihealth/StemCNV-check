@@ -139,9 +139,9 @@ gtf_file <- config$static_data$genome_gtf_file
 if (!file.exists(gtf_file)) {
     gtf_file <- file.path(basepath, gtf_file)
 }
-exclude_regexes <- config$settings$report$CNV_plots$exclude_gene_type_regex %>%
+exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
         paste(collapse = '|')
-gene_type_whitelist <- config$settings$report$CNV_plots$include_only_these_gene_types
+gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
 
 gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
     filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))

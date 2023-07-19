@@ -73,6 +73,9 @@ settings:
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
+  gene_overlap:
+    exclude_gene_type_regex: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
+    include_only_these_gene_types: []
   make_cnv_vcf:
     # mode can be 'combined-calls' (one vcf with overlapped calls) or 'split-tools' (once vcf per tool, with non-overlapped calls)
     mode: combined-calls
@@ -100,9 +103,6 @@ settings:
       # # This is hard to set thresholds for, since currently all types of genes are used
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
-    CNV_plots:
-        exclude_gene_type_regex: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
-        include_only_these_gene_types: []
     SNP_comparison:
       include_dendrogram: TRUE
       ignore_filters: FALSE

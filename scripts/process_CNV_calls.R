@@ -69,8 +69,15 @@ if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied
 use_chr <- paste0('chr', c(1:22, 'X', 'Y'))
 
 gtf_file <- config$static_data$genome_gtf_file
+exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
+        paste(collapse = '|')
+gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
+
 gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
-	filter(type == 'gene' & seqnames %in% use_chr) 
+    filter(type == 'gene' & seqnames %in% use_chr & !str_detect(gene_type, exclude_regexes))
+if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
+    gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
+}
 
 ########################
 # Function definitions #
@@ -269,8 +276,15 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 								coverage.by.ref = list(coverage.by.ref),
 								ref.tool = list(ref.tool),
 			) %>%
-			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
-			makeGRangesFromDataFrame(keep.extra.columns = T)
+			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.'))
+
+		# Need to check again, since checking for CNV state match can loose all matches, which breaks GRanges
+		if (nrow(gr)>0){
+		  gr <- makeGRangesFromDataFrame(gr, keep.extra.columns = T)
+		} else {
+		  gr <- GRanges()
+		}
+
 
 		# This keeps only (certain) overlaps, now
 		# need to rebuild result if matching ref calls were found
