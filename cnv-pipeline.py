@@ -244,9 +244,9 @@ def setup_argparse():
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
 							   help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
-	group_penncnv.add_argument('--pfb-out', default='static-data/PennCNV-PFB_from_clusterfile-stats.pfb',
+	group_penncnv.add_argument('--pfb-out', default='static-data/PennCNV-PFB_from_clusterfile-stats_{genome}.pfb',
 							   help="Filename for generated PFB file. Default: %(default)s")
-	group_penncnv.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-GRCh38.gcmodel',
+	group_penncnv.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-{genome}.gcmodel',
 							   help="Filename for generated GCmodel file. Default: %(default)s")
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
@@ -278,6 +278,8 @@ if __name__ == '__main__':
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':
+		args.pfb_out = args.pfb_out.format(genome=args.genome)
+		args.gc_out = args.pfb_out.format(genome=args.genome)
 		ret = make_penncnv_files(args)
 
 	sys.exit(ret)
