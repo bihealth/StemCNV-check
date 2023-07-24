@@ -19,6 +19,8 @@ from scripts.py_helpers import *
 from scripts.py_exceptions import *
 
 SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
+with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
+	DEF_CONFIG = yaml.safe_load(f)
 
 ### Sanity checks ###
 def check_sample_table(args):
@@ -55,11 +57,9 @@ def check_sample_table(args):
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
-	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
-		def_config = yaml.safe_load(f)
 
 	for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
-		pattern = config['wildcard_constraints'][constraint] if 'wildcard_constraints' in config and constraint in config['wildcard_constraints'] else def_config['wildcard_constraints'][constraint]
+		pattern = config_extract(['wildcard_constraints', constraint], config, DEF_CONFIG)
 		mismatch = [sid for sid, n, p, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
 		if mismatch:
 			raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
@@ -76,8 +76,8 @@ def check_sample_table(args):
 
 
 	#Check SNP_clustering extra ids (if defined)
-	check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, def_config)
-	extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, def_config)
+	check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, DEF_CONFIG)
+	extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, DEF_CONFIG)
 	if check_snp_cluster:
 		for sample_id in samples.keys():
 			cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
@@ -88,19 +88,13 @@ def check_sample_table(args):
 						missing))
 
 
-
-
-
-
 # Assume that the default_config hasn't been altered & is correct
 def check_config(args):
 
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
 
-	#TODO: need helper function to ignore values omitted from user config
-
-	if config['settings']['make_cnv_vcf']['mode'] not in ('combined-calls', 'split-tools'):
+	if config_extract(['settings', 'make_cnv_vcf', 'mode'], config, DEF_CONFIG) not in ('combined-calls', 'split-tools'):
 		raise ConfigValueError(
 			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
 
@@ -114,10 +108,39 @@ def check_installation():
 	pass
 
 
+def make_PennCNV_sexfile(args):
+	"""Make the `sexfile` that PennCNV requirs from the sampletable & config. Needs to updated for each run,
+	but would trigger snakemake reruns if done as a snakemake rule"""
+	#Description of needed format:
+	# A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
+	# tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
+	# Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
+
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+
+	basepath = args.directory
+	datapath = config['data_path']
+	outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
+
+	filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, DEF_CONFIG)
+
+	sample_data = read_sample_table(args.sample_table)
+
+	with open(outfilename, 'w') as f:
+		for sample_id, _, _, sex, _ in sample_data:
+			inputfile = os.path.join(basepath, datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
+			#ensure its consistently 'm'/'f'
+			sex = sex.lower()[0]
+			f.write(f"{inputfile}\t{sex}\n")
+
+
+
 ### Actions ###
 
 def copy_setup_files(args):
 	#TODO: copy into PWD or into directroy?
+	#TODO: add different levels of copying config (only required, `normal` and full)
 	subprocess.call(['cp', f"{SNAKEDIR}/config.yaml", args.config])
 	subprocess.call(['cp', f"{SNAKEDIR}/sample_table.txt", args.sample_table])
 	print('Created setup files: ...')
@@ -213,6 +236,8 @@ def make_penncnv_files(args):
 
 
 def run_snakemake(args):
+
+	make_PennCNV_sexfile(args)
 	
 	argv = [
 		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
@@ -271,7 +296,7 @@ def setup_argparse():
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
 
-	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'filtered-data', 'unfiltered-data'),
+	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'SNP-probe-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")

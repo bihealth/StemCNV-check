@@ -1043,7 +1043,7 @@ gg1 <- dend %>%
     scale_y_continuous(name = 'SNP distance (manhattan method)',
                                          breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
                                          labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','),
-                                         limits = c(-max(SNP.genotype.distances)/2.5, NA),
+                                         limits = c(-max(SNP.genotype.distances)/2, NA),
                                          expand = expansion()) +
     scale_x_continuous(limits = c(0, NA), expand = expansion(add = c(0, .5))) +
     geom_line(data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
@@ -1068,7 +1068,8 @@ gg2 <- dend.format.df %>%
                                   list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] ) +
   theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
 
-gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(4.5, 1))
+gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(
+  5, 1))
 
 subchunkify(gg, 'snp.dendrogram', 8, 10)
 

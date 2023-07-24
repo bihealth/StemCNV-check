@@ -21,9 +21,14 @@ settings:
     - PennCNV
     - GADA
     - CBS
-  filter:
-    use-filterset: 'full' # basic|highGT|highGC|full [=highGT+GC]
+  PennCNV:
+    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
+    filter-settings: 'basic'
+
   CBS:
+    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
+    filter-settings: 'full'
+    # SD.undo split value for CBS
     SDundo: 1
     # one-size-fits-all cutoff
     LRR.th.value: 0.2
@@ -48,8 +53,9 @@ settings:
     LRR.female.X.gain:       0.5   #CN3
     LRR.female.X.gain.large: 1.05  #CN4+
 
-
   GADA:
+    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
+    filter-settings: 'full'
     # Sparsness of bayesian model; higher value gives faster, but fewer results; mostly irrelevant with hig T value
     aAlpha: 0.2
     # Critical parameters of backwards eliminations, sets arbitrary significance level, higher T <> higher significance
@@ -57,6 +63,7 @@ settings:
     mad.T: 5
     # Minimum required probes in a CNV / LOH call
     MinSegLen: 5
+
   postprocessing:
     ## Prefiltering is done as follows:
     # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density & 
@@ -73,9 +80,11 @@ settings:
     tool.overlap.min.perc: 50
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
+
   gene_overlap:
     exclude_gene_type_regex: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
     include_only_these_gene_types: []
+
   make_cnv_vcf:
     # mode can be 'combined-calls' (one vcf with overlapped calls) or 'split-tools' (once vcf per tool, with non-overlapped calls)
     mode: combined-calls
@@ -83,6 +92,7 @@ settings:
     include_states: ['gain', 'loss', 'LOH']
     # Use this to create distinct vcf files, for i.e. different CNV types
     name_addition: ''
+
   report: 
     thresholds:
       # Include these sizes in the main tables of the report
