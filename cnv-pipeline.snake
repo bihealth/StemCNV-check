@@ -357,14 +357,11 @@ def get_preprocess_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   tools = config['settings']['CNV.calling.tools']
   files = []
-  filter = config['settings']['PennCNV']['filter-settings']
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.{filter}.tsv"),
-            os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.{filter}.tsv")] if 'PennCNV' in tools else []
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.{filter}.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
-  filter = config['settings']['CBS']['filter-settings']
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.{filter}.tsv")] if 'CBS' in tools else []
-  filter = config['settings']['GADA']['filter-settings']
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.{filter}.tsv")] if 'GADA' in tools else []
+  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.tsv"),
+            os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv")] if 'PennCNV' in tools else []
+  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
+  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
+  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.tsv")] if 'GADA' in tools else []
 
   files += [os.path.join(BASEPATH, DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")] if ref_id else []
 
