@@ -232,7 +232,7 @@ rule run_filter_tsv:
   input:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv")
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
   threads: get_tool_resource('filter_tsv', 'threads')
   resources:
     time=get_tool_resource('filter_tsv', 'runtime'),
@@ -246,7 +246,7 @@ rule run_filter_tsv:
     
 rule run_PennCNV_auto:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data.{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
@@ -267,7 +267,7 @@ rule run_PennCNV_auto:
 
 rule run_PennCNV_sex:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data.{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
     sexfile = ancient(os.path.join(BASEPATH, "penncnv-sexfile.txt")),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
@@ -292,7 +292,7 @@ rule run_PennCNV_sex:
 
 rule run_CBS:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data.{0}.tsv".format(config['settings']['CBS']['filter-settings']))
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['CBS']['filter-settings']))
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv")
   threads: get_tool_resource('CBS', 'threads')
@@ -312,7 +312,7 @@ rule run_CBS:
 
 rule run_GADA:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data.{0}.tsv".format(config['settings']['GADA']['filter-settings']))
+    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['GADA']['filter-settings']))
   output:
     tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv")
   threads: get_tool_resource('GADA', 'threads')
