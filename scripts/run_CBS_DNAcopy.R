@@ -19,12 +19,13 @@ suppressMessages(library(tidyverse))
 suppressMessages(library(DNAcopy))
 suppressMessages(library(yaml))
 
-sd.undo.val <- args$sd_undo
 inputfile <- args$inputfile
 outputfile <- args$outputfile
 config <- read_yaml(args$configfile)
+sd.undo.val <- args$sd_undo
+min.width <- config$settings$CBS$min.width
 
-sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data\\..*\\.tsv$')
+sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data-.*\\.tsv$')
 
 sampletable <- read_tsv(args$sampletable, col_types = 'cccccc', comment = '#')
 sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
@@ -55,8 +56,7 @@ tb <- read_tsv(inputfile, show_col_types = FALSE) %>%
 cna.basic <- CNA(tb$`Log R Ratio`, tb$Chr, tb$Position, data.type = 'logratio', sampleid = sampleID)
 cna.basic.smoothed <- smooth.CNA(cna.basic)
 
-#TODO: parameterise min.width
-cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = 5, undo.splits = 'sdundo', undo.SD = sd.undo.val)
+cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = min.width, undo.splits = 'sdundo', undo.SD = sd.undo.val)
 
 # p-values aren't much better - they are very sig. even for very short segments
 #segments.p(cna.basic.smoothed.segmented)
@@ -64,7 +64,6 @@ cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = 5, undo.
 tb <- segments.summary(cna.basic.smoothed.segmented) %>%
   		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
 									numsnp = num.mark, sample_id = ID) %>%
-	rowwise %>%
 	mutate(
 		sample_id = sampleID,
 		length = end - start, # TODO: open / half open / +- 1 ??
@@ -88,7 +87,8 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 			seg.median < LRR.loss                                                           ~ 1,
 			seg.median > LRR.gain.large                                                     ~ 4,
 			seg.median > LRR.gain                                                           ~ 3,
-			TRUE ~ 2
+			TRUE ~ 2,
+			.default = 2
 		),
 		CNV.state = case_when(# Male is default CN=1 on X & Y
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & copynumber == 2     ~ 'gain',

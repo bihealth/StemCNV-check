@@ -30,6 +30,8 @@ settings:
     filter-settings: 'full'
     # SD.undo split value for CBS
     SDundo: 1
+    # Minimum size of segments
+    min.width: 5
     # one-size-fits-all cutoff
     LRR.th.value: 0.2
     # with adjustment of threshold for X chromosome (female: down, male: up)
