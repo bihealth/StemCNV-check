@@ -75,7 +75,6 @@ def get_target_files():
                   sample_id = all_samples)
   # cnv-vcf
   if TARGET == 'cnv-vcf':
-    #TODO: this might break if expand can't handle lists
     return expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']),
                   sample_id = all_samples)
       #      )
@@ -172,7 +171,9 @@ def get_chip(wildcards, outtype = 'dir_path'):
   elif outtype == 'file':
     return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
 
-
+#TODO:
+# the *.gtc output files from gencall will *always* match the idat_file names
+# --> maybe better to switch from Chip_Name & Chip_Pos to Folder_Name & IDAT_Name ?!
 rule relink_gencall:
   input:
     lambda wildcards: os.path.join(get_chip(wildcards), '_done')
@@ -226,7 +227,7 @@ rule run_gtc2vcf_vcf:
   log:
     err=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
     out=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
-  shell: 'bcftools plugin gtc2vcf {params.options} --no-version -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
+  shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_filter_tsv:
   input:

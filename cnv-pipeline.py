@@ -14,7 +14,7 @@ import yaml
 
 # import ruamel.yaml as ruamel_yaml
 # from snakemake import RERUN_TRIGGERS
-from snakemake import main as snakemake_main
+from snakemake import main, snakemake
 from scripts.py_helpers import *
 from scripts.py_exceptions import *
 
@@ -134,7 +134,20 @@ def make_PennCNV_sexfile(args):
 			sex = sex.lower()[0]
 			f.write(f"{inputfile}\t{sex}\n")
 
+def ensure_paths_exist(args):
 
+	# Check that all defined paths exist
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+	datapath = config_extract(('data_path',), config, DEF_CONFIG)
+	logpath = config_extract(('log_path',), config, DEF_CONFIG)
+
+	if not os.path.isdir(args.directory):
+		os.makedirs(args.directory)
+	if not os.path.isdir(datapath):
+		os.makedirs(datapath)
+	if not os.path.isdir(logpath):
+		os.makedirs(logpath)
 
 ### Actions ###
 
@@ -145,15 +158,17 @@ def copy_setup_files(args):
 	subprocess.call(['cp', f"{SNAKEDIR}/sample_table.txt", args.sample_table])
 	print('Created setup files: ...')
 
+#TODO: maybe it'd be better if this was part of the actual snakemake workflow?
+# -> the issue though is that it shouldn't depend on any given sample from the view of snakemake
 def make_penncnv_files(args):
-	
+
+	ensure_paths_exist(args)
+
 	# Check if any vcf file is present
 	sample_data = read_sample_table(args.sample_table)
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
-	with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
-		def_config = yaml.safe_load(f)
-	datapath = config['data_path'] if 'data_path' in config else def_config['data_path']
+	datapath = config_extract(('data_path', ), config, DEF_CONFIG)
 	
 	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for sample_id, _, _, _, _ in sample_data]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
@@ -167,32 +182,25 @@ def make_penncnv_files(args):
 		
 		#TODO: The code terminate here because snakemake.main includes a sys.exit() call
 		# --> need to use snakemake.snakemake and parse args (manually?) instead
-		ret = run_snakemake(args)
-		
-		
-# 		snakemake(os.path.join(SNAKEDIR, "cnv-pipeline.snake"), 
-# 		
-# 		            cores=args.cores,
-#             local_cores=args.local_cores,
-#             nodes=args.jobs,
-#             
-#             config=config,
-#             configfiles=args.configfile,
-#             config_args=args.config,
-#             workdir=args.directory,
-#             
-#             		'--configfile', os.path.join(SNAKEDIR, 'default_config.yaml'), args.config,
-# 		'--config', f'sample_table={args.sample_table}',
-# 			f'snakedir={SNAKEDIR}',
-# 			f'basedir={args.directory}',
-# 			f'configfile={args.config}',
-# 			f'target={args.target}',
-#             
-#             
-#             targets= use_vcf,
-#             )
-		
-		if ret:
+		#ret = run_snakemake(args)
+
+		ret = snakemake(
+			os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
+			local_cores=args.local_cores,
+			cores=args.local_cores,
+			workdir=args.directory,
+			configfiles=[os.path.join(SNAKEDIR, 'default_config.yaml'), args.config],
+			printshellcmds=True,
+			force_incomplete=True,
+			config={'sample_table': args.sample_table,
+					'snakedir': SNAKEDIR,
+					'basedir': args.directory,
+					'configfile': args.config
+					},
+			targets=[use_vcf]
+		)
+
+		if not ret:
 			raise Exception('Snakemake run to get vcf failed')
 	
 	#TODO logger calls
@@ -237,6 +245,9 @@ def make_penncnv_files(args):
 
 def run_snakemake(args):
 
+	ensure_paths_exist(args)
+
+	# Ensure that sexfile for PennCNV exists
 	make_PennCNV_sexfile(args)
 	
 	argv = [
@@ -271,7 +282,7 @@ def run_snakemake(args):
 		
 	#print(argv)
 	
-	return snakemake_main(argv)
+	return main(argv)
 
 
 ### Setup ###
