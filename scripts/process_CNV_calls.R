@@ -33,7 +33,6 @@ sample_id <- args$sample_id
 config <- read_yaml(args$configfile)
 sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc', comment = '#')
 
-use.filter <- config$settings$filter$`use-filterset`
 sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
 	tolower() %>% substr(1,1)
 
@@ -353,9 +352,9 @@ finalise_tb <- function(gr) {
 # Run code #
 ############
 
-pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-autosomes.', use.filter, '.tsv'),
-									paste0(sample_id, '/', sample_id, '.penncnv-chrx.', use.filter, '.tsv'))
-if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_id, '.penncnv-chry.', use.filter, '.tsv')) }
+pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-autosomes.tsv'),
+									paste0(sample_id, '/', sample_id, '.penncnv-chrx.tsv'))
+if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_id, '.penncnv-chry.tsv')) }
 
 results = list()
 
@@ -370,7 +369,7 @@ if (args$penncnv) {
 	}
 }
 if (args$cbs) {
-	res <- file.path(datapath, sample_id, paste0(sample_id, '.CBS.', use.filter, '.tsv')) %>%
+	res <- file.path(datapath, sample_id, paste0(sample_id, '.CBS.tsv')) %>%
 		lapply(read_tsv, show_col_types = F) %>%
 		bind_rows()
 	if (nrow(res) > 0) {
@@ -380,7 +379,7 @@ if (args$cbs) {
 	}
 }
 if (args$gada) {
-	res <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.', use.filter, '.tsv')) %>%
+	res <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.tsv')) %>%
 		lapply(read_GADA) %>%
 		bind_rows()
 	if (nrow(res) > 0) {
@@ -414,7 +413,7 @@ overlapped_tools_sample <- overlap_tools(tools, tool.overlap.min.perc)
  
 if (!is.na(ref_id)) {
 	
-	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.', use.filter, '.tsv'))
+	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.tsv'))
 	overlapped_tools_ref <- read_tsv(fname) %>%
 		# These cols will interefere
 		dplyr::select(-length, -call.in.reference, -coverage.by.ref, -ref.tool,
@@ -431,7 +430,7 @@ if (!is.na(ref_id)) {
 		finalise_tb()	
 }
 		
-outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv'))
+outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.tsv'))
 cnvs.tb <- cnvs %>%
 	rowwise() %>%
 	mutate(across(one_of(list_cols), ~paste(., collapse=';')))
