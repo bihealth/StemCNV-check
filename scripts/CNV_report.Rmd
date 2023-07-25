@@ -49,7 +49,6 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, #cache=FALSE,
 )
 
 config <- read_yaml(params$configfile)
-use.filter <- config$settings$filter$`use-filterset`
 datapath <- config$data_path
 
 sampletable <- read_tsv(params$sampletable, col_types = 'cccccc', comment = "#")
@@ -115,7 +114,6 @@ check_cols_exits <- function(cols){
 
 SNP.extra.ids <- c()
 do.SNP.clustering <- config$settings$report$SNP_comparison$include_dendrogram
-SNP.ignore.filters <- config$settings$report$SNP_comparison$ignore_filters
 if (do.SNP.clustering) {
     extra_samples <- config$settings$report$SNP_comparison$extra_samples
     # '__[column]' entry: take all sample_ids with the same value in '[column]'
@@ -186,6 +184,8 @@ read_raw <- function(filename) {
         #separate_rows(Chr, sep=',')
 }
 
+probe.filter <- config$settings$report$`plot-filter-settings`
+
 filter_functions <- list(
     'basic'   = function(GT, GC) GT > 0.15,
     'highGT'   = function(GT, GC) GT > 0.8,
@@ -197,7 +197,7 @@ filter_functions <- list(
 raw_LRR_BAF <- file.path(basepath, datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
     bind_rows() %>%
-    mutate(filter.passed = filter_functions[[use.filter]](`GenTrain Score`, Score))
+    mutate(filter.passed = filter_functions[[probe.filter]](`GenTrain Score`, Score))
 
 ## RAW Genotype info
 read_snps <- function(fname) {
@@ -208,9 +208,11 @@ read_snps <- function(fname) {
 }
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
-snp_file_pattern <- ifelse(SNP.ignore.filters,
+
+clustering.filter <- config$settings$report$SNP_comparison$`filter-settings`
+snp_file_pattern <- ifelse(clustering.filter %!in% names(filter_functions),
                            '.processed-data.tsv',
-                           paste0('.filtered-data.', use.filter, '.tsv'))
+                           paste0('.filtered-data-', clustering.filter, '.tsv'))
 
 SNP.genotype.distances <- file.path(basepath, datapath, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
   lapply(read_snps) %>%
@@ -249,7 +251,8 @@ load_annotate_cnv <- function(fname){
         )
 }
 
-cnv_calls <- lapply(file.path(basepath, datapath, use_ids, paste0(use_ids, '.combined-cnv-calls.', use.filter, '.tsv')), load_annotate_cnv) %>%
+cnv_calls <- lapply(file.path(basepath, datapath, use_ids, paste0(use_ids, '.combined-cnv-calls.tsv')),
+                    load_annotate_cnv) %>%
     bind_rows()
 
 ## GenCall logs
@@ -414,7 +417,7 @@ cat('### PennCNV')
 
 # Extract qc summary stats from PennCNV log files
 logfiles <- list.files(file.path(basepath, config$log_path, 'PennCNV', sample_id),
-                       pattern = paste0(use.filter, '.error.log'), full.names = T)
+                       pattern = 'error.log', full.names = T)
 
 #TODO:
 # Check for Warning lines !!

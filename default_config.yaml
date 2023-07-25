@@ -21,6 +21,7 @@ settings:
     - PennCNV
     - GADA
     - CBS
+
   PennCNV:
     # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
     filter-settings: 'basic'
@@ -95,7 +96,9 @@ settings:
     # Use this to create distinct vcf files, for i.e. different CNV types
     name_addition: ''
 
-  report: 
+  report:
+    # Which filter to apply to probe data for
+    plot-filter-settings: 'full'
     thresholds:
       # Include these sizes in the main tables of the report
       reportable.loh: 2.5e6
@@ -116,8 +119,9 @@ settings:
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
     SNP_comparison:
+      # Same as tool specific filter settings
+      filter-settings: 'full'
       include_dendrogram: TRUE
-      ignore_filters: FALSE
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
       # enries with __[column] will use all other samples with the same value in [column]
       # entries with _[column] expect a column that contains additional (, separated) sample_ids

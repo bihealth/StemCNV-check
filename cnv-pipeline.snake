@@ -400,7 +400,15 @@ def get_report_sample_input(wildcards):
   if config['settings']['report']['SNP_comparison']['include_dendrogram']:
     extra_sample_def = config['settings']['report']['SNP_comparison']['extra_samples']
     ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-    sample_files += expand([os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
+    # check which filter is requested
+    # TODO: import allowed filters from somewhere else
+    allowed_filters = ['basic', 'highGT', 'highGC', 'full', 'highGT+GC']
+    clustering_filter = config['settings']['report']['SNP_comparison']['filter-settings']
+    if clustering_filter in allowed_filters:
+      sample_files += expand([os.path.join(BASEPATH,DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
+        ids=ids, filter=clustering_filter)
+    else:
+      sample_files += expand([os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
 
   return sample_files
 
