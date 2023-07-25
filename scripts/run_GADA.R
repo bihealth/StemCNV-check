@@ -14,6 +14,7 @@ parser$add_argument("-l", "--minseglen", default = 5, help="Min Probe number for
 
 args <- parser$parse_args()
 #args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13/BIHi005-A-13.filtered-data.full.tsv', '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13/BIHi005-A-13.GADA.full.tsv'))
+#args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/validation_data/HG001/data/OmniExpress-24v1_rep1/OmniExpress-24v1_rep1.filtered-data-full.tsv', '/home/vonkunic_c/Misc-Projects/CNV-pipeline/validation_data/HG001/data/OmniExpress-24v1_rep2/OmniExpress-24v1_rep2.GADA.tsv'))
 
 suppressMessages(library(tidyverse))
 suppressMessages(library(gada))
@@ -60,11 +61,16 @@ cnvs <- summary(gada.obj, print=FALSE) %>%
 	as_tibble() %>%
 	filter(State != 0) %>%
 	mutate(State = ifelse(State == 1, 'gain', 'loss'),
-		   chromosome = paste0('chr', chromosome)) %>%
+		   chromosome = paste0('chr', chromosome))
+if (nrow(cnvs) > 0) {
+	cnvs <- cnvs %>%
 	as_granges(seqnames = chromosome,
 				 start = IniProbe, end = EndProbe,
 				 keep_mcols = T) %>%
 	select(-MeanAmp)
+} else {
+	cnvs <- GRanges(LenProbe = integer(), State = character())
+}
 
 # Only the 'par' MAD functions seem to work properly
 tmp <- tempdir()
@@ -111,6 +117,11 @@ calls.out <- bind_ranges(cnvs, mosaics) %>%
 	dplyr::rename(numsnp = LenProbe, CNV.state = State,
 				  length = width, Chr = seqnames) %>%
 	mutate(sample_id = sampleID,
+		   conf = NA,
+		   snp.density = numsnp / length * 1e6,
+		   copynumber = ifelse(!CNV.state %in% c('gain', 'loss'), 2, 3),
+		   copynumber = ifelse(CNV.state == 'loss', 1, copynumber),
+		   copynumber = ifelse(Chr == 'chrY' , copynumber - 1, copynumber),
 	       tool = 'GADA') %>%
 	dplyr::select(-strand)
 

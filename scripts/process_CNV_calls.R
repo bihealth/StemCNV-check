@@ -107,19 +107,14 @@ read_PennCNV <- function(filename) {
 
 ## CBS
 read_CBS <- function(filename) {
-	tb <- read_tsv(filename, show_col_types = F)
-	tb
+	read_tsv(filename, show_col_types = F)
 }
 
 
 ## GADA / MAD
 
 read_GADA <- function(filename) {
-	read_tsv(filename, show_col_types = F) %>%
-		mutate(conf = NA,
-			   snp.density = numsnp / length * 1e6,
-			   copynumber = ifelse(!CNV.state %in% c('gain', 'loss'), 2, 3),
-			   copynumber = ifelse(CNV.state == 'loss', 1, copynumber),)
+	read_tsv(filename, show_col_types = F)
 }
 
 

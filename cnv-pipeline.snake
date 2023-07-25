@@ -27,8 +27,8 @@ else:
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
 SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.getcwd() #Defined by wrapper 
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
-DATAPATH = config['data_path']
-LOGPATH = config['log_path']
+DATAPATH = config['data_path'] if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
+LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
 TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
 
@@ -54,9 +54,9 @@ sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
 def get_cnv_vcf_output(mode):
   addition = config['settings']['make_cnv_vcf']['name_addition']
   if mode == 'combined-calls':
-    return os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls.{addition}vcf")
+    return os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls.{addition}vcf")
   elif mode == 'split-tools':
-    return [os.path.join(BASEPATH, DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{addition}vcf")
+    return [os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{addition}vcf")
             for tool in config['settings']['CNV.calling.tools']]
   else:
     raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make_cnv_vcf']['mode']))
@@ -69,9 +69,9 @@ def get_target_files():
   all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
   # Report
   if TARGET == 'report':
-    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
                   sample_id = all_samples) + \
-           expand(os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
+           expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
                   sample_id = all_samples)
   # cnv-vcf
   if TARGET == 'cnv-vcf':
@@ -85,32 +85,32 @@ def get_target_files():
 
   # Target Processed-calls
   if TARGET == 'processed-calls':
-    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
                   sample_id = all_samples)
   # Target PennCNV
   if TARGET == 'PennCNV':
-    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
                   sample_id = all_samples, chr = ('autosomes', 'chrx')) + \
-      [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv") for
+      [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv") for
        sample_id, _, _, sex, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
   if TARGET == 'CBS':
-    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv"),
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv"),
                   sample_id = all_samples)
   # Target CBS
   if TARGET == 'GADA':
-    return expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv"),
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv"),
                   sample_id = all_samples)
   # #Target: filtered-data
   # if TARGET == 'filtered-data':
-  #   return  expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
+  #   return  expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
   #                 sample_id = all_samples, filter = use_filter)
   #     # TODO: add soft-filter to vcf file!
 
   #Target: unfiltered-data
   if TARGET == 'SNP-probe-data':
-    return  expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"), sample_id = all_samples) + \
-      expand(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"), sample_id = all_samples)
+    return  expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"), sample_id = all_samples) + \
+      expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"), sample_id = all_samples)
 
 
 rule all:
@@ -142,7 +142,7 @@ rule run_gencall:
     egt=config['static_data']['egt_cluster_file'],
     idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
   output:
-    os.path.join(BASEPATH, DATAPATH, "gtc", "{sentrix_name}", "_done")
+    os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
   threads: get_tool_resource('GenCall', 'threads')
   resources:
     time=get_tool_resource('GenCall', 'runtime'),
@@ -151,10 +151,10 @@ rule run_gencall:
   params:
     # TODO: Param chnages in this rule do not seem to trigger a rerun?
     options = get_tool_resource('GenCall', 'cmd-line-params'),
-    outpath = os.path.join(BASEPATH, DATAPATH, "gtc", "{sentrix_name}")
+    outpath = os.path.join(DATAPATH, "gtc", "{sentrix_name}")
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "GenCall", "{sentrix_name}", "out.log")
+    err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
+    out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log")
   shell:
     #TODO: check how imporant definition of the ICU version & LANG is here
     # CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
@@ -167,7 +167,7 @@ def get_chip(wildcards, outtype = 'dir_path'):
   Values for outtype: 'dirpath' | 'file'"""
   chip_name, chip_pos = [(n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id][0]
   if outtype == 'dir_path':
-    return os.path.join(BASEPATH, DATAPATH, 'gtc', chip_name)
+    return os.path.join(DATAPATH, 'gtc', chip_name)
   elif outtype == 'file':
     return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
 
@@ -178,7 +178,7 @@ rule relink_gencall:
   input:
     lambda wildcards: os.path.join(get_chip(wildcards), '_done')
   output:
-    os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+    os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   params:
     gtc_link_path = lambda wildcards: os.path.join('..', 'gtc', get_chip(wildcards, outtype='file'))
   shell:
@@ -190,9 +190,9 @@ rule run_gtc2vcf_tsv:
     bpm=config['static_data']['bpm_manifest_file'],
     egt=config['static_data']['egt_cluster_file'],
     genome=config['static_data']['genome_fasta_file'],
-    gtc = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
+    gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"),
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"),
   threads: get_tool_resource('gtc2vcf', 'threads')
   resources:
     time=get_tool_resource('gtc2vcf', 'runtime'),
@@ -202,8 +202,8 @@ rule run_gtc2vcf_tsv:
     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
     csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "tsv.out.log")
+    err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
+    out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.out.log")
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
 
@@ -212,10 +212,10 @@ rule run_gtc2vcf_vcf:
     bpm=config['static_data']['bpm_manifest_file'],
     egt=config['static_data']['egt_cluster_file'],
     genome=config['static_data']['genome_fasta_file'],
-    gtc = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+    gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   output:
-    vcf = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
-    metatxt = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
+    vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
+    metatxt = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
   threads: get_tool_resource('gtc2vcf', 'threads')
   resources:
     time=get_tool_resource('gtc2vcf', 'runtime'),
@@ -225,33 +225,33 @@ rule run_gtc2vcf_vcf:
     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
     csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
+    err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
+    out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
   shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_filter_tsv:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
   threads: get_tool_resource('filter_tsv', 'threads')
   resources:
     time=get_tool_resource('filter_tsv', 'runtime'),
     mem_mb=get_tool_resource('filter_tsv', 'memory'),
     partition=get_tool_resource('filter_tsv', 'partition')
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
+    err=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
+    out=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
   shell:
     'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} > {log.out} 2> {log.err}'
     
 rule run_PennCNV_auto:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.tsv")
   threads: get_tool_resource('PennCNV', 'threads')
   resources:
     time=get_tool_resource('PennCNV', 'runtime'),
@@ -260,20 +260,20 @@ rule run_PennCNV_auto:
   params:
     filter=config['settings']['PennCNV']['filter-settings']
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "auto.out.log")
+    err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.error.log"),
+    out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.out.log")
   shell:
     'PennCNV_detect -test -loh -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
 
 
 rule run_PennCNV_sex:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
     sexfile = ancient(os.path.join(BASEPATH, "penncnv-sexfile.txt")),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv")
   threads: get_tool_resource('PennCNV', 'threads')
   resources:
     time=get_tool_resource('PennCNV', 'runtime'),
@@ -282,8 +282,8 @@ rule run_PennCNV_sex:
   params:
     filter=config['settings']['PennCNV']['filter-settings']
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
+    err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
+    out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
   shell:
     'PennCNV_detect -test -loh -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} -{wildcards.chr} -sex {input.sexfile} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
 
@@ -293,9 +293,9 @@ rule run_PennCNV_sex:
 
 rule run_CBS:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['CBS']['filter-settings']))
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['CBS']['filter-settings']))
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv")
   threads: get_tool_resource('CBS', 'threads')
   resources:
     time=get_tool_resource('CBS', 'runtime'),
@@ -306,16 +306,16 @@ rule run_CBS:
     filter=config['settings']['CBS']['filter-settings'],
     settings=config['settings']['CBS']
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "CBS", "{sample_id}", "out.log")
+    err=os.path.join(LOGPATH, "CBS", "{sample_id}", "error.log"),
+    out=os.path.join(LOGPATH, "CBS", "{sample_id}", "out.log")
   shell:
     "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 rule run_GADA:
   input:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['GADA']['filter-settings']))
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['GADA']['filter-settings']))
   output:
-    tsv = os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv")
   threads: get_tool_resource('GADA', 'threads')
   resources:
     time=get_tool_resource('GADA', 'runtime'),
@@ -328,8 +328,8 @@ rule run_GADA:
     madT = config['settings']['GADA']['mad.T'],
     minLen = config['settings']['GADA']['MinSegLen']
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "GADA", "{sample_id}", "err.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "GADA", "{sample_id}", "out.log")
+    err=os.path.join(LOGPATH, "GADA", "{sample_id}", "err.log"),
+    out=os.path.join(LOGPATH, "GADA", "{sample_id}", "out.log")
   shell:
     "Rscript {SNAKEDIR}/scripts/run_GADA.R -a {params.alpha} -g {params.gadaT} -m {params.madT} -l {params.minLen} {input.tsv} {output.tsv} > {log.out} 2> {log.err}"
 
@@ -358,13 +358,13 @@ def get_preprocess_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   tools = config['settings']['CNV.calling.tools']
   files = []
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.tsv"),
-            os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv")] if 'PennCNV' in tools else []
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
-  files += [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.GADA.tsv")] if 'GADA' in tools else []
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.tsv"),
+            os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv")] if 'PennCNV' in tools else []
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.GADA.tsv")] if 'GADA' in tools else []
 
-  files += [os.path.join(BASEPATH, DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")] if ref_id else []
+  files += [os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")] if ref_id else []
 
   return files
 
@@ -372,7 +372,7 @@ rule run_process_CNV_calls:
   input:
     get_preprocess_input
   output:
-    os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv")
+    os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv")
   threads: get_tool_resource('CNV.process', 'threads')
   resources:
     time=get_tool_resource('CNV.process', 'runtime'),
@@ -384,18 +384,18 @@ rule run_process_CNV_calls:
     cbs = '-c' if 'CBS' in config['settings']['CNV.calling.tools'] else '',
     settings=config['settings']['postprocessing']
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "CNV_process", "{sample_id}", "error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "CNV_process", "{sample_id}", "out.log")
+    err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
+    out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.gada} {params.cbs} {BASEPATH}/{DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.gada} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 
 def get_report_sample_input(wildcards):
   sample_id, ref_id = get_ref_id(wildcards)
   sample_files = expand(
-          [os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
-           os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.stats.txt"),
-           os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.processed-data.tsv"),],
+          [os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
+           os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
+           os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),],
            ids = (sample_id, ref_id) if ref_id else (sample_id,)
           )
   if config['settings']['report']['SNP_comparison']['include_dendrogram']:
@@ -406,10 +406,10 @@ def get_report_sample_input(wildcards):
     allowed_filters = ['basic', 'highGT', 'highGC', 'full', 'highGT+GC']
     clustering_filter = config['settings']['report']['SNP_comparison']['filter-settings']
     if clustering_filter in allowed_filters:
-      sample_files += expand([os.path.join(BASEPATH,DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
+      sample_files += expand([os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
         ids=ids, filter=clustering_filter)
     else:
-      sample_files += expand([os.path.join(BASEPATH, DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
+      sample_files += expand([os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
 
   return sample_files
 
@@ -417,25 +417,25 @@ rule knit_report:
   input:
     get_report_sample_input
   output:
-    html=os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
-    plots=directory(os.path.join(BASEPATH, DATAPATH, "{sample_id}", "report_images")),
-    summary=os.path.join(BASEPATH, DATAPATH, "{sample_id}", "{sample_id}.summary-check.tsv")
+    html=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
+    plots=directory(os.path.join(DATAPATH, "{sample_id}", "report_images")),
+    summary=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-check.tsv")
   threads: get_tool_resource('knitr', 'threads')
   resources:
     time=get_tool_resource('knitr', 'runtime'),
     mem_mb=get_tool_resource('knitr', 'memory'),
     partition=get_tool_resource('knitr', 'partition')
   log:
-    err=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "error.log"),
-    out=os.path.join(BASEPATH, LOGPATH, "report", "{sample_id}", "out.log")
+    err=os.path.join(LOGPATH, "report", "{sample_id}", "error.log"),
+    out=os.path.join(LOGPATH, "report", "{sample_id}", "out.log")
   shell:
     "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {CONFIGFILE} > {log.out} 2> {log.err}"
 
 
 rule run_make_cnv_vcf:
   input:
-    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.combined-cnv-calls.tsv"),
-    os.path.join(BASEPATH,DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
+    os.path.join(DATAPATH,"{sample_id}","{sample_id}.combined-cnv-calls.tsv"),
+    os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
   output:
     get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
   threads: get_tool_resource('make_cnv_vcf', 'threads')
@@ -447,7 +447,7 @@ rule run_make_cnv_vcf:
     include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),
     mode = config['settings']['make_cnv_vcf']['mode']
   log:
-    err=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","error.log"),
-    out=os.path.join(BASEPATH,LOGPATH,"make_cnv_vcf","{sample_id}","out.log")
+    err=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","error.log"),
+    out=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {BASEPATH}/{DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"

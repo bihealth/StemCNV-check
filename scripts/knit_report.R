@@ -24,9 +24,13 @@ sampletable <- config$sample_table %>% normalizePath
 datapath    <- config$data_path
 
 reportfile  <- file.path(snakedir, "scripts", "CNV_report.Rmd") %>% normalizePath
-workdir     <- file.path(basepath, datapath, sample_id) %>% normalizePath
 outfile     <- paste0(sample_id, ".CNV-report.html") #%>% normalizePath
 
+if (fs::is_absolute_path(datapath)) {
+  workdir   <- file.path(datapath, sample_id) %>% normalizePath
+} else {
+  workdir   <- file.path(basepath, datapath, sample_id) %>% normalizePath
+}
 # clear previously generated images
 if (dir.exists(file.path(workdir, 'report_images'))) {
 	system(str_glue('rm {workdir}/report_images/*'))
