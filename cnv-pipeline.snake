@@ -419,7 +419,7 @@ def get_report_sample_input(wildcards):
            os.path.join(LOGPATH, "PennCNV", "{ids}","{chrs}.error.log"),
            os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),],
           ids = (sample_id, ref_id) if ref_id else (sample_id,),
-          chrs = ['auto', 'chrx'] + ['chry'] if sex[0].lower() == 'm' else []
+          chrs = ['auto', 'chrx'] + (['chry'] if sex[0].lower() == 'm' else [])
   )
   report_filter_settings = get_tool_filter_settings('report')
   clustering_ignore_filter = config['settings']['report']['SNP_comparison']['ignore_filter']
