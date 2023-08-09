@@ -270,7 +270,8 @@ rule run_PennCNV_auto:
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.tsv"),
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","auto.error.log"),
   threads: get_tool_resource('PennCNV', 'threads')
   resources:
     time=get_tool_resource('PennCNV', 'runtime'),
@@ -292,7 +293,8 @@ rule run_PennCNV_sex:
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv")
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
   threads: get_tool_resource('PennCNV', 'threads')
   resources:
     time=get_tool_resource('PennCNV', 'runtime'),
@@ -410,13 +412,15 @@ rule run_process_CNV_calls:
 
 
 def get_report_sample_input(wildcards):
-  sample_id, ref_id = get_ref_id(wildcards)
+  sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   sample_files = expand(
           [os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
            os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
+           os.path.join(LOGPATH,"{ids}","{chrs}.error.log"),
            os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),],
-           ids = (sample_id, ref_id) if ref_id else (sample_id,)
-          )
+          ids = (sample_id, ref_id) if ref_id else (sample_id,),
+          chrs = ['auto', 'chrx'] + ['chry'] if sex[0].lower() == 'm' else []
+  )
   report_filter_settings = get_tool_filter_settings('report')
   clustering_ignore_filter = config['settings']['report']['SNP_comparison']['ignore_filter']
   if not clustering_ignore_filter:
