@@ -211,7 +211,7 @@ read_snps <- function(fname) {
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
 
-ignore.filter <- config$settings$report$SNP_comparison$`ignore_filters`
+ignore.filter <- config$settings$report$SNP_comparison$`ignore_filter`
 snp_file_pattern <- ifelse(ignore.filter,
                            '.processed-data.tsv',
                            paste0('.filtered-data-', probe.filter.setting, '.tsv'))

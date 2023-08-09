@@ -124,7 +124,7 @@ settings:
     SNP_comparison:
       include_dendrogram: TRUE
       # Should clustering use all genotype calls without the probe filters applied for CNV analysis
-      ignore_filters: FALSE
+      ignore_filter: FALSE
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
       # enries with __[column] will use all other samples with the same value in [column]
       # entries with _[column] expect a column that contains additional (, separated) sample_ids
