@@ -422,7 +422,7 @@ logpath <- ifelse(fs::is_absolute_path(config$log_path),
                  config$log_path,
                  file.path(basepath, config$logpath))
 logfiles <- list.files(file.path(logpath, 'PennCNV', sample_id),
-                       pattern = 'error.log', full.names = T)
+                       pattern = '(auto|chrx|chry).error.log', full.names = T)
 
 #TODO:
 # Check for Warning lines !!
