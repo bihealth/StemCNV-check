@@ -420,7 +420,7 @@ cat('### PennCNV')
 # Extract qc summary stats from PennCNV log files
 logpath <- ifelse(fs::is_absolute_path(config$log_path),
                  config$log_path,
-                 file.path(basepath, config$logpath))
+                 file.path(basepath, config$log_path))
 logfiles <- list.files(file.path(logpath, 'PennCNV', sample_id),
                        pattern = '(auto|chrx|chry).error.log', full.names = T)
 
