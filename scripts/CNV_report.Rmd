@@ -184,7 +184,9 @@ read_raw <- function(filename) {
         #separate_rows(Chr, sep=',')
 }
 
-probe.filter <- config$settings$report$`plot-filter-settings`
+probe.filter.setting <- ifelse(config$settings$report$`filter-settings` == '__default__',
+                               config$settings$`default-filter-settings`,
+                               config$settings$report$`filter-settings`)
 
 filter_functions <- list(
     'basic'   = function(GT, GC) GT > 0.15,
@@ -197,7 +199,7 @@ filter_functions <- list(
 raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
     bind_rows() %>%
-    mutate(filter.passed = filter_functions[[probe.filter]](`GenTrain Score`, Score))
+    mutate(filter.passed = filter_functions[[probe.filter.setting]](`GenTrain Score`, Score))
 
 ## RAW Genotype info
 read_snps <- function(fname) {
@@ -209,10 +211,10 @@ read_snps <- function(fname) {
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
 
-clustering.filter <- config$settings$report$SNP_comparison$`filter-settings`
-snp_file_pattern <- ifelse(clustering.filter %!in% names(filter_functions),
+ignore.filter <- config$settings$report$SNP_comparison$`ignore_filters`
+snp_file_pattern <- ifelse(ignore.filter,
                            '.processed-data.tsv',
-                           paste0('.filtered-data-', clustering.filter, '.tsv'))
+                           paste0('.filtered-data-', probe.filter.setting, '.tsv'))
 
 SNP.genotype.distances <- file.path(datapath, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
   lapply(read_snps) %>%

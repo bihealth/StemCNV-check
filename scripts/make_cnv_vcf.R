@@ -25,7 +25,9 @@ suppressMessages(library(yaml))
 
 sample_id <- args$sample_id
 config <- read_yaml(args$config_path)
-use.filter <- config$settings$filter$`use-filterset`
+use.filter <- ifelse(config$settings$make_cnv_vcf$`filter-settings` == '__default__',
+					 config$settings$`default-filter-settings`,
+					 config$settings$make_cnv_vcf$`filter-settings`)
 name_addition <- config$settings$make_cnv_vcf$name_addition
 data_path <- args$data_path
 
@@ -62,7 +64,7 @@ get_REF_entry <- function(seqname, pos) {
 
 
 processed.calls <- file.path(data_path, sample_id,
-							 paste0(sample_id, '.combined-cnv-calls.', use.filter, '.tsv')) %>%
+							 paste0(sample_id, '.combined-cnv-calls.tsv')) %>%
 	read_tsv(show_col_types = FALSE) %>%
 	# TODO: this should not be necessary
 	unique() %>%
@@ -165,13 +167,13 @@ write_to_vcf <- function(tb, outvcf) {
 
 if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
-		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls.{name_addition}{use.filter}.vcf')
+		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls{name_addition}.vcf')
 		processed.calls %>%
 			filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {
-	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls.{name_addition}{use.filter}.vcf')
+	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls{name_addition}.vcf')
 	processed.calls %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		#some purrr walk function instead?

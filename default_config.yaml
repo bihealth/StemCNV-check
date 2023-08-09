@@ -21,10 +21,12 @@ settings:
     - PennCNV
     - GADA
     - CBS
+  # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
+  default-filter-settings: 'basic'
 
   PennCNV:
-    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
-    filter-settings: 'basic'
+    # Specific filter setting for PennCNV, '__default__' uses `default-filter-settings
+    filter-settings: '__default__'
 
   CBS:
     # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
@@ -89,16 +91,17 @@ settings:
     include_only_these_gene_types: []
 
   make_cnv_vcf:
+    filter-settings: '__default__'
     # mode can be 'combined-calls' (one vcf with overlapped calls) or 'split-tools' (once vcf per tool, with non-overlapped calls)
     mode: combined-calls
     # Which CNV types to be included in vcf
     include_states: ['gain', 'loss', 'LOH']
-    # Use this to create distinct vcf files, for i.e. different CNV types
+    # Use this to create distinct vcf files, for i.e. different CNV types. Added to filename before `.vcf`
     name_addition: ''
 
   report:
-    # Which filter to apply to probe data for
-    plot-filter-settings: 'full'
+    # Which filter to apply to probe data for plotting and SNP comparison
+    filter-settings: '__default__'
     thresholds:
       # Include these sizes in the main tables of the report
       reportable.loh: 2.5e6
@@ -119,9 +122,9 @@ settings:
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
     SNP_comparison:
-      # Same as tool specific filter settings
-      filter-settings: 'full'
       include_dendrogram: TRUE
+      # Should clustering use all genotype calls without the probe filters applied for CNV analysis
+      ignore_filters: FALSE
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
       # enries with __[column] will use all other samples with the same value in [column]
       # entries with _[column] expect a column that contains additional (, separated) sample_ids

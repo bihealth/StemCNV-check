@@ -48,15 +48,45 @@ sample_data = read_sample_table(SAMPLETABLE)
 sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
 #print(sample_data)
 
+# Helper functions =============================================================
+
+def get_tool_filter_settings(tool):
+
+  # if isinstance(tool, tuple) or isinstance(tool, list):
+  #   out = config['settings']
+  #   tool = list(tool)
+  #   while tool:
+  #     nextlvl = tool.pop(0)
+  #     out = out[nextlvl]
+  # elif  isinstance(tool, str):
+  out = config['settings'][tool]['filter-settings']
+
+  if out == '__default__':
+    out = config['settings']['default-filter-settings']
+
+  return out
+
+
+
+def get_tool_resource(tool ,resource):
+  if not resource in ('threads', 'memory', 'runtime', 'partition', 'cmd-line-params'):
+    raise KeyError(f"This resource can not be defined: {resource}")
+  if not tool in config['tools']:
+    return config['tools']['__default__'][resource]
+  else:
+    if resource in config['tools'][tool]:
+      return config['tools'][tool][resource]
+    else:
+      return config['tools']['__default__'][resource]
 
 # Rules ========================================================================
 
 def get_cnv_vcf_output(mode):
   addition = config['settings']['make_cnv_vcf']['name_addition']
   if mode == 'combined-calls':
-    return os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls.{addition}vcf")
+    return os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls{addition}.vcf")
   elif mode == 'split-tools':
-    return [os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls.{addition}vcf")
+    return [os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls{addition}.vcf")
             for tool in config['settings']['CNV.calling.tools']]
   else:
     raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make_cnv_vcf']['mode']))
@@ -122,17 +152,6 @@ rule all:
     # TODO: merge all summary check files ?
     # maybe make an extra rule for that ?
 
-def get_tool_resource(tool ,resource):
-  if not resource in ('threads', 'memory', 'runtime', 'partition', 'cmd-line-params'):
-    raise KeyError(f"This resource can not be defined: {resource}")
-  if not tool in config['tools']:
-    return config['tools']['__default__'][resource]
-  else:
-    if resource in config['tools'][tool]:
-      return config['tools'][tool][resource]
-    else:
-      return config['tools']['__default__'][resource]
-
 
 # Maybe-TODO / Alternative:
 # - run in temp folder, then move all the individual gtc files (will need multi line bash script in that case, but that'd be fine)
@@ -161,7 +180,7 @@ rule run_gencall:
     'LANG="en_US.UTF-8" iaap-cli gencall {input.bpm} {input.egt} {params.outpath} --idat-folder {input.idat_path} --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
 
 
-# The iaap-cli will *always* generate filenames bderived from the sentrix name & pos
+# The iaap-cli will *always* generate filenames derived from the sentrix name & pos
 def get_chip(wildcards, outtype = 'dir_path'):
   """Get the chip name from a sample_id
   Values for outtype: 'dirpath' | 'file'"""
@@ -247,7 +266,7 @@ rule run_filter_tsv:
     
 rule run_PennCNV_auto:
   input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
@@ -258,7 +277,7 @@ rule run_PennCNV_auto:
     mem_mb=get_tool_resource('PennCNV', 'memory'),
     partition=get_tool_resource('PennCNV', 'partition')
   params:
-    filter=config['settings']['PennCNV']['filter-settings']
+    filter=get_tool_filter_settings('PennCNV')
   log:
     err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.error.log"),
     out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.out.log")
@@ -268,7 +287,7 @@ rule run_PennCNV_auto:
 
 rule run_PennCNV_sex:
   input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['PennCNV']['filter-settings'])),
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
     sexfile = ancient(os.path.join(BASEPATH, "penncnv-sexfile.txt")),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
@@ -280,7 +299,7 @@ rule run_PennCNV_sex:
     mem_mb=get_tool_resource('PennCNV', 'memory'),
     partition=get_tool_resource('PennCNV', 'partition')
   params:
-    filter=config['settings']['PennCNV']['filter-settings']
+    filter=get_tool_filter_settings('PennCNV')
   log:
     err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
     out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
@@ -293,7 +312,7 @@ rule run_PennCNV_sex:
 
 rule run_CBS:
   input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['CBS']['filter-settings']))
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('CBS')))
   output:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv")
   threads: get_tool_resource('CBS', 'threads')
@@ -303,7 +322,7 @@ rule run_CBS:
     partition=get_tool_resource('CBS', 'partition')
   params:
     SDundo = config['settings']['CBS']['SDundo'],
-    filter=config['settings']['CBS']['filter-settings'],
+    filter=get_tool_filter_settings('CBS'),
     settings=config['settings']['CBS']
   log:
     err=os.path.join(LOGPATH, "CBS", "{sample_id}", "error.log"),
@@ -313,7 +332,7 @@ rule run_CBS:
 
 rule run_GADA:
   input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(config['settings']['GADA']['filter-settings']))
+    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('GADA')))
   output:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.GADA.tsv")
   threads: get_tool_resource('GADA', 'threads')
@@ -322,7 +341,7 @@ rule run_GADA:
     mem_mb=get_tool_resource('GADA', 'memory'),
     partition=get_tool_resource('GADA', 'partition')
   params:
-    filter = config['settings']['GADA']['filter-settings'],
+    filter = get_tool_filter_settings('GADA'),
     alpha = config['settings']['GADA']['aAlpha'],
     gadaT = config['settings']['GADA']['gada.T'],
     madT = config['settings']['GADA']['mad.T'],
@@ -398,16 +417,19 @@ def get_report_sample_input(wildcards):
            os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),],
            ids = (sample_id, ref_id) if ref_id else (sample_id,)
           )
+  report_filter_settings = get_tool_filter_settings('report')
+  clustering_ignore_filter = config['settings']['report']['SNP_comparison']['ignore_filter']
+  if not clustering_ignore_filter:
+    sample_files += expand([os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
+      ids = (sample_id, ref_id) if ref_id else (sample_id,),
+      filter=report_filter_settings)
+
   if config['settings']['report']['SNP_comparison']['include_dendrogram']:
     extra_sample_def = config['settings']['report']['SNP_comparison']['extra_samples']
     ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-    # check which filter is requested
-    # TODO: import allowed filters from somewhere else
-    allowed_filters = ['basic', 'highGT', 'highGC', 'full', 'highGT+GC']
-    clustering_filter = config['settings']['report']['SNP_comparison']['filter-settings']
-    if clustering_filter in allowed_filters:
+    if not clustering_ignore_filter:
       sample_files += expand([os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
-        ids=ids, filter=clustering_filter)
+        ids=ids, filter=report_filter_settings)
     else:
       sample_files += expand([os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
 
