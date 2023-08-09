@@ -430,9 +430,9 @@ logfiles <- list.files(file.path(logpath, 'PennCNV', sample_id),
 penncnv.stats <- lapply(logfiles, function(fname) {
     chrs <- basename(fname) %>% str_extract('^[^\\.]+')
     lines <- readLines(fname)
-    notice_lines <- str_subset(lines, 'NOTICE:')
-    # Extract from last line
-    tb <- notice_lines[[length(notice_lines)]] %>%
+    # Extract from summary line
+    tb <- lines %>%
+      str_subset('NOTICE: quality summary') %>%
             str_remove('.*: ') %>%
             str_split(' ') %>%
             unlist() %>%
