@@ -30,3 +30,4 @@ CNV-pipeline.Rproj
 supplemental_scripts/*
 Notes.txt
 **/*.pyc
+/data/

@@ -19,18 +19,42 @@ settings:
   # Currently implemented tools (=valid options): PennCNV, GADA, CBS
   CNV.calling.tools:
     - PennCNV
-    - GADA
+    #- GADA
     - CBS
-  # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
-  default-filter-settings: 'basic'
+  probe-filter-sets:
+    # Each section here defines a set of SNP probe filters
+    # each set can be applied to individual or all steps of the pipeline, but using only one set is recommended
+    # SNP probes are first filtered by GenTrain & GenCall scores (minimal value) and then for all other criteria
+    # - GenTrainScore: Illumina score on clustering on probe intensities, usually stable between samples (& partially chips)
+    # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
+    # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes.
+    #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
+    # NotImplementedYet: - minMAF: minimum minor allele frequency of SNP to be used (taken from <...>)
+    basic:
+        GenTrainScore:  NA
+        GenCallScore:  0.2 # Illumina recommended minimum
+        Position.duplicates: keep # keep|remove|highestGC|highestGT
+        #minMAF: NA  -  not implemented yet
+    extended:
+        GenTrainScore: 0.7
+        GenCallScore:  0.7 # Anything above this should be a stable genotype call
+        Position.duplicates: highestGC # keep|remove|highestGC|highestGT
+        #minMAF: NA  -  not implemented yet
+    full:
+        GenTrainScore: 0.8
+        GenCallScore:  0.8
+        Position.duplicates: remove # keep|remove|highestGC|highestGT
+        #minMAF: NA  -  not implemented yet
+
+  default-filter-set: extended
 
   PennCNV:
-    # Specific filter setting for PennCNV, '__default__' uses `default-filter-settings
+    # Specific filter setting for PennCNV, '__default__' uses `default-filter-set
     filter-settings: '__default__'
 
   CBS:
     # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
-    filter-settings: 'full'
+    filter-settings: '__default__'
     # SD.undo split value for CBS
     SDundo: 1
     # Minimum size of segments
@@ -60,7 +84,7 @@ settings:
 
   GADA:
     # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
-    filter-settings: 'full'
+    filter-settings: '__default__'
     # Sparsness of bayesian model; higher value gives faster, but fewer results; mostly irrelevant with hig T value
     aAlpha: 0.2
     # Critical parameters of backwards eliminations, sets arbitrary significance level, higher T <> higher significance
@@ -136,7 +160,6 @@ settings:
 
 wildcard_constraints:
   chr: "chry|chrx"
-  filter: "basic|highGT|highGT|full"
   sample_id: "[a-zA-Z0-9-_]+"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
   sentrix_name: '[0-9]+'

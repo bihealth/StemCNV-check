@@ -26,7 +26,7 @@ suppressMessages(library(yaml))
 sample_id <- args$sample_id
 config <- read_yaml(args$config_path)
 use.filter <- ifelse(config$settings$make_cnv_vcf$`filter-settings` == '__default__',
-					 config$settings$`default-filter-settings`,
+					 config$settings$`default-filter-set`,
 					 config$settings$make_cnv_vcf$`filter-settings`)
 name_addition <- config$settings$make_cnv_vcf$name_addition
 data_path <- args$data_path

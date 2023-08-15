@@ -9,7 +9,7 @@ params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
   sample_id: 'BIHi250-A-2'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
-  configfile: 'config_test.yaml' #'CytoSNP-config.yaml'
+  configfile: '/tmp/tmpculxg3pk.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
 ---
 
@@ -171,35 +171,30 @@ subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
 
 # Read Data
 
-## Raw (BAF / LRR)
+## Raw (BAF / LRR), with column for applied filter
 read_raw <- function(filename) {
     read_tsv(filename, show_col_types = FALSE) %>%
                 rename_with(~ str_remove(., '.*\\.')) %>%
-        dplyr::select(-any_of(c('Index', 'Address', 'Name', 'R', 'Theta')),
+        dplyr::select(-any_of(c('Index', 'Address', 'R', 'Theta')),
                                     -contains('Frac'), -contains('X'), -contains('Y')) %>%
-        mutate(sample_id = basename(filename) %>% str_remove('.processed-data.tsv$'),
+        mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
                Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
-               # Chr = ifelse(Chr == 'chrXY', 'chrX,chrY', Chr)
-               ) #%>%
-        #separate_rows(Chr, sep=',')
+               )
 }
 
 probe.filter.setting <- ifelse(config$settings$report$`filter-settings` == '__default__',
-                               config$settings$`default-filter-settings`,
+                               config$settings$`default-filter-set`,
                                config$settings$report$`filter-settings`)
-
-filter_functions <- list(
-    'basic'   = function(GT, GC) GT > 0.15,
-    'highGT'   = function(GT, GC) GT > 0.8,
-    'highGC'   = function(GT, GC) GT > 0.15 & GC > 0.8,
-    'full' = function(GT, GC) GT > 0.8 & GC > 0.8,
-    'highGT+GC' = function(GT, GC) GT > 0.8 & GC > 0.8
-)
 
 raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
   lapply(read_raw) %>%
-    bind_rows() %>%
-    mutate(filter.passed = filter_functions[[probe.filter.setting]](`GenTrain Score`, Score))
+  bind_rows() %>%
+  merge(lapply(file.path(datapath, use_ids, paste0(use_ids, '.filtered-data-', probe.filter.setting, '.tsv')), read_raw) %>%
+            lapply(function(x) mutate(x, filter.passed = TRUE) %>% dplyr::select(sample_id, Name, Chr, Position, filter.passed)) %>%
+            bind_rows(),
+        by = c('sample_id', 'Name', 'Chr', 'Position'), all.x = T
+  ) %>%
+  mutate(filter.passed = ifelse(is.na(filter.passed), F, filter.passed))
 
 ## RAW Genotype info
 read_snps <- function(fname) {
