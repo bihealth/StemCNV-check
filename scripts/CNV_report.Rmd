@@ -357,7 +357,6 @@ Combined.colors <-  purrr::reduce(metric.colors, full_join, by = 'sample_id') %>
 
 get_call_stats_tool <- function(use.tool) {
     cnv_calls %>%
-        #don't do individual tools here -> move to per tool section!
         filter(tool.overlap.state != 'post-overlap' & use.tool %in% tool) %>%
         group_by(sample_id) %>%
         mutate(loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
@@ -459,11 +458,11 @@ penncnv.stats <- lapply(logfiles, function(fname) {
     bind_rows() %>%
     pivot_wider(names_from = chr, values_from = value) %>%
     dplyr::rename(` ` = Name)
-datatable(penncnv.stats, options = list(dom = 't', pageLength = ncol(penncnv.stats)), rownames = FALSE)
+datatable(penncnv.stats, options = list(dom = 't', pageLength = nrow(penncnv.stats)), rownames = FALSE)
 
 # Number of CNVs, LOHs called at which thresholds
 tbout <- get_call_stats_tool('PennCNV')
-datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
 
 cat('\n\n')
 ```
@@ -471,7 +470,7 @@ cat('\n\n')
 cat('### CBS\n\n')
 
 tbout <- get_call_stats_tool('CBS')
-datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
 
 cat('\n\n')
 ```
@@ -480,7 +479,7 @@ cat('\n\n')
 cat('### GADA\n\n')
 
 tbout <- get_call_stats_tool('GADA')
-datatable(tbout, options = list(dom = 't', pageLength = ncol(tbout)), rownames = FALSE)
+datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
 
 cat('\n\n')
 ```
