@@ -12,7 +12,7 @@ parser$add_argument('-f', '--filter-set', type = 'character', default = 'extende
 					help="Which filter-set (defined in config.yaml) to use")
 
 
-args <- parser$parse_args(c('test/data/BIHi005-A/BIHi005-A.processed-data.tsv', 'test/filter-test.out.tsv', 'default_config.yaml'))
+#args <- parser$parse_args(c('test/data/BIHi005-A/BIHi005-A.processed-data.tsv', 'test/filter-test.out.tsv', 'default_config.yaml'))
 args <- parser$parse_args()
 
 suppressMessages(library(tidyverse))
@@ -51,7 +51,7 @@ tb <- read_tsv(inputfile, show_col_types = FALSE) %>%
 
 if (multi.probes != 'keep') {
 	tb <- tb %>% group_by(Chr, Position) %>%
-		mutate(multi = n() > 1)
+		mutate(multi = dplyr::n() > 1)
 
 	if (multi.probes == 'remove') {
 		tb <- tb %>%

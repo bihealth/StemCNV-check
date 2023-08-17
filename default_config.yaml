@@ -3,13 +3,11 @@ static_data:
     csv_manifest_file: '' #Optional (leave empty if not used)
     egt_cluster_file: '' #REQUIRED
     genome_fasta_file: '' #REQUIRED
-    #TODO: this should ne optional
+    #TODO: this should be optional
     genome_gtf_file: '' #REQUIRED
-    pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats.pfb  #REQUIRED
+    pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats_{genome}.pfb  #REQUIRED
     GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
 
-#TODO group/sort these better?
-#sample_table: ''  #Set by wrapper?!
 raw_data_folder: ''  #REQUIRED
 data_path: data
 log_path: logs
