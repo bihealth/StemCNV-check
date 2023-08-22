@@ -224,8 +224,8 @@ SNP.genotype.distances <- file.path(datapath, snp.ids, paste0(snp.ids, snp_file_
 ## CNV calls
 
 #TODO externalise & import this code
-list_cols <- c('coverage.by.ref', 'tool', 'individual_calls', 'numsnp',
-               'copynumbers', 'conf', 'overlap.coverage', 'ref.tool')
+list_cols <- c('coverage.by.ref', 'tool', 'merged_tool_calls', 'numsnp',
+               'copynumber', 'tool_confidence ', 'overlap.coverage', 'ref.tool')
 
 load_annotate_cnv <- function(fname){
     read_tsv(fname) %>%

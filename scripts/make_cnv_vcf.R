@@ -74,8 +74,8 @@ processed.calls <- file.path(data_path, sample_id,
 	mutate(
 		seqnames = str_remove(seqnames, remove_str),
 		## Need to reduce listcols to a single value for vcf
-		# Use highest conf of single call
-		conf = suppressWarnings(conf %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
+		# Use highest tool_confidence  of single call
+		tool_confidence = suppressWarnings(tool_confidence %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
 		#TODO:
 		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
 		# Accurate number would need to be derived parallel to merging, requires loading the SNP subsets & doing a set merge on them
@@ -85,7 +85,7 @@ processed.calls <- file.path(data_path, sample_id,
 		# Only difference here will by 3/4/... or 0/1
 		# -> should maybe take the PennCNV one (instead of majority / 3 or 0)?
 		# -> Maybe 3 or 0 are better assumptions if both 3/4 and 0/1 are the options.
-		copynumber = copynumbers %>% str_split(';') %>% unlist() %>%table() %>% which.max %>% names(),
+		copynumber = copynumber %>% str_split(';') %>% unlist() %>%table() %>% which.max %>% names(),
 		CNV.type = ifelse(CNV.state == 'gain', 'DUP', 'DEL'),
 		CNV.type = ifelse(CNV.state == 'LOH', 'LOH', CNV.type),
 		CHROM = factor(seqnames, levels = chrom_levels),
@@ -121,7 +121,7 @@ vcf.format.content <- list(
 	c('copynumber', 'CN', "Segment most-likely or estimated copy-number call"),
 	c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
 	c('tool', 'TO', "Segment called as CNV by these tools"),
-	c('conf', 'CO', "Tool dependent confidence score segment call (if available)")
+	c('tool_confidence ', 'CO', "Tool dependent confidence score segment call (if available)")
 )
 vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT')
 

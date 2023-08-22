@@ -117,12 +117,14 @@ calls.out <- bind_ranges(cnvs, mosaics) %>%
 	dplyr::rename(numsnp = LenProbe, CNV.state = State,
 				  length = width, Chr = seqnames) %>%
 	mutate(sample_id = sampleID,
-		   conf = NA,
+		   tool_confidence = NA,
 		   snp.density = numsnp / length * 1e6,
 		   copynumber = ifelse(!CNV.state %in% c('gain', 'loss'), 2, 3),
 		   copynumber = ifelse(CNV.state == 'loss', 1, copynumber),
 		   copynumber = ifelse(Chr == 'chrY' , copynumber - 1, copynumber),
-	       tool = 'GADA') %>%
+	       tool = 'GADA',
+		   ID = paste(tool, CNV.state, Chr, start, end, sep='_')
+	) %>%
 	dplyr::select(-strand)
 
 write_tsv(calls.out, outputfile)

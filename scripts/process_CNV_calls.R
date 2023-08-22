@@ -13,15 +13,17 @@ parser$add_argument('-p', '--penncnv', action="store_true", help="Use PennCNV ca
 parser$add_argument('-c', '--cbs', action="store_true", help="Use CBS calls")
 parser$add_argument('-g', '--gada', action="store_true", help="Use GADA calls")
 
-args <- parser$parse_args()
+# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi005-A-13", "config_test.yaml", "sample_table_example.txt"))
 # args <- parser$parse_args(c("-p", "-c", "data_new", "BIHi001-B_WB02", "/tmp/tmpewl9ym4n.yaml", "sample_table.txt"))
 # args <- parser$parse_args(c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
+args <- parser$parse_args()
 
 
 suppressMessages(library(plyranges))
 suppressMessages(library(GenomicRanges))
 suppressMessages(library(tidyverse))
 suppressMessages(library(yaml))
+options(dplyr.summarise.inform = FALSE)
 
 
 ##################
@@ -51,8 +53,8 @@ if (!is.na(ref_id)){
 min.snp				<- config$settings$postprocessing$min.snp
 min.length			<- config$settings$postprocessing$min.length
 min.snp.density 	<- config$settings$postprocessing$min.snp.density
-min.snp.or.length	<- config$settings$postprocessing$min.snp.or.length
-min.length.or.snp	<- config$settings$postprocessing$min.length.or.snp
+#min.snp.or.length	<- config$settings$postprocessing$min.snp.or.length
+#min.length.or.snp	<- config$settings$postprocessing$min.length.or.snp
 merge.distance  	<- config$settings$postprocessing$merge.distance
 merge.before.filter <- config$settings$postprocessing$merge.before.filter
 # Tool overlapping
@@ -65,6 +67,7 @@ valid_name <- config$wildcard_constraints$sample_id
 # valid_name=ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
 if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
 
+# TODO: don't hardcode // outsource
 use_chr <- paste0('chr', c(1:22, 'X', 'Y'))
 
 gtf_file <- config$static_data$genome_gtf_file
@@ -85,23 +88,24 @@ if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
 ## PennCNV
 read_PennCNV <- function(filename) {
 	read.table(filename, sep='', header = F, fill=T,
-						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'conf')) %>% 
+						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'tool_confidence ')) %>%
 		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
 		dplyr::rename(start = start_pos, end = end_pos, sample_id = input) %>%
 		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
-					 across(c(4,10), ~as.numeric(.)),  
-					 Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-					 length = str_remove_all(length, ',') %>% as.integer(),
-					 snp.density = numsnp / length * 1e6,
-					 copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
-					 hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
-					 CNV.state = ifelse(copynumber < 2, 'loss', NA),
-					 CNV.state = ifelse(copynumber == 2, 'LOH', CNV.state),
-					 CNV.state = ifelse(copynumber > 2, 'gain', CNV.state),
-					 CNV.state = as.character(CNV.state),
-					 tool = 'PennCNV',
-			         # basename can't handly empty input ...
-					 sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
+			   across(c(4,10), ~as.numeric(.)),
+			   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
+			   length = str_remove_all(length, ',') %>% as.integer(),
+			   snp.density = numsnp / length * 1e6,
+			   copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
+			   hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
+			   CNV.state = ifelse(copynumber < 2, 'loss', NA),
+			   CNV.state = ifelse(copynumber == 2, 'LOH', CNV.state),
+			   CNV.state = ifelse(copynumber > 2, 'gain', CNV.state),
+			   CNV.state = as.character(CNV.state),
+			   tool = 'PennCNV',
+			   ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
+			   # basename can't handly empty input ...
+			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
 		)
 }
 
@@ -128,30 +132,33 @@ get_distance_to_probe <- function(position, n_probes) {
 
 merge_calls <- function(df.or.GR) {
 	if (is.data.frame(df.or.GR)) {
-		df.or.GR <- makeGRangesFromDataFrame(df.or.GR, keep.extra.columns = T, ignore.strand = T, seqnames.field = 'Chr', start.field = 'start', end.field = 'end')
+		df.or.GR <- as_granges(df.or.GR, seqnames = Chr)
 	}
 	df.or.GR %>%
 		group_by(CNV.state, sample_id, tool) %>%
-			stretch(merge.distance) %>%
-			reduce_ranges(
-				individual_calls = plyranges::n(),
-				numsnp = sum(numsnp),
-				copynumbers = paste(unique(copynumber), collapse = ','),
-				conf = median(conf)
-				) %>%
-			stretch(-1*merge.distance)
+		stretch(merge.distance) %>%
+		reduce_ranges(
+			merged_tool_calls = plyranges::n(),
+			numsnp = sum(numsnp),
+			copynumber = paste(unique(copynumber), collapse = ','),
+			tool_confidence = median(tool_confidence )
+			) %>%
+		stretch(-1*merge.distance) %>%
+		mutate(ID = paste(tool, CNV.state, seqnames, start, end, sep='_'))
 }
 
 ## Pre-filter
 prefilter_calls <- function(df.or.GR) {
+	# 'Our' chip has ~2.5 snps per 10kb -> average expected 250 per Mb
+    # Ideally a threshold on desnity would apply to a pre-calculated window based SNP density
+	# -> this could be done for each array & included in report but also used for i.e. PennCNV extra data (like GC model)
+
 	if (is.data.frame(df.or.GR)){
-		df.or.GR <- dplyr::filter(df.or.GR, 
-									numsnp >= min.snp & length >= min.length & snp.density >= min.snp.density &
-										(numsnp >= min.snp.or.length | length >= min.length.or.snp))
+		df.or.GR <- dplyr::filter(df.or.GR, numsnp >= min.snp & length >= min.length & snp.density >= min.snp.density) # &
+										#(numsnp >= min.snp.or.length | length >= min.length.or.snp))
 	} else {
-		df.or.GR <- plyranges::filter(df.or.GR,
-									numsnp >= min.snp & width >= min.length & (numsnp / width * 1e6) >= min.snp.density &
-										(numsnp >= min.snp.or.length | width >= min.length.or.snp))
+		df.or.GR <- plyranges::filter(df.or.GR,	numsnp >= min.snp & width >= min.length & (numsnp / width * 1e6) >= min.snp.density )#&
+										#(numsnp >= min.snp.or.length | width >= min.length.or.snp))
 	}
 	df.or.GR
 }
@@ -163,17 +170,20 @@ expected_final_tb <- tibble(
 	seqnames = factor(c(), levels = use_chr),
 	start = integer(),
 	end = integer(),
+	#Maybe make this a lis_col ? granges can calculate width anyway
 	length = integer(),
 	CNV.state = character(),
+	ID = character(),
 	call.in.reference = logical(),
 	coverage.by.ref = list(),
 	tool = list(),
-	individual_calls = list(),
+	merged_tool_calls = list(),
 	numsnp = list(),
-	copynumbers = list(),
-	conf = list(),
+	copynumber = list(),
+	tool_confidence = list(),
 	tool.overlap.state = character(),
-	overlap.coverage = list(),
+	coverage.overlap = list(),
+	tool.coverage.overlap = character(),
 	ref.tool = list(),
 	n_genes = integer(),
 	overlapping.genes = character()
@@ -183,11 +193,11 @@ list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) i
 ensure_list_cols <- function(tb.or.gr){
 	as_tibble(tb.or.gr) %>%
 		rowwise() %>%
-		mutate(across(one_of(list_cols), ~ list(.))) %>%
+		mutate(across(any_of(list_cols), ~ list(.))) %>%
 		makeGRangesFromDataFrame(keep.extra.columns = T)
 }
 
-overlap_tools <- function(tools, min.greater.region.overlap = 50) {
+overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.tool.coverage = 60) {
 	
 	gr <- results[tools] %>%
 		bind_ranges()
@@ -202,48 +212,88 @@ overlap_tools <- function(tools, min.greater.region.overlap = 50) {
 	if (length(ov_test) < length(gr))  {
 		ov <- gr %>%
 			group_by(sample_id, CNV.state) %>%
-			reduce_ranges(tool = tool,
-										individual_calls = individual_calls,
-										numsnp = numsnp,
-										copynumbers = copynumbers,
-										conf = conf,
-										widths = width,
-										tool.overlap.state = ifelse(plyranges::n() > 1, 'post-overlap', 'no-overlap'),
-										) %>%
-			mutate( overlap.coverage =  round(widths / width * 100, 2),
-							max.ov = sapply(overlap.coverage, max) ) %>%
+			reduce_ranges(ID = ID,
+			              tool.overlap.state = ifelse(plyranges::n() > 1, 'overlapped', 'no-overlap')) %>%
+			# add snp position count?
+			as_tibble() %>%
+			mutate(group.ID = paste('grouped', CNV.state, seqnames, start, end, sep='_')) %>%
+			dplyr::select(-strand, -seqnames) %>%
+			rename_with(~paste0('group.', .), 1:3) %>%
+			unnest(ID) %>%
+			merge(as_tibble(gr), by = c('sample_id', 'CNV.state', 'ID')) %>%
+			group_by(sample_id, CNV.state, pick(starts_with('group'))) %>%
+			mutate(coverage.overlap = ifelse(tool.overlap.state == 'overlapped', width / group.width * 100, NA),
+			       max.ov = max(coverage.overlap)) %>%
+			group_by(sample_id, CNV.state, pick(starts_with('group')), tool) %>%
+			# sum doesn't work if we have the filters in there and only group by too
+			mutate(tool.cov.sum = sum(coverage.overlap)) %>%
+			group_by(sample_id, CNV.state, seqnames, pick(starts_with('group'))) %>%
+			mutate(tool.cov.ov.median = map2(list(tool), list(tool.cov.sum),
+												\(tool, csum) tibble(tool = tool, csum = csum) %>% unique() %>%
+																pull(csum) %>% median()
+												),
+			)
+
+		#Now filter based on overlap of tool calls with merged region to check if the overlap can be accepted
+		# - require at least 50% of the merged region to be covered by a single call to prevent chained overlaps
+		# - require that the combined regions coverage from tools has a median of at least 60% (avg for only 2 tools)
+		# TODO (for more than 2 tools): add some criteria to remove individual tools/calls from an overlapped region
+		#  to see if the combined group of two other tools can be 'rescued'
+		gr.changed <- ov %>%
+			filter(tool.overlap.state == 'overlapped' &
+					   max.ov >= min.greatest.region.overlap &
+					   tool.cov.ov.median >= min.median.tool.coverage
+			) %>%
+			select(-start, -end, -width,-ID) %>%
+			rename_with(~str_remove(., '^group\\.')) %>%
+			summarise(across(any_of(list_cols), ~list(.)),
+					  #tool is already a list now!
+					  tool.coverage.overlap = map2(tool, list(tool.cov.sum),
+													\(tool, csum) tibble(t = tool, csum = csum) %>% #unique() %>%
+																	mutate(desc = paste0(t,'-', round(csum, 2))) %>%
+																	pull(desc) %>% paste(collapse = ',')
+													) %>% unlist()
+			) %>%
+			as_granges() %>%
 			ensure_list_cols()
-		ov[ov$tool.overlap.state == 'no-overlap',]$overlap.coverage <- NA
+
+		gr.unchanged <- ov %>%
+			filter(tool.overlap.state == 'no-overlap' |
+					   max.ov < min.greatest.region.overlap |
+					   tool.cov.ov.median < min.median.tool.coverage
+			) %>%
+			ungroup() %>%
+			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
+			mutate(tool.coverage.overlap = NA_character_) %>%
+			as_granges() %>%
+			ensure_list_cols()
+
+		gr.pre.overlap <-ov %>%
+			filter(tool.overlap.state == 'overlapped' &
+					   max.ov >= min.greatest.region.overlap &
+					   tool.cov.ov.median >= min.median.tool.coverage
+			) %>%
+			ungroup() %>%
+			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
+			mutate(tool.coverage.overlap = NA_character_,
+				   overlap.coverage = list(NA),
+				   tool.overlap.state = 'pre-overlap') %>%
+			as_granges() %>%
+			ensure_list_cols()
+
+		return(bind_ranges(gr.changed, gr.not.changed, gr.pre.overlap))
+
 	} else {
-		ov <- gr %>% 
+		gr <- gr %>%
 			mutate(tool.overlap.state = 'no-overlap',
-						 widths = NA,
-						 overlap.coverage = NA,
-						 max.ov = NA) %>%
+				   #widths = NA,
+				   coverage.overlap = NA,
+				   tool.coverage.overlap = NA) %>%
 			ensure_list_cols()
+
+		return(gr)
 	}
 
-	#Now filter based on (reciprocal) overlap to check if the overlap can be accepted
-	# TODO: does the max(overlap.coverage) [i.e. not reciprocal] make sense?:
-	# - reciprocal is hard to asses (we want to retain & check against final?)
-	# - could only accept overlap if *all* tools have at least X% overlap with final (prevents ov chains)
-	gr.not.changed <- ov %>% 
-		filter(tool.overlap.state == 'no-overlap' | max.ov < min.greater.region.overlap) %>%
-		plyranges::select(-widths, -max.ov) 
-	
-	gr.changed <- ov %>%
-		filter(tool.overlap.state == 'post-overlap' & max.ov >= min.greater.region.overlap) %>%
-		plyranges::select(-widths, -max.ov) 
-		
-	gr.pre.overlap <- find_overlaps(gr, gr.changed, suffix = c('', '.y')) %>% 
-		filter(CNV.state == CNV.state.y) %>%
-		plyranges::select(-contains('.y')) %>%
-		mutate(tool.overlap.state = 'pre-overlap',
-					 overlap.coverage = list(NA)) %>%
-		ensure_list_cols()
-		
-	return(bind_ranges(gr.changed, gr.not.changed, gr.pre.overlap))
-	
 }
 
 

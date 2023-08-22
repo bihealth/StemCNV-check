@@ -75,10 +75,10 @@ def check_sample_table(args):
 				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
-	#Check SNP_clustering extra ids (if defined)
+	#Check SNP_clustering extra ids (if enabled in config & report is run)
 	check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, DEF_CONFIG)
 	extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, DEF_CONFIG)
-	if check_snp_cluster:
+	if check_snp_cluster and args.target == 'report':
 		for sample_id in samples.keys():
 			cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
 			missing = [sid for sid in cluster_ids if sid not in samples.keys()]
@@ -99,9 +99,20 @@ def check_config(args):
 			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
 
 	#TODO:
-	# - check that required values are filled in
-	# - check that value types are correct / match config (incl list len?)
-	# - maybe: us the same apprach that seasnap has for this?
+	# use the `default_conf_allowedvalues.yaml` to check every entry in the config file
+	# need to write traversion (nested dicts) for yaml & parsing functions for entries: a_1_2...__regex
+
+	# a) type of entry
+		# for categories with __ *any* entry is allowed; save the existing ones
+	# 1-...) extra instructions:
+		# [for lists] str/int/float type of list content
+		# [for lists] lenX, len(list) == X
+		# [for lists] all others applied to the list values
+		# [for strings] filterset / filterset-default for matching __filterset [+- '__default__']
+		# [for int/float] leX, <= X
+	# __regex
+		# for string if only a certain set of values is allowed
+
 
 
 def check_installation():

@@ -98,7 +98,8 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 			.default = NA
 		),
 		tool = 'CBS',
-		conf = NA,
+		ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
+		tool_confidence = NA,
 		# Older version
 		CNV.state.old = ifelse(seg.median < -CBS.LRR.th.value, 'loss', NA),
 		CNV.state.old = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state.old),
