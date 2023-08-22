@@ -59,7 +59,8 @@ merge.distance  	<- config$settings$postprocessing$merge.distance
 merge.before.filter <- config$settings$postprocessing$merge.before.filter
 # Tool overlapping
 tool.order <- config$settings$CNV.calling.tools
-tool.overlap.min.perc <- config$settings$postprocessing$tool.overlap.min.perc
+tool.overlap.greatest.call.min.perc <- config$settings$postprocessing$tool.overlap.greatest.call.min.perc
+tool.overlap.median.cov.perc <- config$settings$postprocessing$tool.overlap.median.cov.perc
 # Compare to reference
 min.cnv.coverage.by.ref <- config$settings$postprocessing$min.cnv.coverage.by.ref
 
@@ -88,7 +89,7 @@ if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
 ## PennCNV
 read_PennCNV <- function(filename) {
 	read.table(filename, sep='', header = F, fill=T,
-						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'tool_confidence ')) %>%
+						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'tool_confidence')) %>%
 		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
 		dplyr::rename(start = start_pos, end = end_pos, sample_id = input) %>%
 		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
@@ -141,7 +142,7 @@ merge_calls <- function(df.or.GR) {
 			merged_tool_calls = plyranges::n(),
 			numsnp = sum(numsnp),
 			copynumber = paste(unique(copynumber), collapse = ','),
-			tool_confidence = median(tool_confidence )
+			tool_confidence = median(tool_confidence)
 			) %>%
 		stretch(-1*merge.distance) %>%
 		mutate(ID = paste(tool, CNV.state, seqnames, start, end, sep='_'))
@@ -194,7 +195,7 @@ ensure_list_cols <- function(tb.or.gr){
 	as_tibble(tb.or.gr) %>%
 		rowwise() %>%
 		mutate(across(any_of(list_cols), ~ list(.))) %>%
-		makeGRangesFromDataFrame(keep.extra.columns = T)
+		as_granges()
 }
 
 overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.tool.coverage = 60) {
@@ -281,7 +282,7 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 			as_granges() %>%
 			ensure_list_cols()
 
-		return(bind_ranges(gr.changed, gr.not.changed, gr.pre.overlap))
+		return(bind_ranges(gr.changed, gr.unchanged, gr.pre.overlap))
 
 	} else {
 		gr <- gr %>%
@@ -454,7 +455,7 @@ if (!all(tool.order %in% tools)) {
 								 'These tools will *not* be used: ', paste0(tools[!tools %in% tool.order], collapse = ', ')))
 }
 
-overlapped_tools_sample <- overlap_tools(tools, tool.overlap.min.perc)
+overlapped_tools_sample <- overlap_tools(tools, tool.overlap.greatest.call.min.perc, tool.overlap.median.cov.perc)
  
 if (!is.na(ref_id)) {
 	

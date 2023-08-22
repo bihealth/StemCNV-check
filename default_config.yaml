@@ -92,21 +92,22 @@ settings:
     MinSegLen: 5
 
   postprocessing:
-    ## Prefiltering is done as follows:
-    # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density & 
-    #  ( [snps] >= min.snp.or.length | [length] > min.length.or.snp )
     ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
     # either before or after filtering (based on merge.before.filter)
+    merge.distance: 500
+    merge.before.filter: TRUE
+    ## Prefiltering of calls is done as follows:
+    # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density
     min.snp: 5
     min.length: 1000
     # This is -so far- only applied to the Call region itself
-    min.snp.density: 10 #snps per Mb 
-    # Disabled for now - likely and overcomplication
-    # min.snp.or.length: 10
-    # min.length.or.snp: 2000
-    merge.distance: 500
-    merge.before.filter: TRUE
-    tool.overlap.min.perc: 50
+    min.snp.density: 10 #snps per Mb
+    ## Calls from multiple tools are overlapped and combined if they match
+    # This is the minimum coverage the largest single call in an overlapped group needs to have.
+    # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
+    tool.overlap.greatest.call.min.perc: 50
+    # This is minimum for the median of coverage percentages that tool in any merged group
+    tool.overlap.median.cov.perc: 60
     ## Reference comparison
     min.cnv.coverage.by.ref: 80
 
