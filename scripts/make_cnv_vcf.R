@@ -169,7 +169,7 @@ if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls{name_addition}.vcf')
 		processed.calls %>%
-			filter(tool.overlap.state != 'post-overlap' & tool == use.tool) %>%
+			filter(tool.overlap.state != 'combined' & tool == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {

@@ -357,7 +357,7 @@ Combined.colors <-  purrr::reduce(metric.colors, full_join, by = 'sample_id') %>
 
 get_call_stats_tool <- function(use.tool) {
     cnv_calls %>%
-        filter(tool.overlap.state != 'post-overlap' & use.tool %in% tool) %>%
+        filter(tool.overlap.state != 'combined' & use.tool %in% tool) %>%
         group_by(sample_id) %>%
         mutate(loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
                loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
@@ -578,7 +578,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, min_size=1e6) {
     }
 
     calls <- cnv_calls %>%
-        filter(tool.overlap.state != 'post-overlap' & seqnames == chr & end >= win_start & start < win_end) %>%
+        filter(tool.overlap.state != 'combined' & seqnames == chr & end >= win_start & start < win_end) %>%
         mutate(x_pos = (end + start) / 2,
                y_pos = map2_int(CNV.state, tool, get_cnv_y),
                #TODO could use different greens/reds for different tools? (on top of different y)

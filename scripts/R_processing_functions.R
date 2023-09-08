@@ -68,17 +68,36 @@ annotate_cnvs <- function(tb.or.gr, config) {
 		)
 }
 
+get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
+	# Use given config if possible
+	if(!is.null(use.config)) {
+		use_chromosomes <- use.config$settings$chromosomes
+	# else check outer scope for config object
+	} else if(exists(config)) {
+		use_chromosomes <- config$settings$chromosomes
+	} else {
+		warning('Setting Chromosomes to default wihtout using config!')
+		use_chromosomes <- paste0('chr', c(1:22, 'X', 'Y'))
+	}
 
-use_chr <- paste0('chr', c(1:22, 'X', 'Y'))
+	if (get_prefix) {
+		chr_prefix <- ifelse(all(str_detect(use_chromosomes, '^chr')),
+		                      'chr', '')
+		return(chr_prefix)
 
-#TODO: move this + input function defs to another script?
+	} else {
+		return(use_chromosomes)
+	}
+}
+
+
 # Harmonize output
 expected_final_tb <- tibble(
 	sample_id = character(),
 	seqnames = factor(c(), levels = use_chr),
 	start = integer(),
 	end = integer(),
-	#Maybe make this a lis_col ? granges can calculate width anyway
+	#Maybe make this a list_col ? granges can calculate width anyway
 	length = integer(),
 	CNV.state = character(),
 	ID = character(),

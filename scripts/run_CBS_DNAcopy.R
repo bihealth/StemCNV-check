@@ -100,14 +100,14 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 		tool = 'CBS',
 		ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
 		tool_confidence = NA,
-		# Older version
-		CNV.state.old = ifelse(seg.median < -CBS.LRR.th.value, 'loss', NA),
-		CNV.state.old = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state.old),
-		CNV.state.old = ifelse(Chr == 'chrX', NA, CNV.state.old),
-		CNV.state.old = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state.old),
-		CNV.state.old = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state.old),
-		copynumber.old = ifelse(is.na(CNV.state.old), 2, 3),
-		copynumber.old = ifelse(CNV.state.old == 'loss', 1, copynumber.old),
+		# # Older version
+		# CNV.state.old = ifelse(seg.median < -CBS.LRR.th.value, 'loss', NA),
+		# CNV.state.old = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state.old),
+		# CNV.state.old = ifelse(Chr == 'chrX', NA, CNV.state.old),
+		# CNV.state.old = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state.old),
+		# CNV.state.old = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state.old),
+		# copynumber.old = ifelse(is.na(CNV.state.old), 2, 3),
+		# copynumber.old = ifelse(CNV.state.old == 'loss', 1, copynumber.old),
 	) %>%
 	filter(!is.na(CNV.state) & !is.na(Chr))
 

@@ -23,6 +23,7 @@ suppressMessages(library(plyranges))
 suppressMessages(library(GenomicRanges))
 suppressMessages(library(tidyverse))
 suppressMessages(library(yaml))
+`%!in%` <- Negate(`%in%`)
 options(dplyr.summarise.inform = FALSE)
 
 
@@ -198,7 +199,7 @@ ensure_list_cols <- function(tb.or.gr){
 		as_granges()
 }
 
-overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.tool.coverage = 60) {
+combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.tool.coverage = 60) {
 	
 	gr <- results[tools] %>%
 		bind_ranges()
@@ -214,16 +215,16 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 		ov <- gr %>%
 			group_by(sample_id, CNV.state) %>%
 			reduce_ranges(ID = ID,
-			              tool.overlap.state = ifelse(plyranges::n() > 1, 'overlapped', 'no-overlap')) %>%
-			# add snp position count?
+			              tool.overlap.state = ifelse(plyranges::n() > 1, 'combined', 'no-overlap')) %>%
 			as_tibble() %>%
-			mutate(group.ID = paste('grouped', CNV.state, seqnames, start, end, sep='_')) %>%
+			# TODO: add numsnp for new grouped size -> need to read filtered probes for that!
+			mutate(group.ID = paste('combined', CNV.state, seqnames, start, end, sep='_')) %>%
 			dplyr::select(-strand, -seqnames) %>%
 			rename_with(~paste0('group.', .), 1:3) %>%
 			unnest(ID) %>%
 			merge(as_tibble(gr), by = c('sample_id', 'CNV.state', 'ID')) %>%
 			group_by(sample_id, CNV.state, pick(starts_with('group'))) %>%
-			mutate(coverage.overlap = ifelse(tool.overlap.state == 'overlapped', width / group.width * 100, NA),
+			mutate(coverage.overlap = ifelse(tool.overlap.state == 'combined', width / group.width * 100, NA),
 			       max.ov = max(coverage.overlap)) %>%
 			group_by(sample_id, CNV.state, pick(starts_with('group')), tool) %>%
 			# sum doesn't work if we have the filters in there and only group by too
@@ -238,10 +239,10 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 		#Now filter based on overlap of tool calls with merged region to check if the overlap can be accepted
 		# - require at least 50% of the merged region to be covered by a single call to prevent chained overlaps
 		# - require that the combined regions coverage from tools has a median of at least 60% (avg for only 2 tools)
-		# TODO (for more than 2 tools): add some criteria to remove individual tools/calls from an overlapped region
+		# TODO (for more than 2 tools): add some criteria to remove individual tools/calls from an combined region
 		#  to see if the combined group of two other tools can be 'rescued'
 		gr.changed <- ov %>%
-			filter(tool.overlap.state == 'overlapped' &
+			filter(tool.overlap.state == 'combined' &
 					   max.ov >= min.greatest.region.overlap &
 					   tool.cov.ov.median >= min.median.tool.coverage
 			) %>%
@@ -250,10 +251,11 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 			summarise(across(any_of(list_cols), ~list(.)),
 					  #tool is already a list now!
 					  tool.coverage.overlap = map2(tool, list(tool.cov.sum),
-													\(tool, csum) tibble(t = tool, csum = csum) %>% #unique() %>%
+													\(tool, csum) tibble(t = tool, csum = csum) %>% unique() %>%
 																	mutate(desc = paste0(t,'-', round(csum, 2))) %>%
 																	pull(desc) %>% paste(collapse = ',')
-													) %>% unlist()
+													) %>% unlist(),
+					  tool.overlap.state = 'combined'
 			) %>%
 			as_granges() %>%
 			ensure_list_cols()
@@ -265,12 +267,13 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
-			mutate(tool.coverage.overlap = NA_character_) %>%
+			mutate(tool.coverage.overlap = NA_character_,
+			       tool.overlap.state = 'no-overlap') %>%
 			as_granges() %>%
 			ensure_list_cols()
 
 		gr.pre.overlap <-ov %>%
-			filter(tool.overlap.state == 'overlapped' &
+			filter(tool.overlap.state == 'combined' &
 					   max.ov >= min.greatest.region.overlap &
 					   tool.cov.ov.median >= min.median.tool.coverage
 			) %>%
@@ -299,11 +302,11 @@ overlap_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 
 
 annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
-	
-	gr <- pair_overlaps(gr_in, gr_ref) 
-	
-	if (nrow(gr) > 0) {
-		gr <- gr %>%
+
+	#If pair_overlaps is enmpty set/df the min/max functions will give a warning, while later Granges functions would crash
+	# dplyr::summarise will also give a (deprecation) warning if it gets a fully empty tibble
+	suppressWarnings(
+	gr <- pair_overlaps(gr_in, gr_ref) %>%
 			as_tibble() %>% rowwise() %>%
 			mutate(width.combined = max(granges.x.end, granges.y.end) - min(granges.x.start, granges.y.start) + 1,
 					 width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
@@ -313,54 +316,52 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.cnv.coverage.by.ref = 0.8) {
 					 ref.state = CNV.state.y
 			) %>%
 			dplyr::select(-contains('.y'), -contains('width')) %>%
-			filter(coverage.by.ref >= min.cnv.coverage.by.ref & 
-						 	CNV.state.x == ref.state) %>%
+		    #TODO: might be better to apply the coverage reciprocally? (on mean for cov.ref.by.sample)
+			filter(coverage.by.ref >= min.cnv.coverage.by.ref &
+						 	CNV.state.x == ref.state)
+	)
+	
+	if (nrow(gr) > 0) {
+		gr <- gr %>%
 			group_by(granges.x.seqnames, granges.x.start, granges.x.end, tool.overlap.state.x, tool.x, CNV.state.x) %>%
 			summarise(across(ends_with('.x'), ~ unique(.)),
 								call.in.reference = TRUE,
 								coverage.by.ref = list(coverage.by.ref),
 								ref.tool = list(ref.tool),
 			) %>%
-			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.'))
+			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
+			as_granges()
 
-		# Need to check again, since checking for CNV state match can loose all matches, which breaks GRanges
-		if (nrow(gr)>0){
-		  gr <- makeGRangesFromDataFrame(gr, keep.extra.columns = T)
-		} else {
-		  gr <- GRanges()
-		}
-
-
-		# This keeps only (certain) overlaps, now
-		# need to rebuild result if matching ref calls were found
-		#1) Original regions not overlapping any merged call
-		non.ovs <- filter_by_non_overlaps(gr_in, gr)
+		# `gr` only has (filtered) overlaps, need to rebuild the full callset if matching ref calls were found
+		# Get Original regions not in the merged call set by ID
+		non.ovs <- gr_in %>% filter(ID %!in% gr$ID)
 		# mutate fails on empty GRanges object
 		if (length(non.ovs) > 0) { non.ovs <- non.ovs %>% mutate(call.in.reference = FALSE) }
 
-		#2) Original regions overlapping that do overlap merged call (=in ref), but don't match the same call state.
-		ovs.noStateMatch <- group_by_overlaps(gr_in, gr)
-		if (length(ovs.noStateMatch) > 0) {
-			ovs.noStateMatch <- ovs.noStateMatch %>%
-				group_by(query, CNV.state.query) %>%
-				mutate(any_match = any(CNV.state.query %in% CNV.state.subject)) %>%
-				filter(!any_match) %>%
-				as_tibble() %>%
-				dplyr::select(-contains('.subject'), -any_match, -query) %>%
-				dplyr::rename_with(~str_remove(., '.query'), contains('.query')) %>%
-				mutate(call.in.reference = FALSE,
-							 coverage.by.ref = list(NA),
-							 ref.tool = list(NA)) %>%
-				makeGRangesFromDataFrame(keep.extra.columns = T)
-		}
+		# #TODO: this should not be necessary anymore, since we filter?
+		# #2) Original regions overlapping that do overlap merged call (=in ref), but don't match the same call state
+		# ovs.noStateMatch <- group_by_overlaps(gr_in, gr)
+		# if (length(ovs.noStateMatch) > 0) {
+		# 	ovs.noStateMatch <- ovs.noStateMatch %>%
+		# 		group_by(query, CNV.state.query) %>%
+		# 		mutate(any_match = any(CNV.state.query %in% CNV.state.subject)) %>%
+		# 		filter(!any_match) %>%
+		# 		as_tibble() %>%
+		# 		dplyr::select(-contains('.subject'), -any_match, -query) %>%
+		# 		dplyr::rename_with(~str_remove(., '.query'), contains('.query')) %>%
+		# 		mutate(call.in.reference = FALSE,
+		# 					 coverage.by.ref = list(NA),
+		# 					 ref.tool = list(NA)) %>%
+		# 		makeGRangesFromDataFrame(keep.extra.columns = T)
+		# }
 
 		gr_out <- bind_ranges(
 			# Calls with matching reference
 			gr,
 			# Calls not overlapping _any_ reference
-			non.ovs,
-			# Call overlapping a reference, but without any matching CNV.state
-			ovs.noStateMatch
+			non.ovs#,
+			# # Call overlapping a reference, but without any matching CNV.state
+			# ovs.noStateMatch
 		) 
 		
 	} else {
@@ -402,7 +403,7 @@ pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-autosomes.tsv'),
 									paste0(sample_id, '/', sample_id, '.penncnv-chrx.tsv'))
 if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_id, '.penncnv-chry.tsv')) }
 
-results = list()
+results <- list()
 
 if (args$penncnv) {
 	res <- file.path(datapath, pennCNVfiles) %>%
@@ -455,12 +456,12 @@ if (!all(tool.order %in% tools)) {
 								 'These tools will *not* be used: ', paste0(tools[!tools %in% tool.order], collapse = ', ')))
 }
 
-overlapped_tools_sample <- overlap_tools(tools, tool.overlap.greatest.call.min.perc, tool.overlap.median.cov.perc)
+combined_tools_sample <- combine_tools(tools, tool.overlap.greatest.call.min.perc, tool.overlap.median.cov.perc)
  
 if (!is.na(ref_id)) {
 	
 	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.tsv'))
-	overlapped_tools_ref <- read_tsv(fname) %>%
+	combined_tools_ref <- read_tsv(fname) %>%
 		# These cols will interefere
 		dplyr::select(-length, -call.in.reference, -coverage.by.ref, -ref.tool,
 									-n_genes, -overlapping.genes) %>%
@@ -468,11 +469,11 @@ if (!is.na(ref_id)) {
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		makeGRangesFromDataFrame(keep.extra.columns = T) 
 	
-	cnvs <- annotate_ref_overlap(overlapped_tools_sample, overlapped_tools_ref) %>%
+	cnvs <- annotate_ref_overlap(combined_tools_sample, combined_tools_ref) %>%
 		finalise_tb()
 	
 } else {
-	cnvs <- overlapped_tools_sample %>% 
+	cnvs <- combined_tools_sample %>%
 		finalise_tb()	
 }
 		

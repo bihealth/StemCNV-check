@@ -21,7 +21,7 @@ dependencies:
   - perl = 5.32 #seems to be only version under which PennCNV build properly
   - gcc # in case not available, i.e. on some WSL distros
   # gtc2vcf
-  - bcftools-gtc2vcf-plugin = 1.16 # new/untested
+  - bcftools-gtc2vcf-plugin = 1.16
   # CBS
   - bioconductor-dnacopy = 1.68.0
   ## Postprocessing ##
