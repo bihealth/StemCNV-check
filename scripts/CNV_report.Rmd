@@ -80,10 +80,10 @@ report.setting <- function(...) {
 }
 
 include.section <- function(section) {
-  include <- ifelse(report.setting('include_sections') == '__all__', T, section %in% report.setting('include_sections'))
+  include <- ifelse(all(report.setting('include_sections') == '__all__'), T, section %in% report.setting('include_sections'))
   exclude <- section %in% report.setting('exclude_sections')
-  #TODO: don't hardcode available tools?
-  include <- include & !(str_detect(section, 'QC\\.(CBS|PennCNV|GADA)') & str_remove(section, 'QC\\.') %!in% cnv_tools)
+  #exclude QC too sections if they are not defined in settings
+  include <- include & !(str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & str_remove(section, 'QC\\.') %!in% cnv_tools)
   include & !exclude
 }
 
