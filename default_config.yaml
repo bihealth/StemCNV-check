@@ -139,9 +139,9 @@ settings:
       # Classify samples as failed from these sizes on
       fail.loh: 5e6
       fail.cnv: 2e6
-    # Thresholds for colored table / rec action [orange, red]
+    # Thresholds for colored table / rec action [yellow, orange/red]
     QCwarnings:
-      callrate: [0.99, 0.99]
+      callrate: [0.995, 0.99]
       total_CNV: [10, 50]
       total_LOH: [30, 75]
       loss_gain_ratio: [2, 4]

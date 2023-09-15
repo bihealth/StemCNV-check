@@ -13,7 +13,7 @@ parser$add_argument('-p', '--penncnv', action="store_true", help="Use PennCNV ca
 parser$add_argument('-c', '--cbs', action="store_true", help="Use CBS calls")
 parser$add_argument('-g', '--gada', action="store_true", help="Use GADA calls")
 
-# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi005-A-13", "config_test.yaml", "sample_table_example.txt"))
+# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi005-A-13", "default_config.yaml", "sample_table_example.txt"))
 # args <- parser$parse_args(c("-p", "-c", "data_new", "BIHi001-B_WB02", "/tmp/tmpewl9ym4n.yaml", "sample_table.txt"))
 # args <- parser$parse_args(c("-p","-c", "/data/cephfs-1/work/groups/cubi/projects/2023-04-24_Schaefer_Array_CNV/data", "9807821008_R02C01", "/data/gpfs-1/users/vonkunic_c/scratch/tmp/hpc-cpu-63/tmpxcb94bht.yaml", "sample_table.txt"))
 args <- parser$parse_args()
@@ -172,7 +172,7 @@ expected_final_tb <- tibble(
 	seqnames = factor(c(), levels = use_chr),
 	start = integer(),
 	end = integer(),
-	#Maybe make this a lis_col ? granges can calculate width anyway
+	#Maybe make this a list_col ? granges can calculate width anyway
 	length = integer(),
 	CNV.state = character(),
 	ID = character(),
@@ -467,7 +467,7 @@ if (!is.na(ref_id)) {
 									-n_genes, -overlapping.genes) %>%
 		mutate(across(one_of(list_cols), ~ str_split(., ';'))) %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
-		makeGRangesFromDataFrame(keep.extra.columns = T) 
+		as_granges()
 	
 	cnvs <- annotate_ref_overlap(combined_tools_sample, combined_tools_ref) %>%
 		finalise_tb()

@@ -13,7 +13,7 @@ parser$add_argument('-s', '--sd-undo', type = 'numeric', default = 1,
 					help="Value for split SD undo")
 
 args <- parser$parse_args()
-#args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A/BIHi005-A.filtered-data.full.tsv', 'test.out', 'default_config.yaml', 'penncnv-sexfile.txt'))
+#args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A/BIHi005-A.filtered-data.full.tsv', 'test.out', 'default_config.yaml', 'sample_table.txt'))
 
 suppressMessages(library(tidyverse))
 suppressMessages(library(DNAcopy))
@@ -31,9 +31,10 @@ sampletable <- read_tsv(args$sampletable, col_types = 'cccccc', comment = '#')
 sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
 	tolower() %>% substr(1, 1)
 
-# CBS gain/loss
-CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
-CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
+# # CBS gain/loss
+# CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
+# CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
+
 # More fine grained loss/gain thresholds, based on Samules Nx settings
 LRR.loss <- config$settings$CBS$LRR.loss
 LRR.loss.large <- config$settings$CBS$LRR.loss.large

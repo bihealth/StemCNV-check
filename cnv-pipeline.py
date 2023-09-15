@@ -135,6 +135,8 @@ def make_PennCNV_sexfile(args):
 	outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
 
 	filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, DEF_CONFIG)
+	if filter == '__default__':
+		filter = config_extract(['settings', 'default-filter-set'], config, DEF_CONFIG)
 
 	sample_data = read_sample_table(args.sample_table)
 

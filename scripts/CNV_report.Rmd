@@ -7,9 +7,9 @@ output:
     toc_float: true
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: 'BIHi250-A-2'  #'GSM2538923_9371579017'
+  sample_id: 'BIHi005-A-13'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
-  configfile: '/tmp/tmpculxg3pk.yaml' #'CytoSNP-config.yaml'
+  configfile: 'default_config.yaml' #'CytoSNP-config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
 ---
 
@@ -377,7 +377,7 @@ export.tb <- full_join(
         pivot_longer(-sample_id, names_to = 'Measure', values_to = 'Value'),
         purrr::reduce(metric.colors, full_join, by = 'sample_id') %>%
             mutate(across(-sample_id, ~str_replace(., 'white', 'NA') %>%
-                                    str_replace('green', 'OK') %>%
+                                    str_replace('#92D050', 'OK') %>%
                                     str_replace('yellow', 'unusual') %>%
                                     str_replace('orange', 'warning') %>%
                                     str_replace('red', 'failed'))) %>%
