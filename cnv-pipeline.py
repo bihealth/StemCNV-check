@@ -75,17 +75,17 @@ def check_sample_table(args):
 				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
-	#Check SNP_clustering extra ids (if enabled in config & report is run)
-	check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, DEF_CONFIG)
-	extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, DEF_CONFIG)
-	if check_snp_cluster and args.target == 'report':
-		for sample_id in samples.keys():
-			cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-			missing = [sid for sid in cluster_ids if sid not in samples.keys()]
-			if missing:
-				raise SampletableReferenceError(
-					"These Sample_ID defined as controls for SNP clustering dendrogram (or derived from one of the columns there) do not exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(
-						missing))
+	# #Check SNP_clustering extra ids (if enabled in config & report is run)
+	# check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, DEF_CONFIG)
+	# extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, DEF_CONFIG)
+	# if check_snp_cluster and args.target == 'report':
+	# 	for sample_id in samples.keys():
+	# 		cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
+	# 		missing = [sid for sid in cluster_ids if sid not in samples.keys()]
+	# 		if missing:
+	# 			raise SampletableReferenceError(
+	# 				"These Sample_ID defined as controls for SNP clustering dendrogram (or derived from one of the columns there) do not exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(
+	# 					missing))
 
 
 # Assume that the default_config hasn't been altered & is correct

@@ -52,21 +52,14 @@ sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
 # Helper functions =============================================================
 
 def get_tool_filter_settings(tool):
-
-  # if isinstance(tool, tuple) or isinstance(tool, list):
-  #   out = config['settings']
-  #   tool = list(tool)
-  #   while tool:
-  #     nextlvl = tool.pop(0)
-  #     out = out[nextlvl]
-  # elif  isinstance(tool, str):
-  out = config['settings'][tool]['filter-settings']
-
+  if tool.split(':')[0] == 'report':
+    report_settings = config['reports'][tool.split(':')[1]]
+    out = config_extract((tool.split(':')[2], 'filter-settings'), report_settings, config['reports']['__default__'])
+  else:
+    out = config['settings'][tool]['filter-settings']
   if out == '__default__':
     out = config['settings']['default-filter-set']
-
   return out
-
 
 
 def get_tool_resource(tool ,resource):
@@ -100,10 +93,11 @@ def get_target_files():
   all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
   # Report
   if TARGET == 'report':
-    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
-                  sample_id = all_samples) + \
-           expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
-                  sample_id = all_samples)
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report_filetype}"),
+                  sample_id = all_samples,
+                  report_filetype = [rep+'.'+config['reports'][rep]['file_type'] for rep in config['reports'].keys() if rep != '__default__']) #+ \
+           # expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
+           #        sample_id = all_samples)
   # cnv-vcf
   if TARGET == 'cnv-vcf':
     return expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']),
@@ -414,7 +408,8 @@ rule run_process_CNV_calls:
 
 def get_report_sample_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
-  report_filter_settings = get_tool_filter_settings('report')
+  report_settings = config['reports'][wildcards.report]
+
   sample_files = expand(
           [os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
            os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
@@ -423,21 +418,18 @@ def get_report_sample_input(wildcards):
            os.path.join(DATAPATH, "{ids}", "{ids}.filtered-data-{filter}.tsv")],
           ids = (sample_id, ref_id) if ref_id else (sample_id,),
           chrs = ['auto', 'chrx'] + (['chry'] if sex[0].lower() == 'm' else []),
-          filter = report_filter_settings
+          filter = get_tool_filter_settings(f"report:{wildcards.report}:call.data.and.plots"),
   )
 
-  clustering_ignore_filter = config['settings']['report']['SNP_comparison']['ignore_filter']
-  # if not clustering_ignore_filter:
-  #   sample_files += expand([os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
-  #     ids = (sample_id, ref_id) if ref_id else (sample_id,),
-  #     filter=report_filter_settings)
-
-  if config['settings']['report']['SNP_comparison']['include_dendrogram']:
-    extra_sample_def = config['settings']['report']['SNP_comparison']['extra_samples']
+  incl_sections = config_extract(('include_sections', ), report_settings, config['reports']['__default__'])
+  excl_sections = config_extract(('exclude_sections', ), report_settings, config['reports']['__default__'])
+  do_snp_clustering = (incl_sections == '__all__' or 'SNP.dendrogram' in incl_sections) and not 'SNP.dendrogram' in excl_sections
+  if do_snp_clustering:
+    extra_sample_def = config_extract(('SNP_comparison', 'extra_samples'), report_settings, config['reports']['__default__'])
     ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-    if not clustering_ignore_filter:
+    if not config_extract(('SNP_comparison', 'ignore_filter'), report_settings, config['reports']['__default__']):
       sample_files += expand([os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
-        ids=ids, filter=report_filter_settings)
+        ids=ids, filter = get_tool_filter_settings(f"report:{wildcards.report}:SNP_comparison"))
     else:
       sample_files += expand([os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
 
@@ -447,19 +439,22 @@ rule knit_report:
   input:
     get_report_sample_input
   output:
-    html=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV-report.html"),
-    plots=directory(os.path.join(DATAPATH, "{sample_id}", "report_images")),
-    summary=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-check.tsv")
+    report=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report}.{ext}") ,
+    plots=directory(os.path.join(DATAPATH, "{sample_id}", "{report}-{ext}_images")),
+    # -> this extra output is optional now!
+    #summary=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-check.tsv")
+  wildcard_constraints:
+    ext="(pdf|html)"
   threads: get_tool_resource('knitr', 'threads')
   resources:
     time=get_tool_resource('knitr', 'runtime'),
     mem_mb=get_tool_resource('knitr', 'memory'),
     partition=get_tool_resource('knitr', 'partition')
   log:
-    err=os.path.join(LOGPATH, "report", "{sample_id}", "error.log"),
-    out=os.path.join(LOGPATH, "report", "{sample_id}", "out.log")
+    err=os.path.join(LOGPATH, "report", "{sample_id}", "{report}-{ext}.error.log"),
+    out=os.path.join(LOGPATH, "report", "{sample_id}", "{report}-{ext}.out.log")
   shell:
-    "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {CONFIGFILE} > {log.out} 2> {log.err}"
+    "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {wildcards.report} {CONFIGFILE} > {log.out} 2> {log.err}"
 
 
 rule run_make_cnv_vcf:

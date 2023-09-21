@@ -5,12 +5,15 @@ output:
     df_print: paged
     toc: true
     toc_float: true
+  pdf_document:
+    default
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
   sample_id: 'BIHi250-A-2'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
   report_name: 'CNV-report'
-  configfile: '/tmp/tmpculxg3pk.yaml' #'CytoSNP-config.yaml'
+  out_format: 'html'
+  configfile: 'test/test_config.yaml'
   workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
 ---
 
@@ -39,13 +42,16 @@ library(RIdeogram)
 library(DT)
 library(yaml)
 library(patchwork)
+library(knitr)
 library(sessioninfo)
 `%!in%` <- Negate(`%in%`)
+
+image_folder <- paste0(params$report_name, '-', params$out_format, '_images/')
 
 basepath <- params$base_path
 workdir <- ifelse(params$workdir == '', getwd(), params$workdir)
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE,
-                      fig.path = file.path(workdir, 'report_images/')
+                      fig.path = file.path(workdir, image_folder)
 )
 
 config <- read_yaml(params$configfile)
@@ -73,7 +79,7 @@ report.setting <- function(...) {
                 params$report_name, "$", paste(args, collapse="$")))
   }
   #Convert to numeric if that makes sense
-  if (!any(is.na(as.numeric(subconfig)))) {
+  if (!any(is.na(suppressWarnings(as.numeric(subconfig))))) {
     subconfig <- as.numeric(subconfig)
   }
   subconfig
@@ -184,8 +190,48 @@ regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
 include_roi_plots <-  include.section('regions.of.interest') & ifelse('Regions_of_Interest' %in% colnames(sampletable), !is.na(regions) & regions != '', FALSE)
 
 
+if ('Sample_Name' %in% colnames(sampletable)) {
+    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
+    ref_name <- sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name
+} else {
+    sample_name <- sample_id
+    ref_name <- ref_id
+}
 
-# Misc 
+if (!is.na(ref_id)) {
+    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
+    names(sample_headers) <- c(sample_id, ref_id)
+} else {
+    sample_headers <- c(sample_name )
+    names(sample_headers) <- c(sample_id )
+}
+
+tr_tibble <- function(tb) {
+  tr <- t(tb )
+  colnames(tr) <- sample_headers[tr[1,]]
+  tb <- as_tibble(tr, rownames = ' ')
+  tb[2:nrow(tb),]
+}
+
+
+## Rmd related functions
+
+simple_table_output <- function(tb, caption=NULL) {
+  if (params$out_format == 'html') {
+    return(datatable(tb, caption = caption,
+                     options = list(dom = 't', pageLength = nrow(tb)), rownames = FALSE))
+  } else {
+    return(kable(tb, caption = caption))
+  }
+}
+
+gene_table_dt <- function(tb) {
+  tb %>% mutate(across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.))) %>%
+    datatable(options = list(dom = 'ftilp', pageLength = 20), rownames = FALSE)
+}
+
+
+# Make a separate subchunnk, this is often needed when mixing loops, tabsets & html elements
 subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
 
@@ -241,7 +287,7 @@ cluster.probe.filter.setting <- ifelse(report.setting('SNP_comparison', 'filter-
                                config$settings$`default-filter-set`,
                                report.setting('SNP_comparison', 'filter-settings'))
 
-ignore.filter <- config$settings$report$SNP_comparison$`ignore_filter`
+ignore.filter <- report.setting('SNP_comparison', 'ignore_filter')
 snp_file_pattern <- ifelse(ignore.filter,
                            '.processed-data.tsv',
                            paste0('.filtered-data-', cluster.probe.filter.setting, '.tsv'))
@@ -265,7 +311,7 @@ list_cols <- c('coverage.by.ref', 'tool', 'merged_tool_calls', 'numsnp',
 load_annotate_cnv <- function(fname){
     read_tsv(fname) %>%
         rowwise() %>%
-        mutate(across(one_of(list_cols), ~ str_split(., ';'))) %>%
+        mutate(across(any_of(list_cols), ~ str_split(., ';'))) %>%
         mutate(
             #main.state = CNV.state[which.min(match(tool, tool.overlap.order))],
             #call.in.reference = ifelse(is.na(call.in.reference), F, call.in.reference),
@@ -301,32 +347,28 @@ GenCall.stats <-  file.path(datapath, use_ids, paste0(use_ids, '.stats.txt')) %>
 
 # Sample Overview
 
+
+```{r sample.information, eval = include.section('sample.information'), results = 'asis'}
+
+cat('## Sample Information\n\n')
+
+info.tb <- sampletable %>%
+  filter(Sample_ID %in% c(sample_id, ref_id)) %>%
+  dplyr::select(Sample_ID, Sex, Reference_Sample,
+                any_of(report.setting('sample.info.extra.cols'))) %>%
+  mutate(`Analysis run date` = Sys.Date()) %>%
+  tr_tibble() %>%
+  dplyr::select(-starts_with('Reference ('))
+
+simple_table_output(info.tb)
+
+cat('\n\n')
+
+```
+
 ## QC metrics {.tabset}
 
 ```{r qc.metrics}
-
-if ('Sample_Name' %in% colnames(sampletable)) {
-    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
-    ref_name <- sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name
-} else {
-    sample_name <- sample_id
-    ref_name <- ref_id
-}
-
-if (!is.na(ref_id)) {
-    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
-    names(sample_headers) <- c(sample_id, ref_id)
-} else {
-    sample_headers <- c(sample_name )
-    names(sample_headers) <- c(sample_id )
-}
-
-tr_tibble <- function(tb) {
-    tr <- t(tb )
-    colnames(tr) <- sample_headers[tr[1,]]
-    tb <- as.data.frame(tr) %>% rownames_to_column(var = ' ')
-    tb[2:nrow(tb),]
-}
 
 metrics <- list(
     GenCall.stats %>%
@@ -428,11 +470,22 @@ write_tsv(export.tb, file.path(workdir, str_glue('{sample_id}.summary-check.tsv'
 
 ```{r qc.summary, eval = include.section('QC.summary'), results='asis'}
 cat('### Summary\n\n')
-datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined.metrics)),
-          rownames = FALSE) %>%
-    formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[1]]]), textAlign = 'center') %>%
-    # DT can take specification of non-existing columns - just need a workaround for the sample_header call
-    formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[length(sample_headers)]]]), textAlign = 'center')
+if (params$out_format == 'html') {
+    datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined.metrics)),
+              rownames = FALSE) %>%
+        formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[1]]]), textAlign = 'center') %>%
+        # DT can take specification of non-existing columns - just need a workaround for the sample_header call
+        formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[length(sample_headers)]]]), textAlign = 'center')
+} else {
+#For pdf: library(condformat)
+# https://stackoverflow.com/questions/45311909/how-do-you-color-the-cell-in-rmarkdown-pdf-output
+
+  cat('No colored tables in pdf yet, sry :( \n\n')
+
+  Combined.metrics
+
+}
+
 cat('\n\n')
 ```
 
@@ -441,7 +494,7 @@ cat('\n\n')
 
 ```{r qc.gencall, eval = include.section('QC.GenCall'), results='asis'}
 cat('### GenCall\n\n')
-datatable(GenCall.stats %>% tr_tibble(), options = list(dom = 't', pageLength = ncol(GenCall.stats)), rownames = FALSE)
+simple_table_output(GenCall.stats %>% tr_tibble())
 cat('\n\n')
 ```
 
@@ -493,25 +546,26 @@ penncnv.stats <- lapply(logfiles, function(fname) {
     bind_rows() %>%
     pivot_wider(names_from = chr, values_from = value) %>%
     dplyr::rename(` ` = Name)
-datatable(penncnv.stats, options = list(dom = 't', pageLength = nrow(penncnv.stats)), rownames = FALSE)
+
+simple_table_output(penncnv.stats)
 
 # Number of CNVs, LOHs called at which thresholds
 tbout <- get_call_stats_tool('PennCNV')
-datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
-
+simple_table_output(tbout)
 cat('\n\n')
 ```
 ```{r qc.CBS, eval = include.section('QC.CBS'), results='asis'}
 cat('### CBS\n\n')
 tbout <- get_call_stats_tool('CBS')
-datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
+simple_table_output(tbout)
 cat('\n\n')
 ```
 
-```{r qc.GADA, eval = include.section('QC.PennCNV'), results='asis'}
+```{r qc.GADA, eval = include.section('QC.GADA'), results='asis'}
 cat('### GADA\n\n')
 tbout <- get_call_stats_tool('GADA')
-datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
+#datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
+simple_table_output(tbout)
 cat('\n\n')
 ```
 
@@ -520,6 +574,8 @@ cat('### Pipeline settings\n\n')
 # ```yaml
 # `r xfun::file_string(params$configfile)`
 # ```
+
+#Unclear if this will work in pdf?
 cat(knitr::knit(text = knitr::knit_expand(text = '```yaml\n`r xfun::file_string(params$configfile)`\n```'), quiet = TRUE))
 cat('\n\n')
 session_info()
@@ -746,27 +802,33 @@ cat('## Reportable calls {.tabset}\n\n')
 
 ```
 
-```{r reportable, eval = include.section('reportable.table')}
+```{r reportable, results='asis', eval = include.section('reportable.table')}
 
 cat('List of all reportable calls of the input samples. Overlapping calls from multiple tools with the same CNV.state (i.e. loss/gain) are merged.\n\n')
+if (params$out_format == 'html') {
+    datatable(reportable.calls, caption = 'Critical & reportable calls',
+              rownames = F,
+              extensions = c('Buttons', 'Scroller'),
+              filter = 'top',
+              options = list(
+                scrollY = 300, scrollCollapse = TRUE,
+            scrollX =  TRUE,
+            scroller = TRUE,
+            dom = 'Bftilp', #TODO -> change this
+                buttons = c('colvis', 'copy', 'csv', 'excel'),
+                    columnDefs = list(
+                    list(targets = c(0,12:18), visible = FALSE)
+                )
+                )
+            ) %>%
+        formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
+} else {
 
-datatable(reportable.calls, caption = 'Critical & reportable calls',
-          rownames = F,
-          extensions = c('Buttons', 'Scroller'),
-          filter = 'top',
-          options = list(
-            scrollY = 300, scrollCollapse = TRUE,
-        scrollX =  TRUE,
-        scroller = TRUE,
-        dom = 'Bftilp', #TODO -> change this
-            buttons = c('colvis', 'copy', 'csv', 'excel'),
-                columnDefs = list(
-                list(targets = c(0,12:18), visible = FALSE)
-            )
-            )
-        ) %>%
-    formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
+  subchunkify(simple_table_output(reportable.calls %>% dplyr::select(-(12:18)),
+                                   caption = 'Critical & reportable calls:'),
+               'critical.call.table')
 
+}
 cat('\n\n')
 ```
 
@@ -792,10 +854,11 @@ if (nrow(reportable.calls)>0) {
 
     if (report.setting('call.data.and.plots', 'include.plot')) {
       subchunkify(res$gg, paste0('plot.reportable.call.',i), 5, 10)
+      cat('\n\n')
     }
-    #TODO: should this be DT calls instead?
     if (report.setting('call.data.and.plots', 'include.call.table')) {
-      subchunkify(res$calls, paste0('table.reportable.calls.',i))
+      subchunkify(simple_table_output(res$calls), paste0('table.reportable.calls.',i))
+      cat('\n\n')
     }
     if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
       gene.tb <-  res$genes
@@ -803,7 +866,8 @@ if (nrow(reportable.calls)>0) {
         gene.tb <- gene.tb %>%
           filter(direct_hit)
       }
-      subchunkify(gene.tb, paste0('table.reportable.genes.',i))
+      subchunkify(simple_table_output(gene.tb), paste0('table.reportable.genes.',i))
+      cat('\n\n')
     }
     cat('\n\n')
   }
@@ -825,24 +889,27 @@ cat('This section includes all pre-processed calls (includes merging of tools an
 
 
 ```{r non.reportable,  eval = include.section('nonreportable.table'), results='asis', cache=FALSE}
-
-datatable(non.reportable.calls, caption = 'Non reportable calls',
-          rownames = F,
-          extensions = c('Buttons', 'Scroller'),
-          filter = 'top',
-          options = list(
-            scrollY = 300, scrollCollapse = TRUE,
-          scrollX =  TRUE,
-          scroller = TRUE,
-          dom = 'Bftilp',
-            buttons = c('colvis', 'copy', 'csv', 'excel'),
-                columnDefs = list(
-                list(targets = c(0,12:18), visible = FALSE)
-            )
-            )
-        ) %>%
-    formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
-
+if (params$out_format == 'html') {
+    datatable(non.reportable.calls, caption = 'Non reportable calls',
+              rownames = F,
+              extensions = c('Buttons', 'Scroller'),
+              filter = 'top',
+              options = list(
+                scrollY = 300, scrollCollapse = TRUE,
+              scrollX =  TRUE,
+              scroller = TRUE,
+              dom = 'Bftilp',
+                buttons = c('colvis', 'copy', 'csv', 'excel'),
+                    columnDefs = list(
+                    list(targets = c(0,12:18), visible = FALSE)
+                )
+                )
+            ) %>%
+        formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
+} else {
+  cat('Non reportable calls:\n\n')
+  non.reportable.calls %>% dplyr::select(-(12:18)) %>% kable()
+}
 cat('\n\n')
 ```
 
@@ -864,10 +931,11 @@ if (nrow(non.reportable.calls)>0) {
     }
     if (report.setting('call.data.and.plots', 'include.plot')) {
       subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
+      cat('\n\n')
     }
-    #TODO: should this be DT calls instead?
     if (report.setting('call.data.and.plots', 'include.call.table')) {
-      subchunkify(res$calls, paste0('table.nonreportable.calls.',i))
+      subchunkify(simple_table_output(res$calls), paste0('table.nonreportable.calls.',i))
+      cat('\n\n')
     }
     if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
       gene.tb <-  res$genes
@@ -875,7 +943,8 @@ if (nrow(non.reportable.calls)>0) {
         gene.tb <- gene.tb %>%
           filter(direct_hit)
       }
-      subchunkify(gene.tb, paste0('table.nonreportable.genes.',i))
+      subchunkify(simple_table_output(gene.tb), paste0('table.nonreportable.genes.',i))
+      cat('\n\n')
     }
     cat('\n\n')
   }
@@ -897,36 +966,49 @@ use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
 roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
 if (!is.na(regions) & length(regions)>0) {
-    for (region in regions) {
+  for (region in regions) {
 
-        region_name <- str_extract(region, '^[^|]+\\|') %>% str_remove('\\|')
-        region_name <- ifelse(is.na(region_name), 'Region', region_name)
+    region_name <- str_extract(region, '^[^|]+\\|') %>% str_remove('\\|')
+    region_name <- ifelse(is.na(region_name), 'Region', region_name)
 
-        Chr <- str_remove(region, '^[^|]+\\|') %>% str_remove(':.*') %>%
-          str_remove(regex('chr', ignore_case = T))
-        Chr <- ifelse(use_chr_str,  paste0('chr', Chr), Chr)
-        Start <- str_extract(region, '(?<=:)[0-9]+') %>% as.numeric()
-        End <- str_extract(region, '(?<=-)[0-9]+$') %>% as.numeric()
-        Size <- End - Start
+    Chr <- str_remove(region, '^[^|]+\\|') %>% str_remove(':.*') %>%
+      str_remove(regex('chr', ignore_case = T))
+    Chr <- ifelse(use_chr_str,  paste0('chr', Chr), Chr)
+    Start <- str_extract(region, '(?<=:)[0-9]+') %>% as.numeric()
+    End <- str_extract(region, '(?<=-)[0-9]+$') %>% as.numeric()
+    Size <- End - Start
 
-        size_order <- ifelse(log10(Size) >= 6, 1e6, 1e3)
-        size_str <- ifelse(log10(Size) >= 6, 'Mb', 'kb')
+    size_order <- ifelse(log10(Size) >= 6, 1e6, 1e3)
+    size_str <- ifelse(log10(Size) >= 6, 'Mb', 'kb')
 
-        cat(paste0('### ', region_name, ', ', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
+    cat(paste0('### ', region_name, ', ', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
 
-        res <- make_LRR_BAF_plots(Chr, Start, End, Size, roundup_oom(Size))
-        if (typeof(res$gg) == 'character') {
-          cat(res$gg, '\n\n')
-          next()
-        }
-        subchunkify(res$gg, paste0('plot.roi.',region), 5, 10)
-        subchunkify(res$calls, paste0('table.roi.',region))
-        subchunkify(res$genes, paste0('table.roi.',region))
-
-        cat('\n\n')
+    res <- make_LRR_BAF_plots(Chr, Start, End, Size, roundup_oom(Size))
+    if (typeof(res$gg) == 'character') {
+      cat(res$gg, '\n\n')
+      next()
     }
+
+    if (report.setting('call.data.and.plots', 'include.plot')) {
+      subchunkify(res$gg, paste0('plot.roi.', region), 5, 10)
+      cat('\n\n')
+    }
+    if (report.setting('call.data.and.plots', 'include.call.table')) {
+      subchunkify(simple_table_output(res$calls), paste0('table.roi.', region))
+      cat('\n\n')
+    }
+    if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
+      gene.tb <-  res$genes
+      if (report.setting('call.data.and.plots', 'include.gene.table.details') == 'Call') {
+        gene.tb <- gene.tb %>%
+          filter(direct_hit)
+      }
+      subchunkify(simple_table_output(gene.tb), paste0('table.roi.', region))
+      cat('\n\n')
+    }
+  }
 } else {
-    cat('Nothing defined.')
+  cat('Nothing defined.')
 }
 
 cat('\n\n')
@@ -934,14 +1016,10 @@ cat('\n\n')
 
 # Sample comparison  {.tabset}
 
-## Virtual Karyotype
-
-If a reference sample exists, a side by side comparison is also generated (left: sample; right: reference).
-
 <!-- TODO: this could probably also be done with gosling  -->
 <!-- https://gosling-lang.github.io/gos/gallery/ideograms.html  -->
 
-```{r rideogram, eval = include.section('virtual.karyotype'), results='asis'}
+```{r virtual.karyotype, eval = include.section('virtual.karyotype'), results='asis'}
 
 cat('## Virtual Karyotype\n\n')
 
@@ -974,19 +1052,24 @@ overlay.tb <- sample.calls %>%
     dplyr::select(Chr, Start, End, Value)
 
 #This should not be the case unless there are 0 calls that generated images
-if (!dir.exists(file.path(workdir, 'report_images'))) {
-    dir.create(file.path(workdir, 'report_images'))
+if (!dir.exists(file.path(workdir, image_folder))) {
+    dir.create(file.path(workdir, image_folder))
 }
 
 #TODO: output needs to be checked
 svg_file1 <- tempfile(fileext = '.svg')
 #somehow 'convertSVG' can't deal with absolute paths
-png_file1 <- file.path('report_images', 'chunk_ideogram_virtualKaryotype.png')
+png_file1 <- file.path(image_folder, 'chunk_ideogram_virtualKaryotype.png')
 
 ideogram(human_karyotype, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
 convertSVG(svg_file1, file = png_file1)
 
-cat(paste0('<img src="', png_file1, '" width="800" />'))
+if (params$out_format == 'html') {
+    cat(paste0('<img src="', png_file1, '" width="800" />'))
+} else {
+  #Somehow tex/whatever executes from somewhere else then knitr and cna't find this ...
+  include_graphics(png_file1)
+}
 
 if (!is.na(ref_id)) {
   refdata <- sample.calls %>%
@@ -994,13 +1077,17 @@ if (!is.na(ref_id)) {
         dplyr::select(Chr, Start, End, Value)
 
   svg_file2 <- tempfile(fileext = '.svg')
-  png_file2 <- file.path('report_images', 'chunk_ideogram_virtualKaryotype_vsRef.png')
+  png_file2 <- file.path(image_folder, 'chunk_ideogram_virtualKaryotype_vsRef.png')
 
   ideogram(human_karyotype, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
          colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
   convertSVG(svg_file2, file = png_file2)
 
-  cat(paste0('<img src="', png_file2, '" width="800" />'))
+  if (params$out_format == 'html') {
+    cat(paste0('<img src="', png_file2, '" width="800" />'))
+  } else {
+    include_graphics(png_file2)
+  }
 }
 
 cat('\n\n')
@@ -1023,8 +1110,8 @@ cat('\n\n')
 cat('## SNP dendrogram\n\n')
 
 #Build annotation table
-color_by <- config$settings$report$SNP_comparison$dendrogram.color.by %>% check_cols_exits()
-shape_by <- config$settings$report$SNP_comparison$dendrogram.shape.by %>% check_cols_exits()
+color_by <- report.setting('SNP_comparison', 'dendrogram.color.by') %>% check_cols_exits()
+shape_by <- report.setting('SNP_comparison', 'dendrogram.shape.by') %>% check_cols_exits()
 dend.format.df <- sampletable %>%
     filter(Sample_ID %in% snp.ids)
 
@@ -1037,7 +1124,7 @@ if (length(color_by) == 1) {
     }
 
     dend.format.df <- dend.format.df %>%
-        mutate(across(one_of(color_by), ~ factor(., levels = sort(unique(.))))	) %>%
+        mutate(across(all_of(color_by), ~ factor(., levels = sort(unique(.))))	) %>%
         arrange(!!sym(color_by)) %>%
         mutate(col = viridis_pal(option='H')(length(unique(!!sym(color_by))))[match(!!sym(color_by), unique(!!sym(color_by)))],
                      col = ifelse(is.na(!!sym(color_by)), 'grey90', col)
@@ -1061,8 +1148,7 @@ if (length(color_by) == 1) {
 if (length(shape_by) == 1) {
 
     dend.format.df <- dend.format.df %>%
-        mutate(across(one_of(shape_by), ~ factor(., levels = sort(unique(.), na.last = T))),
-                     #across(one_of(shape_by), ~ ifelse(is.na(.), 'Unknown', .))
+        mutate(across(all_of(shape_by), ~ factor(., levels = sort(unique(.), na.last = T))),
                      ) %>%
         arrange(!!sym(shape_by))
 
@@ -1083,8 +1169,8 @@ if (length(shape_by) == 1) {
         na.shape <- 16
 
         dend.format.df <- dend.format.df %>%
-            mutate(across(one_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
-                         across(one_of(shape_by), ~ factor(., levels = unique(.))) )
+            mutate(across(all_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
+                         across(all_of(shape_by), ~ factor(., levels = unique(.))) )
     }
 
     dend.format.df <- dend.format.df %>%
