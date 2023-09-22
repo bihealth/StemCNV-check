@@ -12,7 +12,19 @@
 
     - finalise aggregation of commonly usable functions
 
+    - PennCNV installation issues
+        - might be able to use docker image via snakemake?
+
 ### Feature Wishlist
+
+    - Actual checks if ROIs contain CNV evidence
+        - test the PennCNV module for that
+        - allow global definition of regions (in config?)
+        - add reference calls as (secondary) ROIs ?
+
+    - improved wrapper script
+        - auto detection if PennCNV files are missing & promt to get them
+        - config check
 
     - More analysis on array & genome
         - (avg) probe density

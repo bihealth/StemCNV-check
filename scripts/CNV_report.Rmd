@@ -228,9 +228,15 @@ simple_table_output <- function(tb, caption=NULL) {
   }
 }
 
-gene_table_dt <- function(tb) {
-  tb %>% mutate(across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.))) %>%
-    datatable(options = list(dom = 'ftilp', pageLength = 20), rownames = FALSE)
+gene_table_output <- function(tb, caption = NULL) {
+  tb <- tb %>%
+    arrange(desc(direct_hit)) %>%
+    mutate(across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)))
+  if (params$out_format == 'html') {
+    return(datatable(tb, options = list(dom = 'pftil', pageLength = 10), rownames = FALSE))
+  } else {
+    return(kable(tb, caption = caption))
+  }
 }
 
 
@@ -401,7 +407,8 @@ metrics <- list(
         pivot_wider(names_from = class, values_from = contains('calls'))
 )
 
-green_col = ifelse(params$out_format == 'html', '#92D050', 'green')
+# Datatable takes colors differently than ggplot, doesn't work somehow
+green_col <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
 
 apply_gr_th <- function(data, warning_levels){
     case_when(
@@ -422,7 +429,7 @@ metric.colors <- list(
                  SNPs_post_filter = 'white'),
     mutate(metrics[[3]],
                  SNP.distance.to.ref = ifelse(SNP.distance.to.ref == '-', 'white',
-                                                                         apply_gr_th(SNP.distance.to.ref, SNP_distance_reference))),
+                                              apply_gr_th(SNP.distance.to.ref, SNP_distance_reference))),
     mutate(metrics[[4]],
                  loss.gain_log2ratio = apply_gr_th(abs(loss.gain_log2ratio), ratio_CNV_warnings),
                  total_calls_CNV = apply_gr_th(total_calls_CNV, total_CNV_warnings),
@@ -478,9 +485,9 @@ cat('### Summary\n\n')
 if (params$out_format == 'html') {
     datatable(Combined.metrics, options = list(dom = 't', pageLength = nrow(Combined.metrics)),
               rownames = FALSE) %>%
-        formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[1]]]), textAlign = 'center') %>%
+        formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])), textAlign = 'center') %>%
         # DT can take specification of non-existing columns - just need a workaround for the sample_header call
-        formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[length(sample_headers)]]]), textAlign = 'center')
+        formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), textAlign = 'center')
 } else {
 
   tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
@@ -871,7 +878,7 @@ if (nrow(reportable.calls)>0) {
         gene.tb <- gene.tb %>%
           filter(direct_hit)
       }
-      subchunkify(simple_table_output(gene.tb), paste0('table.reportable.genes.',i))
+      subchunkify(gene_table_output(gene.tb), paste0('table.reportable.genes.',i))
       cat('\n\n')
     }
     cat('\n\n')
@@ -948,7 +955,7 @@ if (nrow(non.reportable.calls)>0) {
         gene.tb <- gene.tb %>%
           filter(direct_hit)
       }
-      subchunkify(simple_table_output(gene.tb), paste0('table.nonreportable.genes.',i))
+      subchunkify(gene_table_output(gene.tb), paste0('table.nonreportable.genes.',i))
       cat('\n\n')
     }
     cat('\n\n')
@@ -1008,7 +1015,7 @@ if (!is.na(regions) & length(regions)>0) {
         gene.tb <- gene.tb %>%
           filter(direct_hit)
       }
-      subchunkify(simple_table_output(gene.tb), paste0('table.roi.', region))
+      subchunkify(gene_table_output(gene.tb), paste0('table.roi.', region))
       cat('\n\n')
     }
   }

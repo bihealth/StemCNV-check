@@ -3,7 +3,7 @@ static_data:
     csv_manifest_file: '' #Optional (leave empty if not used)
     egt_cluster_file: '' #REQUIRED
     genome_fasta_file: '' #REQUIRED
-    #TODO: this should be optional
+    #TODO: this should be optional (maybe incl genome fasta?)
     genome_gtf_file: '' #REQUIRED
     pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats_{genome}.pfb  #REQUIRED
     GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
