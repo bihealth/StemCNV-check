@@ -172,7 +172,7 @@ rule run_gencall:
   shell:
     #TODO: check how imporant definition of the ICU version & LANG is here
     # CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
-    'LANG="en_US.UTF-8" iaap-cli gencall {input.bpm} {input.egt} {params.outpath} --idat-folder {input.idat_path} --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
+    'LANG="en_US.UTF-8" iaap-cli gencall "{input.bpm}" "{input.egt}" "{params.outpath}" --idat-folder "{input.idat_path}" --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
 
 
 # The iaap-cli will *always* generate filenames derived from the sentrix name & pos
@@ -196,7 +196,7 @@ rule relink_gencall:
   params:
     gtc_link_path = lambda wildcards: os.path.join('..', 'gtc', get_chip(wildcards, outtype='file'))
   shell:
-    "ln -s {params.gtc_link_path} {output}"
+    'ln -s "{params.gtc_link_path}" "{output}"'
   
 
 rule run_gtc2vcf_tsv:
@@ -214,12 +214,12 @@ rule run_gtc2vcf_tsv:
     partition=get_tool_resource('gtc2vcf', 'partition')
   params:
     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
-    csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
+    csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.out.log")
   shell:
-    'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
+    'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_gtc2vcf_vcf:
   input:
@@ -237,11 +237,11 @@ rule run_gtc2vcf_vcf:
     partition=get_tool_resource('gtc2vcf', 'partition')
   params:
     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
-    csv='--csv {}'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
+    csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
   log:
     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
-  shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm {input.bpm} {params.csv} --egt {input.egt} --fasta-ref {input.genome} --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
+  shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_filter_tsv:
   input:
