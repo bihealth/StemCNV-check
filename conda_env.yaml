@@ -35,6 +35,7 @@ dependencies:
   - r-rideogram
   - r-rcolorbrewer
   - r-DT
+  - r-kableextra
   #- r-plotly
   - r-patchwork
   #- r-circlize # new/untested

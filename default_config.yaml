@@ -133,19 +133,15 @@ reports:
   #Multiple individual reports can be defined, file_type is necessary for each one!
   CNV-report:
     # pdf or html output *needs* to be defined for each report
-    # reports are optimised for html
     file_type: 'html'
-  Test-report:
-    # pdf or html output *needs* to be defined for each report
-    # reports are optimised for html
-    file_type: 'pdf'
-    exclude_sections: [nonreportable.table, nonreportable.plots, circo.plot, QC.settings, "SNP.dendrogram"]
-    call.data.and.plots:
-      # Which filter to apply to probe data for plotting
-      filter-settings: '__default__'
-      include.plot: True
-      include.call.table: FALSE
-      include.gene.table.details: 'Call'
+#  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
+#  summary-report:
+#    file_type: 'pdf'
+#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GADA, nonreportable.table, nonreportable.plots, circo.plot]
+#    call.data.and.plots:
+#      include.plot: True
+#      include.call.table: FALSE
+#      include.gene.table.details: 'Call'
 
   #This is the default from which all reports inherit settings
   __default__:

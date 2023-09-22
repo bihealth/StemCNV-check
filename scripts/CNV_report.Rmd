@@ -9,12 +9,12 @@ output:
     default
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: 'BIHi250-A-2'  #'GSM2538923_9371579017'
+  sample_id: 'BIHi005-A'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
   report_name: 'CNV-report'
   out_format: 'html'
   configfile: 'test/test_config.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
+  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A'
 ---
 
 <style type="text/css">
@@ -43,6 +43,7 @@ library(DT)
 library(yaml)
 library(patchwork)
 library(knitr)
+library(kableExtra)
 library(sessioninfo)
 `%!in%` <- Negate(`%in%`)
 
@@ -53,6 +54,7 @@ workdir <- ifelse(params$workdir == '', getwd(), params$workdir)
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE,
                       fig.path = file.path(workdir, image_folder)
 )
+options(knitr.kable.NA = '')
 
 config <- read_yaml(params$configfile)
 datapath <- dirname(workdir)
@@ -218,6 +220,7 @@ tr_tibble <- function(tb) {
 
 simple_table_output <- function(tb, caption=NULL) {
   if (params$out_format == 'html') {
+    #TODO: might want to use kable here as well?
     return(datatable(tb, caption = caption,
                      options = list(dom = 't', pageLength = nrow(tb)), rownames = FALSE))
   } else {
@@ -477,13 +480,13 @@ if (params$out_format == 'html') {
         # DT can take specification of non-existing columns - just need a workaround for the sample_header call
         formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), Combined.colors[, sample_headers[[length(sample_headers)]]]), textAlign = 'center')
 } else {
-#For pdf: library(condformat)
-# https://stackoverflow.com/questions/45311909/how-do-you-color-the-cell-in-rmarkdown-pdf-output
 
-  cat('No colored tables in pdf yet, sry :( \n\n')
-
-  Combined.metrics
-
+  tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
+    column_spec(2, background = unlist(Combined.colors[, sample_headers[[1]]]))
+  if (!is.na(ref_id)) {
+     tbout <- column_spec(tbout, 3, background = unlist(Combined.colors[, sample_headers[[2]]]))
+  }
+  tbout
 }
 
 cat('\n\n')
@@ -825,7 +828,7 @@ if (params$out_format == 'html') {
 } else {
 
   subchunkify(simple_table_output(reportable.calls %>% dplyr::select(-(12:18)),
-                                   caption = 'Critical & reportable calls:'),
+                                   caption = 'Critical and reportable calls'),
                'critical.call.table')
 
 }
@@ -1024,7 +1027,7 @@ cat('\n\n')
 cat('## Virtual Karyotype\n\n')
 
 if (!is.na(ref_id)) {
-  cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}}; right: {ref_name}).\n\n'))
+  cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
 }
 
 # <!-- TODO: this could probably also be done with gosling  -->
@@ -1067,8 +1070,8 @@ convertSVG(svg_file1, file = png_file1)
 if (params$out_format == 'html') {
     cat(paste0('<img src="', png_file1, '" width="800" />'))
 } else {
-  #Somehow tex/whatever executes from somewhere else then knitr and cna't find this ...
-  include_graphics(png_file1)
+  #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
+  include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
 }
 
 if (!is.na(ref_id)) {
@@ -1086,7 +1089,7 @@ if (!is.na(ref_id)) {
   if (params$out_format == 'html') {
     cat(paste0('<img src="', png_file2, '" width="800" />'))
   } else {
-    include_graphics(png_file2)
+    include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
   }
 }
 

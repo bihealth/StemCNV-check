@@ -45,6 +45,8 @@ if (dir.exists(str_glue('{workdir}/{report_name}_images'))) {
 }
 
 # Run Rmd - all files should be stored in the final output folder (= workdir)
+# Note: the intermediates_dir/knit_root_dir settings only apply do (r)md, but *not* to latex for pdf generation (https://github.com/rstudio/rmarkdown/issues/1975)
+# In order to have latex output everything (incl error logs) in the 'output_dir' the input template would need to (temporarily) copied over
 setwd(workdir)
 rmarkdown::render(
   input = report.template,
