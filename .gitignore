@@ -28,6 +28,5 @@ CNV-pipeline.Rproj
 *.test
 *.pdf
 supplemental_scripts/*
-Notes.txt
 **/*.pyc
 /data/

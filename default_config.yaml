@@ -129,9 +129,57 @@ settings:
     # Use this to create distinct vcf files, for i.e. different CNV types. Added to filename before `.vcf`
     name_addition: ''
 
-  report:
-    # Which filter to apply to probe data for plotting and SNP comparison
-    filter-settings: '__default__'
+reports:
+  #Multiple individual reports can be defined, file_type is necessary for each one!
+  CNV-report:
+    # pdf or html output *needs* to be defined for each report
+    file_type: 'html'
+#  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
+#  summary-report:
+#    file_type: 'pdf'
+#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GADA, nonreportable.table, nonreportable.plots, circo.plot]
+#    call.data.and.plots:
+#      include.plot: True
+#      include.call.table: FALSE
+#      include.gene.table.details: 'Call'
+
+  #This is the default from which all reports inherit settings
+  __default__:
+    # individual sections can be included (whitelist) or excluded (blacklist) from report. Default is special '__all__' for include
+    include_sections: '__all__'
+    exclude_sections: []
+    #Availbale sections (Note that tool specific ones also depend on pipeline settings)
+    #  - sample.information
+    #  - QC.summary
+    #  - QC.GenCall
+    #  - QC.PennCNV
+    #  - QC.CBS
+    #  - QC.GADA
+    #  - QC.settings
+    #  - reportable.table
+    #  - reportable.plots
+    #  - nonreportable.table
+    #  - nonreportable.plots
+    #  - regions.of.interest
+    #  - virtual.karyotype
+    #  - circo.plot
+    #  - SNP.dendrogram
+
+    # List of columns from the sample_table that should be included in the "Sample Information section"
+    sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
+
+    call.data.and.plots:
+      # Which filter to apply to probe data for plotting
+      filter-settings: '__default__'
+      include.plot: True
+      include.call.table: True
+      include.gene.table.details: 'All' # Choice of: None|Call|All
+      # Minimum relative size of (each) flanking region compared to call
+      plot.flanking.region.relative: 2
+      # Minimum size of total plot region
+      plot.region.minsize.reportable: 2e6
+      plot.region.minsize.nonreportable: 5e6
+
     thresholds:
       # Include these sizes in the main tables of the report
       reportable.loh: 2.5e6
@@ -151,8 +199,10 @@ settings:
       # # This is hard to set thresholds for, since currently all types of genes are used
       # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
       # overlapping_genes: []
+
     SNP_comparison:
-      include_dendrogram: TRUE
+      # Which filter to apply to probe data for SNP comparison
+      filter-settings: '__default__'
       # Should clustering use all genotype calls without the probe filters applied for CNV analysis
       ignore_filter: FALSE
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
