@@ -1,5 +1,5 @@
 ---
-title: "CNV report"
+title: "`r paste(params$sample_id, str_replace_all(params$report_name, '[\\._-]', ' '))`"
 output: 
   html_document:
     df_print: paged

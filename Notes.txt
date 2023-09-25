@@ -4,6 +4,8 @@
 
 ### Bugs / Fixes needed
 
+    - add background boxes for call plots
+
     - str_split for list cols doesn't work properly
 
     - finalise aggregation of commonly usable functions
