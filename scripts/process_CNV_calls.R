@@ -399,8 +399,8 @@ finalise_tb <- function(gr) {
 # Run code #
 ############
 
-pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-autosomes.tsv'),
-									paste0(sample_id, '/', sample_id, '.penncnv-chrx.tsv'))
+pennCNVfiles <- c(paste0(sample_id, '/', sample_id, '.penncnv-auto.tsv'),
+				  paste0(sample_id, '/', sample_id, '.penncnv-chrx.tsv'))
 if (sex == 'm') { pennCNVfiles <- c(pennCNVfiles, paste0(sample_id, '/', sample_id, '.penncnv-chry.tsv')) }
 
 results <- list()

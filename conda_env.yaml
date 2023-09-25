@@ -36,6 +36,7 @@ dependencies:
   - r-rcolorbrewer
   - r-DT
   - r-kableextra
+  - r-tinytex # WSL Ubuntu doesnt have latex
   #- r-plotly
   - r-patchwork
   #- r-circlize # new/untested

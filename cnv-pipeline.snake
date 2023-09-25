@@ -33,7 +33,6 @@ TARGET = config['target'] if 'target' in config else 'report' #Defined by wrappe
 IDAT_INPUT = config['raw_data_folder']
 
 wildcard_constraints:
-  chr=config['wildcard_constraints']['chr'],
   # This seems to cause issues -> will also make debugging harder for users
   #filter=list(config['settings']['probe-filter-sets'].keys()),
   sample_id=config['wildcard_constraints']['sample_id'],
@@ -115,7 +114,7 @@ def get_target_files():
   # Target PennCNV
   if TARGET == 'PennCNV':
     return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
-                  sample_id = all_samples, chr = ('autosomes', 'chrx')) + \
+                  sample_id = all_samples, chr = ('auto', 'chrx')) + \
       [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv") for
        sample_id, _, _, sex, _ in sample_data if sex.lower()[0] == 'm']
   # Target CBS
@@ -144,8 +143,6 @@ rule all:
   run:
     if removetempconfig:
       os.remove(CONFIGFILE)
-    # TODO: merge all summary check files ?
-    # maybe make an extra rule for that ?
 
 
 # Maybe-TODO / Alternative:
@@ -259,32 +256,9 @@ rule run_filter_tsv:
   shell:
     'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} {CONFIGFILE} > {log.out} 2> {log.err}'
     
-rule run_PennCNV_auto:
+rule run_PennCNV:
   input:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-    pfb = config['static_data']['pfb_file'],
-    gcmodel = config['static_data']['GCmodel_file']
-  output:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-autosomes.tsv"),
-    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","auto.error.log"),
-  threads: get_tool_resource('PennCNV', 'threads')
-  resources:
-    time=get_tool_resource('PennCNV', 'runtime'),
-    mem_mb=get_tool_resource('PennCNV', 'memory'),
-    partition=get_tool_resource('PennCNV', 'partition')
-  params:
-    filter=get_tool_filter_settings('PennCNV')
-  log:
-    err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.error.log"),
-    out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "auto.out.log")
-  shell:
-    'PennCNV_detect -test -loh -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
-
-
-rule run_PennCNV_sex:
-  input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-    sexfile = ancient(os.path.join(BASEPATH, "penncnv-sexfile.txt")),
     pfb = config['static_data']['pfb_file'],
     gcmodel = config['static_data']['GCmodel_file']
   output:
@@ -295,17 +269,19 @@ rule run_PennCNV_sex:
     time=get_tool_resource('PennCNV', 'runtime'),
     mem_mb=get_tool_resource('PennCNV', 'memory'),
     partition=get_tool_resource('PennCNV', 'partition')
+  wildcard_constraints:
+    chr='chrx|chry|auto'
   params:
-    filter=get_tool_filter_settings('PennCNV')
+    filter = get_tool_filter_settings('PennCNV'),
+    chrom = lambda wildcards: '' if wildcards.chr == 'auto' else '-'+wildcards.chr,
+    #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
+    do_loh = lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards, True)[2] == 'm') else '-loh'
   log:
     err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
     out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
   shell:
-    'PennCNV_detect -test -loh -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} -{wildcards.chr} -sex {input.sexfile} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+    'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
 
-#? maybe ??
-# make a rule to merge PennCNV files?
-# -> that rule would also need to check sex though
 
 rule run_CBS:
   input:
@@ -353,11 +329,13 @@ rule run_GADA:
 def get_ref_id(wildcards, get_sex=False):
   sample_id = wildcards.sample_id
   sex, ref_id = [(s, r) for sid, _, _, s, r in sample_data if sid == sample_id][0]
+  sex = sex[0].lower()
 
   if ref_id:
     try:
       #Assume existing match -> wrapper should have done a check
       ref_sex = [s for sid, _, _, s, _ in sample_data if sid == ref_id][0]
+      ref_sex = ref_sex[0].lower()
     except IndexError:
       # Somehow no match
       raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
@@ -374,9 +352,9 @@ def get_preprocess_input(wildcards):
   sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
   tools = config['settings']['CNV.calling.tools']
   files = []
-  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-autosomes.tsv"),
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-auto.tsv"),
             os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv")] if 'PennCNV' in tools else []
-  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex[0].lower() == 'm' else []
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex == 'm' else []
   files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
   files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.GADA.tsv")] if 'GADA' in tools else []
 
@@ -417,7 +395,7 @@ def get_report_sample_input(wildcards):
            os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),
            os.path.join(DATAPATH, "{ids}", "{ids}.filtered-data-{filter}.tsv")],
           ids = (sample_id, ref_id) if ref_id else (sample_id,),
-          chrs = ['auto', 'chrx'] + (['chry'] if sex[0].lower() == 'm' else []),
+          chrs = ['auto', 'chrx'] + (['chry'] if sex == 'm' else []),
           filter = get_tool_filter_settings(f"report:{wildcards.report}:call.data.and.plots"),
   )
 

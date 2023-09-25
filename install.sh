@@ -48,6 +48,10 @@ ln -s ../pipeline/PennCNV-1.0.5/detect_cnv.pl PennCNV_detect
 ln -s ../pipeline/PennCNV-1.0.5/kext
 cd $start_path
 
+# Likely needed for pdf generation on WSL - doesn't take long though so better to include
+Rscript -e 'tinytex::install_tinytex()'
+
+#TODO - keep these?
 
 ## R-GADA
 # Another segmentation algorithm - specifically for array data

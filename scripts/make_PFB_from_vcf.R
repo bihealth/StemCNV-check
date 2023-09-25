@@ -22,7 +22,7 @@ vcf.info <- as_tibble(snp.vcf@fix) %>%
   separate(INFO, 
            .$INFO[[1]] %>% str_remove_all('=[0-9.]+') %>% str_split(';') %>% unlist(),
            sep=';[^=]+=', convert = T) %>%
-  mutate(Chr = str_remove(CHROM, 'chr'),
+  mutate(Chr = str_remove(CHROM, 'chr') %>% factor(levels=c(1:22, 'X', 'Y')),
          GC = str_remove(GC, 'GC='),
          alleles = paste0(REF, ',', ALT),
   			 A_freq = (2*N_AA + N_AB) / (2*(N_AA + N_AB + N_BB)),
@@ -33,9 +33,8 @@ vcf.info <- as_tibble(snp.vcf@fix) %>%
   			 ) 
 
 vcf.info %>%
-  select(ID, CHROM, POS, PFB) %>%
-  dplyr::rename(Name = ID, Chr = CHROM, Position = POS) %>%
-	mutate(Chr = factor(Chr, levels=c(1:22, 'X', 'Y'))) %>%
+  select(ID, Chr, POS, PFB) %>%
+  dplyr::rename(Name = ID, Position = POS) %>%
   filter(if_all(everything(), ~!is.na(.))) %>%
 	arrange(Chr, Position) %>%
   write_tsv(outputfile)
