@@ -41,7 +41,7 @@ read_GADA <- function(filename) {
 load_preprocessed_cnvs <- function(fname){
 	read_tsv(fname) %>%
 		rowwise() %>%
-		mutate(across(one_of(list_cols), ~ str_split(., ';')))
+		mutate(across(any_of(list_cols), ~ str_split(., ';')))
 }
 
 annotate_cnvs <- function(tb.or.gr, config) {
@@ -73,7 +73,7 @@ get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 	if(!is.null(use.config)) {
 		use_chromosomes <- use.config$settings$chromosomes
 	# else check outer scope for config object
-	} else if(exists(config)) {
+	} else if(exists('config')) {
 		use_chromosomes <- config$settings$chromosomes
 	} else {
 		warning('Setting Chromosomes to default wihtout using config!')
@@ -94,7 +94,7 @@ get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 # Harmonize output
 expected_final_tb <- tibble(
 	sample_id = character(),
-	seqnames = factor(c(), levels = use_chr),
+	seqnames = factor(c(), levels = get_chromosome_set()),
 	start = integer(),
 	end = integer(),
 	#Maybe make this a list_col ? granges can calculate width anyway
@@ -117,30 +117,43 @@ expected_final_tb <- tibble(
 	)
 list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
 
-ensure_list_cols <- function(tb.or.gr){
-	as_tibble(tb.or.gr) %>%
-		rowwise() %>%
-		mutate(across(any_of(list_cols), ~ list(.))) %>%
-		as_granges()
+
+load_gtf_data <- function(config) {
+	gtf_file <- config$static_data$genome_gtf_file
+	#May need to ensure path is absolute, since rmd might have changed wd ?
+	if (!file.exists(gtf_file)) {
+		gtf_file <- normalizePath(gtf_file, mustWork = TRUE)
+	}
+	exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
+			paste(collapse = '|')
+	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
+
+	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
+		filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
+	if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
+		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
+	}
+	gr_genes
 }
 
+get_sample_info <- function(sample_id, value, sampletable){
 
-# Sanitize output & add gene overlap annotation
-finalise_cnv_tb <- function(gr) {
+	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
+	if (value == 'ref_id') return(ref_id)
 
-	#TODO this section should be moved
-	gr$n_genes <- count_overlaps(gr, gr_genes)
-	gr$overlapping.genes <- NA_character_
-	ov_genes <- group_by_overlaps(gr, gr_genes) %>% reduce_ranges(genes = paste(gene_name, collapse = ','))
-	gr[ov_genes$query,]$overlapping.genes <- ov_genes$genes
+	sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
+		tolower() %>% substr(1,1)
+	if (value == 'sex') return(sex)
 
-	tb <- as_tibble(gr) %>%
-		rowwise() %>%
-		mutate(across(one_of(list_cols), ~ list(.))) %>%
-		bind_rows(expected_final_tb) %>%
-		rowwise() %>%
-		mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
-		dplyr::select(any_of(colnames(expected_final_tb)))
-
-	return(tb)
+	if (!is.na(ref_id)){
+		sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
+  			tolower() %>% substr(1,1)
+		if(sex.ref != sex) {
+			stop('Sex of sample and reference does not match!')
+		}
+	} else {
+		sex.ref <- NA
+	}
+	if (value == 'sex.ref') return(sex.ref)
+	else stop(paste('Unsupported sample info value:', value))
 }

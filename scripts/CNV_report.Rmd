@@ -9,12 +9,12 @@ output:
     default
 params:
   base_path: '/home/vonkunic_c/Misc-Projects/CNV-pipeline' #tests
-  sample_id: 'BIHi005-A'  #'GSM2538923_9371579017'
+  sample_id: 'BIHi005-A-13'  #'GSM2538923_9371579017'
   sampletable: 'sample_table_example.txt' #'sample_table.txt'
   report_name: 'CNV-report'
   out_format: 'html'
   configfile: 'test/test_config.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A'
+  workdir: '/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A-13'
 ---
 
 <style type="text/css">
@@ -47,6 +47,26 @@ library(kableExtra)
 library(sessioninfo)
 `%!in%` <- Negate(`%in%`)
 
+get_script_dir <- function() {
+	match <- commandArgs(trailingOnly = FALSE) %>%
+		str_subset('--file=') %>%
+		str_remove('--file=')
+	check <- sys.frames()[[1]]$ofile
+	if (length(match) > 0) {
+        # Rscript
+		return(normalizePath(match) %>% dirname())
+	} else if (!is.null(check)) {
+		# source'd via R console
+        return(normalizePath(check) %>% dirname())
+	} else {
+		# likely testing in IDE
+		return ('scripts')
+	}
+}
+source(file.path(get_script_dir(), 'R_io_functions.R'))
+
+# General variables & settings
+
 image_folder <- paste0(params$report_name, '-', params$out_format, '_images/')
 
 basepath <- params$base_path
@@ -60,6 +80,86 @@ config <- read_yaml(params$configfile)
 datapath <- dirname(workdir)
 
 cnv_tools <- config$settings$CNV.calling.tools
+
+sampletable <- read_tsv(params$sampletable, col_types = 'cccccc', comment = "#")
+
+sample_id <- params$sample_id
+sex <- get_sample_info(sample_id, 'sex', sampletable)
+ref_id <- get_sample_info(sample_id, 'ref_id', sampletable)
+sex.ref <- get_sample_info(sample_id, 'sex.ref', sampletable)
+
+#Sample_Name is an optional column in the sampletable
+if ('Sample_Name' %in% colnames(sampletable)) {
+    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
+    ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
+} else {
+    sample_name <- sample_id
+    ref_name <- ifelse(is.na(ref_id), NA, ref_id)
+}
+
+if (!is.na(ref_id)) {
+    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
+    names(sample_headers) <- c(sample_id, ref_id)
+} else {
+    sample_headers <- c(sample_name )
+    names(sample_headers) <- c(sample_id )
+}
+
+#Reportable thresholds
+reportable.loh <- report.setting('thresholds', 'reportable.loh')
+reportable.cnv <- report.setting('thresholds', 'reportable.cnv')
+fail.loh <- report.setting('thresholds', 'fail.loh')
+fail.cnv <- report.setting('thresholds', 'fail.cnv')
+
+#Warning tresholds
+callrate_warnings <- report.setting('QCwarnings', 'callrate')
+total_CNV_warnings <- report.setting('QCwarnings', 'total_CNV')
+total_LOH_warnings <- report.setting('QCwarnings', 'total_LOH')
+ratio_CNV_warnings <- report.setting('QCwarnings', 'loss_gain_ratio')
+sizable_CNV_warnings <- report.setting('QCwarnings', 'sizable_CNV')
+sizable_LOH_warnings <- report.setting('QCwarnings', 'sizable_LOH')
+SNP_distance_reference <- report.setting('QCwarnings', 'SNP_distance_reference')
+
+valid_name <- config$wildcard_constraints$sample_id
+# valid_name <- ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
+if (!all(str_detect(use_ids, valid_name))) {stop('Sample id does not match supplied or default wildcard constraints!')}
+
+SNP.extra.ids <- c()
+if (include.section('SNP.dendrogram')) {
+    extra_samples <- report.setting('SNP_comparison', 'extra_samples')
+    # '__[column]' entry: take all sample_ids with the same value in '[column]'
+    same_value_cols <- str_subset(extra_samples, '^__') %>% str_remove('^__') %>% check_cols_exits()
+    SNP.extra.ids <- sapply(same_value_cols, function(x) {
+        sample_value <- unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
+        sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
+    }) %>% unlist()
+    # '_[column]' entry: take all sample_ids from '[column]'
+    id_cols <- str_subset(extra_samples, '^_[^_]') %>% str_remove('^_') %>% check_cols_exits()
+    SNP.extra.ids <- c(SNP.extra.ids, sapply(id_cols, function(x) {
+        sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
+    }) %>% unlist() )
+    # other entries: assume they are sample_ids & take the existing ones. No warning since this is discouraged
+    ids <- str_subset(extra_samples, '^[^_]')
+    SNP.extra.ids <- c(SNP.extra.ids, ids[ids %in% sampletable$Sample_ID])
+} 
+
+gr_genes <- load_gtf_data(config)
+
+regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
+    str_split(';') %>% unlist()
+include_roi_plots <-  include.section('regions.of.interest') & ifelse('Regions_of_Interest' %in% colnames(sampletable), !is.na(regions) & regions != '', FALSE)
+
+## general functions
+
+#TODO: this should be covfered by config check in the wrapper
+check_cols_exits <- function(cols){
+    if (all(cols %in% colnames(sampletable))) {
+        return(cols)
+    }
+    missing <- cols[! cols %in% colnames(sampletable)]
+    warning(str_glue('The following columns mentioned in the config do not exist and will be ignored: {paste(missing, collapse = ", ")}'))
+    return(cols[cols %in% colnames(sampletable)])
+}
 
 report.setting <- function(...) {
   args <- list(...)
@@ -93,119 +193,6 @@ include.section <- function(section) {
   #exclude QC too sections if they are not defined in settings
   include <- include & !(str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & str_remove(section, 'QC\\.') %!in% cnv_tools)
   include & !exclude
-}
-
-sampletable <- read_tsv(params$sampletable, col_types = 'cccccc', comment = "#")
-
-sample_id <- params$sample_id
-sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
-        tolower() %>% substr(1,1)
-
-ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
-
-use_ids <- c(sample_id )
-if (!is.na(ref_id)){ 
-  use_ids <- c(sample_id, ref_id)
-  sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
-    tolower() %>% substr(1,1)
-  
-  if(sex.ref != sex) {
-    stop('Sex of sample and reference does not match!')
-  } 
-}
-
-#Sample_Name is now an optional column
-if ('Sample_Name' %in% colnames(sampletable)) {
-    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
-    ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
-    rename_by <- 'Sample_Name'
-} else {
-    sample_name <- sample_id
-    ref_name <- ifelse(is.na(ref_id), NA, ref_id)
-    rename_by <- 'Sample_ID'
-}
-
-#Reportable thresholds
-reportable.loh <- report.setting('thresholds', 'reportable.loh')
-reportable.cnv <- report.setting('thresholds', 'reportable.cnv')
-fail.loh <- report.setting('thresholds', 'fail.loh')
-fail.cnv <- report.setting('thresholds', 'fail.cnv')
-
-#Warning tresholds
-callrate_warnings <- report.setting('QCwarnings', 'callrate')
-total_CNV_warnings <- report.setting('QCwarnings', 'total_CNV')
-total_LOH_warnings <- report.setting('QCwarnings', 'total_LOH')
-ratio_CNV_warnings <- report.setting('QCwarnings', 'loss_gain_ratio')
-sizable_CNV_warnings <- report.setting('QCwarnings', 'sizable_CNV')
-sizable_LOH_warnings <- report.setting('QCwarnings', 'sizable_LOH')
-SNP_distance_reference <- report.setting('QCwarnings', 'SNP_distance_reference')
-
-valid_name <- config$wildcard_constraints$sample_id
-# valid_name <- ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
-if (!all(str_detect(use_ids, valid_name))) {stop('Sample id does not match supplied or default wildcard constraints!')}
-
-check_cols_exits <- function(cols){
-    if (all(cols %in% colnames(sampletable))) {
-        return(cols)
-    }
-    missing <- cols[! cols %in% colnames(sampletable)]
-    warning(str_glue('The following columns mentioned in the config do not exist and will be ignored: {paste(missing, collapse = ", ")}'))
-    return(cols[cols %in% colnames(sampletable)])
-}
-
-SNP.extra.ids <- c()
-if (include.section('SNP.dendrogram')) {
-    extra_samples <- report.setting('SNP_comparison', 'extra_samples')
-    # '__[column]' entry: take all sample_ids with the same value in '[column]'
-    same_value_cols <- str_subset(extra_samples, '^__') %>% str_remove('^__') %>% check_cols_exits()
-    SNP.extra.ids <- sapply(same_value_cols, function(x) {
-        sample_value <- unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
-        sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
-    }) %>% unlist()
-    # '_[column]' entry: take all sample_ids from '[column]'
-    id_cols <- str_subset(extra_samples, '^_[^_]') %>% str_remove('^_') %>% check_cols_exits()
-    SNP.extra.ids <- c(SNP.extra.ids, sapply(id_cols, function(x) {
-        sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
-    }) %>% unlist() )
-    # other entries: assume they are sample_ids & take the existing ones. No warning since this is discouraged
-    ids <- str_subset(extra_samples, '^[^_]')
-    SNP.extra.ids <- c(SNP.extra.ids, ids[ids %in% sampletable$Sample_ID])
-} 
-
-#?? may need to ensure path is absolute, since rmd might have changed wd ?
-gtf_file <- config$static_data$genome_gtf_file
-if (!file.exists(gtf_file)) {
-    gtf_file <- file.path(basepath, gtf_file)
-}
-exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
-        paste(collapse = '|')
-gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
-
-gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
-    filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
-if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
-    gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
-}
-
-regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
-    str_split(';') %>% unlist()
-include_roi_plots <-  include.section('regions.of.interest') & ifelse('Regions_of_Interest' %in% colnames(sampletable), !is.na(regions) & regions != '', FALSE)
-
-
-if ('Sample_Name' %in% colnames(sampletable)) {
-    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
-    ref_name <- sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name
-} else {
-    sample_name <- sample_id
-    ref_name <- ref_id
-}
-
-if (!is.na(ref_id)) {
-    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
-    names(sample_headers) <- c(sample_id, ref_id)
-} else {
-    sample_headers <- c(sample_name )
-    names(sample_headers) <- c(sample_id )
 }
 
 tr_tibble <- function(tb) {
@@ -726,6 +713,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, total_min_size = 2e6
 
   # Make the plots
   lrr <- ggplot(plot.data) +
+    geom_rect(data = tibble(), aes(xmin = start, xmax = end, ymin = -1.5, yamx = 1.5), fill = 'grey50', alpha = 0.3) +
     geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) +
     geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +
@@ -745,7 +733,7 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, total_min_size = 2e6
   baf <- ggplot(plot.data) +
     geom_hline(yintercept = 0, col = 'black', linewidth=0.5) +
     geom_hline(yintercept = 1, col = 'black', linewidth=0.5) +
-    #geom_tile(data = calls, aes(x = x_pos, y = y_pos_baf, width = length, height = 0.05, fill = color)) +
+    geom_rect(data = tibble(), aes(xmin = start, xmax = end, ymin = 0, yamx = 1), fill = 'grey50', alpha = 0.3) +
     scale_fill_identity() +
     geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +

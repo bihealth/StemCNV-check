@@ -19,5 +19,5 @@ class SampleConstraintError(Exception):
 class ConfigValueError(Exception):
     """Raised when the config file contains values not allowed in a given field"""
 
-class ConfigReferenceError(Exception):
-    """Raised when the config file contains values not allowed in a given field"""
+class ConfigKeyWarning(Warning):
+    """Raised when the config file contains entries that are not defined or deprecated"""

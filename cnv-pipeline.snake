@@ -129,7 +129,6 @@ def get_target_files():
   # if TARGET == 'filtered-data':
   #   return  expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data.{filter}.tsv"),
   #                 sample_id = all_samples, filter = use_filter)
-  #     # TODO: add soft-filter to vcf file!
 
   #Target: unfiltered-data
   if TARGET == 'SNP-probe-data':

@@ -2,6 +2,8 @@
 """Helper functions for pipeline"""
 from .py_exceptions import *
 from collections import OrderedDict
+from collections.abc import MutableMapping
+import warnings
 
 
 def read_sample_table(filename, with_opt=False):
@@ -74,8 +76,22 @@ def config_extract(entry_kws, config, def_config, verbose=False):
             subconfig = subconfig_def[entry]
             subconfig_def = subconfig_def[entry]
             if verbose:
-                print('Warning: Using config default values for: ' + ' / '.join(used_entries))
+                print('Warning: Using config default values for: ' + ' : '.join(used_entries))
         else:
-            raise ValueError(' / '.join(used_entries) + " is not a valid config entry")
+            warnings.warn(' : '.join(used_entries) + " is not a valid config entry or has been deprecated",
+                          ConfigKeyWarning)
+            return None
+            #raise ValueError(' : '.join(used_entries) + " is not a valid config entry or has been deprecated")
 
     return subconfig
+
+
+def flatten(dictionary, parent_key='', separator=':'):
+    items = []
+    for key, value in dictionary.items():
+        new_key = parent_key + separator + key if parent_key else key
+        if isinstance(value, MutableMapping):
+            items.extend(flatten(value, new_key, separator=separator).items())
+        else:
+            items.append((new_key, value))
+    return dict(items)

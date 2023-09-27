@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import yaml
+from collections import defaultdict
 
 # import ruamel.yaml as ruamel_yaml
 # from snakemake import RERUN_TRIGGERS
@@ -93,13 +94,82 @@ def check_config(args):
 
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
+	with open(os.path.join(SNAKEDIR, 'allowedvalues_config.yaml')) as f:
+		allowed_values = yaml.safe_load(f)
 
-	if config_extract(['settings', 'make_cnv_vcf', 'mode'], config, DEF_CONFIG) not in ('combined-calls', 'split-tools'):
-		raise ConfigValueError(
-			'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make.cnv.vcf']['mode']))
+	sample_data = read_sample_table(args.sample_table, with_opt=True)
+
+	def parse_scientific(n):
+		if isinstance(n, (int, float)):
+			return n
+		if re.match('^[0-9.]+e[0-9]+$', n):
+			n, e = n.split('e')
+			out = float(n) * 10**int(e)
+			return int(out) if int(out) == out else out
+		else:
+			ValueError(f"{n} can not be coerced to a number")
+
+	defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
+	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+v+'$', x)))
+	def_functions = {
+		'list': lambda x, v: type(x) == list,
+		'str': lambda x, v: type(x) == str,
+		'int': lambda x, v: type(parse_scientific(x)) == int,
+		'float': lambda x, v: type(parse_scientific(x)) == float or type(parse_scientific(x)) == int,
+		'bool': lambda x, v: type(x) == bool,
+		'len': lambda x, v: len(x) == v,
+		'le': lambda x, v: parse_scientific(x) <= v,
+		'ge': lambda x, v: parse_scientific(x) >= v,
+		'filterset': lambda x, v: x in defined_filtersets or x == '__default__',
+		'filtersetnodefault': lambda x, v: x in defined_filtersets,
+		#TODO: this doesn't seem to work yet
+		'sections': lambda x, v: all(i in allowed_values['allowed_sections'] for i in x),
+		'sectionsall': lambda x, v: x == '__all__' or all(i in allowed_values['allowed_sections'] for i in x),
+		'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
+	}
+	check_functions.update(def_functions)
+
+	#Helper function:
+	def formatfunc(s):
+		strpart = s.rstrip('0123456789')
+		if strpart in def_functions:
+			numpart = int(s[len(strpart):]) if s[len(strpart):] else None
+		else: # regex function
+			numpart = strpart
+		return strpart, numpart
+
+	# Check all config entries
+	errors = []
+	for flatkey, config_value in flatten(config).items():
+		# Need to change the key for variable config sections
+		flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
+		flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
+		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
+		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
+		if funcs is None:
+			print(flatkey, config_value)
+			continue
+		funcs, *list_funcs = funcs.split('__')
+		for func_key in funcs.split('_'):
+			func_key, func_value = formatfunc(func_key)
+			check = check_functions[func_key](config_value, func_value)
+			if not check:
+				errors.append((flatkey, config_value, func_key, func_value))
+		for func_key in list_funcs:
+			func_key, func_value  = formatfunc(func_key)
+			check = all(check_functions[func_key](i, func_value) for i in config_value)
+			if not check:
+				errors.append((flatkey, config_value, func_key, func_value))
+
+
+
+	# Check required enrties
+	## static-data/*, log, data, raw-input, reports/*/filetype
+
+
 
 	#TODO:
-	# use the `default_conf_allowedvalues.yaml` to check every entry in the config file
+	# use the `allowedvalues_config.yaml` to check every entry in the config file
 	# need to write traversion (nested dicts) for yaml & parsing functions for entries: a_1_2...__regex
 
 	# a) type of entry

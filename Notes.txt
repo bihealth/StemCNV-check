@@ -4,12 +4,6 @@
 
 ### Bugs / Fixes needed
 
-    - add background boxes for call plots
-
-    - str_split for list cols doesn't work properly
-
-    - finalise aggregation of commonly usable functions
-
     - PennCNV installation issues
         - might be able to use docker image via snakemake?
 
@@ -27,8 +21,7 @@
         - add reference calls as (secondary) ROIs ?
 
     - improved wrapper script
-        - auto detection if PennCNV files are missing & promt to get them
-        - config check
+        - auto detection if PennCNV files are missing & prompt to get them
 
     - More analysis on array & genome
         - (avg) probe density
@@ -40,9 +33,9 @@
 
     - Proper vcf output:
         - Preprocess step:
-            - one combined vcf file (without individual calls?)
+            - one combined vcf file (with or without individual calls?)
                 -> need/want to retain individual calls somehow, maybe FILTER?
-            - could replace current preprocess tsv output, instead of only addinf vcf ?! (undecided)
+            - could replace current preprocess tsv output, instead of only adding vcf ?! (undecided)
 
         - per tool vcf output
             - needs extra rule for PennCNV
