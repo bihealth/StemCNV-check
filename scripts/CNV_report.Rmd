@@ -128,13 +128,13 @@ SNP.extra.ids <- c()
 if (include.section('SNP.dendrogram')) {
     extra_samples <- report.setting('SNP_comparison', 'extra_samples')
     # '__[column]' entry: take all sample_ids with the same value in '[column]'
-    same_value_cols <- str_subset(extra_samples, '^__') %>% str_remove('^__') %>% check_cols_exits()
+    same_value_cols <- str_subset(extra_samples, '^__') %>% str_remove('^__') #%>% check_cols_exits()
     SNP.extra.ids <- sapply(same_value_cols, function(x) {
         sample_value <- unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
         sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
     }) %>% unlist()
     # '_[column]' entry: take all sample_ids from '[column]'
-    id_cols <- str_subset(extra_samples, '^_[^_]') %>% str_remove('^_') %>% check_cols_exits()
+    id_cols <- str_subset(extra_samples, '^_[^_]') %>% str_remove('^_') #%>% check_cols_exits()
     SNP.extra.ids <- c(SNP.extra.ids, sapply(id_cols, function(x) {
         sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
     }) %>% unlist() )
@@ -151,15 +151,15 @@ include_roi_plots <-  include.section('regions.of.interest') & ifelse('Regions_o
 
 ## general functions
 
-#TODO: this should be covfered by config check in the wrapper
-check_cols_exits <- function(cols){
-    if (all(cols %in% colnames(sampletable))) {
-        return(cols)
-    }
-    missing <- cols[! cols %in% colnames(sampletable)]
-    warning(str_glue('The following columns mentioned in the config do not exist and will be ignored: {paste(missing, collapse = ", ")}'))
-    return(cols[cols %in% colnames(sampletable)])
-}
+# #TODO: this should be covfered by config check in the wrapper
+# check_cols_exits <- function(cols){
+#     if (all(cols %in% colnames(sampletable))) {
+#         return(cols)
+#     }
+#     missing <- cols[! cols %in% colnames(sampletable)]
+#     warning(str_glue('The following columns mentioned in the config do not exist and will be ignored: {paste(missing, collapse = ", ")}'))
+#     return(cols[cols %in% colnames(sampletable)])
+# }
 
 report.setting <- function(...) {
   args <- list(...)
@@ -1110,8 +1110,8 @@ cat('\n\n')
 cat('## SNP dendrogram\n\n')
 
 #Build annotation table
-color_by <- report.setting('SNP_comparison', 'dendrogram.color.by') %>% check_cols_exits()
-shape_by <- report.setting('SNP_comparison', 'dendrogram.shape.by') %>% check_cols_exits()
+color_by <- report.setting('SNP_comparison', 'dendrogram.color.by') #%>% check_cols_exits()
+shape_by <- report.setting('SNP_comparison', 'dendrogram.shape.by') #%>% check_cols_exits()
 dend.format.df <- sampletable %>%
     filter(Sample_ID %in% snp.ids)
 

@@ -10,9 +10,9 @@ import os
 import re
 import subprocess
 import sys
+import warnings
 import yaml
 from collections import defaultdict
-
 # import ruamel.yaml as ruamel_yaml
 # from snakemake import RERUN_TRIGGERS
 from snakemake import main, snakemake
@@ -27,12 +27,8 @@ with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
 def check_sample_table(args):
 	sample_data = read_sample_table(args.sample_table)
 
-	# all_ids = [sid for sid, _, _, _, _ in sample_data]
-	# excl = ('no data', 'reference', 'waiting for data')
-	# sample_data = [[i, n, p, s, r if r not in excl else ''] for i, n, p, s, r in sample_data] #if all_ids.count(i) == 1
-
 	# Check sample_ids are unique
-	#The way the sample_table is read in means that non-unique sample_names will be silently overwrite one another ...
+	#The way the sample_table is read in means that non-unique sample_ids would silently overwrite one another ...
 	all_ids = [sid for sid, _, _, _, _ in sample_data]
 	non_unique_ids = [sid for sid in all_ids if all_ids.count(sid) > 1]
 	if non_unique_ids:
@@ -54,7 +50,7 @@ def check_sample_table(args):
 	# Give warning if sex of reference and sample don't match
 	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
-		sys.stderr.write("Warning: the following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+		warnings.warn("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
@@ -76,19 +72,6 @@ def check_sample_table(args):
 				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
-	# #Check SNP_clustering extra ids (if enabled in config & report is run)
-	# check_snp_cluster = config_extract(('settings', 'report', 'SNP_comparison', 'include_dendrogram'), config, DEF_CONFIG)
-	# extra_sample_def = config_extract(('settings', 'report', 'SNP_comparison', 'extra_samples'), config, DEF_CONFIG)
-	# if check_snp_cluster and args.target == 'report':
-	# 	for sample_id in samples.keys():
-	# 		cluster_ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-	# 		missing = [sid for sid in cluster_ids if sid not in samples.keys()]
-	# 		if missing:
-	# 			raise SampletableReferenceError(
-	# 				"These Sample_ID defined as controls for SNP clustering dendrogram (or derived from one of the columns there) do not exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(
-	# 					missing))
-
-
 # Assume that the default_config hasn't been altered & is correct
 def check_config(args):
 
@@ -97,6 +80,46 @@ def check_config(args):
 	with open(os.path.join(SNAKEDIR, 'allowedvalues_config.yaml')) as f:
 		allowed_values = yaml.safe_load(f)
 
+	## Check required enrties
+	# Folders: log, data, raw-input
+	for req in ('data_path', 'log_path', 'raw_data_folder'):
+		try:
+			if not config[req]:
+				raise ConfigValueError(f"Required config entry is missing: {req}")
+			if not os.path.isdir(config[req]):
+				warn_str = f"Required Entry '{req}' is not an existing folder! Attempting to create it."
+				warnings.warn(warn_str, ConfigValueWarning)
+				os.makedirs(config[req], exist_ok=False)
+		except KeyError:
+			raise ConfigValueError(f"Required config entry is missing: {req}")
+	# Files: static-data/*
+	for req in allowed_values['static_data'].keys():
+		try:
+			if not config['static_data'][req]:
+				raise ConfigValueError(f"Required config entry is missing: static-data:{req}")
+			if not os.path.isfile(config['static_data'][req]):
+				if req in ('pfb_file', 'GCmodel_file'):
+					info = " You can create it by running `cnv-pipeline -a make-penncnv-files`"
+				else:
+					info = ""
+				raise ConfigValueError(f"Required static data file '{req}' is missing." + info)
+		except KeyError:
+			raise ConfigValueError(f"Required config entry is missing: static-data:{req}")
+	# Other settings: reports/*/filetype
+	if not 'reports' in config:
+		#TODO: test if the pipeline won't crash in this case
+		warnings.warn('No reports are defined in the config, only tabular & vcf files will be created!', ConfigValueWarning)
+	else:
+		for rep in config['reports']:
+			if rep == '__default__':
+				continue
+			try:
+				if not config['reports'][rep]['file_type']:
+					raise ConfigValueError(f"Required config entry is missing: reports:{rep}:file_type")
+			except KeyError:
+				raise ConfigValueError(f"Required config entry is missing: reports:{rep}:file_type")
+
+	## Check value ranges
 	sample_data = read_sample_table(args.sample_table, with_opt=True)
 
 	def parse_scientific(n):
@@ -123,7 +146,7 @@ def check_config(args):
 		'filterset': lambda x, v: x in defined_filtersets or x == '__default__',
 		'filtersetnodefault': lambda x, v: x in defined_filtersets,
 		#TODO: this doesn't seem to work yet
-		'sections': lambda x, v: all(i in allowed_values['allowed_sections'] for i in x),
+		'sections': lambda x, v: x in allowed_values['allowed_sections'],
 		'sectionsall': lambda x, v: x == '__all__' or all(i in allowed_values['allowed_sections'] for i in x),
 		'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
 	}
@@ -156,33 +179,33 @@ def check_config(args):
 			if not check:
 				errors.append((flatkey, config_value, func_key, func_value))
 		for func_key in list_funcs:
-			func_key, func_value  = formatfunc(func_key)
+			func_key, func_value = formatfunc(func_key)
 			check = all(check_functions[func_key](i, func_value) for i in config_value)
 			if not check:
 				errors.append((flatkey, config_value, func_key, func_value))
 
-
-
-	# Check required enrties
-	## static-data/*, log, data, raw-input, reports/*/filetype
-
-
-
-	#TODO:
-	# use the `allowedvalues_config.yaml` to check every entry in the config file
-	# need to write traversion (nested dicts) for yaml & parsing functions for entries: a_1_2...__regex
-
-	# a) type of entry
-		# for categories with __ *any* entry is allowed; save the existing ones
-	# 1-...) extra instructions:
-		# [for lists] str/int/float type of list content
-		# [for lists] lenX, len(list) == X
-		# [for lists] all others applied to the list values
-		# [for strings] filterset / filterset-default for matching __filterset [+- '__default__']
-		# [for int/float] leX, <= X
-	# __regex
-		# for string if only a certain set of values is allowed
-
+	help_strings = defaultdict(lambda: lambda v: "only these entries: " + v[1:-1].replace('|', ', ')).update({
+		'list': lambda v: 'a list with ',
+		'str': lambda v: 'characters (add quotes for numbers or similar)',
+		'int': lambda v: 'integers (whole numbers)',
+		'float': lambda v: 'numbers',
+		'bool': lambda v: 'booleans (True/False)',
+		'len': lambda v: f"exactly {v} entries",
+		'le': lambda v: f"numbers <={v}",
+		'ge': lambda v: f"numbers >={v}",
+		'filterset': lambda v: "the defined filtersets ({}) or __default__".format(', '.join(defined_filtersets)),
+		'filtersetnodefault': lambda v: "only the defined filtersets ({}) but not '__default__'".format(', '.join(defined_filtersets)),
+		'sections': lambda v: "the defined report sections: " + ', '.join(allowed_values['allowed_sections']),
+		'sectionsall': lambda v: "either '__all__' or a list with of defined report sections: " + ', '.join(allowed_values['allowed_sections']),
+		'insamplesheet': lambda v: "column names of the samplesheet: " + ', '.join(sample_data[0].keys())
+	})
+	if errors:
+		for flatkey, config_value, func_key, func_value in errors:
+			warn_str = f"The config entry '{config_value}' for '{flatkey}' is invalid. Allowed value" + \
+				's are ' if func_key != 'list' else ' is a list with ' + \
+				help_strings[func_key](func_value) + '.'
+			warnings.warn(warn_str, ConfigValueWarning)
+		raise ConfigValueError('The config contains values that are not allowed')
 
 
 def check_installation():
@@ -217,6 +240,7 @@ def make_PennCNV_sexfile(args):
 			sex = sex.lower()[0]
 			f.write(f"{inputfile}\t{sex}\n")
 
+#TODO: this shouldn't be needed any longer
 def ensure_paths_exist(args):
 
 	# Check that all defined paths exist
@@ -262,10 +286,6 @@ def make_penncnv_files(args):
 		use_vcf = vcf_files[0]
 		print('Running snakemake to get:', use_vcf)
 		args.snake_options += [	use_vcf ]
-		
-		#TODO: The code terminate here because snakemake.main includes a sys.exit() call
-		# --> need to use snakemake.snakemake and parse args (manually?) instead
-		#ret = run_snakemake(args)
 
 		ret = snakemake(
 			os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
@@ -378,7 +398,6 @@ def setup_argparse():
 	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
-	#group_basic.add_argument('--data-path', '-p', default='data', help="Filepath to were results are written inside the run directrory. Default: %(default)s")
 
 	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
 	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
@@ -412,7 +431,7 @@ if __name__ == '__main__':
 	
 	if args.action == 'run':
 		check_sample_table(args)
-		#check_config(args)
+		check_config(args)
 		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)

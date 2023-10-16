@@ -9,6 +9,12 @@
 
 ### Feature Wishlist
 
+    - use CI ?
+
+    - better installation & windows support
+        - dockerize?
+        - switch to conda envs defined in snakemake
+
     - Consistent handling of "chr" format
         - Either specify in config, or use format from vcf / fastq / ?
         - then always use this format

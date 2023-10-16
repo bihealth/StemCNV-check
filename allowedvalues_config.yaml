@@ -99,7 +99,7 @@ reports:
   __report: #TODO: filetype required for all but __default__ !
     file_type: str_(html|pdf)
     include_sections: sectionsall
-    exclude_sections: sections
+    exclude_sections: list__sections
 
     sample.info.extra.cols: list__insamplesheet
 
