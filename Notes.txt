@@ -7,27 +7,7 @@
     - PennCNV installation issues
         - might be able to use docker image via snakemake?
 
-### Feature Wishlist
-
-    - use CI ?
-
-    - better installation & windows support
-        - dockerize?
-        - switch to conda envs defined in snakemake
-
-    - Consistent handling of "chr" format
-        - Either specify in config, or use format from vcf / fastq / ?
-        - then always use this format
-        - Current Issues: penncnv gcmodel files need to be done in <1:22, X, Y> format
-            -> could be remedied by using USCS downloadable stuff? or by generating this from fasta file (unclear how long that would take)
-
-    - Actual checks if ROIs contain CNV evidence
-        - test the PennCNV module for that
-        - allow global definition of regions (in config?)
-        - add reference calls as (secondary) ROIs ?
-
-    - improved wrapper script
-        - auto detection if PennCNV files are missing & prompt to get them
+### Feature Wishlist (somewhat orderd)
 
     - More analysis on array & genome
         - (avg) probe density
@@ -36,6 +16,21 @@
         - Get q,p arm (sub)cooridinates
             -> some UCSC functions should allow this
         - this should also provide / set chr standard format
+
+    - Consistent handling of "chr" format
+        - Either specify in config, or use format from vcf / fastq / ?
+        - then always use this format
+        - Current Issues: penncnv gcmodel files need to be done in <1:22, X, Y> format
+            -> could be remedied by using USCS downloadable stuff? or by generating this from fasta file (unclear how long that would take)
+
+    - better installation & windows support
+        - dockerize?
+        - switch to conda envs defined in snakemake
+
+    - Actual checks if ROIs contain CNV evidence
+        - test the PennCNV module for that
+        - allow global definition of regions (in config?)
+        - add reference calls as (secondary) ROIs ?
 
     - Proper vcf output:
         - Preprocess step:
@@ -48,20 +43,29 @@
                 -> maybe mark PennCNV file as intermediate?
             - other tools should be possible directly from R
 
-    - Test & add more CNV callers
-        - Ascat (tumor/normal)
-        - GLAD (germline)
-        - VEGA (germline)
+    - vcf output for variants & filtering change:
+        - remove the generation of raw data in tsv format
+        - do filtering on the vcf file instead
+        - output a filtered vcf file where probes are masked / 'FILTER' is set properly
+
+    - transfer to github
+        - general linting
+        - cleanup of TODO comments
+        - start using CI
 
     - Call merging overhaul:
         - merging by number of probes between them
         - merging by relative value
         - merging by absolute value
 
-    - vcf output for variants & filtering change:
-        - remove the generation of raw data in tsv format
-        - do filtering on the vcf file instead
-        - output a filtered vcf file where probes are masked / 'FILTER' is set properly
+    - improved wrapper script
+        - auto detection if PennCNV files are missing & prompt to get them
+
+
+    - Test & add more CNV callers
+        - Ascat (tumor/normal)
+        - GLAD (germline)
+        - VEGA (germline)
 
     - Additional filter options
         - MAF (need to get from databank?)

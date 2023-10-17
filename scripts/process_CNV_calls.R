@@ -12,7 +12,7 @@ parser$add_argument('-p', '--penncnv', action="store_true", help="Use PennCNV ca
 parser$add_argument('-c', '--cbs', action="store_true", help="Use CBS calls")
 parser$add_argument('-g', '--gada', action="store_true", help="Use GADA calls")
 
-# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi005-A-13", "test/test_config.yaml", "sample_table_example.txt"))
+# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi250-A-2", "test/test_config.yaml", "sample_table_example.txt"))
 args <- parser$parse_args()
 
 
@@ -238,7 +238,8 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 				   width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
 				   coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
 				   cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
-				   ref.tool = tool.y,
+				   # need to flatten/fully unpack tool.y or we get list of lists
+				   ref.tool = list(unlist(tool.y)),
 				   ref.state = CNV.state.y
 			) %>%
 			dplyr::select(-contains('.y'), -contains('width')) %>%
@@ -253,7 +254,7 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 			summarise(across(ends_with('.x'), ~ unique(.)),
 								call.in.reference = TRUE,
 								coverage.by.ref = list(coverage.by.ref),
-								ref.tool = list(ref.tool),
+								ref.tool = list(unlist(ref.tool)),
 			) %>%
 			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
 			as_granges()
@@ -368,11 +369,10 @@ combined_tools_sample <- combine_tools(tools, tool.overlap.greatest.call.min.per
 if (!is.na(ref_id)) {
 	
 	fname <- file.path(datapath, ref_id, paste0(ref_id, '.combined-cnv-calls.tsv'))
-	combined_tools_ref <- read_tsv(fname) %>%
+	combined_tools_ref <- load_preprocessed_cnvs(fname) %>%
 		# These cols will interefere
 		dplyr::select(-length, -call.in.reference, -coverage.by.ref, -ref.tool,
 									-n_genes, -overlapping.genes) %>%
-		mutate(across(one_of(list_cols), ~ str_split(., ';'))) %>%
 		filter(tool.overlap.state != 'pre-overlap') %>%
 		as_granges()
 	

@@ -1,5 +1,64 @@
-
+#General
 `%!in%` <- Negate(`%in%`)
+
+get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
+	# Use given config if possible
+	if(!is.null(use.config)) {
+		use_chromosomes <- use.config$settings$chromosomes
+	# else check outer scope for config object
+	} else if(exists('config')) {
+		use_chromosomes <- config$settings$chromosomes
+	} else {
+		warning('Setting Chromosomes to default wihtout using config!')
+		use_chromosomes <- paste0('chr', c(1:22, 'X', 'Y'))
+	}
+
+	if (get_prefix) {
+		chr_prefix <- ifelse(all(str_detect(use_chromosomes, '^chr')),
+		                      'chr', '')
+		return(chr_prefix)
+
+	} else {
+		return(use_chromosomes)
+	}
+}
+
+get_sample_info <- function(sample_id, value, sampletable){
+
+	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
+	if (value == 'ref_id') return(ref_id)
+
+	sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
+		tolower() %>% substr(1,1)
+	if (value == 'sex') return(sex)
+
+	if (!is.na(ref_id)){
+		sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
+  			tolower() %>% substr(1,1)
+		if(sex.ref != sex) {
+			stop('Sex of sample and reference does not match!')
+		}
+	} else {
+		sex.ref <- NA
+	}
+	if (value == 'sex.ref') return(sex.ref)
+	else stop(paste('Unsupported sample info value:', value))
+}
+
+
+
+# File input functions
+
+## SNP data
+read_raw <- function(filename) {
+    read_tsv(filename, show_col_types = FALSE) %>%
+                rename_with(~ str_remove(., '.*\\.')) %>%
+        dplyr::select(-any_of(c('Index', 'Address', 'R', 'Theta')),
+                                    -contains('Frac'), -contains('X'), -contains('Y')) %>%
+        mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
+               Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
+               )
+}
 
 ## PennCNV
 read_PennCNV <- function(filename) {
@@ -37,6 +96,7 @@ read_GADA <- function(filename) {
 	read_tsv(filename, show_col_types = F)
 }
 
+## preprocessed
 
 load_preprocessed_cnvs <- function(fname){
 	read_tsv(fname) %>%
@@ -44,54 +104,32 @@ load_preprocessed_cnvs <- function(fname){
 		mutate(across(any_of(list_cols), ~ str_split(., ';')))
 }
 
-annotate_cnvs <- function(tb.or.gr, config) {
-
-	#Reportable thresholds
-	reportable.loh <- config$settings$report$thresholds$reportable.loh %>% as.numeric()
-	reportable.cnv <- config$settings$report$thresholds$reportable.cnv %>% as.numeric()
-	fail.loh <- config$settings$report$thresholds$fail.loh %>% as.numeric()
-	fail.cnv <- config$settings$report$thresholds$fail.cnv %>% as.numeric()
-
-	tb.or.gr %>%
-			mutate(
-			reportable = case_when(
-				#tool.overlap.state == 'pre-overlap'                                ~ NA_character_,
-				CNV.state %!in% c('gain', 'loss') & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
-				CNV.state %in% c('gain', 'loss') & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
-				CNV.state %!in% c('gain', 'loss') & length >= fail.loh                           ~ 'critical',
-				CNV.state %in% c('gain', 'loss') & length >= fail.cnv                           ~ 'critical',
-				CNV.state %!in% c('gain', 'loss') & length >= reportable.loh                     ~ 'yes',
-				CNV.state %in% c('gain', 'loss') & length >= reportable.cnv                     ~ 'yes',
-				call.in.reference                                                 ~ 'no, in ref.',
-				TRUE                                                              ~ 'no') %>%
-				factor(levels = c('critical', 'yes', 'yes, in ref.', 'no', 'no, in ref.'))
-		)
-}
-
-get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
-	# Use given config if possible
-	if(!is.null(use.config)) {
-		use_chromosomes <- use.config$settings$chromosomes
-	# else check outer scope for config object
-	} else if(exists('config')) {
-		use_chromosomes <- config$settings$chromosomes
-	} else {
-		warning('Setting Chromosomes to default wihtout using config!')
-		use_chromosomes <- paste0('chr', c(1:22, 'X', 'Y'))
+## GTF data
+load_gtf_data <- function(config) {
+	gtf_file <- config$static_data$genome_gtf_file
+	#Rmd might change cwd, so relative paths can break if not read/forwarded by snakemake
+	if (!file.exists(gtf_file)) {
+		gtf_file <- file.path(config$snakedir, config$static_data$genome_gtf_file)
 	}
-
-	if (get_prefix) {
-		chr_prefix <- ifelse(all(str_detect(use_chromosomes, '^chr')),
-		                      'chr', '')
-		return(chr_prefix)
-
-	} else {
-		return(use_chromosomes)
+	if (!file.exists(gtf_file)) {
+		gtf_file <- normalizePath(config$static_data$genome_gtf_file, mustWork = TRUE)
 	}
+	exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
+			paste(collapse = '|')
+	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
+
+	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
+		filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
+	if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
+		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
+	}
+	gr_genes
 }
 
 
-# Harmonize output
+# Output
+
+## Default table structure for CNVs
 expected_final_tb <- tibble(
 	sample_id = character(),
 	seqnames = factor(c(), levels = get_chromosome_set()),
@@ -117,43 +155,22 @@ expected_final_tb <- tibble(
 	)
 list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
 
+# Other report functions
 
-load_gtf_data <- function(config) {
-	gtf_file <- config$static_data$genome_gtf_file
-	#May need to ensure path is absolute, since rmd might have changed wd ?
-	if (!file.exists(gtf_file)) {
-		gtf_file <- normalizePath(gtf_file, mustWork = TRUE)
-	}
-	exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
-			paste(collapse = '|')
-	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
-
-	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
-		filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
-	if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
-		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
-	}
-	gr_genes
-}
-
-get_sample_info <- function(sample_id, value, sampletable){
-
-	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
-	if (value == 'ref_id') return(ref_id)
-
-	sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
-		tolower() %>% substr(1,1)
-	if (value == 'sex') return(sex)
-
-	if (!is.na(ref_id)){
-		sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
-  			tolower() %>% substr(1,1)
-		if(sex.ref != sex) {
-			stop('Sex of sample and reference does not match!')
-		}
-	} else {
-		sex.ref <- NA
-	}
-	if (value == 'sex.ref') return(sex.ref)
-	else stop(paste('Unsupported sample info value:', value))
+get_SNP_clustering_IDs <- function(config_entry, sample_id, sampletable) {
+    # '__[column]' entry: take all sample_ids with the same value in '[column]'
+    same_value_cols <- str_subset(config_entry, '^__') %>% str_remove('^__')
+    ids <- sapply(same_value_cols, function(x) {
+        sample_value <- unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
+        sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
+    }) %>% unlist()
+    # '_[column]' entry: take all sample_ids from '[column]'
+    id_cols <- str_subset(config_entry, '^_[^_]') %>% str_remove('^_')
+    ids <- c(ids, sapply(id_cols, function(x) {
+        sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
+    }) %>% unlist() )
+    # other entries: assume they are sample_ids & take the existing ones. No warning since this is discouraged
+    single.ids <- str_subset(config_entry, '^[^_]')
+    ids <- c(ids, single.ids[single.ids %in% sampletable$Sample_ID])
+	ids
 }
