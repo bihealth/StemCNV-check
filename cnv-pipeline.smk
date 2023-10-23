@@ -274,6 +274,7 @@ rule run_PennCNV:
   wildcard_constraints:
     chr='chrx|chry|auto'
   params:
+    penncnv_path = '/home/user/PennCNV/detect_cnv.pl' if config['use_singularity'] else 'PennCNV_detect',
     filter = get_tool_filter_settings('PennCNV'),
     chrom = lambda wildcards: '' if wildcards.chr == 'auto' else '-'+wildcards.chr,
     #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
@@ -284,7 +285,7 @@ rule run_PennCNV:
   container:
     "docker://genomicslab/penncnv"
   shell:
-    '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+    '{params.penncnv_path} -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
     #'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
 
 

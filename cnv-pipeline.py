@@ -204,8 +204,8 @@ def check_config(args):
 	if errors:
 		for flatkey, config_value, func_key, func_value in errors:
 			warn_str = f"The config entry '{config_value}' for '{flatkey}' is invalid. Allowed value" + \
-				's are ' if func_key != 'list' else ' is a list with ' + \
-				help_strings[func_key](func_value) + '.'
+					   ('s are ' if func_key != 'list' else ' is a list with ') + \
+					   help_strings[func_key](func_value) + '.'
 			warnings.warn(warn_str, ConfigValueWarning)
 		raise ConfigValueError('The config contains values that are not allowed')
 
@@ -342,9 +342,14 @@ def run_snakemake(args):
 	argv = [
 		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
 		"-p", #"-r", is default now
-		"--rerun-incomplete",
-		"--use-singularity"
+		"--rerun-incomplete"
 	]
+	if args.no_singularity:
+		warnings.warn("Usage of singularity/docker by snakemake is disabled, pipeline will fail without local PennCNV installation based on the install.sh script!")
+		use_singularity = False
+	else:
+		argv += [ "--use-singularity" ]
+		use_singularity = True
 	
 	argv += [
 		'-d', args.directory,
@@ -354,6 +359,7 @@ def run_snakemake(args):
 			f'basedir={args.directory}',
 			f'configfile={args.config}',
 			f'target={args.target}',
+			f'use_singularity={use_singularity}'
 	]
 	
 	if args.cluster_profile:
@@ -401,6 +407,7 @@ def setup_argparse():
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
 	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
+	group_snake.add_argument('--no-singularity', action='store_true', help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
 	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
 							 help="Options to pass to snakemake; separate from normal options with '--'")
 	
