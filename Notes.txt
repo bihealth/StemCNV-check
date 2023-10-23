@@ -4,8 +4,6 @@
 
 ### Bugs / Fixes needed
 
-    - PennCNV installation issues
-        - might be able to use docker image via snakemake?
 
 ### Feature Wishlist (somewhat orderd)
 
@@ -24,8 +22,11 @@
             -> could be remedied by using USCS downloadable stuff? or by generating this from fasta file (unclear how long that would take)
 
     - better installation & windows support
-        - dockerize?
+        - dockerize
+            -> doesn't make a full dockerimage, just one where the rules can be run in
         - switch to conda envs defined in snakemake
+        - find / setup a good docker container to replace iaap download?
+            -> after that stick to conda (+docker) available stuff
 
     - Actual checks if ROIs contain CNV evidence
         - test the PennCNV module for that

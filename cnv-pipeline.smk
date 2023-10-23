@@ -25,7 +25,7 @@ else:
 
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
-SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.getcwd() #Defined by wrapper 
+SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.path.dirname(os.path.realpath(__file__)) #Defined by wrapper
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
 DATAPATH = config['data_path'] if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
 LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
@@ -165,6 +165,9 @@ rule run_gencall:
   log:
     err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
     out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log")
+  #TODO - containerize?
+  # this wont ever be in conda, BUT there are docker containers (or even github repos) with this available
+  # -> not clear if we should use a random docker for this (none by illumina) or make our own? Are we allowed even?
   shell:
     #TODO: check how imporant definition of the ICU version & LANG is here
     # CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
@@ -278,8 +281,11 @@ rule run_PennCNV:
   log:
     err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
     out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
+  container:
+    "docker://genomicslab/penncnv"
   shell:
-    'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+    '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+    #'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/PennCNV_overrides/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
 
 
 rule run_CBS:

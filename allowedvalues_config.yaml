@@ -22,7 +22,6 @@ log_path: str
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS|GADA)
   probe-filter-sets:
-    #TODO this allows *any* extra levels!
     __filterset:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
@@ -96,7 +95,7 @@ allowed_sections:
      - circo.plot
      - SNP.dendrogram
 reports:
-  __report: #TODO: filetype required for all but __default__ !
+  __report:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
@@ -113,10 +112,10 @@ reports:
       plot.region.minsize.nonreportable: int_ge10000
 
     thresholds:
-      reportable.loh: int #TODO scientific notation?
-      reportable.cnv: int #TODO scientific notation?
-      fail.loh: int #TODO scientific notation?
-      fail.cnv: int #TODO scientific notation?
+      reportable.loh: int
+      reportable.cnv: int
+      fail.loh: int
+      fail.cnv: int
     QCwarnings:
       callrate: list_len2__float__le1
       total_CNV: list_len2__int
@@ -142,7 +141,7 @@ wildcard_constraints:
 tools:
   __tool:
     threads: int
-    memory: str
+    memory: '[0-9]+M?'
     runtime: str
     cmd-line-params: str
     partition: str

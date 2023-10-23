@@ -19,7 +19,7 @@ class SampleConstraintError(Exception):
 class ConfigValueError(Exception):
     """Raised when the config file contains values not allowed in a given field"""
 
-class ConfigValueWarning(Exception):
+class ConfigValueWarning(Warning):
     """Raised when the config file contains values not allowed in a given field"""
 
 class ConfigKeyWarning(Warning):

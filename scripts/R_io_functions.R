@@ -105,15 +105,16 @@ load_preprocessed_cnvs <- function(fname){
 }
 
 ## GTF data
-load_gtf_data <- function(config) {
-	gtf_file <- config$static_data$genome_gtf_file
+get_static_path <- function(path, project_base=''){
 	#Rmd might change cwd, so relative paths can break if not read/forwarded by snakemake
-	if (!file.exists(gtf_file)) {
-		gtf_file <- file.path(config$snakedir, config$static_data$genome_gtf_file)
-	}
-	if (!file.exists(gtf_file)) {
-		gtf_file <- normalizePath(config$static_data$genome_gtf_file, mustWork = TRUE)
-	}
+	if(file.exists(path)) return(path)
+	else if (file.exists(file.path(project_base, path))) return(file.path(project_base, path))
+	else if (file.exists(normalizePath(path))) return(normalizePath(path))
+	else stop(paste('Could not find file path:', path))
+}
+
+load_gtf_data <- function(config) {
+	gtf_file <- get_static_path(config$static_data$genome_gtf_file, config$basedir)
 	exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
 	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types

@@ -133,7 +133,7 @@ def check_config(args):
 			ValueError(f"{n} can not be coerced to a number")
 
 	defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
-	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+v+'$', x)))
+	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', x)))
 	def_functions = {
 		'list': lambda x, v: type(x) == list,
 		'str': lambda x, v: type(x) == str,
@@ -145,7 +145,6 @@ def check_config(args):
 		'ge': lambda x, v: parse_scientific(x) >= v,
 		'filterset': lambda x, v: x in defined_filtersets or x == '__default__',
 		'filtersetnodefault': lambda x, v: x in defined_filtersets,
-		#TODO: this doesn't seem to work yet
 		'sections': lambda x, v: x in allowed_values['allowed_sections'],
 		'sectionsall': lambda x, v: x == '__all__' or all(i in allowed_values['allowed_sections'] for i in x),
 		'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
@@ -184,7 +183,10 @@ def check_config(args):
 			if not check:
 				errors.append((flatkey, config_value, func_key, func_value))
 
-	help_strings = defaultdict(lambda: lambda v: "only these entries: " + v[1:-1].replace('|', ', ')).update({
+	#TODO: better help message where regex is a list of values
+	#help_strings = defaultdict(lambda: lambda v: "only these entries: " + v[1:-1].replace('|', ', '))
+	help_strings = defaultdict(lambda: lambda v: "matching this regex: " + v)
+	help_strings.update({
 		'list': lambda v: 'a list with ',
 		'str': lambda v: 'characters (add quotes for numbers or similar)',
 		'int': lambda v: 'integers (whole numbers)',
@@ -213,8 +215,9 @@ def check_installation():
 
 
 def make_PennCNV_sexfile(args):
-	"""Make the `sexfile` that PennCNV requirs from the sampletable & config. Needs to updated for each run,
+	"""Make the `sexfile` that PennCNV requires from the sampletable & config. Needs to be updated for each run,
 	but would trigger snakemake reruns if done as a snakemake rule"""
+	#TODO: would a subworkflow still trigger reruns?
 	#Description of needed format:
 	# A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
 	# tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
@@ -240,22 +243,6 @@ def make_PennCNV_sexfile(args):
 			sex = sex.lower()[0]
 			f.write(f"{inputfile}\t{sex}\n")
 
-#TODO: this shouldn't be needed any longer
-def ensure_paths_exist(args):
-
-	# Check that all defined paths exist
-	with open(args.config) as f:
-		config = yaml.safe_load(f)
-	datapath = config_extract(('data_path',), config, DEF_CONFIG)
-	logpath = config_extract(('log_path',), config, DEF_CONFIG)
-
-	if not os.path.isdir(args.directory):
-		os.makedirs(args.directory)
-	if not os.path.isdir(datapath):
-		os.makedirs(datapath)
-	if not os.path.isdir(logpath):
-		os.makedirs(logpath)
-
 ### Actions ###
 
 def copy_setup_files(args):
@@ -268,8 +255,6 @@ def copy_setup_files(args):
 #TODO: maybe it'd be better if this was part of the actual snakemake workflow?
 # -> the issue though is that it shouldn't depend on any given sample from the view of snakemake
 def make_penncnv_files(args):
-
-	ensure_paths_exist(args)
 
 	# Check if any vcf file is present
 	sample_data = read_sample_table(args.sample_table)
@@ -285,10 +270,10 @@ def make_penncnv_files(args):
 	else:
 		use_vcf = vcf_files[0]
 		print('Running snakemake to get:', use_vcf)
-		args.snake_options += [	use_vcf ]
+		#args.snake_options += [	use_vcf ]
 
 		ret = snakemake(
-			os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
+			os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
 			local_cores=args.local_cores,
 			cores=args.local_cores,
 			workdir=args.directory,
@@ -305,7 +290,10 @@ def make_penncnv_files(args):
 
 		if not ret:
 			raise Exception('Snakemake run to get vcf failed')
-	
+
+
+	#TODO: externalise this to an additional snakefile? (-> easiest way to use the pennCNV docker container?)
+
 	#TODO logger calls
 	print(f'Making PFB file: {args.pfb_out}')
 	outdir = os.path.dirname(args.pfb_out)
@@ -348,16 +336,14 @@ def make_penncnv_files(args):
 
 def run_snakemake(args):
 
-	ensure_paths_exist(args)
-
 	# Ensure that sexfile for PennCNV exists
 	make_PennCNV_sexfile(args)
 	
 	argv = [
-		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.snake"),
-		"-p", "-r",
-		#"--keep-incomplete",
-		"--rerun-incomplete"
+		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
+		"-p", #"-r", is default now
+		"--rerun-incomplete",
+		"--use-singularity"
 	]
 	
 	argv += [
@@ -425,19 +411,20 @@ def setup_argparse():
 if __name__ == '__main__':
 	
 	args = setup_argparse().parse_args()
-	
-	#TODO
-	# check that conda & PennCNV are set up ?!
-	
+
 	if args.action == 'run':
 		check_sample_table(args)
 		check_config(args)
+		if not os.path.isdir(args.directory):
+			os.makedirs(args.directory)
 		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-penncnv-files':
 		args.pfb_out = args.pfb_out.format(genome=args.genome)
 		args.gc_out = args.gc_out.format(genome=args.genome)
+		if not os.path.isdir(args.directory):
+			os.makedirs(args.directory)
 		ret = make_penncnv_files(args)
 
 	sys.exit(ret)
