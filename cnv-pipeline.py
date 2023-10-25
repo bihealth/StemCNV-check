@@ -133,7 +133,7 @@ def check_config(args):
 			ValueError(f"{n} can not be coerced to a number")
 
 	defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
-	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', x)))
+	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
 	def_functions = {
 		'list': lambda x, v: type(x) == list,
 		'str': lambda x, v: type(x) == str,
