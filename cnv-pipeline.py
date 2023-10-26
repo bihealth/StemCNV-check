@@ -132,7 +132,8 @@ def check_config(args):
 		else:
 			ValueError(f"{n} can not be coerced to a number")
 
-	defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
+	defined_filtersets = set(config_extract(['settings', 'probe-filter-sets'], config, DEF_CONFIG).keys())
+	#defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
 	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', x)))
 	def_functions = {
 		'list': lambda x, v: type(x) == list,
@@ -169,7 +170,8 @@ def check_config(args):
 		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
 		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
 		if funcs is None:
-			print(flatkey, config_value)
+			#Happens with deprecated / typo'd entries, these get a warning throguh config_extract
+			#print(flatkey, config_value)
 			continue
 		funcs, *list_funcs = funcs.split('__')
 		for func_key in funcs.split('_'):
