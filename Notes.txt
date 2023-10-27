@@ -4,6 +4,9 @@
 
 ### Bugs / Fixes needed
 
+    - genome fasta is *only* used for gtc2vcf
+        --> check if it's needed / what difference it makes
+        --> allow it to be optional
 
 ### Feature Wishlist (somewhat orderd)
 

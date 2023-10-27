@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import warnings
 import yaml
 from collections import defaultdict
@@ -42,7 +43,7 @@ def check_sample_table(args):
 	elif not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
 		missing = [f"{sid}: {s}" for sid, s in samples.items() if not s[0].lower() in ('m', 'f')]
 		raise SampleConstraintError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'. Affected samples: " + ', '.join(missing))
-	#Check that all reference samples exist
+	# Check that all reference samples exist
 	ref_samples = {rid: sex for _, _, _, sex, rid in sample_data if rid}
 	missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
 	if missing_refs:
@@ -50,7 +51,7 @@ def check_sample_table(args):
 	# Give warning if sex of reference and sample don't match
 	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
-		warnings.warn("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+		raise SampletableReferenceError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
@@ -72,6 +73,49 @@ def check_sample_table(args):
 				raise SampletableRegionError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
+
+#TODO: interactive prompt to create missing files (pfb, gcmodel, genome info)
+def interactive_check_staticdata(args, config):
+
+	for req in ('bpm_manifest_file', 'egt_cluster_file'):
+		if not req in config['static_data'] or not config['static_data'][req]:
+			raise InputFileError(f"Required config entry is missing: static-data:{req}")
+		if not os.path.isfile(config['static_data'][req]):
+			raise InputFileError(f"Defined static data file for '{req}' does not exist.")
+
+	#TODO: figure out what effect csv & fasta file have on the vcf (& tsv?) output
+	for req in ('csv_manifest_file', 'genome_fasta_file', 'genome_gtf_file'):
+		if not req in config['static_data'] or not config['static_data'][req]:
+			warnings.warn(f"No static input for '{req}' is defined. Generated vcf file will be missing some features.")
+		if req in config['static_data'] and not os.path.isfile(config['static_data'][req]):
+			raise InputFileError(f"Defined static data file for '{req}' does not exist.")
+
+	missing_creatable = set()
+	for req in ('csv_manifest_file', 'genome_fasta_file', 'genome_gtf_file'):
+		if not req in config['static_data'] or not config['static_data'][req]:
+			missing_creatable.add(req)
+
+		if req in config['static_data'] and not os.path.isfile(config['static_data'][req]):
+			missing_creatable.add(req)
+			warnings.warn(f"Defined static data file for '{req}' does not exist. This file can be created")
+
+	if missing_creatable:
+		warnings.warn("The following required static data files are not defined in the config or do not exist yet, but they can be auto-generated: {}".format(', '.join(missing_creatable)))
+		ask = input("Should the missing, auto-generatable files be created now? [yN]")
+		if not ask or ask[0].lower() != 'y':
+			warnings.warn("Not creating missing required files, can not continue.")
+			raise InputFileError("Required static data files are missing: " + ', '.join(missing_creatable))
+
+		genome = args.genome
+
+
+
+	rewrite_config = False
+
+
+
+
+
 # Assume that the default_config hasn't been altered & is correct
 def check_config(args):
 
@@ -81,6 +125,19 @@ def check_config(args):
 		allowed_values = yaml.safe_load(f)
 
 	## Check required enrties
+
+	# Files: static-data/*
+	#TODO: some values here should be optional
+	for req in allowed_values['static_data'].keys():
+		if req in ('pfb_file', 'GCmodel_file', 'genomeInfo_file'):
+			infostr = " You can create it by running `cnv-pipeline -a make-staticdata`"
+		else:
+			infostr = ""
+		if not req in config['static_data'] or not config['static_data'][req]:
+			raise InputFileError(f"Required config entry is missing: static-data:{req}")
+		if not os.path.isfile(config['static_data'][req]):
+			raise InputFileError(f"Static data file '{req}' does not exist." + infostr)
+
 	# Folders: log, data, raw-input
 	for req in ('data_path', 'log_path', 'raw_data_folder'):
 		try:
@@ -92,19 +149,6 @@ def check_config(args):
 				os.makedirs(config[req], exist_ok=False)
 		except KeyError:
 			raise ConfigValueError(f"Required config entry is missing: {req}")
-	# Files: static-data/*
-	for req in allowed_values['static_data'].keys():
-		try:
-			if not config['static_data'][req]:
-				raise ConfigValueError(f"Required config entry is missing: static-data:{req}")
-			if not os.path.isfile(config['static_data'][req]):
-				if req in ('pfb_file', 'GCmodel_file'):
-					info = " You can create it by running `cnv-pipeline -a make-penncnv-files`"
-				else:
-					info = ""
-				raise ConfigValueError(f"Required static data file '{req}' is missing." + info)
-		except KeyError:
-			raise ConfigValueError(f"Required config entry is missing: static-data:{req}")
 	# Other settings: reports/*/filetype
 	if not 'reports' in config:
 		#TODO: test if the pipeline won't crash in this case
@@ -211,19 +255,16 @@ def check_config(args):
 		raise ConfigValueError('The config contains values that are not allowed')
 
 
-def check_installation():
-	pass
-
-
+# This is done outside of snakemake so that the file can be updated without this triggering reruns
+# (which it would independently of mtime if created by a rule)
+#TODO: would some sort of subworkflow still trigger reruns?
 def make_PennCNV_sexfile(args):
 	"""Make the `sexfile` that PennCNV requires from the sampletable & config. Needs to be updated for each run,
 	but would trigger snakemake reruns if done as a snakemake rule"""
-	#TODO: would a subworkflow still trigger reruns?
 	#Description of needed format:
 	# A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
 	# tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
 	# Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
-
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
 
@@ -240,7 +281,7 @@ def make_PennCNV_sexfile(args):
 	with open(outfilename, 'w') as f:
 		for sample_id, _, _, sex, _ in sample_data:
 			inputfile = os.path.join(basepath, datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
-			#ensure its consistently 'm'/'f'
+			# Ensure its consistently 'm'/'f'
 			sex = sex.lower()[0]
 			f.write(f"{inputfile}\t{sex}\n")
 
@@ -252,6 +293,68 @@ def copy_setup_files(args):
 	subprocess.call(['cp', f"{SNAKEDIR}/config.yaml", args.config])
 	subprocess.call(['cp', f"{SNAKEDIR}/sample_table.txt", args.sample_table])
 	print('Created setup files: ...')
+
+
+def create_missing_staticdata(args):
+	# Check if any vcf file is present, generate one if none are
+	# This is done because the vcf files generated with gtc2vcf contain the full information
+	# about GT (background) counts from the egt clusterfile, that can be used to make the pfb file for PennCNV
+	sample_data = read_sample_table(args.sample_table)
+	with open(args.config) as f:
+		config = yaml.safe_load(f)
+	datapath = config_extract(('data_path',), config, DEF_CONFIG)
+
+	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
+				 sample_id, _, _, _, _ in sample_data]
+	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
+
+	if vcf_present:
+		use_vcf = vcf_present[0]
+	else:
+		use_vcf = vcf_files[0]
+		print('Running snakemake to get:', use_vcf)
+
+		ret = snakemake(
+			os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
+			local_cores=args.local_cores,
+			cores=args.local_cores,
+			workdir=args.directory,
+			configfiles=[os.path.join(SNAKEDIR, 'default_config.yaml'), args.config],
+			printshellcmds=True,
+			force_incomplete=True,
+			config={'sample_table': args.sample_table,
+					'snakedir': SNAKEDIR,
+					'basedir': args.directory,
+					'configfile': args.config
+					},
+			targets=[use_vcf]
+		)
+
+		if not ret:
+			raise Exception('Snakemake run to get vcf failed')
+
+	# Run extra snakemake to check which files are missing & create them accordingly
+	with tempfile.TemporaryDirectory() as tmpdir:
+		ret = snakemake(
+			os.path.join(SNAKEDIR, "staticdata_creation.smk"),
+			local_cores=args.local_cores,
+			cores=args.local_cores,
+			workdir=args.directory,
+			printshellcmds=True,
+			force_incomplete=True,
+			config={'snakedir': SNAKEDIR,
+					'TMPDIR': tmpdir,
+					'genome': args.genome,
+					'vcf_input_file': use_vcf,
+					'pfb_outname': args.pfb_out,
+					'gcmodel_outname': args.gc_out,
+					'chrominfo_outname': args.genome_info_out
+					}
+		)
+
+	return ret
+
+
 
 #TODO: maybe it'd be better if this was part of the actual snakemake workflow?
 # -> the issue though is that it shouldn't depend on any given sample from the view of snakemake
@@ -271,7 +374,6 @@ def make_penncnv_files(args):
 	else:
 		use_vcf = vcf_files[0]
 		print('Running snakemake to get:', use_vcf)
-		#args.snake_options += [	use_vcf ]
 
 		ret = snakemake(
 			os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
@@ -342,8 +444,7 @@ def run_snakemake(args):
 	
 	argv = [
 		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
-		"-p", #"-r", is default now
-		"--rerun-incomplete"
+		"-p", "--rerun-incomplete"
 	]
 	if args.no_singularity:
 		warnings.warn("Usage of singularity/docker by snakemake is disabled, pipeline will fail without local PennCNV installation based on the install.sh script!")
@@ -362,7 +463,8 @@ def run_snakemake(args):
 			f'target={args.target}',
 			f'use_singularity={use_singularity}'
 	]
-	
+
+	#TODO: add other options for cluster submission?
 	if args.cluster_profile:
 		argv += [
 			"--profile", args.cluster_profile,
@@ -375,8 +477,6 @@ def run_snakemake(args):
 	
 	if args.snake_options:
 		argv += args.snake_options
-		
-	#print(argv)
 	
 	return main(argv)
 
@@ -388,27 +488,35 @@ def setup_argparse():
 
 	group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
-	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-penncnv-files'), help='Action to perform. Default: %(default)s')
+	group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-staticdata'), help='Action to perform. Default: %(default)s')
 	group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
 	group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
 
-	group_penncnv = parser.add_argument_group("make-penncnv-files", "Specific arguments for make-penncnv-files")
-	group_penncnv.add_argument('--genome', default='GRCh38', choices=('GRCh37', 'GRCh38'),
-							   help="Genome build to make the GC model for (uses the files shipped with PennCNV). Default: %(default)s")
-	group_penncnv.add_argument('--pfb-out', default='static-data/PennCNV-PFB_from_clusterfile-stats_{genome}.pfb',
-							   help="Filename for generated PFB file. Default: %(default)s")
-	group_penncnv.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-{genome}.gcmodel',
-							   help="Filename for generated GCmodel file. Default: %(default)s")
+	group_basic.add_argument('--no-singularity', action='store_true',
+							 help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
+	group_basic.add_argument('--directory', '-d', default=os.getcwd(),
+							 help="Directory to run pipeline in. Default: $CWD")
+	# group_basic.add_argument('--non-interactive', '-y', action="store_true",
+	# 						 help="Skip all interactive questions of the wrapper")
 
-	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake")
+
+	group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
+	group_static.add_argument('--genome', default='hg38', choices=('hg19', 'hg38'), help="Genome build to use (UCSC names). Default: %(default)s")
+	group_static.add_argument('--snp-array-name', default=None, help="A name or identifier string for the snp-array, can used in filesnames. No Default.")
+	group_static.add_argument('--pfb-out', default='static-data/PennCNV-PFB_from_clusterfile-{genome}{array}.pfb',
+							   help="Filename for generated PFB file. Default: %(default)s")
+	group_static.add_argument('--gc-out', default='static-data/PennCNV-GCmodel-{genome}{array}.gcmodel',
+							   help="Filename for generated GCmodel file. Default: %(default)s")
+	group_static.add_argument('--genome-info-out', default='static-data/UCSC-{genome}_chromosome-position-info.tsv',
+							   help="Filename for generated genome position info file. Default: %(default)s")
+
+	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
 	group_snake.add_argument('--target', '-t', default='report', choices=('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'GADA', 'SNP-probe-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
 	group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
-	group_snake.add_argument('--directory', '-d', default=os.getcwd(), help="Directory to run pipeline in. Default: $CWD")
-	group_snake.add_argument('--no-singularity', action='store_true', help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
 	group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
 							 help="Options to pass to snakemake; separate from normal options with '--'")
 	
@@ -428,12 +536,14 @@ if __name__ == '__main__':
 		ret = run_snakemake(args)
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
-	elif args.action == 'make-penncnv-files':
-		args.pfb_out = args.pfb_out.format(genome=args.genome)
-		args.gc_out = args.gc_out.format(genome=args.genome)
+	elif args.action == 'make-staticdata':
+		args.snp_array_name = '_' + args.snp_array_name if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
+		args.pfb_out = args.pfb_out.format(genome=args.genome, array=args.snp_array_name)
+		args.gc_out = args.gc_out.format(genome=args.genome, array=args.snp_array_name)
+		args.genome_info_out = args.genome_info_out.format(genome=args.genome)
 		if not os.path.isdir(args.directory):
 			os.makedirs(args.directory)
-		ret = make_penncnv_files(args)
+		ret = create_missing_staticdata(args)
 
 	sys.exit(ret)
 

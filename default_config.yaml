@@ -1,16 +1,17 @@
 static_data:
     bpm_manifest_file: '' #REQUIRED
+    egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
-    egt_cluster_file: '' #REQUIRED
+    #TODO: these two should be optional *and* Auto-generatable
     genome_fasta_file: '' #REQUIRED
-    #TODO: this should be optional (maybe incl genome fasta?)
-    genome_gtf_file: '' #REQUIRED
-    pfb_file: static-data/PennCNV-PFB_from_clusterfile-stats_{genome}.pfb  #REQUIRED
-    GCmodel_file: static-data/PennCNV-GCmodel-{genome}.gcmodel  #REQUIRED
+    genome_gtf_file: ''   #REQUIRED
+    pfb_file: static-data/PennCNV-PFB_from_clusterfile_{genome}_{arrayname}.pfb #REQUIRED, Auto-generatable
+    GCmodel_file: static-data/PennCNV-GCmodel-{genome}_{arrayname}.gcmodel      #REQUIRED, Auto-generatable
+    genomeInfo_file: static-data/UCSC-{genome}_chromosome-position-info.tsv     #REQUIRED, Auto-generatable
 
-raw_data_folder: ''  #REQUIRED
-data_path: data
-log_path: logs
+raw_data_folder: '' #REQUIRED
+data_path: data     #REQUIRED
+log_path: logs      #REQUIRED
 
 settings:
   # Select tools to use and specify order of 'trust' in case of overlapping calls with different states
