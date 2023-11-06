@@ -95,7 +95,7 @@ report.setting <- function(...) {
 include.section <- function(section) {
   include <- ifelse(all(report.setting('include_sections') == '__all__'), T, section %in% report.setting('include_sections'))
   exclude <- section %in% report.setting('exclude_sections')
-  #exclude QC too sections if they are not defined in settings
+  # also exclude QC sections if they are not defined in settings
   include <- include & !(str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & str_remove(section, 'QC\\.') %!in% cnv_tools)
   include & !exclude
 }
@@ -252,12 +252,16 @@ snp.ids <- unique(c(use_ids, SNP.extra.ids))
 cluster.probe.filter.setting <- ifelse(report.setting('SNP_comparison', 'filter-settings') == '__default__',
                                config$settings$`default-filter-set`,
                                report.setting('SNP_comparison', 'filter-settings'))
+# hclust will fail with <2 samples, so need to disable that section
+if (length(snp.ids) < 2) {
+  config$reports[[params$report_name]]$exclude_sections <- c(report.setting('exclude_sections'), 'SNP.dendrogram')
+}
 
 ignore.filter <- report.setting('SNP_comparison', 'ignore_filter')
 snp_file_pattern <- ifelse(ignore.filter,
                            '.processed-data.tsv',
                            paste0('.filtered-data-', cluster.probe.filter.setting, '.tsv'))
-
+# This is always needed (to get snp_dist_to_ref)
 SNP.genotype.distances <- file.path(datapath, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
   lapply(read_snps) %>%
     bind_rows() %>%
