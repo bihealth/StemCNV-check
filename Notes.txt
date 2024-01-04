@@ -16,13 +16,40 @@
         - Flag centromers
         - Get q,p arm (sub)cooridinates
             -> some UCSC functions should allow this
-        - this should also provide / set chr standard format
+        - this should also provide / set chr standard format (see below)
+
+        + Gap detection
+
+        --> either add this to preprocess script
+        OR
+        --> make a new script that adds annotations/filters/flags to CNV calls
 
     - Consistent handling of "chr" format
         - Either specify in config, or use format from vcf / fastq / ?
         - then always use this format
-        - Current Issues: penncnv gcmodel files need to be done in <1:22, X, Y> format
+        - Current Issues: penncnv gcmodel files need to be done in <1:22, X, Y> format (?)AND need to match pfb file
             -> could be remedied by using USCS downloadable stuff? or by generating this from fasta file (unclear how long that would take)
+
+    - Proper vcf output:
+        - Preprocess step / final VCF:
+            - one combined vcf file
+              - combined calls from tools
+              - might want to retain pre-filtered calls (?)
+              - might want to add additional filters
+              - unclear if all current cols of the tsv can easily be but into vcf
+            - could replace current preprocess tsv output, instead of only adding vcf ?! (undecided)
+
+        Optional:
+        - per tool vcf output (& getting rid of internal tsv files ?)
+            - needs extra rule for PennCNV
+                -> maybe mark PennCNV file as intermediate?
+            - other tools should be possible directly from R
+
+    - transfer to github
+        - general linting
+        - cleanup of TODO comments
+        - start using CI
+        - start writing tests
 
     - better installation & windows support
         - dockerize
@@ -36,26 +63,10 @@
         - allow global definition of regions (in config?)
         - add reference calls as (secondary) ROIs ?
 
-    - Proper vcf output:
-        - Preprocess step:
-            - one combined vcf file (with or without individual calls?)
-                -> need/want to retain individual calls somehow, maybe FILTER?
-            - could replace current preprocess tsv output, instead of only adding vcf ?! (undecided)
-
-        - per tool vcf output
-            - needs extra rule for PennCNV
-                -> maybe mark PennCNV file as intermediate?
-            - other tools should be possible directly from R
-
     - vcf output for variants & filtering change:
         - remove the generation of raw data in tsv format
         - do filtering on the vcf file instead
         - output a filtered vcf file where probes are masked / 'FILTER' is set properly
-
-    - transfer to github
-        - general linting
-        - cleanup of TODO comments
-        - start using CI
 
     - Call merging overhaul:
         - merging by number of probes between them

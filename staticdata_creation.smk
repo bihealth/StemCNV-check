@@ -36,6 +36,8 @@ rule create_gcmodel_file:
     shell:
         "gunzip {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt.gz; {params.penncnv_path}/cal_gc_snp.pl {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt {input} -out {output}"
 
+#TODO not all files exist for all Genome versions!
+# -> might need a check that download worked?
 rule ucsc_goldenpath_download:
     output: temp("{DOWNLOAD_DIR}/{genome}.{filename}.txt")
     wildcard_constraints:

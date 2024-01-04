@@ -14,8 +14,8 @@ data_path: data     #REQUIRED
 log_path: logs      #REQUIRED
 
 settings:
-  # Select tools to use and specify order of 'trust' in case of overlapping calls with different states
-  # Currently implemented tools (=valid options): PennCNV, GADA, CBS
+  # Select tools to use ##Outdated:and specify order of 'trust' in case of overlapping calls with different states
+  # Currently implemented tools (=valid options): PennCNV, CBS ##Gada should not be trusted
   CNV.calling.tools:
     - PennCNV
     #- GADA
