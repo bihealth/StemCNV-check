@@ -491,12 +491,13 @@ suppressMessages(library(tinytex))
 
 latex_path <- tinytex_root()
 
-if (latex_path == "") {
-  sys.error("No LaTeX installation found. Installing TinyTex.")
-  tinytex_install()
-}
+if (latex_path == "") {{
+  message("No LaTeX installation found. Installing TinyTex.")
+  install_tinytex()
+}}
 
-touchFile('{output}')
+system("touch {output}")
+
 EOF
 """
 
