@@ -82,7 +82,7 @@ def interactive_check_staticdata(args, config):
 
 	for req in ('csv_manifest_file', 'genome_fasta_file', 'genome_gtf_file'):
 		if not req in config['static_data'] or not config['static_data'][req]:
-			warnings.warn(f"No static input for '{req}' is defined. Generated vcf file will be missing some features.")
+			logger.warning(f"No static input for '{req}' is defined. Generated vcf file will be missing some features.")
 		if req in config['static_data'] and not os.path.isfile(config['static_data'][req]):
 			raise InputFileError(f"Defined static data file for '{req}' does not exist.")
 
@@ -93,13 +93,13 @@ def interactive_check_staticdata(args, config):
 
 		if req in config['static_data'] and not os.path.isfile(config['static_data'][req]):
 			missing_creatable.add(req)
-			warnings.warn(f"Defined static data file for '{req}' does not exist. This file can be created")
+			logger.warning(f"Defined static data file for '{req}' does not exist. This file can be created")
 
 	if missing_creatable:
-		warnings.warn("The following required static data files are not defined in the config or do not exist yet, but they can be auto-generated: {}".format(', '.join(missing_creatable)))
+		logger.warning("The following required static data files are not defined in the config or do not exist yet, but they can be auto-generated: {}".format(', '.join(missing_creatable)))
 		ask = input("Should the missing, auto-generatable files be created now? [yN]")
 		if not ask or ask[0].lower() != 'y':
-			warnings.warn("Not creating missing required files, can not continue.")
+			logger.warning("Not creating missing required files, can not continue.")
 			raise InputFileError("Required static data files are missing: " + ', '.join(missing_creatable))
 
 		genome = args.genome
@@ -134,13 +134,13 @@ def check_config(args):
 				raise ConfigValueError(f"Required config entry is missing: {req}")
 			if not os.path.isdir(config[req]):
 				warn_str = f"Required Entry '{req}' is not an existing folder! Attempting to create it."
-				warnings.warn(warn_str, ConfigValueWarning)
+				logger.warning(warn_str, ConfigValueWarning)
 				os.makedirs(config[req], exist_ok=False)
 		except KeyError:
 			raise ConfigValueError(f"Required config entry is missing: {req}")
 	# Other settings: reports/*/filetype
 	if not 'reports' in config:
-		warnings.warn('No reports are defined in the config, only tabular & vcf files will be created!', ConfigValueWarning)
+		logger.warning('No reports are defined in the config, only tabular & vcf files will be created!', ConfigValueWarning)
 	else:
 		for rep in config['reports']:
 			if rep == '__default__':
@@ -238,7 +238,7 @@ def check_config(args):
 			warn_str = f"The config entry '{config_value}' for '{flatkey}' is invalid. Allowed value" + \
 					   ('s are ' if func_key != 'list' else ' is a list with ') + \
 					   help_strings[func_key](func_value) + '.'
-			warnings.warn(warn_str, ConfigValueWarning)
+			logger.warning(warn_str, ConfigValueWarning)
 		raise ConfigValueError('The config contains values that are not allowed')
 
 

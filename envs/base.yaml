@@ -5,8 +5,8 @@ channels:
   - defaults
 dependencies:
   ## General ##
-  - python >= 3.11
-  - snakemake
+  - python >=3.11
+  - snakemake >=7.0,<8.0
   - pathlib
   - apptainer
   - pip

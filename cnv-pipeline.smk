@@ -474,7 +474,31 @@ def get_report_sample_input(wildcards):
     else:
       sample_files += expand([os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
 
+  if wildcards.ext == 'pdf':
+    sample_files += [os.path.join(LOGPATH, "report", "_latex_installation_check")]
+
   return sample_files
+
+rule check_latex_installation:
+  output:
+    os.path.join(LOGPATH, "report", "_latex_installation_check")
+  conda:
+    "envs/general-R.yaml"
+  shell:
+    """
+Rscript - << 'EOF'
+suppressMessages(library(tinytex))
+
+latex_path <- tinytex_root()
+
+if (latex_path == "") {
+  sys.error("No LaTeX installation found. Installing TinyTex.")
+  tinytex_install()
+}
+
+touchFile('{output}')
+EOF
+"""
 
 rule knit_report:
   input:
