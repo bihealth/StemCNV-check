@@ -11,8 +11,6 @@ parser$add_argument('configfile', type = 'character', help='Path to config file'
 parser$add_argument('-f', '--filter-set', type = 'character', default = 'extended',
 					help="Which filter-set (defined in config.yaml) to use")
 
-
-#args <- parser$parse_args(c('test/data/BIHi005-A/BIHi005-A.processed-data.tsv', 'test/filter-test.out.tsv', 'default_config.yaml'))
 args <- parser$parse_args()
 
 suppressMessages(library(tidyverse))

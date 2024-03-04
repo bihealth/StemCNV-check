@@ -2,12 +2,14 @@ static_data:
     bpm_manifest_file: '' #REQUIRED
     egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
-    #TODO: these two should be optional *and* Auto-generatable
+    #TODO: these two should be optional *and* Auto-generatable/downloadable
     genome_fasta_file: '' #REQUIRED
     genome_gtf_file: ''   #REQUIRED
-    pfb_file: static-data/PennCNV-PFB_from_clusterfile_{genome}_{arrayname}.pfb #REQUIRED, Auto-generatable
-    GCmodel_file: static-data/PennCNV-GCmodel-{genome}_{arrayname}.gcmodel      #REQUIRED, Auto-generatable
-    genomeInfo_file: static-data/UCSC-{genome}_chromosome-position-info.tsv     #REQUIRED, Auto-generatable
+    pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
+    GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
+    array_density: static-data/density_{genome}_{snp-array-name}.bed             #REQUIRED, Auto-generatable
+    array_gaps: static-data/gaps_{genome}_{snp-array-name}.bed                   #REQUIRED, Auto-generatable
+    genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv               #REQUIRED, Auto-generatable
 
 raw_data_folder: '' #REQUIRED
 data_path: data     #REQUIRED
@@ -99,6 +101,8 @@ settings:
     min.length: 1000
     # This is -so far- only applied to the Call region itself
     min.snp.density: 10 #snps per Mb
+    density.windows: 100000     #window size for probe density calculation (0.5Mb)
+    min.gap.size: '__mean+sd__' #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
     ## Calls from multiple tools are combined and combined if they match
     # This is the minimum coverage the largest single call in an combined group needs to have.
     # keep this >=50 to prevent formation/acceptance of chains of overlapping calls

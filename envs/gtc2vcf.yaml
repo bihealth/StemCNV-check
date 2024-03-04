@@ -1,0 +1,7 @@
+name: cnv-pipeline-gtc2vcf
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bcftools-gtc2vcf-plugin = 1.16

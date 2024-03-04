@@ -1,7 +1,7 @@
 # This yaml defines the allowed values for entries in the config
 # Entries here are mapped to/used as function (or used as regex) to check the value in the actual config
 # - functions for a single entry are separated by single underscore '_'
-# - functions applied to eahc entry of a list are separated by double underscores '__'
+# - functions applied to each entry of a list are separated by double underscores '__'
 # - functions that are basic objects types (int, float, str, bool, list) check match with that [float also allows int]
 # - functions with number added: le/ge check size of numeric values, len checks length of list
 # - filterset, filtersetdefault, sections, sectionsall & insamplehseet are special functions
@@ -14,6 +14,9 @@ static_data:
     genome_gtf_file: str
     pfb_file: str
     GCmodel_file: str
+    array_density: str
+    array_gaps: str
+    genomeInfo_file: str
 
 raw_data_folder: str
 data_path: str
@@ -61,7 +64,9 @@ settings:
     min.snp: int
     min.length: int
     min.snp.density: float #snps per Mb #TODO: might also want __default__ for this?
-    merge.distance: int
+    density.windows: int_ge0     #window size for probe density calculation (0.5Mb)
+    min.gap.size: str_([0-9+]|__mean\+sd__) #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
+    merge.distance: int_ge0
     merge.before.filter: bool
     tool.overlap.greatest.call.min.perc: float_le100
     tool.overlap.median.cov.perc: float_le100
@@ -132,7 +137,6 @@ reports:
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet
 
-#TODO: add warning if people edit anything below here?
 wildcard_constraints:
   sample_id: str
   sentrix_pos: str

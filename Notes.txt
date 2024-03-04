@@ -4,31 +4,12 @@
 
 ### Bugs / Fixes needed
 
-    - genome fasta is *only* used for gtc2vcf
-        --> check if it's needed / what difference it makes
-        --> allow it to be optional
+    - activate tiny_tex installation for R-env
 
-### Feature Wishlist (somewhat orderd)
+    - check all position calculations for being of by 1 (open vs half-open issue)
 
-    - More analysis on array & genome
-        - (avg) probe density
-            -> default density filter?
-        - Flag centromers
-        - Get q,p arm (sub)cooridinates
-            -> some UCSC functions should allow this
-        - this should also provide / set chr standard format (see below)
 
-        + Gap detection
-
-        --> either add this to preprocess script
-        OR
-        --> make a new script that adds annotations/filters/flags to CNV calls
-
-    - Consistent handling of "chr" format
-        - Either specify in config, or use format from vcf / fastq / ?
-        - then always use this format
-        - Current Issues: penncnv gcmodel files need to be done in <1:22, X, Y> format (?)AND need to match pfb file
-            -> could be remedied by using USCS downloadable stuff? or by generating this from fasta file (unclear how long that would take)
+### Feature Wishlist (somewhat ordered)
 
     - Proper vcf output:
         - Preprocess step / final VCF:
@@ -45,11 +26,64 @@
                 -> maybe mark PennCNV file as intermediate?
             - other tools should be possible directly from R
 
-    - transfer to github
+    - transfer to github, figure out how to deal with the 2 branches right now?
         - general linting
-        - cleanup of TODO comments
+        - cleanup of TODO comments in dev branch (they are NOT resolved in main, just 'hidden')
         - start using CI
         - start writing tests
+
+    - Test if bcftools-gtc2vcf-plugin v1.19 works (1.18 did not)
+
+    - genome fasta is *only* used for gtc2vcf
+        --> check if it's needed / what difference it makes
+        --> allow it to be optional
+
+    - More analysis on array & genome
+        - (avg) probe density
+            -> default density filter?
+        - Flag centromers
+        - Get q,p arm (sub)cooridinates
+            -> some UCSC functions should allow this
+        - this should also provide / set chr standard format (see below)
+
+        + Gap detection
+
+        --> either add this to preprocess script
+        OR
+        --> make a new script that adds annotations/filters/flags to CNV calls
+
+    - Call pre-processing initial steps
+        - pre-filtering calls per tool can remove calls with few-probes that actually overlap with other (larger) calls
+          from other tools (thus final output is not showing the full evidence there is)
+            - could solve this by (optionally) merging calls from different tools before filtering for min. size
+            - should be combined with
+        - Call merging overhaul:
+            - merging by number of probes between them
+            - merging by relative value
+            - [only existing right now] merging by absolute value
+
+
+    - Consistent handling of "chr" format
+        - currently hard coded (via str manipulation; mainly via IO functions & the CBS script -> should all be in IO ?) & working
+        - PennCNV needs NCBI format (no chr)
+        - Metadata/ChromInfo comes in UCSC format (with chr)
+        - final output is hardcoded to use UCSC format (with chr)
+        TODOs:
+        - double check UCSC format is actually always used
+        - get rid of the chromosome list in the config; use some other way to filter out Mito Chr from CNV calls
+        - use nicer conversion functions (the GenomeInfoDb approaches are pretty slow though)
+        - add an option to change the format in the final output (vcf / report / ...)
+
+    - Improve how gencall is run
+        - Use the Broad IlluminaGenotypingArray WDL pipeline for the initial processing
+            - contains gencall & gtc2vcf capabilities
+            - some additional fingerprinting etc
+        - OR:
+            - run gencall in temp folder with only 1 idat file
+            - then move all the individual gtc files to per-sample output folders (where link is right now)
+            - double check how imporant definition of the ICU version & LANG is for local gencall
+                - CLR_ICU_VERSION_OVERRIDE="70.1" / $(uconv -V | sed 's/.* //g')
+
 
     - better installation & windows support
         - dockerize
@@ -57,6 +91,7 @@
         - switch to conda envs defined in snakemake
         - find / setup a good docker container to replace iaap download?
             -> after that stick to conda (+docker) available stuff
+            - us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298
 
     - Actual checks if ROIs contain CNV evidence
         - test the PennCNV module for that
@@ -68,13 +103,15 @@
         - do filtering on the vcf file instead
         - output a filtered vcf file where probes are masked / 'FILTER' is set properly
 
-    - Call merging overhaul:
-        - merging by number of probes between them
-        - merging by relative value
-        - merging by absolute value
-
     - improved wrapper script
         - auto detection if PennCNV files are missing & prompt to get them
+        - allow generation of pfb file from cohort via PennCNV
+
+    - Report enhancements
+        - use a better library for ideograms & co
+            - gosling: https://gosling-lang.github.io/gos/gallery/ideograms.html
+            - circos
+        - add table with edit distances of sample vs all_in_dendrogram
 
 
     - Test & add more CNV callers
@@ -90,10 +127,79 @@
 
     - generation of CNV reference set shared between celllines
 
-### Report Wishlist
+### TODO collections:
 
-    - CircO plots / golsing / ...
+- allowedvalues_config.yaml
+    - Add warning if people edit anything below wildcard_constraints/tools
 
+- cnv-pipeline.py
+    - figure out what effect csv & fasta file have on the vcf (& tsv?) output
+    - make some of the config static values optional?
+    - test if the pipeline would crash without defined reports (&/ adapt default target)
+    - better help message if config check fails where regex is a list of values
+    - could some sort of snakemake subworkflow be used for pennCNV sexfile (without triggering reruns)
+    - copy_setup_files: copy into PWD or into directroy? add different levels of copying config (only required, `normal` and full)
+    - add/switch to other options for cluster submission?
+    - add verbosity levels for logging
+
+- cnv-pipeline.smk
+    - allow multiple targets to be specified?
+    - Param changes in GenCall rule (&others?) may not trigger a rerun?
+
+- staticdata_creation.smk
+    - gap file creation
+      # TODO: Extend gaps to see if they are only divided by very small 'islands' of probes
+      # -> would need an additional cutoff here (% or bp); maybe same as call merging distance?
+      #
+      # Version 1: gaps = region without probes above mean+sd
+      # Version 2: gaps = regions above defined size
+
+- base.yaml
+    - define min/max snakemake version (7 or 8)?
+
+- CNV_report.Rmd
+    - f. simple_table_output: (html) might want to use kable here as well?
+    - qc.metrics: if different chips are used that will be an issue. Should be catched earlier somehow
+    - qc.penncnv: Check log files for Warning lines
+    - f. get_cnv_y: maybe better to set PennCNV.LOH as tool at some point ?
+    - f. make_LRR_BAF_plot: better to use actual chromosome size when checking max of plot window
+    - Virtual Karyotype / ideogram:
+        - use the proper genome info data
+        - consider replacing the whole ideogram by Gosling
+
+- preprocess_CNV_calls.R
+    - l.132 (tool call merging)
+        # TODO: add numsnp for new grouped size -> need to read filtered probes for that!
+    - l.156 (tool call merging)
+    	# TODO (for more than 2 tools): add some criteria to remove individual tools/calls from an combined region
+		#  to see if the combined group of two other tools can be 'rescued'
+	- l.216 (annotate_ref_overlap)
+	    #TODO add to output: reciprocal.overlap = min(coverage.by.ref, cov.ref.by.sample)
+	- l.380ff (vcf generation)
+
+- R_io_functions.R
+    - deprecate/change "get_chromosome_set" function
+        # PennCNV *needs* NCBI format, so use that for pfb & filtered LRR/BAF files
+        # - Meta info is available in UCSC format, so that needs to be used internally
+        # - in the future add anoption to convert final output to whatever format is desired
+
+- run_CBS_DNAcopy.R
+    - l.70, CNV length: open / half open / +- 1 ??
+
+### argpasre test lines
+    -TODO: think about using/switching to snakemake script
+
+- filter_data.R
+    args <- parser$parse_args(c('test/data/BIHi005-A/BIHi005-A.processed-data.tsv', 'test/filter-test.out.tsv', 'test/test_config.yaml'))
+
+- make_cnv_vcf.R
+    args <- parser$parse_args(c('test/data', '206210670080_R09C02', 'test/test_config.yaml', '-m', 'split-tools', '-i', 'gain', 'loss'))
+
+- preprocess_CNV_calls.R
+    args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi250-A-2", "test/test_config.yaml", "test/sample_table.txt"))
+
+- run_CBS_DNAcopy.R
+    args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A/BIHi005-A.filtered-data.full.tsv', 'test.out', 'test/test_config.yaml', 'test/sample_table.txt'))
 
 ## Mosaicism
 

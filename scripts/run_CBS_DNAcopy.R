@@ -9,11 +9,10 @@ parser$add_argument('outputfile', type = 'character', help='Path to output file'
 parser$add_argument('configfile', type = 'character', help='Path to config file')
 parser$add_argument('sampletable', type = 'character', help='Path to sampletable')
 
-parser$add_argument('-s', '--sd-undo', type = 'numeric', default = 1,
+parser$add_argument('-s', '--sd-undo', type = 'double', default = 1,
 					help="Value for split SD undo")
 
 args <- parser$parse_args()
-#args <- parser$parse_args(c('/home/vonkunic_c/Misc-Projects/CNV-pipeline/test/data/BIHi005-A/BIHi005-A.filtered-data.full.tsv', 'test.out', 'default_config.yaml', 'sample_table.txt'))
 
 suppressMessages(library(tidyverse))
 suppressMessages(library(DNAcopy))
@@ -31,10 +30,6 @@ sampletable <- read_tsv(args$sampletable, col_types = 'cccccc', comment = '#')
 sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
 	tolower() %>% substr(1, 1)
 
-# # CBS gain/loss
-# CBS.LRR.th.value 	  <- config$settings$CBS$LRR.th.value
-# CBS.LRR.th.value.Xadj <- config$settings$CBS$LRR.th.value.Xadj
-
 # More fine grained loss/gain thresholds, based on Samules Nx settings
 LRR.loss <- config$settings$CBS$LRR.loss
 LRR.loss.large <- config$settings$CBS$LRR.loss.large
@@ -49,7 +44,6 @@ LRR.female.XX.loss <- config$settings$CBS$LRR.female.XX.loss
 LRR.female.X.gain <- config$settings$CBS$LRR.female.X.gain
 LRR.female.X.gain.large <- config$settings$CBS$LRR.female.X.gain.large
 
-
 tb <- read_tsv(inputfile, show_col_types = FALSE) %>% 
   dplyr::select(-Index) %>%
   rename_with(~ str_remove(., '.*\\.'))
@@ -59,15 +53,12 @@ cna.basic.smoothed <- smooth.CNA(cna.basic)
 
 cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = min.width, undo.splits = 'sdundo', undo.SD = sd.undo.val)
 
-# p-values aren't much better - they are very sig. even for very short segments
-#segments.p(cna.basic.smoothed.segmented)
-
 tb <- segments.summary(cna.basic.smoothed.segmented) %>%
   		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
 									numsnp = num.mark, sample_id = ID) %>%
 	mutate(
 		sample_id = sampleID,
-		length = end - start, # TODO: open / half open / +- 1 ??
+		length = end - start,
 		Chr = paste0('chr', Chr),
 		Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
 		snp.density = numsnp / length * 1e6,
@@ -101,14 +92,6 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 		tool = 'CBS',
 		ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
 		tool_confidence = NA,
-		# # Older version
-		# CNV.state.old = ifelse(seg.median < -CBS.LRR.th.value, 'loss', NA),
-		# CNV.state.old = ifelse(seg.median > CBS.LRR.th.value, 'gain', CNV.state.old),
-		# CNV.state.old = ifelse(Chr == 'chrX', NA, CNV.state.old),
-		# CNV.state.old = ifelse(Chr == 'chrX' & seg.median < -CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'loss', CNV.state.old),
-		# CNV.state.old = ifelse(Chr == 'chrX' & seg.median > CBS.LRR.th.value + ifelse(sex == 'm', -1, 1) * CBS.LRR.th.value.Xadj, 'gain', CNV.state.old),
-		# copynumber.old = ifelse(is.na(CNV.state.old), 2, 3),
-		# copynumber.old = ifelse(CNV.state.old == 'loss', 1, copynumber.old),
 	) %>%
 	filter(!is.na(CNV.state) & !is.na(Chr))
 

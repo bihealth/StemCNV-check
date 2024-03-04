@@ -16,7 +16,6 @@ parser$add_argument('-i', '--include-state', type = 'character', nargs = '+',
 					help="Types of CNVs to include in VCF: gain|loss|LOH (default: all)")
 
 args <- parser$parse_args()
-#args <- parser$parse_args(c('data', '206210670080_R09C02', 'default_config.yaml', '-m', 'split-tools', '-i', 'gain', 'loss'))
 
 suppressMessages(library(tidyverse))
 suppressMessages(library(plyranges))

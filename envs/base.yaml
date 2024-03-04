@@ -1,0 +1,17 @@
+name: cnv-pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  ## General ##
+  - python >= 3.11
+  - snakemake
+  - pathlib
+  - apptainer
+  - pip
+  - pip:
+    - loguru
+  # # Needed to build local PennCNV
+  # - perl = 5.32 #seems to be only version under which PennCNV builds properly
+  # - gcc # in case not available, i.e. on some WSL distros

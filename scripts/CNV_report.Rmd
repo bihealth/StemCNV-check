@@ -187,7 +187,6 @@ tr_tibble <- function(tb) {
 
 simple_table_output <- function(tb, caption=NULL) {
   if (params$out_format == 'html') {
-    #TODO: might want to use kable here as well?
     return(datatable(tb, caption = caption,
                      options = list(dom = 't', pageLength = nrow(tb)), rownames = FALSE))
   } else {
@@ -333,7 +332,6 @@ metrics <- list(
         mutate(call_rate = round(call_rate, 3)),
     raw_LRR_BAF %>%
         group_by(sample_id) %>%
-        #TODO: if different chips are used that will be an issue. Should be catched earlier somehow
         summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / unique(GenCall.stats$number_snps) ) %>%
                                                                         format(digits = 2, nsmall=2) %>% paste('%')),
     tibble(sample_id = use_ids,
@@ -467,8 +465,6 @@ logpath <- ifelse(fs::is_absolute_path(config$log_path),
 logfiles <- list.files(file.path(logpath, 'PennCNV', sample_id),
                        pattern = '(auto|chrx|chry).error.log', full.names = T)
 
-#TODO:
-# Check for Warning lines !!
 penncnv.stats <- lapply(logfiles, function(fname) {
     chrs <- basename(fname) %>% str_extract('^[^\\.]+')
     lines <- readLines(fname)
@@ -521,14 +517,6 @@ simple_table_output(tbout)
 cat('\n\n')
 ```
 
-```{r qc.GADA, eval = include.section('QC.GADA'), results='asis'}
-cat('### GADA\n\n')
-tbout <- get_call_stats_tool('GADA')
-#datatable(tbout, options = list(dom = 't', pageLength = nrow(tbout)), rownames = FALSE)
-simple_table_output(tbout)
-cat('\n\n')
-```
-
 ```{r sessioninfo, eval = include.section('QC.settings'), results='asis'}
 cat('### Pipeline settings\n\n')
 # ```yaml
@@ -558,7 +546,6 @@ get_cnv_y <- function(cnv.state, tool) {
     # Go by tool order (start from 1)
     out <- match(tool, cnv_tools)
     # For PennCNV LOH & gain/loss may overlap and need separate tracks
-    # TODO: maybe better to set PennCNV.LOH as tool at some point ?
     out <- ifelse(cnv.state %!in% c('gain', 'loss'), 1-out, out)
     out
 }
@@ -590,7 +577,6 @@ make_LRR_BAF_plots <- function(chr, start, end, size = 1e6, total_min_size = 2e6
   }
 
   #Shrink down ends if they overlap 0/Chr_Max (from what is covered by probes)
-  #MaybeTODO: use actual chromosome size here
   chr_max <- raw_LRR_BAF %>% filter(Chr == chr) %>% pull(Position) %>% max()
   win_start <- max(win_start, 0)
   win_end <- min(win_end, chr_max)
@@ -773,7 +759,7 @@ if (params$out_format == 'html') {
                 scrollY = 300, scrollCollapse = TRUE,
             scrollX =  TRUE,
             scroller = TRUE,
-            dom = 'Bftilp', #TODO -> change this
+            dom = 'Bftilp',
                 buttons = c('colvis', 'copy', 'csv', 'excel'),
                     columnDefs = list(
                     list(targets = c(0,12:18), visible = FALSE)
@@ -924,7 +910,8 @@ regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
 use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
 roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
-if (!is.na(regions) & length(regions)>0) {
+# Using all here would swallow problems; the NA check should only be needed for empty entries
+if (any(!is.na(regions)) & length(regions)>0) {
   for (region in regions) {
 
     region_name <- str_extract(region, '^[^|]+\\|') %>% str_remove('\\|')
@@ -949,7 +936,7 @@ if (!is.na(regions) & length(regions)>0) {
     }
 
     if (report.setting('call.data.and.plots', 'include.plot')) {
-      subchunkify(res$gg, paste0('plot.roi.', region), 5, 10)
+      subchunkify(res$gg, paste0('plot.roi.', region_name, '-', Chr, '-', Start, '-', End), 5, 10)
       cat('\n\n')
     }
     if (report.setting('call.data.and.plots', 'include.call.table')) {
@@ -975,8 +962,6 @@ cat('\n\n')
 
 # Sample comparison  {.tabset}
 
-<!-- TODO: this could probably also be done with gosling  -->
-<!-- https://gosling-lang.github.io/gos/gallery/ideograms.html  -->
 
 ```{r virtual.karyotype, eval = include.section('virtual.karyotype'), results='asis'}
 
@@ -985,17 +970,6 @@ cat('## Virtual Karyotype\n\n')
 if (!is.na(ref_id)) {
   cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
 }
-
-# <!-- TODO: this could probably also be done with gosling  -->
-# <!-- https://gosling-lang.github.io/gos/gallery/ideograms.html  -->
-
-# TODO: need to get the proper data from somewhere else, fasta or vcf headers maybe?
-# -> centromer positions would be needed as well
-# -> maybe some bioconductor packages
-
-# getChromInfoFromUCSC('hg19')
-# UCSC should have cytoband & centromer positions available
-# golden.path <- paste("http://hgdownload.cse.ucsc.edu/goldenPath/",build,"/database/cytoBand.txt.gz",sep="")
 
 # This is supposedly GRCh38
 data(human_karyotype, package="RIdeogram")
@@ -1015,7 +989,6 @@ if (!dir.exists(file.path(workdir, image_folder))) {
     dir.create(file.path(workdir, image_folder))
 }
 
-#TODO: output needs to be checked
 svg_file1 <- tempfile(fileext = '.svg')
 #somehow 'convertSVG' can't deal with absolute paths
 png_file1 <- file.path(image_folder, 'chunk_ideogram_virtualKaryotype.png')

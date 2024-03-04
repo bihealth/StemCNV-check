@@ -10,11 +10,8 @@ parser$add_argument('sampletablefile', type = 'character', help='Path to samplet
 
 parser$add_argument('-p', '--penncnv', action="store_true", help="Use PennCNV calls")
 parser$add_argument('-c', '--cbs', action="store_true", help="Use CBS calls")
-parser$add_argument('-g', '--gada', action="store_true", help="Use GADA calls")
 
-# args <- parser$parse_args(c("-p", "-c", "test/data", "BIHi250-A-2", "test/test_config.yaml", "sample_table_example.txt"))
 args <- parser$parse_args()
-
 
 suppressMessages(library(plyranges))
 suppressMessages(library(GenomicRanges))
@@ -22,7 +19,6 @@ suppressMessages(library(tidyverse))
 suppressMessages(library(yaml))
 `%!in%` <- Negate(`%in%`)
 options(dplyr.summarise.inform = FALSE)
-
 
 get_script_dir <- function() {
 	match <- commandArgs(trailingOnly = FALSE) %>%
@@ -81,11 +77,6 @@ gr_genes <- load_gtf_data(config)
 
 ## Merge
 
-#Wishlist: try this instead of distance based merge
-# get_distance_to_probe <- function(position, n_probes) {
-# 	1
-# }
-
 merge_calls <- function(df.or.GR) {
 	if (is.data.frame(df.or.GR)) {
 		df.or.GR <- as_granges(df.or.GR, seqnames = Chr)
@@ -105,15 +96,10 @@ merge_calls <- function(df.or.GR) {
 
 ## Pre-filter
 prefilter_calls <- function(df.or.GR) {
-	# 'Our' chip has ~2.5 snps per 10kb -> average expected 250 per Mb
-    # Ideally a threshold on desnity would apply to a pre-calculated window based SNP density
-	# -> this could be done for each array & included in report but also used for i.e. PennCNV extra data (like GC model)
 	if (is.data.frame(df.or.GR)){
-		df.or.GR <- dplyr::filter(df.or.GR, numsnp >= min.snp & length >= min.length & snp.density >= min.snp.density) # &
-										#(numsnp >= min.snp.or.length | length >= min.length.or.snp))
+		df.or.GR <- dplyr::filter(df.or.GR, numsnp >= min.snp & length >= min.length & snp.density >= min.snp.density)
 	} else {
-		df.or.GR <- plyranges::filter(df.or.GR,	numsnp >= min.snp & width >= min.length & (numsnp / width * 1e6) >= min.snp.density )#&
-										#(numsnp >= min.snp.or.length | width >= min.length.or.snp))
+		df.or.GR <- plyranges::filter(df.or.GR,	numsnp >= min.snp & width >= min.length & (numsnp / width * 1e6) >= min.snp.density )
 	}
 	df.or.GR
 }
@@ -143,7 +129,6 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 			reduce_ranges(ID = ID,
 			              tool.overlap.state = ifelse(plyranges::n() > 1, 'combined', 'no-overlap')) %>%
 			as_tibble() %>%
-			# TODO: add numsnp for new grouped size -> need to read filtered probes for that!
 			mutate(group.ID = paste('combined', CNV.state, seqnames, start, end, sep='_')) %>%
 			dplyr::select(-strand, -seqnames) %>%
 			rename_with(~paste0('group.', .), 1:3) %>%
@@ -167,8 +152,6 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 		#Now filter based on overlap of tool calls with merged region to check if the overlap can be accepted
 		# - require at least 50% of the merged region to be covered by a single call to prevent chained overlaps
 		# - require that the combined regions coverage from tools has a median of at least 60% (avg for only 2 tools)
-		# TODO (for more than 2 tools): add some criteria to remove individual tools/calls from an combined region
-		#  to see if the combined group of two other tools can be 'rescued'
 		gr.changed <- ov %>%
 			filter(tool.overlap.state == 'combined' &
 					   max.ov >= min.greatest.region.overlap &
@@ -240,7 +223,6 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 				   width.overlap = min(granges.x.end, granges.y.end) - max(granges.x.start, granges.y.start) + 1,
 				   coverage.by.ref = round(100 * width.overlap / granges.x.width, 2),
 				   cov.ref.by.sample = round(100 * width.overlap / granges.y.width, 2),
-				   #TODO: reciprocal.overlap = min(coverage.by.ref, cov.ref.by.sample)
 				   # need to flatten/fully unpack tool.y or we get list of lists
 				   ref.tool = list(unlist(tool.y)),
 				   ref.state = CNV.state.y
@@ -334,16 +316,6 @@ if (args$cbs) {
 	  results[['CBS']] <- res
 	} else {
 	  tool.order <- tool.order[tool.order != 'CBS']
-	}
-}
-if (args$gada) {
-	res <- file.path(datapath, sample_id, paste0(sample_id, '.GADA.tsv')) %>%
-		lapply(read_GADA) %>%
-		bind_rows()
-	if (nrow(res) > 0) {
-	  results[['GADA']] <- res
-	} else {
-	  tool.order <- tool.order[tool.order != 'GADA']
 	}
 }
 
@@ -442,7 +414,7 @@ write_tsv(cnvs.tb, outname.tsv)
 # 	'##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">'
 # )
 #
-# #TODO: think, does it make sense to include even the pre-filtered calls here?
+# #TODO: think, does it make sense to include also the pre-filtered calls here?
 # #TODO 2: this will be expanded on in the future; might become it's onw script
 # filter.lines <- c(
 # 	'##FILTER=<ID=PASS,Description="All filters passed">',
