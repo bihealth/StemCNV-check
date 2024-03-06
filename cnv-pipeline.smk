@@ -110,6 +110,17 @@ def get_cnv_vcf_output(mode):
 def get_target_files():
   #Target options: ('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
   all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
+
+  # complete
+  if TARGET == 'complete':
+    return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report_filetype}"),
+                  sample_id = all_samples,
+                  report_filetype = [rep+'.'+config['reports'][rep]['file_type'] for rep in config['reports'].keys() if rep != '__default__']) + \
+           expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']),
+                  sample_id = all_samples)
+  # expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
+  #        sample_id = all_samples)
+
   # Report
   if TARGET == 'report':
     return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report_filetype}"),
@@ -121,11 +132,6 @@ def get_target_files():
   if TARGET == 'cnv-vcf':
     return expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']),
                   sample_id = all_samples)
-      #      )
-      #
-      # [os.path.join(BASEPATH, DATAPATH, f"{sample_id}", f"{sample_id}.{{tool}}-cnv-calls.{filter}.vcf") for
-      #              sample_id, _, _, _, _ in sample_data],
-      #             tool = 'combined' if config['settings']['make_cnv_vcf']['mode'] == 'combined-calls' else config['settings']['CNV.calling.tools'])
 
   # Target Processed-calls
   if TARGET == 'processed-calls':

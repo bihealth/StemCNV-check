@@ -4,39 +4,15 @@
 
 ### Bugs / Fixes needed
 
-    - activate tiny_tex installation for R-env
-
     - check all position calculations for being of by 1 (open vs half-open issue)
 
 
 ### Feature Wishlist (somewhat ordered)
 
-    - Proper vcf output:
-        - Preprocess step / final VCF:
-            - one combined vcf file
-              - combined calls from tools
-              - might want to retain pre-filtered calls (?)
-              - might want to add additional filters
-              - unclear if all current cols of the tsv can easily be but into vcf
-            - could replace current preprocess tsv output, instead of only adding vcf ?! (undecided)
-
-        Optional:
-        - per tool vcf output (& getting rid of internal tsv files ?)
-            - needs extra rule for PennCNV
-                -> maybe mark PennCNV file as intermediate?
-            - other tools should be possible directly from R
-
     - transfer to github, figure out how to deal with the 2 branches right now?
         - general linting
-        - cleanup of TODO comments in dev branch (they are NOT resolved in main, just 'hidden')
         - start using CI
         - start writing tests
-
-    - Test if bcftools-gtc2vcf-plugin v1.19 works (1.18 did not)
-
-    - genome fasta is *only* used for gtc2vcf
-        --> check if it's needed / what difference it makes
-        --> allow it to be optional
 
     - More analysis on array & genome
         - (avg) probe density
@@ -52,6 +28,34 @@
         OR
         --> make a new script that adds annotations/filters/flags to CNV calls
 
+    - Better vcf output:
+        - make sure the VCF with the probes can be read into IGV
+            - should add probe filters here
+            - consider replacing the current tsv file (will need extra scripts for PennCNV)
+
+        - double check that all VCF format convections are met
+        - double check thatall tools calculate SVLEN correctly
+
+        - Preprocess step / final VCF:
+            - one combined vcf file
+              - combined calls from all tools
+              - allow to retain pre-filtered calls (soft filter)
+              - might want to add additional filters
+              - unclear if all current cols of the tsv can easily be put into vcf
+            - could replace current preprocess tsv output, instead of only adding vcf (undecided)
+
+        Optional (but ideal)
+        - per tool vcf output (& getting rid of internal tsv files ?)
+            - needs extra rule for PennCNV
+                -> maybe mark PennCNV file as intermediate?
+            - other tools should be possible directly from R
+
+    - Test if bcftools-gtc2vcf-plugin v1.19 works (1.18 did not)
+
+    - genome fasta is *only* used for gtc2vcf
+        --> check if it's needed / what difference it makes
+        --> allow it to be optional
+
     - Call pre-processing initial steps
         - pre-filtering calls per tool can remove calls with few-probes that actually overlap with other (larger) calls
           from other tools (thus final output is not showing the full evidence there is)
@@ -61,7 +65,6 @@
             - merging by number of probes between them
             - merging by relative value
             - [only existing right now] merging by absolute value
-
 
     - Consistent handling of "chr" format
         - currently hard coded (via str manipulation; mainly via IO functions & the CBS script -> should all be in IO ?) & working
@@ -88,10 +91,10 @@
     - better installation & windows support
         - dockerize
             -> doesn't make a full dockerimage, just one where the rules can be run in
-        - switch to conda envs defined in snakemake
         - find / setup a good docker container to replace iaap download?
             -> after that stick to conda (+docker) available stuff
             - us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298
+        - bioconda would come with a docker container?!
 
     - Actual checks if ROIs contain CNV evidence
         - test the PennCNV module for that
@@ -166,6 +169,10 @@
     - Virtual Karyotype / ideogram:
         - use the proper genome info data
         - consider replacing the whole ideogram by Gosling
+
+- make_cnv_vcf.R
+    - numsnp for merged calls is not properly calculated (using max currently)
+    - ref base lookup is low (also maybe not even needed?)
 
 - preprocess_CNV_calls.R
     - l.132 (tool call merging)

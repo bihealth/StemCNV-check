@@ -65,7 +65,6 @@ get_REF_entry <- function(seqname, pos) {
 processed.calls <- file.path(data_path, sample_id,
 							 paste0(sample_id, '.combined-cnv-calls.tsv')) %>%
 	read_tsv(show_col_types = FALSE) %>%
-	# TODO: this should not be necessary
 	unique() %>%
 	# Maybe needed for the list col redoing
 	rowwise() %>%
@@ -75,7 +74,7 @@ processed.calls <- file.path(data_path, sample_id,
 		## Need to reduce listcols to a single value for vcf
 		# Use highest tool_confidence  of single call
 		tool_confidence = suppressWarnings(tool_confidence %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
-		#TODO:
+		#Note:
 		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
 		# Accurate number would need to be derived parallel to merging, requires loading the SNP subsets & doing a set merge on them
 		numsnp = numsnp %>% str_split(';') %>% unlist() %>% as.integer() %>% max(),
@@ -88,15 +87,24 @@ processed.calls <- file.path(data_path, sample_id,
 		CNV.type = ifelse(CNV.state == 'gain', 'DUP', 'DEL'),
 		CNV.type = ifelse(CNV.state == 'LOH', 'LOH', CNV.type),
 		CHROM = factor(seqnames, levels = chrom_levels),
-		POS = start, #TODO not sure if this is also 1-indexed
+		POS = start - 1, # 1-indexed, but:
+		#https://samtools.github.io/hts-specs/VCFv4.2.pdf:
+		# For simple insertions and
+		# deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT
+		# Strings must include the base before the event (which must be reflected in the POS field), unless the event
+		# occurs at position 1 on the contig in which case it must include the base after the event; this padding base is
+		# not required (although it is permitted) for e.g. complex substitutions or other events where all alleles have at
+		# least one base represented in their Strings. If any of the ALT alleles is a symbolic allele (an angle-bracketed
+		# ID String “<ID>”) then the padding base is required and POS denotes the coordinate of the base preceding
+		# the polymorphism.
 		ID = str_glue("CNV_{seqnames}_{start}_{end}"),
-		REF = map2_chr(seqnames, start, get_REF_entry),
+		REF = map2_chr(seqnames, start - 1, get_REF_entry),
 		ALT = str_glue('<{CNV.type}>'),
 	    QUAL = '.',
 		FILTER = '.',
 		INFO = str_glue("END={end};SVTYPE={CNV.type};SVLEN={length}"),
-		#TODO: is this the correct way?
-		genotype = ifelse(CNV.state == 'LOH', '0/1', '1/1')
+		# We can not phase the CNVs, so it's more accurate to set  ./.
+		genotype = ifelse(CNV.state == 'LOH', '0/0', './.'),
 	 )
 
 # MAYBE:
@@ -111,16 +119,15 @@ processed.calls <- file.path(data_path, sample_id,
 
 #Static data for vcf writing
 info.lines <- c('##INFO=<ID=END,Number=1,Type=Integer,Description="End coordinate of the variant">',
-				'##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">',
+				'##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Difference in length between REF and ALT alleles">',
 				'##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">')
 
-#TODO make it possible to configure this somewhat?
 vcf.format.content <- list(
 	c('genotype', 'GT', "Segment genotype"),
 	c('copynumber', 'CN', "Segment most-likely or estimated copy-number call"),
 	c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
-	c('tool', 'TO', "Segment called as CNV by these tools"),
-	c('tool_confidence ', 'CO', "Tool dependent confidence score segment call (if available)")
+	c('tool', 'TO', "Segment called as CNV by these tools")#,
+	#c('tool_confidence ', 'CO', "Tool dependent confidence score segment call (if available)")
 )
 vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT')
 
@@ -134,10 +141,9 @@ write_to_vcf <- function(tb, outvcf) {
 		type <- ifelse(is.integer(tb[[x[1]]]), 'Integer', 'String')
 		shorthand <- x[2]
 		desc <- x[3]
-		str_glue('##FORMAT=<ID={shorthand},NUMBER=1,Type={type},Description="{desc}">')
+		str_glue('##FORMAT=<ID={shorthand},Number=1,Type={type},Description="{desc}">')
 	})
 
-	#TODO: maybe the format & info lines need to go above the contig info?
 	writeLines(c(vcf.header, info.lines, format.lines,
 	             paste0('#', paste(c(vcf_cols, sample_id), collapse = '\t'))), con = outvcf)
 

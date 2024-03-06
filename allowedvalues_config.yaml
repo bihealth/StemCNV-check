@@ -23,7 +23,7 @@ data_path: str
 log_path: str
 
 settings:
-  CNV.calling.tools: list__str__(PennCNV|CBS|GADA)
+  CNV.calling.tools: list__str__(PennCNV|CBS)
   probe-filter-sets:
     __filterset:
         GenTrainScore: float_le1_ge0
