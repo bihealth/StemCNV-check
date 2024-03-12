@@ -2,7 +2,6 @@ static_data:
     bpm_manifest_file: '' #REQUIRED
     egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
-    #TODO: these two should be optional *and* Auto-generatable/downloadable
     genome_fasta_file: '' #REQUIRED
     genome_gtf_file: ''   #REQUIRED
     pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
@@ -17,10 +16,9 @@ log_path: logs      #REQUIRED
 
 settings:
   # Select tools to use ##Outdated:and specify order of 'trust' in case of overlapping calls with different states
-  # Currently implemented tools (=valid options): PennCNV, CBS ##Gada should not be trusted
+  # Currently implemented tools (=valid options): PennCNV & CBS
   CNV.calling.tools:
     - PennCNV
-    #- GADA
     - CBS
   probe-filter-sets:
     # Each section here defines a set of SNP probe filters
@@ -30,22 +28,18 @@ settings:
     # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
     # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes.
     #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
-    # NotImplementedYet: - minMAF: minimum minor allele frequency of SNP to be used (taken from <...>)
     basic:
         GenTrainScore:  0
         GenCallScore:  0.2 # Illumina recommended minimum
         Position.duplicates: keep # keep|remove|highestGC|highestGT
-        #minMAF: NA  -  not implemented yet
     extended:
         GenTrainScore: 0.7
         GenCallScore:  0.7 # Anything above this should be a stable genotype call
         Position.duplicates: highestGC # keep|remove|highestGC|highestGT
-        #minMAF: NA  -  not implemented yet
     full:
         GenTrainScore: 0.8
         GenCallScore:  0.8
         Position.duplicates: remove # keep|remove|highestGC|highestGT
-        #minMAF: NA  -  not implemented yet
 
   default-filter-set: extended
 
@@ -79,17 +73,6 @@ settings:
     LRR.female.X.gain:       0.5   #CN3
     LRR.female.X.gain.large: 1.05  #CN4+
 
-  GADA:
-    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
-    filter-settings: '__default__'
-    # Sparsness of bayesian model; higher value gives faster, but fewer results; mostly irrelevant with hig T value
-    aAlpha: 0.2
-    # Critical parameters of backwards eliminations, sets arbitrary significance level, higher T <> higher significance
-    gada.T: 15
-    mad.T: 5
-    # Minimum required probes in a CNV / LOH call
-    MinSegLen: 5
-
   postprocessing:
     ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
     # either before or after filtering (based on merge.before.filter)
@@ -101,6 +84,7 @@ settings:
     min.length: 1000
     # This is -so far- only applied to the Call region itself
     min.snp.density: 10 #snps per Mb
+    # FutureFeature
     density.windows: 100000     #window size for probe density calculation (0.5Mb)
     min.gap.size: '__mean+sd__' #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
     ## Calls from multiple tools are combined and combined if they match
@@ -127,12 +111,18 @@ settings:
 
 reports:
   #Multiple individual reports can be defined, file_type is necessary for each one!
-  CNV-report:
+#   full-report:
+#     file_type: 'html' #REQUIRED
+  user-report:
     file_type: 'html' #REQUIRED
+    exclude_sections:
+        - nonreportable.plots
+    call.data.and.plots:
+      include.gene.table.details: 'Call'
 #  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
 #  summary-report:
 #    file_type: 'pdf'
-#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GADA, QC.GenCall, reportable.table, nonreportable.table, nonreportable.plots, circo.plot]
+#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall, reportable.table, nonreportable.table, nonreportable.plots, circo.plot]
 #    call.data.and.plots:
 #      include.plot: True
 #      include.call.table: FALSE
@@ -150,7 +140,6 @@ reports:
     #  - QC.GenCall
     #  - QC.PennCNV
     #  - QC.CBS
-    #  - QC.GADA
     #  - QC.settings
     #  - reportable.table
     #  - reportable.plots
@@ -192,9 +181,6 @@ reports:
       sizable_CNV: [5, 10]
       sizable_LOH: [5, 10]
       SNP_distance_reference: [1, 5]
-      # # This is hard to set thresholds for, since currently all types of genes are used
-      # # -> maybe add a filter for which genes should be used? (may need it's own section in here)
-      # overlapping_genes: []
 
     SNP_comparison:
       # Which filter to apply to probe data for SNP comparison
@@ -226,9 +212,9 @@ tools:
     threads: 4
     memory: "8000M"
     runtime: "4:00:00"
-    cmd-line-params: "--gender-estimate-call-rate-threshold -0.1" #maybe remove?
+    cmd-line-params: "--gender-estimate-call-rate-threshold -0.1"
   gtc2vcf:
-    cmd-line-params: "" #"--do-not-check-eof"
+    cmd-line-params: ""
     memory: "10000M"
     runtime: "4:00:00"
   knitr:

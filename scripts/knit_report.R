@@ -31,7 +31,7 @@ snakedir    <- config$snakedir %>% normalizePath
 sampletable <- config$sample_table %>% normalizePath
 datapath    <- config$data_path
 
-report.template  <- file.path(snakedir, "scripts", "CNV_report.Rmd") %>% normalizePath
+report.template  <- file.path(snakedir, "scripts", "report_template.Rmd") %>% normalizePath
 outfile     <- str_glue("{sample_id}.{report_name}.{filetype}")
 
 if (fs::is_absolute_path(datapath)) {

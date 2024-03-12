@@ -3,7 +3,7 @@
 from .py_exceptions import *
 from collections import OrderedDict
 from collections.abc import MutableMapping
-import warnings
+from loguru import logger
 
 
 def read_sample_table(filename, with_opt=False):
@@ -46,14 +46,14 @@ def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):
     col_val_match = [sampledef[2:] for sampledef in config_extra_samples if sampledef[:2] == '__']
     for col in col_val_match:
         if col not in sample_data_full[0].keys():
-            raise ConfigReferenceError('Config for SNP clustering refers to non-existing column: ' + col)
+            raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
         match_val = [dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0]
         ids += [dictline['Sample_ID'] for dictline in sample_data_full if dictline[col] == match_val]
     # '_[column]' entry: take all sample_ids from '[column]'
     id_cols = [sampledef[1:] for sampledef in config_extra_samples if sampledef[0] == '_' and sampledef[:2] != '__']
     for col in id_cols:
         if col not in sample_data_full[0].keys():
-            raise ConfigReferenceError('Config for SNP clustering refers to non-existing column: ' + col)
+            raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
         ids += [dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0].split(',')
     # other entries: assume they are sample_ids & use them as is
     ids += [sampledef for sampledef in config_extra_samples if sampledef[0] != '_']
@@ -78,10 +78,8 @@ def config_extract(entry_kws, config, def_config, verbose=False):
             if verbose:
                 print('Warning: Using config default values for: ' + ' : '.join(used_entries))
         else:
-            warnings.warn(' : '.join(used_entries) + " is not a valid config entry or has been deprecated",
-                          ConfigKeyWarning)
+            logger.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated", ConfigKeyWarning)
             return None
-            #raise ValueError(' : '.join(used_entries) + " is not a valid config entry or has been deprecated")
 
     return subconfig
 

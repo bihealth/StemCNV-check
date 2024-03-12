@@ -53,13 +53,6 @@ settings:
     LRR.female.X.gain: float
     LRR.female.X.gain.large: float
 
-  GADA:
-    filter-settings: filterset
-    aAlpha: float # restrictions?
-    gada.T: float #might be int?
-    mad.T: float #might be int?
-    MinSegLen: int
-
   postprocessing:
     min.snp: int
     min.length: int
@@ -89,7 +82,6 @@ allowed_sections:
      - QC.GenCall
      - QC.PennCNV
      - QC.CBS
-     - QC.GADA
      - QC.settings
      - reportable.table
      - reportable.plots
