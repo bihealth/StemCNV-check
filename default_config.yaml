@@ -3,7 +3,7 @@ static_data:
     egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
     genome_fasta_file: '' #REQUIRED
-    genome_gtf_file: ''   #REQUIRED
+    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                      #REQUIRED, Auto-generatable
     pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
     GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
     array_density: static-data/density_{genome}_{snp-array-name}.bed             #REQUIRED, Auto-generatable
@@ -97,8 +97,18 @@ settings:
     min.reciprocal.coverage.with.ref: 80
 
   gene_overlap:
-    exclude_gene_type_regex: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
-    include_only_these_gene_types: []
+    # These options determine which genes are read from the gtf file
+    exclude_gene_type_regex: []
+    # Example: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
+    include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
+    # These genelists are used to mark genes with high impact
+    # Gene list should contain a Name as header and then one gene per line; comments (#) are allowed
+    # Genes from curated and high impact lists can be scored differently, curated score takes precedence
+    curated_genelists:
+        - '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
+    highimpact_genelists:
+        - '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
+        - '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
 
   make_cnv_vcf:
     filter-settings: '__default__'
@@ -170,8 +180,8 @@ reports:
       reportable.loh: 2.5e6
       reportable.cnv: 4e5
       # Classify samples as failed from these sizes on
-      fail.loh: 5e6
-      fail.cnv: 2e6
+      critical.loh: 5e6
+      critical.cnv: 2e6
     # Thresholds for colored table / rec action [yellow, orange/red]
     QCwarnings:
       callrate: [0.995, 0.99]

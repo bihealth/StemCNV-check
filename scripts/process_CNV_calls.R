@@ -237,9 +237,9 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 		gr <- gr %>%
 			group_by(granges.x.seqnames, granges.x.start, granges.x.end, tool.overlap.state.x, tool.x, CNV.state.x) %>%
 			summarise(across(ends_with('.x'), ~ unique(.)),
-								call.in.reference = TRUE,
-								coverage.by.ref = list(coverage.by.ref),
-								ref.tool = list(unlist(ref.tool)),
+					  call.in.reference = TRUE,
+					  coverage.by.ref = list(coverage.by.ref),
+					  ref.tool = list(unlist(ref.tool)),
 			) %>%
 			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
 			as_granges()
@@ -260,13 +260,67 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 	} else {
 		gr_out <- gr_in %>%
 			mutate(call.in.reference = FALSE,
-						 coverage.by.ref = list(NA),
-						 ref.tool = list(NA))
+				   coverage.by.ref = list(NA),
+				   ref.tool = list(NA))
 	}
 	
 	gr_out
 	
 }
+
+annotate_gene_lists <- function(gr, config) {
+
+	if (length(config$settings$gene_overlap$highimpact_genelists) == 0) {
+		return(gr)
+	}
+
+	gene_list_paths <- config$settings$gene_overlap$highimpact_genelists %>%
+		str_replace('__inbuilt__', config$snakedir)
+	gene_lists <- lapply(gene_list_paths, read_tsv, col_types = 'c', comment = '#')
+	names(gene_lists) <- sapply(gene_lists, colnames)
+	gene_lists <- lapply(gene_lists, pull)
+
+	# Make a GRList object with gene coordinates for each gene list
+	sub_gene_gr <- lapply(gene_lists, function(x) gr_genes %>% filter(gene_name %in% x)) %>%
+		GRangesList()
+
+	# Make a list-col & add gene-lists names with hits
+	gr$high.impact <- imap(sub_gene_gr, function(x, name) ifelse(count_overlaps(gr, x)>0, name,NA_character_ )) %>%
+		pmap(\(...) na.omit(c(...)) %>% as.character())
+
+	# Make an extra col with all affected high impact genes
+	gr$high.impact.genes <- NA_character_
+	ov_genes <- group_by_overlaps(gr, unlist(sub_gene_gr)) %>% reduce_ranges(genes = paste(unique(gene_name), collapse = ','))
+	gr[ov_genes$query,]$high.impact.genes <- ov_genes$genes
+
+	return(gr)
+}
+
+
+annotate_gaps <- function(gr, gapfile) {
+
+	gaps <- read_bed(gapfile) %>%
+		select(-name, -score) %>%
+		mutate(gap_size = width) %>%
+		filter(seqnames %in% get_chromosome_set())
+
+	# TODO calculated gap as in paper analysis (% of calls size vs n_probes)
+	# gap_designation =  ifelse(is.na(perc_gap), F, perc_gap > 1/3 & (gap_slope * perc_gap + gap_intercept) <= log2(region.n_positions)
+
+	#TODO this needs proper n_probes
+	join_overlap_left(gr, gaps) %>%
+	   group_by(ID, n_probes) %>%
+	   reduce_ranges(gap_size_sum = sum(gap_size)) %>%
+	   mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width)) %>%
+	   pull()
+
+	gr <- gr %>%
+
+
+		#mutate(gap = ifelse(count_overlaps(gr, gaps) > 0, TRUE, FALSE))
+	return(gr)
+}
+
 
 # Sanitize output & add gene overlap annotation
 finalise_tb <- function(gr) {
@@ -352,11 +406,13 @@ if (!is.na(ref_id)) {
 		as_granges()
 	
 	cnvs <- annotate_ref_overlap(combined_tools_sample, combined_tools_ref, min.reciprocal.coverage.with.ref) %>%
+		annotate_gene_lists(config) %>%
 		finalise_tb()
 	
 } else {
 	cnvs <- combined_tools_sample %>%
-		finalise_tb()	
+		annotate_gene_lists(config) %>%
+		finalise_tb()
 }
 		
 outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.tsv'))

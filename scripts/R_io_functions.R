@@ -120,7 +120,11 @@ load_gtf_data <- function(config) {
 	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
 
 	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
-		filter(type == 'gene' & !str_detect(gene_type, exclude_regexes))
+		filter(type == 'gene') %>%
+		mutate(gene_id = str_remove(gene_id, '\\..*'))
+	if (exclude_regexes != ''){
+		gr_genes <- filter(gr_genes, !str_detect(gene_type, exclude_regexes))
+	}
 	if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
 		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
 	}
@@ -151,6 +155,8 @@ expected_final_tb <- tibble(
 	coverage.overlap = list(),
 	tool.coverage.overlap = character(),
 	ref.tool = list(),
+	high.impact = list(),
+	high.impact.genes = character(),
 	n_genes = integer(),
 	overlapping.genes = character()
 	)

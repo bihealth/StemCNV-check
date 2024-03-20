@@ -13,7 +13,9 @@ GENOME = config['genome']
 # ================================================================
 
 rule all:
-    input: [config['chrominfo_outname'], config['array_gaps_outname'], config['array_density_outname'], config['pfb_outname'], config['gcmodel_outname']]
+    input: [config['chrominfo_outname'], config['array_gaps_outname'], config['array_density_outname'],
+            config['pfb_outname'], config['gcmodel_outname'],
+            config['gtf_file_outname']]
 
 
 #Note: PennCNV does not seem to work with UCSC chromosome style in PFB file
@@ -146,6 +148,18 @@ write_bed(density, '{output.density}')
 
 EOF
 """
+
+rule gencode_v45_gtf_download:
+    output: config['gtf_file_outname']
+    # Source gtf GRCh38:
+    params:
+        ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
+        release_path = "gencode.v45.basic.annotation.gtf.gz" if GENOME == "hg38" else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
+    shell:
+        """
+        wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
+        gunzip {output}.gz
+        """
 
 
 rule ucsc_goldenpath_download:

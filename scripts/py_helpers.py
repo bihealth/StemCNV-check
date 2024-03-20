@@ -3,7 +3,7 @@
 from .py_exceptions import *
 from collections import OrderedDict
 from collections.abc import MutableMapping
-from loguru import logger
+from loguru import logger as logging
 
 
 def read_sample_table(filename, with_opt=False):
@@ -78,7 +78,7 @@ def config_extract(entry_kws, config, def_config, verbose=False):
             if verbose:
                 print('Warning: Using config default values for: ' + ' : '.join(used_entries))
         else:
-            logger.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated", ConfigKeyWarning)
+            logging.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated", ConfigKeyWarning)
             return None
 
     return subconfig

@@ -2,20 +2,20 @@
 
 ## About
 
-<...> is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
-<...> uses snakemake to run the complete analysis from raw data (.idat) up report generation for each sample with a single command.
+SCnv-Quac (Stemcell CNV Quality Control) is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
+SCnv-Quac uses snakemake to run the complete analysis from raw data (.idat) up report generation for each sample with a single command.
 
-It requires a linux environment (including WSL) and a working conda (or mamba) installation.
+It requires a linux environment (or WSL on windows) and a working conda (or mamba) installation.
 
 ## Installation
 
 1. Clone the repository
-2. Run `conda env create -f envs/base.yml` to create a base conda environment from which to run <...>
+2. Run `conda env create -f envs/base.yml` to create a base conda environment from which to run SCnv-Quac
 3. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
 ## Setup
 
-<...> requires a sample table and a config file to run. 
+SCnv-Quac requires a sample table and a config file to run. 
 sample_table.txt (tab-separated)
 
 - sample_id
