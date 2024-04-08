@@ -58,7 +58,7 @@ settings:
     min.length: int
     min.snp.density: float #snps per Mb #TODO: might also want __default__ for this?
     density.windows: int_ge0     #window size for probe density calculation (0.5Mb)
-    min.gap.size: str_([0-9+]|__mean\+sd__) #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
+    min.gap.size: str_([0-9+]|auto-array) #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
     merge.distance: int_ge0
     merge.before.filter: bool
     tool.overlap.greatest.call.min.perc: float_le100
@@ -69,6 +69,8 @@ settings:
   gene_overlap:
     exclude_gene_type_regex: list__str
     include_only_these_gene_types: list__str
+    highimpact_curated_lists: list__str
+    highlight_lists: list__str
 
   make_cnv_vcf:
     filter-settings: filterset

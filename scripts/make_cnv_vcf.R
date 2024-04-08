@@ -73,19 +73,19 @@ processed.calls <- file.path(data_path, sample_id,
 		seqnames = str_remove(seqnames, remove_str),
 		## Need to reduce listcols to a single value for vcf
 		# Use highest tool_confidence  of single call
-		tool_confidence = suppressWarnings(tool_confidence %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
+		caller_confidence = suppressWarnings(caller_confidence %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
 		#Note:
 		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
 		# Accurate number would need to be derived parallel to merging, requires loading the SNP subsets & doing a set merge on them
-		numsnp = numsnp %>% str_split(';') %>% unlist() %>% as.integer() %>% max(),
-		tool = tool %>% str_split(';') %>% unlist() %>% unique() %>% sort %>% paste(collapse='&'),
+		n_snp_probes = n_snp_probes %>% str_split(';') %>% unlist() %>% as.integer() %>% max(),
+		CNV_caller = CNV_caller %>% str_split(';') %>% unlist() %>% unique() %>% sort %>% paste(collapse='&'),
 		# No good way to decied if multiple copynumbers are predicted
 		# Only difference here will by 3/4/... or 0/1
 		# -> should maybe take the PennCNV one (instead of majority / 3 or 0)?
 		# -> Maybe 3 or 0 are better assumptions if both 3/4 and 0/1 are the options.
 		copynumber = copynumber %>% str_split(';') %>% unlist() %>%table() %>% which.max %>% names(),
-		CNV.type = ifelse(CNV.state == 'gain', 'DUP', 'DEL'),
-		CNV.type = ifelse(CNV.state == 'LOH', 'LOH', CNV.type),
+		CNV_type = ifelse(CNV_type == 'gain', 'DUP', 'DEL'),
+		CNV_type = ifelse(CNV_type == 'LOH', 'LOH', CNV_type),
 		CHROM = factor(seqnames, levels = chrom_levels),
 		POS = start - 1, # 1-indexed, but:
 		#https://samtools.github.io/hts-specs/VCFv4.2.pdf:
@@ -99,12 +99,12 @@ processed.calls <- file.path(data_path, sample_id,
 		# the polymorphism.
 		ID = str_glue("CNV_{seqnames}_{start}_{end}"),
 		REF = map2_chr(seqnames, start - 1, get_REF_entry),
-		ALT = str_glue('<{CNV.type}>'),
+		ALT = str_glue('<{CNV_type}>'),
 	    QUAL = '.',
 		FILTER = '.',
-		INFO = str_glue("END={end};SVTYPE={CNV.type};SVLEN={length}"),
+		INFO = str_glue("END={end};SVTYPE={CNV_type};SVLEN={length}"),
 		# We can not phase the CNVs, so it's more accurate to set  ./.
-		genotype = ifelse(CNV.state == 'LOH', '0/0', './.'),
+		genotype = ifelse(CNV_type == 'LOH', '0/0', './.'),
 	 )
 
 # MAYBE:
@@ -126,8 +126,8 @@ vcf.format.content <- list(
 	c('genotype', 'GT', "Segment genotype"),
 	c('copynumber', 'CN', "Segment most-likely or estimated copy-number call"),
 	c('numsnp', 'PN', "Number of points (i.e. SNP probes) in the segment"),
-	c('tool', 'TO', "Segment called as CNV by these tools")#,
-	#c('tool_confidence ', 'CO', "Tool dependent confidence score segment call (if available)")
+	c('CNV_caller', 'CA', "Segment called as CNV by these callers")#,
+	#c('caller_confidence ', 'CC', "Caller dependent confidence score segment call (if available)")
 )
 vcf_cols <- c('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT')
 
@@ -148,7 +148,7 @@ write_to_vcf <- function(tb, outvcf) {
 	             paste0('#', paste(c(vcf_cols, sample_id), collapse = '\t'))), con = outvcf)
 
 	tb <- tb %>%
-		filter(CNV.state %in% args$include_state)
+		filter(CNV_type %in% args$include_state)
 
 	if (nrow(tb) > 0) {
 		tb %>%
@@ -174,7 +174,7 @@ if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls{name_addition}.vcf')
 		processed.calls %>%
-			filter(tool.overlap.state != 'combined' & tool == use.tool) %>%
+			filter(tool.overlap.state != 'combined' & CNV_caller == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {

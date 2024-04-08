@@ -166,6 +166,7 @@ if (include.section('SNP.dendrogram')) {
 } 
 
 gr_genes <- load_gtf_data(config)
+gr_info  <- load_genomeInfo(config)
 
 regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
@@ -209,6 +210,7 @@ gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
       across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)),
       # high_impact should contain the Names of which lists were hit; TBD: sort by any(curated) > any(other) > none
       high_impact = ifelse(is.na(high_impact), '-', high_impact),
+      highlight = ifelse(is.na(highlight), '-', highlight),
       #high_impact = factor(high_impact, levels = c(unique(na.omit(high_impact)), '-')),
       name_is_geneid = str_detect(gene_name, 'ENSG[0-9]{11}'),
       # REEV: gene_id *should* work, but won't if they are deprectated/not in Annonars
@@ -217,10 +219,11 @@ gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
       NCBI = ifelse(name_is_geneid, '-', str_glue("<a href='https://pubmed.ncbi.nlm.nih.gov/?term={gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>")),
       Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
     ) %>%
-    arrange(desc(high_impact), desc(direct_hit), start) %>%
-    select(gene_name, gene_id, seqnames, start, end, high_impact, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
+    arrange(desc(high_impact), desc(highlight), desc(direct_hit), start) %>%
+    select(gene_name, gene_id, seqnames, start, end, high_impact, highlight, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
   if (params$out_format == 'html') {
-    colors <- ifelse(tb$high_impact == '-', 'white', 'red')
+    colors1 <- ifelse(tb$high_impact == '-', 'white', 'red')
+    colors2 <- ifelse(tb$highlight == '-', 'white', 'orange')
     dt <- datatable(tb, rownames = FALSE, escape = FALSE,
                      options = list(dom = 'Bftilp', pageLength = 10,
                                     extensions = c('Buttons'),
@@ -229,10 +232,11 @@ gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
                                       targets = 1:4, visible = FALSE
                                     ))
                      )) %>%
-        formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors)) # textAlign = 'center'
+        formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
+        formatStyle('highlight', backgroundColor = styleRow(1:nrow(tb), colors2))
     return(dt)
   } else {
-    tb <- tb %>% select(gene_name, gene_id, high_impact, any_of(extra_cols))
+    tb <- tb %>% select(gene_name, gene_id, high_impact, highlight, any_of(extra_cols))
     return(kable(tb, caption = caption))
   }
 }
@@ -240,12 +244,12 @@ gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
 CNV_table_output <- function(tb, caption = NULL) {
   # Reorder & subset columns
     tb <- tb %>%
-      select(sample_id, ID, Chr, Start, End, Size, reportable, CNV.state, tool,
-             #curated.genes,
-             high.impact, call.in.reference, high.impact.genes,
-             copynumber, numsnp,  merged_tool_calls, tool_confidence,
+      select(sample_id, ID, Chr, Start, End, Size, reportable, CNV_type, CNV_caller,
+             high_impact, highlight, reference_overlap,
+             high_impact_genes, highlight_genes,
+             copynumber, n_snp_probes,  n_premerged_calls, caller_confidence,
              tool.coverage.overlap, tool.overlap.state,
-             coverage.by.ref, ref.tool )
+             reference_coverage, reference_caller )
 
   if (params$out_format == 'html') {
     dt <- datatable(tb,
@@ -259,16 +263,16 @@ CNV_table_output <- function(tb, caption = NULL) {
               buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
               columnDefs = list(
                 #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0,1,12:(ncol(tb)-1)), visible = FALSE)
+                list(targets = c(0,1,14:(ncol(tb)-1)), visible = FALSE)
               )
             )
           ) %>%
       formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
     return(dt)
   } else {
-    tb <- tb %>% select(Chr, Start, End, Size, reportable, CNV.state, tool,
-                        #curated.genes,
-                        high.impact, call.in.reference, high.impact.genes
+    tb <- tb %>% select(Chr, Start, End, Size, reportable, CNV_type, CNV_caller,
+                        high_impact, highlight, reference_overlap,
+                        high_impact_genes, highlight_genes
     )
     return(kable(tb, caption = caption))
   }
@@ -349,13 +353,13 @@ cnv_calls <- lapply(file.path(datapath, use_ids, paste0(use_ids, '.combined-cnv-
   bind_rows() %>%
   mutate(
       reportable = case_when(
-        CNV.state %!in% c('gain', 'loss') & length >= reportable.loh & call.in.reference ~ 'yes, in ref.',
-        CNV.state  %in% c('gain', 'loss') & length >= reportable.cnv & call.in.reference ~ 'yes, in ref.',
-        CNV.state %!in% c('gain', 'loss') & length >= critical.loh                       ~ 'critical',
-        CNV.state  %in% c('gain', 'loss') & length >= critical.cnv                       ~ 'critical',
-        CNV.state %!in% c('gain', 'loss') & length >= reportable.loh                     ~ 'yes',
-        CNV.state  %in% c('gain', 'loss') & length >= reportable.cnv                     ~ 'yes',
-        call.in.reference                                                                ~ 'no, in ref.',
+        CNV_type %!in% c('gain', 'loss') & length >= reportable.loh & reference_overlap ~ 'yes, in ref.',
+        CNV_type  %in% c('gain', 'loss') & length >= reportable.cnv & reference_overlap ~ 'yes, in ref.',
+        CNV_type %!in% c('gain', 'loss') & length >= critical.loh                       ~ 'critical',
+        CNV_type  %in% c('gain', 'loss') & length >= critical.cnv                       ~ 'critical',
+        CNV_type %!in% c('gain', 'loss') & length >= reportable.loh                     ~ 'yes',
+        CNV_type  %in% c('gain', 'loss') & length >= reportable.cnv                     ~ 'yes',
+        reference_overlap                                                                ~ 'no, in ref.',
         TRUE                                                                             ~ 'no') %>%
             factor(levels = c('critical', 'yes', 'yes, in ref.', 'no', 'no, in ref.'))
     )
@@ -409,11 +413,11 @@ metrics <- list(
            SNP.distance.to.ref = unlist(ifelse(is.na(ref_id), list('-'), list(c(SNP.genotype.distances[1], '-'))))
     ),
     cnv_calls %>%
-        #don't do individual tools here -> move to per tool section!
+        #don't do individual tools here -> move to per CNV_caller section!
         filter(tool.overlap.state != 'pre-overlap') %>%
         group_by(sample_id) %>%
-        mutate(class = factor(ifelse(CNV.state %!in% c('gain', 'loss'), 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
-               loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
+        mutate(class = factor(ifelse(CNV_type %!in% c('gain', 'loss'), 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
+               loss.gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
                loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
         ) %>%
         group_by(sample_id, loss.gain_log2ratio, class, .drop = F) %>%
@@ -463,17 +467,17 @@ Combined.colors <-  purrr::reduce(metric.colors, full_join, by = 'sample_id') %>
 
 get_call_stats_tool <- function(use.tool) {
     cnv_calls %>%
-        filter(tool.overlap.state != 'combined' & use.tool %in% tool) %>%
+        filter(tool.overlap.state != 'combined' & use.tool %in% CNV_caller) %>%
         group_by(sample_id) %>%
-        mutate(loss.gain_log2ratio = log2(sum(CNV.state == 'gain') / sum(CNV.state == 'loss')) %>% round(digits = 2),
+        mutate(loss.gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
                loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
         ) %>%
-        group_by(sample_id, CNV.state, loss.gain_log2ratio) %>%
+        group_by(sample_id, CNV_type, loss.gain_log2ratio) %>%
         summarise(total_calls = n(),
                   reportable_new_calls = sum(str_detect(reportable, 'critical|yes$')),
                   critical_new_calls = sum(reportable == 'critical')
         ) %>%
-        pivot_wider(names_from = CNV.state, values_from = contains('calls')) %>%
+        pivot_wider(names_from = CNV_type, values_from = contains('calls')) %>%
         tr_tibble()
 }
 
@@ -606,11 +610,11 @@ cat('\n\n')
 
 ```{r CNV.call.functions}
 
-get_cnv_y <- function(cnv.state, tool) {
+get_cnv_y <- function(CNV_type, CNV_caller) {
     # Go by tool order (start from 1)
-    out <- match(tool, cnv_tools)
+    out <- match(CNV_caller, cnv_tools)
     # For PennCNV LOH & gain/loss may overlap and need separate tracks
-    out <- ifelse(cnv.state %!in% c('gain', 'loss'), 1-out, out)
+    out <- ifelse(CNV_type %!in% c('gain', 'loss'), 1-out, out)
     out
 }
 
@@ -662,9 +666,9 @@ make_LRR_BAF_plots <- function(call.row,
   calls <- cnv_calls %>%
     filter(tool.overlap.state != 'combined' & seqnames == chr & end >= win_start & start < win_end) %>%
     mutate(x_pos = (end + start) / 2,
-           y_pos = map2_int(CNV.state, tool, get_cnv_y),
-           color = ifelse(CNV.state %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
-           color = ifelse(CNV.state == 'loss', '#f46d43', color),
+           y_pos = map2_int(CNV_type, CNV_caller, get_cnv_y),
+           color = ifelse(CNV_type %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
+           color = ifelse(CNV_type == 'loss', '#f46d43', color),
            Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
            ) %>%
     # Need to ensure table contains reference so everything is properly facet_wrapped
@@ -675,7 +679,8 @@ make_LRR_BAF_plots <- function(call.row,
     filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = start, end = end))) %>%
     as_tibble()
 
-  high_impact_list <- call.row$high.impact.genes %>% str_split(',') %>% unlist()
+  high_impact_list <- call.row$high_impact_genes %>% str_split(',') %>% unlist()
+  highlight_list <- call.row$highlight_genes %>% str_split(',') %>% unlist()
   gene.data <- gr_genes %>%
     filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
     as_tibble() %>%
@@ -685,6 +690,30 @@ make_LRR_BAF_plots <- function(call.row,
            direct_hit = gene_id %in% direct_genes$gene_id,
            high_impact = ifelse(gene_name %in% high_impact_list,
                                 paste(unlist(call.row$high.impact), collapse = ';'), NA_character_),
+           highlight = ifelse(gene_name %in% highlight_list,
+                                paste(unlist(call.row$highlight), collapse = ';'), NA_character_),
+    ) %>%
+    separate_rows(Sample_Name, sep = '---') %>%
+    # Need to ensure table contains reference so everything is properly facet_wrapped
+    bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
+                     x_pos = NA_integer_, y_pos = NA_integer_))
+
+  info_data <- gr_info %>%
+    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
+    as_tibble() %>%
+    mutate(x_pos = (end + start) / 2,
+           y_pos = 0,
+           Sample_Name = paste(sample_headers, collapse = '---'),
+           color = case_when(
+             section_name %in% high_impact_list ~ 'red',
+             section_name %in% highlight_list ~ 'orange',
+             band_staining == 'gpos100' ~ 'black',
+             band_staining ==  'gpos50' ~ 'grey30',
+             band_staining ==  'gpos25' ~ 'grey70',
+             centromer ~ 'lightblue',
+             TRUE ~ 'white'
+           ),
+           textcolor = ifelse(color %in% c('black', 'grey30'), 'white', 'black')
     ) %>%
     separate_rows(Sample_Name, sep = '---') %>%
     # Need to ensure table contains reference so everything is properly facet_wrapped
@@ -696,7 +725,7 @@ make_LRR_BAF_plots <- function(call.row,
   cnv_track <- ggplot(calls) +
     geom_tile(aes(x = x_pos, y = y_pos, width = length, height = .9, fill = color)) +
     scale_fill_identity() +
-    geom_text(aes(label = paste0(tool, ': ', CNV.state), x = x_pos, y = y_pos),
+    geom_text(aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
               vjust = 0.5, hjust = 0.5, size = 2.5) +
     scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
                        limits = c(win_start, win_end), oob = oob_keep) +
@@ -707,6 +736,9 @@ make_LRR_BAF_plots <- function(call.row,
           axis.line = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank(),
+          plot.background = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
           strip.background = element_blank(),
           strip.text.x = element_blank(),
           panel.spacing = panel_space_val) +
@@ -717,7 +749,7 @@ make_LRR_BAF_plots <- function(call.row,
                   fill = case_when(
                     !is.na(high_impact) ~ 'red',
                     direct_hit          ~ 'black',
-                    TRUE                ~ 'grey30'
+                    TRUE                ~ 'grey50'
                   ),
         show.legend = F)
     ) +
@@ -775,25 +807,43 @@ make_LRR_BAF_plots <- function(call.row,
       panel.spacing = panel_space_val
     )
 
-  # This still creates and empty plot area - not sure how to get rid of it
-  header <- ggplot(calls) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
-    theme(axis.line = element_blank(), plot.background = element_blank(),
-          panel.background = element_blank(), panel.border = element_blank())
+  # # This still creates and empty plot area - not sure how to get rid of it
+  # header <- ggplot(calls) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
+  #   theme(axis.line = element_blank(), plot.background = element_blank(),
+  #         panel.background = element_blank(), panel.border = element_blank())
+  header <- ggplot(info_data) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
+    geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
+              color = 'black', linewidth = 0.2) +
+    scale_fill_identity() +
+    geom_text(aes(label = section_name, x = x_pos, y = y_pos, color = textcolor),
+              vjust = 0.5, hjust = 0.5, size = 2.5, show.legend = F) +
+    scale_color_identity() +
+    theme_classic() +
+    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+    scale_y_continuous(expand = expansion()) +
+    theme(axis.line = element_blank(),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank(),
+          plot.background = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.spacing = panel_space_val)
 
-  n_cnvs <- length(na.omit(unique(calls$CNV.state)))
+  n_cnvs <- length(na.omit(unique(calls$CNV_type)))
   gg <- header / cnv_track / lrr / baf / cnv_track / gene_track + plot_layout(heights = c(1, n_cnvs, 10, 10, n_cnvs, 2))
 
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, reportable, call.in.reference, CNV.state, tool) %>%
+    dplyr::select(Sample_Name, 1, 3:4, reportable, reference_overlap, CNV_type, CNV_caller) %>%
     #dplyr::rename(Chr = seqnames) %>%
     arrange(Sample_Name, start) %>% #Chr
     rowwise() %>%
-    mutate(across(c(CNV.state, tool), ~paste(., collapse = ',')))
+    mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 
   gene.data <- gene.data %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(seqnames, start, end, width, strand, high_impact, direct_hit, gene_name, gene_type, gene_id) %>%
+    dplyr::select(seqnames, start, end, width, strand, high_impact, highlight, direct_hit, gene_name, gene_type, gene_id) %>%
     unique()
 
   list('gg' = gg, 'calls' = calls, 'genes' = gene.data)
@@ -804,16 +854,16 @@ reportable.calls <- cnv_calls %>%
     filter(tool.overlap.state != 'pre-overlap' &
                     sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
     dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-    mutate(call.in.reference = factor(call.in.reference),
-                 CNV.state = factor(CNV.state)) %>%
+    mutate(reference_overlap = factor(reference_overlap),
+           CNV_type = factor(CNV_type)) %>%
     arrange(reportable, Chr, Start)
 
 non.reportable.calls <- cnv_calls %>%
     filter(tool.overlap.state != 'pre-overlap' &
                  sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
     dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-    mutate(call.in.reference = factor(call.in.reference),
-                 CNV.state = factor(CNV.state)) %>%
+    mutate(reference_overlap = factor(reference_overlap),
+           CNV_type = factor(CNV_type)) %>%
     arrange(reportable, Chr, Start)
 
 ```
@@ -845,7 +895,7 @@ if (nrow(reportable.calls)>0) {
 
     state.str <- ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
                         paste0('(', str_remove(row$reportable, '(yes|no), '), ')'), '')
-    cat(paste0('### ', row$CNV.state, ' ', state.str, ': ', row$Chr, ' - ', format_size(row$Size), '\n\n'))
+    cat(paste0('### ', row$CNV_type, ' ', state.str, ': ', row$Chr, ' - ', format_size(row$Size), '\n\n'))
 
     res <- make_LRR_BAF_plots(row,
                               report.setting('call.data.and.plots', 'plot.region.minsize.reportable'),
@@ -900,7 +950,7 @@ if (nrow(non.reportable.calls)>0) {
     row <- non.reportable.calls[i,]
     state.str <- ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
                         paste0(' (', str_remove(row$reportable, '(yes|no), '), ')'), '')
-    cat(paste0('### ', row$Chr, ' - ', format_size(row$Size), ': ', row$CNV.state, state.str, '\n\n'))
+    cat(paste0('### ', row$Chr, ' - ', format_size(row$Size), ': ', row$CNV_type, state.str, '\n\n'))
 
     res <- make_LRR_BAF_plots(row,
                               report.setting('call.data.and.plots', 'plot.region.minsize.nonreportable'),
@@ -1008,14 +1058,22 @@ if (!is.na(ref_id)) {
   cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
 }
 
-# This is supposedly GRCh38
-data(human_karyotype, package="RIdeogram")
+# Use prepared static data table (genome build specific, UCSC derived) instead of inbuilt RIdeogram
+# data(human_karyotype, package="RIdeogram")
+genome_data <- gr_info %>% filter(centromer) %>%
+  group_by(size) %>%
+  reduce_ranges() %>%
+  as.data.frame() %>%
+  dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
+  mutate(Start = 0,
+         Chr = str_remove(Chr, 'chr')) %>%
+  select(Chr, Start, End, CE_start, CE_end)
 
 sample.calls <- cnv_calls %>%
-    dplyr::select(seqnames, start, end, CNV.state, sample_id) %>%
+    dplyr::select(seqnames, start, end, CNV_type, sample_id) %>%
     dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
-    mutate(Value = ifelse(CNV.state %!in% c('gain', 'loss'), 0, 1),
-           Value = ifelse(CNV.state == 'loss', -1, Value),
+    mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
+           Value = ifelse(CNV_type == 'loss', -1, Value),
            Chr = str_remove(Chr, 'chr'))
 overlay.tb <- sample.calls %>%
     filter(sample_id == !!sample_id) %>%
@@ -1030,7 +1088,7 @@ svg_file1 <- tempfile(fileext = '.svg')
 #somehow 'convertSVG' can't deal with absolute paths
 png_file1 <- file.path(image_folder, 'chunk_ideogram_virtualKaryotype.png')
 
-ideogram(human_karyotype, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
+ideogram(genome_data, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
 convertSVG(svg_file1, file = png_file1)
 
 if (params$out_format == 'html') {
@@ -1048,7 +1106,7 @@ if (!is.na(ref_id)) {
   svg_file2 <- tempfile(fileext = '.svg')
   png_file2 <- file.path(image_folder, 'chunk_ideogram_virtualKaryotype_vsRef.png')
 
-  ideogram(human_karyotype, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
+  ideogram(genome_data, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
          colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
   convertSVG(svg_file2, file = png_file2)
 

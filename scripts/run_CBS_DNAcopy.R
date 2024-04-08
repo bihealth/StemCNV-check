@@ -55,13 +55,13 @@ cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = min.widt
 
 tb <- segments.summary(cna.basic.smoothed.segmented) %>%
   		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
-									numsnp = num.mark, sample_id = ID) %>%
+									n_snp_probes = num.mark, sample_id = ID) %>%
 	mutate(
 		sample_id = sampleID,
 		length = end - start,
 		Chr = paste0('chr', Chr),
 		Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-		snp.density = numsnp / length * 1e6,
+		snp.density = n_snp_probes / length * 1e6,
 		copynumber = case_when(
 			#Male is default CN=1 on X & Y, also unqiue cutoffs
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median < LRR.male.XorY.loss       ~ 0,
@@ -82,18 +82,18 @@ tb <- segments.summary(cna.basic.smoothed.segmented) %>%
 			TRUE ~ 2,
 			.default = 2
 		),
-		CNV.state = case_when(# Male is default CN=1 on X & Y
+		CNV_type = case_when(# Male is default CN=1 on X & Y
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & copynumber == 2     ~ 'gain',
 			sex == 'm' & Chr %in% c('chrX', 'chrY') & copynumber == 1     ~ NA,
 			copynumber > 2                                                ~ 'gain',
 			copynumber < 2                                                ~ 'loss ',
 			.default = NA
 		),
-		tool = 'CBS',
-		ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
-		tool_confidence = NA,
+		CNV_caller = 'CBS',
+		ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
+		caller_confidence = NA,
 	) %>%
-	filter(!is.na(CNV.state) & !is.na(Chr))
+	filter(!is.na(CNV_type) & !is.na(Chr))
 
 if (sex == 'f') {
 	tb <- filter(tb, Chr != 'chrY')

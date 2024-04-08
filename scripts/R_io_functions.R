@@ -63,22 +63,22 @@ read_raw <- function(filename) {
 ## PennCNV
 read_PennCNV <- function(filename) {
 	read.table(filename, sep='', header = F, fill=T,
-						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'tool_confidence')) %>%
+						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')) %>%
 		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
-		dplyr::rename(start = start_pos, end = end_pos, sample_id = input) %>%
+		dplyr::rename(start = start_pos, end = end_pos, sample_id = input, n_snp_probes = numsnp) %>%
 		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
 			   across(c(4,10), ~as.numeric(.)),
 			   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
 			   length = str_remove_all(length, ',') %>% as.integer(),
-			   snp.density = numsnp / length * 1e6,
+			   snp.density = n_snp_probes / length * 1e6,
 			   copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
 			   hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
-			   CNV.state = ifelse(copynumber < 2, 'loss', NA),
-			   CNV.state = ifelse(copynumber == 2, 'LOH', CNV.state),
-			   CNV.state = ifelse(copynumber > 2, 'gain', CNV.state),
-			   CNV.state = as.character(CNV.state),
-			   tool = 'PennCNV',
-			   ID = paste(tool, CNV.state, Chr, start, end, sep='_'),
+			   CNV_type = ifelse(copynumber < 2, 'loss', NA),
+			   CNV_type = ifelse(copynumber == 2, 'LOH', CNV_type),
+			   CNV_type = ifelse(copynumber > 2, 'gain', CNV_type),
+			   CNV_type = as.character(CNV_type),
+			   CNV_caller = 'PennCNV',
+			   ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
 			   # basename can't handly empty input ...
 			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
 		)
@@ -131,6 +131,18 @@ load_gtf_data <- function(config) {
 	gr_genes
 }
 
+## GenomeInfo Data
+
+load_genomeInfo <- function(config) {
+
+	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
+	gr_info <- read_tsv(get_static_path(config$static_data$genomeInfo_file, config$basedir)) %>%
+		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
+		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name))
+
+	gr_info
+}
+
 
 # Output
 
@@ -142,23 +154,25 @@ expected_final_tb <- tibble(
 	end = integer(),
 	#Maybe make this a list_col ? granges can calculate width anyway
 	length = integer(),
-	CNV.state = character(),
+	CNV_type = character(),
 	ID = character(),
-	call.in.reference = logical(),
-	coverage.by.ref = list(),
-	tool = list(),
-	merged_tool_calls = list(),
-	numsnp = list(),
+	reference_overlap = logical(),
+	CNV_caller = list(),
+	n_premerged_calls = list(),
+	n_snp_probes = list(),
 	copynumber = list(),
-	tool_confidence = list(),
+	caller_confidence = list(),
 	tool.overlap.state = character(),
 	coverage.overlap = list(),
 	tool.coverage.overlap = character(),
-	ref.tool = list(),
-	high.impact = list(),
-	high.impact.genes = character(),
+	reference_caller = list(),
+	reference_coverage = list(),
+	high_impact = list(),
+	high_impact_genes = character(),
+	highlight = list(),
+	highlight_genes = character(),
 	n_genes = integer(),
-	overlapping.genes = character()
+	overlapping_genes = character()
 	)
 list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
 

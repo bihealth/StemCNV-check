@@ -86,12 +86,12 @@ settings:
     min.snp.density: 10 #snps per Mb
     # FutureFeature
     density.windows: 100000     #window size for probe density calculation (0.5Mb)
-    min.gap.size: '__mean+sd__' #minimum distance between 2 probes to be considered a gap. Number or '__mean+sd__'
+    min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
     ## Calls from multiple tools are combined and combined if they match
     # This is the minimum coverage the largest single call in an combined group needs to have.
     # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
     tool.overlap.greatest.call.min.perc: 50
-    # This is minimum for the median of coverage percentages that tool in any merged group
+    # This is minimum for the median of coverage percentages from all tool in any merged group
     tool.overlap.median.cov.perc: 60
     ## Reference comparison
     min.reciprocal.coverage.with.ref: 80
@@ -104,11 +104,11 @@ settings:
     # These genelists are used to mark genes with high impact
     # Gene list should contain a Name as header and then one gene per line; comments (#) are allowed
     # Genes from curated and high impact lists can be scored differently, curated score takes precedence
-    curated_genelists:
-        - '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
-    highimpact_genelists:
-        - '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
-        - '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+    highimpact_curated_lists:
+        - '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.yaml'
+    highlight_lists:
+        - '__inbuilt__/supplemental-files/genelist-cancer-hotspots.yaml'
+        - '__inbuilt__/supplemental-files/genelist-cancer-drivers.yaml'
 
   make_cnv_vcf:
     filter-settings: '__default__'
