@@ -126,7 +126,7 @@ gaps <- complement_ranges(array) %>%
          ) %>%
   filter(!chrom_end & !chrom_start) %>%
   mutate(width_mean_sd = mean(width(.))+sd(width(.)),
-         gap_min_size = ifelse('{params.min_gap_size}' == '__mean+sd__',
+         gap_min_size = ifelse('{params.min_gap_size}' == 'auto-array',
                                unique(width_mean_sd),
                                as.numeric('{params.min_gap_size}'))) %>%
   filter(width(.) >= gap_min_size)

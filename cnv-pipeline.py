@@ -200,6 +200,8 @@ def check_config(args):
 		flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
 		flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
 		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
+		flatkey_ = re.sub('reports:__report:call.data.and.plots:(primary|secondary|reference_gt|regions_of_interest|__default__)',
+						  'reports:__report:call.data.and.plots:__plotsection', flatkey_)
 		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
 		if funcs is None:
 			print(flatkey, config_value)
@@ -345,8 +347,8 @@ def create_missing_staticdata(args):
 
 	# Run extra snakemake to check which files are missing & create them accordingly
 	with tempfile.TemporaryDirectory() as tmpdir:
-		density_windows = config_extract(('settings', 'postprocessing', 'density.windows',), config, DEF_CONFIG)
-		min_gap_size = config_extract(('settings', 'postprocessing', 'min.gap.size',), config, DEF_CONFIG)
+		density_windows = config_extract(('settings', 'array_attribute_summary', 'density.windows',), config, DEF_CONFIG)
+		min_gap_size = config_extract(('settings', 'array_attribute_summary', 'min.gap.size',), config, DEF_CONFIG)
 		ret = snakemake(
 			os.path.join(SNAKEDIR, "staticdata_creation.smk"),
 			local_cores=args.local_cores,
