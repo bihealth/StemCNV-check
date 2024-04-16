@@ -493,9 +493,12 @@ add_call_scoring <- function(tb) {
 			(score_values$callsize_verylarge * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$very.large.cnv) ) +
 			(score_values$callsize_large * (CNV_type %!in% c('gain', 'loss') & length >= score_thresholds$large.loh & length < score_thresholds$very.large.loh) ) +
 			(score_values$callsize_large * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$large.cnv & length < score_thresholds$very.large.cnv) ) +
-			# Extras: MulitCallerOverlap (15), PennCNV (10), Gap (-15), HighDensity (-15)
-			(score_values$MultiCallerOverlap * (tool.overlap.state == 'combined') ) +
-			(score_values$CalledBy_PennCNV * ('PennCNV' %in% CNV_caller) ) +
+			# Extras: CallerType(combined:10, PennCNV:5), Gap (-15), HighDensity (-15)
+			case_when(
+				tool.overlap.state == 'combined' ~ score_values$caller.type.multiOverlap,
+				'PennCNV' %in% CNV_caller        ~ score_values$caller.type.PennCNV,
+				TRUE							 ~ 0
+			) +
 			(score_values$Call_has_Gap * (call_has_probe_gap)) +
 			(score_values$HighSNPDensity * (high_probe_density)),
 		Call_Designation = case_when(

@@ -31,7 +31,11 @@ def read_sample_table(filename, with_opt=False):
                 continue
             line = line.split('\t')
             # reorder line
-            line_ordered = [line[header.index(val)] for val in cols]
+            try:
+                line_ordered = [line[header.index(val)] for val in cols]
+            except IndexError:
+                logging.error("Could not extract proper columns from this line:\n" + '\t'.join(line))
+                raise
             if with_opt:
                 samples.append(OrderedDict((name, val) for name, val in zip(cols, line_ordered)))
             else:

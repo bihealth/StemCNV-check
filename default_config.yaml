@@ -143,8 +143,9 @@ settings:
       highlight_per_gene: 10
       callsize_verylarge: 75
       callsize_large: 50
-      MultiCallerOverlap: 15
-      CalledBy_PennCNV: 10
+      # 'caller.type' scores are mutually exclusive
+      caller.type.multiOverlap: 10
+      caller.type.PennCNV: 5
       Call_has_Gap: -15
       HighSNPDensity: -15
 

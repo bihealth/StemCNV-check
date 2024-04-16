@@ -91,8 +91,8 @@ settings:
       highlight_per_gene: int
       callsize_verylarge: int
       callsize_large: int
-      MultiCallerOverlap: int
-      CalledBy_PennCNV: int
+      caller.type.multiOverlap: int
+      caller.type.PennCNV: int
       Call_has_Gap: int
       HighSNPDensity: int
 
