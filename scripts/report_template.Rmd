@@ -695,9 +695,6 @@ make_LRR_BAF_plots <- function(call.row,
                                total_min_size = 2e6, flank_factor = 2) {
 
   chr <- call.row$Chr
-  start <- call.row$Start
-  end <- call.row$End
-  size <- call.row$Size
 
   if (total_min_size < 1e4) {
     warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{start}-{end}) to at least 10kb'))
@@ -705,8 +702,8 @@ make_LRR_BAF_plots <- function(call.row,
   }
 
   # Set initial plot window as Call size * (1+2*flank_factor)
-  win_start <- start - size * flank_factor
-  win_end <- end + size * flank_factor
+  win_start <- call.row$Start - call.row$Size * flank_factor
+  win_end <- call.row$End + call.row$Size * flank_factor
   # If it is below minimum increase accordingly
   if (win_end - win_start < total_min_size) {
     #Don't want .5 positions
@@ -725,14 +722,14 @@ make_LRR_BAF_plots <- function(call.row,
     mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
 
   if (nrow(plot.data)==0){
-    warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{start}-{end} +- {round(size/1e3)}kb')
+    warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{win_start}-{win_end}')
     warning(warn_msg)
     return(list('gg' = warn_msg, 'calls' = tibble(), 'genes' = tibble()))
   }
 
   calls <- cnv_calls %>%
-    filter(tool.overlap.state != 'combined' & Chr == chr & end >= win_start & start < win_end) %>%
-    mutate(x_pos = (end + start) / 2,
+    filter(tool.overlap.state != 'combined' & Chr == chr & End >= win_start & Start < win_end) %>%
+    mutate(x_pos = (End + Start) / 2,
            y_pos = map2_int(CNV_type, CNV_caller, get_cnv_y),
            color = ifelse(CNV_type %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
            color = ifelse(CNV_type == 'loss', '#f46d43', color),
@@ -743,7 +740,7 @@ make_LRR_BAF_plots <- function(call.row,
                      x_pos = NA_integer_, y_pos = NA_integer_))
 
   direct_genes <- gr_genes %>%
-    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = start, end = end))) %>%
+    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = call.row$Start, end = call.row$End))) %>%
     as_tibble()
 
   high_impact_list <- call.row$high_impact_genes %>% str_split(',') %>% unlist()
@@ -820,9 +817,6 @@ make_LRR_BAF_plots <- function(call.row,
                   ),
         show.legend = F)
     ) +
-    # Not readable most of the time
-    # geom_text(aes(label = ID, x = x_pos, y = y_pos),
-    # 		  vjust = 0.5, hjust = 0.5, size = 2.5) +
     scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) +
     scale_fill_identity() +
@@ -838,7 +832,7 @@ make_LRR_BAF_plots <- function(call.row,
 
   lrr <- ggplot(plot.data) +
     geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = start, xmax = end, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
+              aes(xmin = call.row$Start, xmax = call.row$End, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
     geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) +
     geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +
@@ -859,7 +853,7 @@ make_LRR_BAF_plots <- function(call.row,
     geom_hline(yintercept = 0, col = 'black', linewidth=0.5) +
     geom_hline(yintercept = 1, col = 'black', linewidth=0.5) +
     geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = start, xmax = end, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
+              aes(xmin = call.row$Start, xmax = call.row$End, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
     geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +
     scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
@@ -874,10 +868,6 @@ make_LRR_BAF_plots <- function(call.row,
       panel.spacing = panel_space_val
     )
 
-  # # This still creates and empty plot area - not sure how to get rid of it
-  # header <- ggplot(calls) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
-  #   theme(axis.line = element_blank(), plot.background = element_blank(),
-  #         panel.background = element_blank(), panel.border = element_blank())
   header <- ggplot(info_data) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
     geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
               color = 'black', linewidth = 0.2) +
@@ -903,7 +893,7 @@ make_LRR_BAF_plots <- function(call.row,
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
     dplyr::select(Sample_Name, 1, 3:4, Call_Designation, Score, reference_overlap, CNV_type, CNV_caller) %>%
-    arrange(Sample_Name, Call_Designation, Score, start) %>%
+    arrange(Sample_Name, Call_Designation, Score, Start) %>%
     rowwise() %>%
     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 

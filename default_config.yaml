@@ -251,9 +251,10 @@ reports:
       #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
       # enries with __[column] will use all other samples with the same value in [column]
       # entries with _[column] expect a column that contains additional (, separated) sample_ids
-      extra_samples: ['__Chip_Name', '__Sample_Group']
-      # You can also use additional metadata columns from the sample table
-      dendrogram.color.by: 'Sample_Group'
+      # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
+      extra_samples: ['__Chip_Name']
+      # You can also use additional metadata columns from the sample table, i.e. "Sample_Group"
+      dendrogram.color.by: 'Chip_Name'
       dendrogram.shape.by: 'Chip_Name'
 
 

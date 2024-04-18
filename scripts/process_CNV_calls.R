@@ -359,6 +359,11 @@ annotate_impact_lists <- function(gr, config, lists = 'high_impact') {
 	} else {
 		quit('Can only annotate "high_impact" or "highlight" lists')
 	}
+	#Don't do anything if no lists are defined
+	if (length(config_sect) == 0) {
+		return(gr)
+	}
+
 	col_name_g <- paste0(col_name, '_genes')
 
 	yaml_files <- unlist(config_sect) %>%
