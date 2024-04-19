@@ -368,17 +368,21 @@ def create_missing_staticdata(args):
 					'array_density_outname': args.array_density_out,
 					'array_gaps_outname': args.array_gaps_out,
 					'gtf_file_outname': args.gencode_gtf_out,
+					'genomeFasta_file_outname': args.gencode_fasta_out,
 					'density_windows': density_windows,
 					'min_gap_size': min_gap_size,
 					}
 		)
 
-	logger.info("""All files generated, add the following lines to the static-data section of your config file:
+	logger.info("""All files generated, add/update the following lines in the static-data section of your config file:
+  genome_fasta_file: {fasta_out}
+  genome_gtf_file: {gtf_out}	
   pfb_file: {pfb_out}
   GCmodel_file: {gcmodel_out}
   array_density: {density_out}
   array_gaps: {gap_out}
   genomeInfo_file: {info_out}""".format(
+		fasta_out=args.gencode_fasta_out, gtf_out=args.gencode_gtf_out,
 		pfb_out=args.penncnv_pfb_out, gcmodel_out=args.penncnv_gc_out, density_out=args.array_density_out,
 		gap_out=args.array_gaps_out, info_out=args.chromosome_info_out)
 	)
@@ -469,6 +473,8 @@ def setup_argparse():
 							   help="Filename for generated chromosome info file. Default: %(default)s")
 	group_static.add_argument('--gencode-gtf-out', default='static-data/gencode.{genome}.v45.gtf',
 							   help="Filename for generated chromosome info file. Default: %(default)s")
+	group_static.add_argument('--gencode-fasta-out', default='static-data/{genome}.genome.fa',
+							   help="Filename for generated chromosome info file. Default: %(default)s")
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
@@ -505,6 +511,7 @@ if __name__ == '__main__':
 		args.array_gaps_out = args.array_gaps_out.format(genome=args.genome, array=args.snp_array_name)
 		args.chromosome_info_out = args.chromosome_info_out.format(genome=args.genome)
 		args.gencode_gtf_out = args.gencode_gtf_out.format(genome=args.genome)
+		args.gencode_fasta_out = args.gencode_fasta_out.format(genome=args.genome)
 		if not os.path.isdir(args.directory):
 			os.makedirs(args.directory)
 		ret = create_missing_staticdata(args)

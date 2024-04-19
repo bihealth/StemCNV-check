@@ -2,7 +2,7 @@ static_data:
     bpm_manifest_file: '' #REQUIRED
     egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
-    genome_fasta_file: '' #REQUIRED
+    genome_fasta_file: 'static-data/{genome}.genome.fa'                          #REQUIRED, Auto-generatable
     genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                      #REQUIRED, Auto-generatable
     pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
     GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable

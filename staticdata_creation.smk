@@ -161,6 +161,17 @@ rule gencode_v45_gtf_download:
         gunzip {output}.gz
         """
 
+rule gencode_v45_genomeFasta_download:
+    output: config['genomeFasta_file_outname']
+    # Source gtf GRCh38:
+    params:
+        ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
+        release_path = "GRCh38.p14.genome.fa.gz" if GENOME == "hg38" else "GRCh37_mapping/GRCh37.primary_assembly.genome.fa.gz"
+    shell:
+        """
+        wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
+        gunzip {output}.gz
+        """
 
 rule ucsc_goldenpath_download:
     output: temp("{DOWNLOAD_DIR}/{genome}.{filename}.txt")

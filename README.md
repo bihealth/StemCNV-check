@@ -16,30 +16,31 @@ It requires a linux environment (or WSL on windows) and a working conda (or mamb
 ## Setup
 
 SCnv-Quac requires a sample table and a config file to run. 
-sample_table.txt (tab-separated)
 
-- sample_id
-- sex
-- ref
-- ...
+The sample table (default: sample_table.txt) is a tab-separated file describing all samples to be analyzed:
+- Required columns: Sample_ID, Chip_Name, Chip_Pos, Sex, Reference_Sample
+- Optional columns (reseved): Sample_Name, Regions_of_Interest
+- See the `sample_table_example.txt` file for a description of individual columns
+- Example files can be created using `<...> -a setup-files`
 
-The config file (default: config.yaml) needs to define static files specific to the used array platform and genome build:
-- egt
-- bpm
-- csv
-- gtf
-- genome.fa
+The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  
+Required settings that are not defined by default include static files specific to the used array platform and genome build:
+- egt_cluster_file: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array 
+- bpm_manifest_file: the beadpool manifest file (.bpm) for the array platform, available from Illumina or the provider running the array
+- csv_manifest_file (optional): the manifest file in csv format, available from Illumina or the provider running the array
 
 Additionally, the config file needs to define the following paths:
-- input_dir: path to the directory containing the raw data (.idat files)
-- output_dir: path to the directory where the analysis results will be stored
-- log_dir: path to the directory where the log files will be stored
+- raw_data_folder: path to the input directory under which the raw data (.idat) can be found. Ths folder should contain subfolders that match the Chip_Name column in the sample table (containing the array chip IDs)
+- data_path: the output of SCnv-QuaC will be writtento this path
+- log_path: the log files of SCnv-QuaC will be writtento this path
 
-Examples of these files can be created using this command: `<...> -a setup-files`
 
 ## Usage
 
-Before the first analysis additional array & genome-build specific files need to be created:
+Before the first analysis sample table and config file need to be set up (see above).
+Automatic generation of the additional array & genome-build specific static files can only be done if sample data for 
+that array is available.  
+*Note*: unless provided directly this will also include download of fasta and gtf file for the reference genome build.
 
 `<...> -a make-staticdata --genome <genome_build> --snp-array-name <array_platform> [-s <sample_table> -c <config_file>]`
 
@@ -49,3 +50,20 @@ To run the analysis:
 
 ## Output
 
+SCnv-QuaC will produce the following output files for each sample, when run with default settings:
+- `data_path/{sample}/{sample}.unprocessed.vcf`; `data_path/{sample}/{sample}.processed-data.tsv`  
+  The unfiltered SNP data of the array in vcf and tabular format (vcf contains more information)
+- `data_path/{sample}/{sample}.stats.txt`  
+  The CNV calls for the sample GenCall stat
+- `data_path/{sample}/{sample}.filtered-data-{filter}.tsv`  
+  Filtered SNP data in tabular format, the default filter is 'extended' (see default config), other filters can be defined
+- `data_path/{sample}/{sample}.CBS.tsv`  
+  The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm
+- `data_path/{sample}/{sample}.penncnv-{auto|chrx|chry}.tsv`  
+  The CNV calls for the sample from the PennCNV caller (Note: the chry file will only be created for samples annotated as male)
+- `data_path/{sample}/{sample}.combined-cnv-calls.{tsv|vcf}`  
+  The CNV calls processed, combined and annotated by SCnv-QuaC in tabular and vcf format. Annotation includes comparison against reference sample, call scoring and gene annotation.
+- `data_path/{sample}/{sample}.user-report.html`; ...  
+  Html reports containing summary statistics, QC statistics, lists CNV calls sorted by annotation score, plots of most/all CNVs and sample comparison. The default 'user-report' only contains plots for critical and reportable calls, a full report can easily be enabled in the config.yaml. The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
+- `data_path/{sample}/{sample}.summary-check.tsv`  
+  A tabular export of the summary table contained in the report
