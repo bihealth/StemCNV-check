@@ -280,10 +280,10 @@ CNV_ID_str <- function(Call_Designation, CNV_type, Chr, Size, i,
 CNV_table_output <- function(tb, caption = NULL) {
   # Reorder & subset columns
     tb <- tb %>%
-      # works, but doesn't actuallly hightlight the correct tab
+      # The links work, but switching the active tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
       mutate(Call_Details = paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'), '"',
-                                   # This part doesn't seem to do anything (or the same thing as <data-toggle="tab">)
-                                   ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')", '"',
+                                   # # This part doesn't seem to do anything (or the same thing as <data-toggle="tab">)
+                                   # ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')", '"',
                                    ">",
                                    pmap_chr(., CNV_ID_str), '</a>')) %>%
       select(sample_id, ID, i, Call_Designation, Call_Details,
@@ -485,10 +485,12 @@ metrics <- list(
         mutate(class = factor(ifelse(CNV_type %!in% c('gain', 'loss'), 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
                loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
                loss_gain_log2ratio = ifelse(is.infinite(loss_gain_log2ratio) | is.nan(loss_gain_log2ratio), NA, loss_gain_log2ratio),
-               highlight_calls = sum(!is.na(highlight)),
-               high_impact_calls = sum(!is.na(high_impact))
+               # highlight_calls = sum(!is.na(highlight)),
+               # high_impact_calls = sum(!is.na(high_impact))
         ) %>%
-        group_by(sample_id, loss_gain_log2ratio, highlight_calls, high_impact_calls, class, .drop = F) %>%
+        group_by(sample_id, loss_gain_log2ratio,
+                 #highlight_calls, high_impact_calls,
+                 class, .drop = F) %>%
         summarise(total_calls = n(),
                   reportable_calls = sum(Call_Designation == 'Reportable Call'),
                   critical_calls = sum(Call_Designation == 'Critical Call'),
@@ -697,7 +699,7 @@ make_LRR_BAF_plots <- function(call.row,
   chr <- call.row$Chr
 
   if (total_min_size < 1e4) {
-    warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{start}-{end}) to at least 10kb'))
+    warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{call.row$Start}-{call.row$End}) to at least 10kb'))
     total_min_size <- 1e4
   }
 
@@ -780,6 +782,7 @@ make_LRR_BAF_plots <- function(call.row,
            textcolor = ifelse(color %in% c('black', 'grey30'), 'white', 'black')
     ) %>%
     separate_rows(Sample_Name, sep = '---') %>%
+    mutate(Sample_Name = factor(Sample_Name, levels = sample_headers)) %>%
     # Need to ensure table contains reference so everything is properly facet_wrapped
     bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
                      x_pos = NA_integer_, y_pos = NA_integer_))
@@ -814,9 +817,8 @@ make_LRR_BAF_plots <- function(call.row,
                     !is.na(high_impact) ~ 'red',
                     direct_hit          ~ 'black',
                     TRUE                ~ 'grey50'
-                  ),
-        show.legend = F)
-    ) +
+                  )),
+        show.legend = F) +
     scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) +
     scale_fill_identity() +
@@ -940,13 +942,13 @@ reference_gt.call.table <- cnv_calls %>%
 
 ```
 
-```{r primary.cnvs.header, eval = include.section('primary.cnvs.table') | include.section('primary.cnvs.plots'), results='asis'}
+```{r primary_cnvs.header, eval = include.section('primary_cnvs.table') | include.section('primary_cnvs.plots'), results='asis'}
 cat('## Critical and reportable CNV calls {.tabset}\n\n')
 cat('This section includes all calls with critical or primary designation (=primary calls)\n\n')
 ```
 
 
-```{r primary.cnvs.table, results='asis', eval = include.section('primary.cnvs.table')}
+```{r primary_cnvs.table, results='asis', eval = include.section('primary_cnvs.table')}
 #cat('List of all primary CNV calls from the input sample.\n The pre-processing step merges overlapping calls from multiple callers with the same CNV_type after removing very small calls.\n\n')
 CNV_table_output(primary.call.table, caption = 'Primary CNV calls')
 cat('\n\n')
@@ -954,41 +956,41 @@ cat('\n\n')
 
 
 
-```{r primary.cnvs.plots, eval = include.section('primary.cnvs.plots'), results='asis'}
+```{r primary_cnvs.plots, eval = include.section('primary_cnvs.plots'), results='asis'}
 make_CNV_plot_section(primary.call.table, 'primary')
 cat('\n\n')
 ```
 
-```{r secondary.cnvs.header, eval = include.section('secondary.cnvs.table') | include.section('secondary.cnvs.plots'), results='asis'}
+```{r secondary_cnvs.header, eval = include.section('secondary_cnvs.table') | include.section('secondary_cnvs.plots'), results='asis'}
 cat('## Secondary calls {.tabset}\n\n')
 cat('This section includes call that are neither reportable, critical or matching the reference genotype\n\n')
 ```
 
 
 
-```{r secondary.cnvs.table, eval = include.section('secondary.cnvs.table'), results='asis', cache=FALSE}
+```{r secondary_cnvs.table, eval = include.section('secondary_cnvs.table'), results='asis', cache=FALSE}
 CNV_table_output(secondary.call.table, caption = 'Secondary calls')
 cat('\n\n')
 ```
 
-```{r secondary.cnvs.plots, eval = include.section('secondary.cnvs.plots'), results='asis'}
+```{r secondary_cnvs.plots, eval = include.section('secondary_cnvs.plots'), results='asis'}
 make_CNV_plot_section(secondary.call.table, 'secondary')
 cat('\n\n')
 ```
 
-```{r reference_gt.cnvs.header, eval = include.section('reference_gt.cnvs.table') | include.section('reference_gt.cnvs.plots'), results='asis'}
+```{r reference_gt.cnvs.header, eval = !is.na(ref_id) & (include.section('reference_gt.cnvs.table') | include.section('reference_gt.cnvs.plots')), results='asis'}
 cat('## Reference Genotype calls {.tabset}\n\n')
 cat('This section includes all calls that match the genotype of the reference sample\n\n')
 ```
 
 
 
-```{r reference_gt.cnvs.table, eval = include.section('reference_gt.cnvs.table'), results='asis', cache=FALSE}
+```{r reference_gt.cnvs.table, eval = !is.na(ref_id) & include.section('reference_gt.cnvs.table'), results='asis', cache=FALSE}
 CNV_table_output(reference_gt.call.table, caption = 'Reference genotype calls')
 cat('\n\n')
 ```
 
-```{r reference_gt.cnvs.plots, eval = include.section('reference_gt.cnvs.plots'), results='asis'}
+```{r reference_gt.cnvs.plots, eval = !is.na(ref_id) & include.section('reference_gt.cnvs.plots'), results='asis'}
 make_CNV_plot_section(reference_gt.call.table, 'reference_gt')
 cat('\n\n')
 ```

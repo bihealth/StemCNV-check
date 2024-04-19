@@ -167,7 +167,7 @@ reports:
   user-report:
     file_type: 'html' #REQUIRED
     exclude_sections:
-        - secondary.plots
+        - secondary_cnvs.plots
     call.data.and.plots:
       __default__:
         include.gene.table.details: 'Call'
@@ -193,10 +193,10 @@ reports:
     #  - QC.PennCNV
     #  - QC.CBS
     #  - QC.settings
-    #  - primary.cnvs.table
-    #  - primary.cnvs.plots
-    #  - secondary.cnvs.table
-    #  - secondary.cnvs.plots
+    #  - primary_cnvs.table
+    #  - primary_cnvs.plots
+    #  - secondary_cnvs.table
+    #  - secondary_cnvs.plots
     #  - reference_gt.table
     #  - reference_gt.plots
     #  - regions.of.interest
@@ -228,8 +228,8 @@ reports:
       # Using the same value twice skips 'yellow'
       warning_level2_red:
         - call_rate
-        - critical_CNV
-        - critical_LOH
+        - critical_calls_CNV
+        - critical_calls_LOH
         - high_impact_calls
       call_rate: [0.995, 0.99]  #red; Callrate fails if it is *below* these values
       SNP_distance_to_reference: [1, 5]
