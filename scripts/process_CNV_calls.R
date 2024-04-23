@@ -76,7 +76,8 @@ density.quantile.cutoff <- config$settings$CNV_processing$call_processing$densit
 
 #Scoring
 score_thresholds <- config$settings$CNV_processing$scoring_thresholds
-score_values <- config$settings$CNV_processing$scoring_values
+impact_scores <- config$settings$CNV_processing$Impact_scoring
+reliability_scores <- config$settings$CNV_processing$Reliability_scoring
 
 valid_name <- config$wildcard_constraints$sample_id
 if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
@@ -485,33 +486,45 @@ add_call_scoring <- function(tb) {
 	tb %>%
 	  rowwise() %>%
 	  mutate(
-		  Score =
+		  size_category = case_when(
+			length >= score_thresholds$extreme.loh & CNV_type %!in% c('gain', 'loss') ~ 'extreme',
+			length >= score_thresholds$extreme.cnv & CNV_type %in% c('gain', 'loss') ~ 'extreme',
+			length >= score_thresholds$very.large.loh & CNV_type %!in% c('gain', 'loss') ~ 'very_large',
+			length >= score_thresholds$very.large.cnv & CNV_type %in% c('gain', 'loss') ~ 'very_large',
+			length >= score_thresholds$large.loh & CNV_type %!in% c('gain', 'loss') ~ 'large',
+			length >= score_thresholds$large.cnv & CNV_type %in% c('gain', 'loss') ~ 'large',
+			length >= score_thresholds$medium.loh & CNV_type %!in% c('gain', 'loss') ~ 'medium',
+			length >= score_thresholds$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
+			TRUE ~ 'small'
+		  ),
+		  ImpactScore =
 			# High impact (base) & per gene/region [70, +5/g]
-			(score_values$highimpact_base * !any(length(high_impact) == 0) ) +
-			ifelse(!any(length(high_impact) == 0), score_values$highimpact_per_gene * (1 + str_count(high_impact_genes, ',')), 0) +
+			(impact_scores$highimpact_base * !any(length(high_impact) == 0) ) +
+			ifelse(!any(length(high_impact) == 0), impact_scores$highimpact_per_gene * (1 + str_count(high_impact_genes, ',')), 0) +
 			# Highlight (base) & per gene/region [0, +10/g]
 			# NOTE: this will count genes that are highlight AND high_impact with 15 in total
-			(score_values$highlight_base * !any(length(highlight) == 0) ) +
-			ifelse(!any(length(highlight) == 0), score_values$highlight_per_gene * (1 + str_count(highlight_genes, ',')), 0) +
+			(impact_scores$highlight_base * !any(length(highlight) == 0) ) +
+			ifelse(!any(length(highlight) == 0), impact_scores$highlight_per_gene * (1 + str_count(highlight_genes, ',')), 0) +
 			# Size cutoff points (very large / large, [75 / 50])
-			(score_values$callsize_verylarge * (CNV_type %!in% c('gain', 'loss') & length >= score_thresholds$very.large.loh) ) +
-			(score_values$callsize_verylarge * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$very.large.cnv) ) +
-			(score_values$callsize_large * (CNV_type %!in% c('gain', 'loss') & length >= score_thresholds$large.loh & length < score_thresholds$very.large.loh) ) +
-			(score_values$callsize_large * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$large.cnv & length < score_thresholds$very.large.cnv) ) +
-			# Extras: CallerType(combined:10, PennCNV:5), Gap (-15), HighDensity (-15)
-			case_when(
-				tool.overlap.state == 'combined' ~ score_values$caller.type.multiOverlap,
-				'PennCNV' %in% CNV_caller        ~ score_values$caller.type.PennCNV,
-				TRUE							 ~ 0
-			) +
-			(score_values$Call_has_Gap * (call_has_probe_gap)) +
-			(score_values$HighSNPDensity * (high_probe_density)),
-		Call_Designation = case_when(
+			(impact_scores$callsize_extreme * (CNV_type %!in% c('gain', 'loss') & size_category == 'extreme') ) +
+			(impact_scores$callsize_very_large * (CNV_type %!in% c('gain', 'loss') & size_category == 'very_large') ) +
+			(impact_scores$overlap_any_gene * n_genes),
+		  ReliabilityScore =
+			reliability_scores[[
+				ifelse(tool.overlap.state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
+				size_category]] +
+			(reliability_scores$Call_has_Gap * (call_has_probe_gap)) +
+			(reliability_scores$HighSNPDensity * (high_probe_density)),
+		  Call_Designation = case_when(
 			reference_overlap            				   ~ 'Origin Genotype',
-			Score >= score_thresholds$min.score.critical   ~ 'Critical Call',
-			Score >= score_thresholds$min.score.reportable ~ 'Reportable Call',
+			ImpactScore >= score_thresholds$min.impact.critical &
+				ReliabilityScore >= score_thresholds$min.reliability.critical  ~ 'Critical Call',
+			ImpactScore >= score_thresholds$min.impact.critical &
+				ReliabilityScore < score_thresholds$min.reliability.critical  ~ 'Reportable Call',
+			ImpactScore >= score_thresholds$min.impact.reportable &
+				ReliabilityScore >= score_thresholds$min.reliability.reportable ~ 'Reportable Call',
 			TRUE                         				   ~ 'Secondary Call'
-			)
+		  )
 	  ) %>% ungroup()
 
 }

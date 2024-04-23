@@ -375,15 +375,16 @@ def create_missing_staticdata(args):
 					}
 		)
 
-	logger.info("""All files generated, add the following lines to the static-data section of your config file:
+	if ret:
+		logger.info("""All files generated, add the following lines to the static-data section of your config file:
   pfb_file: {pfb_out}
   GCmodel_file: {gcmodel_out}
   array_density: {density_out}
   array_gaps: {gap_out}
   genomeInfo_file: {info_out}""".format(
-		pfb_out=args.penncnv_pfb_out, gcmodel_out=args.penncnv_gc_out, density_out=args.array_density_out,
-		gap_out=args.array_gaps_out, info_out=args.chromosome_info_out)
-	)
+			pfb_out=args.penncnv_pfb_out, gcmodel_out=args.penncnv_gc_out, density_out=args.array_density_out,
+			gap_out=args.array_gaps_out, info_out=args.chromosome_info_out)
+		)
 
 	return ret
 
@@ -500,7 +501,7 @@ if __name__ == '__main__':
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-staticdata':
-		args.snp_array_name = '_' + args.snp_array_name if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
+		args.snp_array_name = ('_' + args.snp_array_name) if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
 		args.penncnv_pfb_out = args.penncnv_pfb_out.format(genome=args.genome, array=args.snp_array_name)
 		args.penncnv_gc_out = args.penncnv_gc_out.format(genome=args.genome, array=args.snp_array_name)
 		args.array_density_out = args.array_density_out.format(genome=args.genome, array=args.snp_array_name)

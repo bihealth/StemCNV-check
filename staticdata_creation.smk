@@ -13,9 +13,13 @@ GENOME = config['genome']
 # ================================================================
 
 rule all:
-    input: [config['chrominfo_outname'], config['array_gaps_outname'], config['array_density_outname'],
-            config['pfb_outname'], config['gcmodel_outname'],
-            config['gtf_file_outname']]
+    input:
+        config['chrominfo_outname'],
+        config['array_gaps_outname'],
+        config['array_density_outname'],
+        config['pfb_outname'],
+        config['gcmodel_outname'],
+        config['gtf_file_outname']
 
 
 #Note: PennCNV does not seem to work with UCSC chromosome style in PFB file
@@ -42,12 +46,12 @@ vcf.info <- as_tibble(snp.vcf@fix) %>%
          GC = str_remove(GC, 'GC='),
          POS = as.numeric(POS),
          alleles = paste0(REF, ',', ALT),
-  			 A_freq = (2*N_AA + N_AB) / (2*(N_AA + N_AB + N_BB)),
-  			 #This is B_allele frequency, or 'population frequency B-allele'. PennCNV needs this
-  			 PFB = (2*N_BB + N_AB) / (2*(N_AA + N_AB + N_BB)),
-  			 #This is AF/Alternate allele frequency. Some bcftool modules need this
-  			 Alt_freq = ifelse(ALLELE_B == 1, PFB, A_freq)
-  			 )
+         A_freq = (2*N_AA + N_AB) / (2*(N_AA + N_AB + N_BB)),
+         #This is B_allele frequency, or 'population frequency B-allele'. PennCNV needs this
+         PFB = (2*N_BB + N_AB) / (2*(N_AA + N_AB + N_BB)),
+         #This is AF/Alternate allele frequency. Some bcftool modules need this
+         Alt_freq = ifelse(ALLELE_B == 1, PFB, A_freq)
+         )
 # ensure that CHROM uses NCBI/ENSEMBL styles
 styles <- genomeStyles()
 vcf.info$Chr <- factor(mapSeqlevels(vcf.info$CHROM %>% as.character(), 'NCBI'),
@@ -57,7 +61,7 @@ vcf.info %>%
   select(ID, Chr, POS, PFB) %>%
   dplyr::rename(Name = ID, Position = POS) %>%
   filter(if_all(everything(), ~!is.na(.))) %>%
-	arrange(Chr, Position) %>%
+  arrange(Chr, Position) %>%
   write_tsv('{output}')
 EOF
 """

@@ -287,7 +287,7 @@ CNV_table_output <- function(tb, caption = NULL) {
                                    ">",
                                    pmap_chr(., CNV_ID_str), '</a>')) %>%
       select(sample_id, ID, i, Call_Designation, Call_Details,
-             Score, Chr, Start, End, Size, CNV_type, CNV_caller,
+             ImpactScore, ReliabilityScore, Chr, Start, End, Size, CNV_type, CNV_caller,
              high_impact, highlight, reference_overlap,
              call_has_probe_gap, high_probe_density,
              high_impact_genes, highlight_genes,
@@ -308,14 +308,14 @@ CNV_table_output <- function(tb, caption = NULL) {
               buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
               columnDefs = list(
                 #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0,1,2,3,7,8,19:(ncol(tb)-1)), visible = FALSE)
+                list(targets = c(0,1,2,3,8,9,20:(ncol(tb)-1)), visible = FALSE)
               )
             )
           ) %>%
       formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
     return(dt)
   } else {
-    tb <- tb %>% select(Call_Designation, Score,
+    tb <- tb %>% select(Call_Designation, ImpactScore, ReliabilityScore,
                         Chr, Start, End, Size, CNV_type, CNV_caller,
                         high_impact, highlight, reference_overlap,
                         call_has_probe_gap, high_probe_density,
@@ -533,7 +533,7 @@ metric.colors <- list(
                  reportable_calls_LOH = apply_gr_th(reportable_calls_LOH, reportable_LOH_warnings, 'reportable_calls_LOH'),
                  critical_calls_CNV = apply_gr_th(critical_calls_CNV, critical_CNV_warnings, 'critical_calls_CNV'),
                  critical_calls_LOH = apply_gr_th(critical_calls_LOH, critical_LOH_warnings, 'critical_calls_LOH'),
-                 # This is already part of the critical / reportable Score
+                 # This is already part of the critical / reportable ImpactScore
                  # highlight_calls = apply_gr_th(highlight_calls, highlight_warnings, 'highlight_calls'),
                  # high_impact_calls = apply_gr_th(high_impact_calls, high_impact_warnings, 'high_impact_calls')
                 )
@@ -894,8 +894,8 @@ make_LRR_BAF_plots <- function(call.row,
 
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, Call_Designation, Score, reference_overlap, CNV_type, CNV_caller) %>%
-    arrange(Sample_Name, Call_Designation, Score, Start) %>%
+    dplyr::select(Sample_Name, 1, 3:4, Call_Designation, ImpactScore, ReliabilityScore, reference_overlap, CNV_type, CNV_caller) %>%
+    arrange(Sample_Name, Call_Designation, ImpactScore, Start) %>%
     rowwise() %>%
     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 
@@ -917,7 +917,7 @@ cnv_calls <- cnv_calls %>%
            #high_impact = factor(high_impact),
            #highlight = factor(highlight),
   ) %>%
-  arrange(desc(Score), desc(Size), Chr, Start)
+  arrange(desc(ImpactScore), desc(Size), Chr, Start)
 
 primary.call.table <- cnv_calls %>%
   filter(tool.overlap.state != 'pre-overlap' &
@@ -1026,7 +1026,8 @@ if (any(!is.na(regions)) & length(regions)>0) {
       mutate(Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
              i = row_number(),
              region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
-             Score = 0,
+             ImpactScore = 0,
+             ReliabilityScore = 0,
              ID = region_name,
              ) %>%
       bind_rows(expected_final_tb)
