@@ -56,6 +56,8 @@ def get_tool_filter_settings(tool):
   if tool.split(':')[0] == 'report':
     report_settings = config['reports'][tool.split(':')[1]]
     out = config_extract((tool.split(':')[2], 'filter-settings'), report_settings, config['reports']['__default__'])
+  elif tool.count(':') == 2 and tool.split(':')[1] == 'CNV_processing':
+    out = config['settings']['CNV_processing']['call_processing']['filter-settings']
   else:
     out = config['settings'][tool]['filter-settings']
   if out == '__default__':
@@ -426,6 +428,9 @@ def get_preprocess_input(wildcards):
   files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex == 'm' else []
   files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
 
+  filter = get_tool_filter_settings(f"settings:CNV_processing:call_processing")
+  files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data-{filter}.tsv")]
+
   files += [os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")] if ref_id else []
 
   return files
@@ -443,7 +448,7 @@ rule run_process_CNV_calls:
   params:
     penncnv = '-p' if 'PennCNV' in config['settings']['CNV.calling.tools'] else '',
     cbs = '-c' if 'CBS' in config['settings']['CNV.calling.tools'] else '',
-    settings=config['settings']['postprocessing']
+    settings=config['settings']['CNV_processing']
   log:
     err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
     out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")

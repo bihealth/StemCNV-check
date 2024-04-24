@@ -172,6 +172,8 @@ def check_config(args, required_only=False):
 		flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
 		flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
 		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
+		flatkey_ = re.sub('reports:__report:call.data.and.plots:(primary|secondary|reference_gt|regions_of_interest|__default__)',
+						  'reports:__report:call.data.and.plots:__plotsection', flatkey_)
 		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
 		if funcs is None:
 			print(flatkey, config_value)
@@ -295,8 +297,8 @@ def create_missing_staticdata(args):
 		'array_gaps_outname': args.array_gaps_out,
 		'gtf_file_outname': args.gencode_gtf_out,
 		'genomeFasta_file_outname': args.gencode_fasta_out,
-		'density_windows': config_extract(('settings', 'postprocessing', 'density.windows',), config, DEF_CONFIG),
-		'min_gap_size': config_extract(('settings', 'postprocessing', 'min.gap.size',), config, DEF_CONFIG),
+		'density_windows': config_extract(('settings', 'array_attribute_summary', 'density.windows',), config, DEF_CONFIG),
+		'min_gap_size': config_extract(('settings', 'array_attribute_summary', 'min.gap.size',), config, DEF_CONFIG),
 		}
 
 	# fasta file is needed to get vcf files
@@ -339,6 +341,7 @@ def create_missing_staticdata(args):
 	vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
 				 sample_id, _, _, _, _ in sample_data]
 	vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
+
 	if vcf_present:
 		use_vcf = vcf_present[0]
 	else:
@@ -385,7 +388,8 @@ def create_missing_staticdata(args):
 			config=dict(static_snake_config, **{'TMPDIR': tmpdir, 'vcf_input_file': use_vcf}),
 		)
 
-	logger.info("""All files generated, add/update the following lines in the static-data section of your config file:
+	if ret:
+		logger.info("""All files generated, add/update the following lines in the static-data section of your config file:
   genome_fasta_file: {0.gencode_fasta_out}
   genome_gtf_file: {0.gencode_gtf_out}	
   pfb_file: {0.penncnv_pfb_out}

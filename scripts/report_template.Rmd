@@ -11,7 +11,7 @@ params:
   base_path: ''
   sample_id: ''
   sampletable: 'sample_table.txt'
-  report_name: 'CNV-QC-report'
+  report_name: 'CNV-report'
   out_format: 'html'
   configfile: 'config.yaml'
   workdir: ''
@@ -46,47 +46,57 @@ library(sessioninfo)
 `%!in%` <- Negate(`%in%`)
 
 get_script_dir <- function() {
-	match <- commandArgs(trailingOnly = FALSE) %>%
-		str_subset('--file=') %>%
-		str_remove('--file=')
-	check <- sys.frames()[[1]]$ofile
-	if (length(match) > 0) {
-        # Rscript
-		return(normalizePath(match) %>% dirname())
-	} else if (!is.null(check)) {
-		# source'd via R console
-        return(normalizePath(check) %>% dirname())
-	} else {
-		# likely testing in IDE
-		return ('scripts')
-	}
+  match <- commandArgs(trailingOnly = FALSE) %>%
+    str_subset('--file=') %>%
+    str_remove('--file=')
+  check <- sys.frames()[[1]]$ofile
+  if (length(match) > 0) {
+    # Rscript
+	return(normalizePath(match) %>% dirname())
+  } else if (!is.null(check)) {
+    # source'd via R console
+    return(normalizePath(check) %>% dirname())
+  } else {
+    # likely testing in IDE
+	return ('scripts')
+  }
 }
 source(file.path(get_script_dir(), 'R_io_functions.R'))
 
-report.setting <- function(...) {
-  args <- list(...)
-  #Check config for this specific report
-  subconfig <- config$reports[[params$report_name]]
+config_parse <- function(args, report_name) {
+  subconfig <- config$reports[[report_name]]
   for (arg in args) {
     subconfig <- subconfig[[arg]]
   }
-  # Fall back to default
-  if (is.null(subconfig)) {
-    subconfig <- config$reports[['__default__']]
-    for (arg in args) {
-      subconfig <- subconfig[[arg]]
-    }
+  subconfig
+}
+
+report.setting <- function(...) {
+  args <- list(...)
+  #Check if retry for '__default__' plot-section is needed
+  if (args[[1]] == 'call.data.and.plots') {
+    retry_default <- args[[2]] != 'filter-settings'
+    retry_args <- args
+    retry_args[[2]] <- '__default__'
+  } else {
+    retry_default <- FALSE
   }
-  # setting not found - error
-  if (is.null(subconfig)) {
+  #Check config settings for this specific report
+  out.value <- config_parse(args, params$report_name)
+  if (is.null(out.value) & retry_default) out.value <- config_parse(retry_args, params$report_name)
+  # Fall back to default report settings
+  if (is.null(out.value)) out.value <- config_parse(args, '__default__')
+  if (is.null(out.value) & retry_default) out.value <- config_parse(retry_args, '__default__')
+  # Setting not found - error
+  if (is.null(out.value)) {
     quit(paste0('Tried to find non-existing config settings: reports$',
                 params$report_name, "$", paste(args, collapse="$")))
   }
   #Convert to numeric if that makes sense
-  if (!any(is.na(suppressWarnings(as.numeric(subconfig))))) {
-    subconfig <- as.numeric(subconfig)
+  if (!any(is.na(suppressWarnings(as.numeric(out.value))))) {
+    out.value <- as.numeric(out.value)
   }
-  subconfig
+  out.value
 }
 
 
@@ -141,20 +151,19 @@ if (!is.na(ref_id)) {
   use_ids <- sample_id
 }
 
-#Reportable thresholds
-reportable.loh <- report.setting('thresholds', 'reportable.loh')
-reportable.cnv <- report.setting('thresholds', 'reportable.cnv')
-critical.loh <- report.setting('thresholds', 'critical.loh')
-critical.cnv <- report.setting('thresholds', 'critical.cnv')
-
 #Warning tresholds
-callrate_warnings <- report.setting('QCwarnings', 'callrate')
-total_CNV_warnings <- report.setting('QCwarnings', 'total_CNV')
-total_LOH_warnings <- report.setting('QCwarnings', 'total_LOH')
-ratio_CNV_warnings <- report.setting('QCwarnings', 'loss_gain_ratio')
-sizable_CNV_warnings <- report.setting('QCwarnings', 'sizable_CNV')
-sizable_LOH_warnings <- report.setting('QCwarnings', 'sizable_LOH')
-SNP_distance_reference <- report.setting('QCwarnings', 'SNP_distance_reference')
+red_warnings <- report.setting('SampleQCwarnings', 'warning_level2_red')
+callrate_warnings <- report.setting('SampleQCwarnings', 'call_rate')
+SNP_distance_to_ref_warning <- report.setting('SampleQCwarnings', 'SNP_distance_to_reference')
+ratio_CNV_warnings <- report.setting('SampleQCwarnings', 'loss_gain_log2ratio')
+total_CNV_warnings <- report.setting('SampleQCwarnings', 'total_calls_CNV')
+total_LOH_warnings <- report.setting('SampleQCwarnings', 'total_calls_LOH')
+reportable_CNV_warnings <- report.setting('SampleQCwarnings', 'reportable_calls_CNV')
+reportable_LOH_warnings <- report.setting('SampleQCwarnings', 'reportable_calls_LOH')
+critical_CNV_warnings <- report.setting('SampleQCwarnings', 'critical_calls_CNV')
+critical_LOH_warnings <- report.setting('SampleQCwarnings', 'critical_calls_LOH')
+# highlight_warnings <- report.setting('SampleQCwarnings', 'highlight_calls')
+# high_impact_warnings <- report.setting('SampleQCwarnings', 'high_impact_calls')
 
 valid_name <- config$wildcard_constraints$sample_id
 # valid_name <- ifelse(is.null(valid_name), '[0-9]{12}_R[0-9]{2}C[0-9]{2}', valid_name)
@@ -193,9 +202,9 @@ simple_table_output <- function(tb, caption=NULL) {
   }
 }
 
-gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
+gene_table_output <- function(tb, plotsection, caption = NULL, extra_cols = c()) {
 
-  if (report.setting('call.data.and.plots', 'include.gene.table.details') == 'Call') {
+  if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') == 'Call') {
     tb <- filter(tb, direct_hit)
     gene_area <- 'call'
   } else {
@@ -241,19 +250,55 @@ gene_table_output <- function(tb, caption = NULL, extra_cols = c()) {
   }
 }
 
+format_size <- function(size) {
+  oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
+  num <- round(size / oom_f)
+  paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
+}
+
+CNV_ID_str <- function(Call_Designation, CNV_type, Chr, Size, i,
+                       region_name = NULL,
+                       formatting = 'nice', ...) {
+  #ROIs might have user defined names
+  if (!is.null(region_name) & formatting == 'nice') return(paste0('ROI: ', region_name))
+  else if(!is.null(region_name)) return(paste0('ROI-',region_name))
+  # All other calls
+  type_str <- case_when(
+    Call_Designation == 'Origin Genotype' ~ 'RefGT',
+    Call_Designation == 'Critical Call' ~ 'Crit',
+    Call_Designation == 'Reportable Call' ~ 'Rep',
+    Call_Designation == 'Secondary Call' ~ 'Sec'
+  )
+  if (formatting == 'nice') {
+    return(str_glue('{type_str}-{i} {CNV_type}: {Chr}-{format_size(Size)}'))
+  } else {
+    return(str_glue('{type_str}-{i}-{CNV_type}-{Chr}-{format_size(Size)}') %>%
+             str_to_lower())
+  }
+}
+
 CNV_table_output <- function(tb, caption = NULL) {
   # Reorder & subset columns
     tb <- tb %>%
-      select(sample_id, ID, Chr, Start, End, Size, reportable, CNV_type, CNV_caller,
+      # The links work, but switching the active tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
+      mutate(Call_Details = paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'), '"',
+                                   # # This part doesn't seem to do anything (or the same thing as <data-toggle="tab">)
+                                   # ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')", '"',
+                                   ">",
+                                   pmap_chr(., CNV_ID_str), '</a>')) %>%
+      select(sample_id, ID, i, Call_Designation, Call_Details,
+             Score, Chr, Start, End, Size, CNV_type, CNV_caller,
              high_impact, highlight, reference_overlap,
+             call_has_probe_gap, high_probe_density,
              high_impact_genes, highlight_genes,
              copynumber, n_snp_probes,  n_premerged_calls, caller_confidence,
              tool.coverage.overlap, tool.overlap.state,
-             reference_coverage, reference_caller )
+             reference_coverage, reference_caller, percent_gap_coverage )
 
   if (params$out_format == 'html') {
     dt <- datatable(tb,
             rownames = FALSE,
+            escape = FALSE,
             extensions = c('Buttons', 'Scroller'),
             filter = 'top',
             caption = caption,
@@ -263,23 +308,57 @@ CNV_table_output <- function(tb, caption = NULL) {
               buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
               columnDefs = list(
                 #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0,1,14:(ncol(tb)-1)), visible = FALSE)
+                list(targets = c(0,1,2,3,7,8,19:(ncol(tb)-1)), visible = FALSE)
               )
             )
           ) %>%
       formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.')
     return(dt)
   } else {
-    tb <- tb %>% select(Chr, Start, End, Size, reportable, CNV_type, CNV_caller,
+    tb <- tb %>% select(Call_Designation, Score,
+                        Chr, Start, End, Size, CNV_type, CNV_caller,
                         high_impact, highlight, reference_overlap,
+                        call_has_probe_gap, high_probe_density,
                         high_impact_genes, highlight_genes
     )
     return(kable(tb, caption = caption))
   }
-
-
 }
 
+make_CNV_plot_section <- function(call.table, plotsection = 'primary') {
+  if (nrow(call.table) == 0) {
+    return(str_glue('No {plotsection} CNV calls found.'))
+  }
+  for (i in call.table$i) {
+      row <- call.table[i,]
+
+      cat('### ', pmap_chr(row, CNV_ID_str, formatting = 'nice'), '\n\n')
+
+      res <- make_LRR_BAF_plots(row,
+                                report.setting('call.data.and.plots', plotsection, 'plot.region.minsize'),
+                                report.setting('call.data.and.plots', plotsection, 'plot.flanking.region.relative')
+      )
+      if (typeof(res$gg) == 'character') {
+        cat(res$gg, '\n\n')
+        next()
+      }
+
+      if (report.setting('call.data.and.plots', plotsection, 'include.plot')) {
+        subchunkify(res$gg, paste0(plotsection, '.call.',i,'.plot'), 5, 10)
+        cat('\n\n')
+      }
+      if (report.setting('call.data.and.plots', plotsection, 'include.call.table')) {
+        subchunkify(simple_table_output(res$calls), paste0(plotsection, '.call.',i,'.table'))
+        cat('\n\n')
+      }
+      if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') != 'None') {
+        gene.tb <-  res$genes
+        subchunkify(gene_table_output(gene.tb, plotsection), paste0(plotsection, '.call.',i, '.table.genes'))
+        cat('\n\n')
+      }
+      cat('\n\n')
+  }
+}
 
 # Make a separate subchunnk, this is often needed when mixing loops, tabsets & html elements
 subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
@@ -350,19 +429,7 @@ SNP.genotype.distances <- file.path(datapath, snp.ids, paste0(snp.ids, snp_file_
 
 cnv_calls <- lapply(file.path(datapath, use_ids, paste0(use_ids, '.combined-cnv-calls.tsv')),
                     load_preprocessed_cnvs) %>%
-  bind_rows() %>%
-  mutate(
-      reportable = case_when(
-        CNV_type %!in% c('gain', 'loss') & length >= reportable.loh & reference_overlap ~ 'yes, in ref.',
-        CNV_type  %in% c('gain', 'loss') & length >= reportable.cnv & reference_overlap ~ 'yes, in ref.',
-        CNV_type %!in% c('gain', 'loss') & length >= critical.loh                       ~ 'critical',
-        CNV_type  %in% c('gain', 'loss') & length >= critical.cnv                       ~ 'critical',
-        CNV_type %!in% c('gain', 'loss') & length >= reportable.loh                     ~ 'yes',
-        CNV_type  %in% c('gain', 'loss') & length >= reportable.cnv                     ~ 'yes',
-        reference_overlap                                                                ~ 'no, in ref.',
-        TRUE                                                                             ~ 'no') %>%
-            factor(levels = c('critical', 'yes', 'yes, in ref.', 'no', 'no, in ref.'))
-    )
+  bind_rows()
 
 ## GenCall logs
 GenCall.stats <-  file.path(datapath, use_ids, paste0(use_ids, '.stats.txt')) %>%
@@ -410,55 +477,65 @@ metrics <- list(
         summarise(SNPs_post_filter = (100 * sum(filter.passed, na.rm=T) / unique(GenCall.stats$number_snps) ) %>%
                                                                         format(digits = 2, nsmall=2) %>% paste('%')),
     tibble(sample_id = use_ids,
-           SNP.distance.to.ref = unlist(ifelse(is.na(ref_id), list('-'), list(c(SNP.genotype.distances[1], '-'))))
+           SNP_distance_to_reference = unlist(ifelse(is.na(ref_id), list('-'), list(c(SNP.genotype.distances[1], '-'))))
     ),
     cnv_calls %>%
-        #don't do individual tools here -> move to per CNV_caller section!
         filter(tool.overlap.state != 'pre-overlap') %>%
         group_by(sample_id) %>%
         mutate(class = factor(ifelse(CNV_type %!in% c('gain', 'loss'), 'LOH', 'CNV'), levels = c('CNV', 'LOH')),
-               loss.gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
-               loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
+               loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
+               loss_gain_log2ratio = ifelse(is.infinite(loss_gain_log2ratio) | is.nan(loss_gain_log2ratio), NA, loss_gain_log2ratio),
+               # highlight_calls = sum(!is.na(highlight)),
+               # high_impact_calls = sum(!is.na(high_impact))
         ) %>%
-        group_by(sample_id, loss.gain_log2ratio, class, .drop = F) %>%
+        group_by(sample_id, loss_gain_log2ratio,
+                 #highlight_calls, high_impact_calls,
+                 class, .drop = F) %>%
         summarise(total_calls = n(),
-                  reportable_new_calls = sum(str_detect(reportable, 'critical|yes$')),
-                  critical_new_calls = sum(reportable == 'critical'),
+                  reportable_calls = sum(Call_Designation == 'Reportable Call'),
+                  critical_calls = sum(Call_Designation == 'Critical Call'),
                   ) %>%
-        pivot_wider(names_from = class, values_from = contains('calls'))
+        pivot_wider(names_from = class, values_from = matches('(total|reportable|critical)_calls'))
 )
 
 # Datatable takes colors differently than ggplot, doesn't work somehow
-green_col <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
+green_color <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
 
-apply_gr_th <- function(data, warning_levels){
+warn_color <- function(s) ifelse(s %in% red_warnings, 'red', 'orange')
+apply_gr_th <- function(data, warning_levels, second = 'orange'){
+   second_color <- ifelse(second %in% c('orange', 'red'), second, warn_color(second))
     case_when(
-        data > warning_levels[[2]] ~ 'orange',
+        data > warning_levels[[2]] ~ second_color,
         data > warning_levels[[1]] ~ 'yellow',
-        TRUE                       ~ green_col,
+        TRUE                       ~ green_color,
     )
 }
 
 metric.colors <- list(
     mutate(metrics[[1]],
                  call_rate = case_when(
-                    call_rate < callrate_warnings[[2]]  ~ 'red',
+                    call_rate < callrate_warnings[[2]]  ~ warn_color('call_rate'),
                     call_rate < callrate_warnings[[1]]  ~ 'yellow',
-                    TRUE ~ green_col),
-                 computed_gender = ifelse(tolower(computed_gender) != sex, 'red', green_col)),
+                    TRUE ~ green_color),
+                 computed_gender = ifelse(tolower(computed_gender) != sex, 'red', green_color)),
     mutate(metrics[[2]],
                  SNPs_post_filter = 'white'),
     mutate(metrics[[3]],
-                 SNP.distance.to.ref = ifelse(SNP.distance.to.ref == '-', 'white',
-                                              apply_gr_th(SNP.distance.to.ref, SNP_distance_reference))),
+                 SNP_distance_to_reference = ifelse(SNP_distance_to_reference == '-', 'white',
+                                              apply_gr_th(SNP_distance_to_reference, SNP_distance_to_ref_warning,
+                                                          warn_color('SNP_distance_to_ref_warning'))
+                 )),
     mutate(metrics[[4]],
-                 loss.gain_log2ratio = apply_gr_th(abs(loss.gain_log2ratio), ratio_CNV_warnings),
-                 total_calls_CNV = apply_gr_th(total_calls_CNV, total_CNV_warnings),
-                 total_calls_LOH = apply_gr_th(total_calls_LOH, total_LOH_warnings),
-                 reportable_new_calls_CNV = apply_gr_th(reportable_new_calls_CNV, sizable_CNV_warnings),
-                 reportable_new_calls_LOH = apply_gr_th(reportable_new_calls_LOH, sizable_LOH_warnings),
-                 critical_new_calls_CNV = ifelse(critical_new_calls_CNV >= 1, 'red', green_col),
-                 critical_new_calls_LOH = ifelse(critical_new_calls_LOH >= 1, 'red', green_col),
+                 loss_gain_log2ratio = apply_gr_th(abs(loss_gain_log2ratio), ratio_CNV_warnings, 'loss_gain_log2ratio'),
+                 total_calls_CNV = apply_gr_th(total_calls_CNV, total_CNV_warnings, 'total_calls_CNV'),
+                 total_calls_LOH = apply_gr_th(total_calls_LOH, total_LOH_warnings, 'total_calls_LOH'),
+                 reportable_calls_CNV = apply_gr_th(reportable_calls_CNV, reportable_CNV_warnings, 'reportable_calls_CNV'),
+                 reportable_calls_LOH = apply_gr_th(reportable_calls_LOH, reportable_LOH_warnings, 'reportable_calls_LOH'),
+                 critical_calls_CNV = apply_gr_th(critical_calls_CNV, critical_CNV_warnings, 'critical_calls_CNV'),
+                 critical_calls_LOH = apply_gr_th(critical_calls_LOH, critical_LOH_warnings, 'critical_calls_LOH'),
+                 # This is already part of the critical / reportable Score
+                 # highlight_calls = apply_gr_th(highlight_calls, highlight_warnings, 'highlight_calls'),
+                 # high_impact_calls = apply_gr_th(high_impact_calls, high_impact_warnings, 'high_impact_calls')
                 )
         )
 
@@ -469,15 +546,17 @@ get_call_stats_tool <- function(use.tool) {
     cnv_calls %>%
         filter(tool.overlap.state != 'combined' & use.tool %in% CNV_caller) %>%
         group_by(sample_id) %>%
-        mutate(loss.gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
-               loss.gain_log2ratio = ifelse(is.infinite(loss.gain_log2ratio) | is.nan(loss.gain_log2ratio), NA, loss.gain_log2ratio)
+        mutate(loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
+               loss_gain_log2ratio = ifelse(is.infinite(loss_gain_log2ratio) | is.nan(loss_gain_log2ratio), NA, loss_gain_log2ratio),
+               highlight_calls = sum(!is.na(highlight)),
+               high_impact_calls = sum(!is.na(high_impact))
         ) %>%
-        group_by(sample_id, CNV_type, loss.gain_log2ratio) %>%
+        group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
         summarise(total_calls = n(),
-                  reportable_new_calls = sum(str_detect(reportable, 'critical|yes$')),
-                  critical_new_calls = sum(reportable == 'critical')
+                  reportable_calls = sum(Call_Designation == 'reportable'),
+                  critical_calls = sum(Call_Designation == 'critical')
         ) %>%
-        pivot_wider(names_from = CNV_type, values_from = contains('calls')) %>%
+        pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls')) %>%
         tr_tibble()
 }
 
@@ -487,7 +566,7 @@ export.tb <- full_join(
         pivot_longer(-sample_id, names_to = 'Measure', values_to = 'Value'),
         purrr::reduce(metric.colors, full_join, by = 'sample_id') %>%
             mutate(across(-sample_id, ~str_replace(., 'white', 'NA') %>%
-                                    str_replace(green_col, 'OK') %>%
+                                    str_replace(green_color, 'OK') %>%
                                     str_replace('yellow', 'unusual') %>%
                                     str_replace('orange', 'warning') %>%
                                     str_replace('red', 'critical'))) %>%
@@ -594,11 +673,6 @@ cat('\n\n')
 
 ```{r sessioninfo, eval = include.section('QC.settings'), results='asis'}
 cat('### Pipeline settings\n\n')
-# ```yaml
-# `r xfun::file_string(params$configfile)`
-# ```
-
-#Unclear if this will work in pdf?
 cat(knitr::knit(text = knitr::knit_expand(text = '```yaml\n`r xfun::file_string(params$configfile)`\n```'), quiet = TRUE))
 cat('\n\n')
 session_info()
@@ -606,7 +680,8 @@ cat('\n\n')
 ```
 
 
-# CNV calling
+# CNV calling {.tabset}
+
 
 ```{r CNV.call.functions}
 
@@ -618,28 +693,19 @@ get_cnv_y <- function(CNV_type, CNV_caller) {
     out
 }
 
-format_size <- function(size) {
-  oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
-  num <- round(size / oom_f)
-  paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
-}
-
 make_LRR_BAF_plots <- function(call.row,
                                total_min_size = 2e6, flank_factor = 2) {
 
   chr <- call.row$Chr
-  start <- call.row$Start
-  end <- call.row$End
-  size <- call.row$Size
 
   if (total_min_size < 1e4) {
-    warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{start}-{end}) to at least 10kb'))
+    warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{call.row$Start}-{call.row$End}) to at least 10kb'))
     total_min_size <- 1e4
   }
 
   # Set initial plot window as Call size * (1+2*flank_factor)
-  win_start <- start - size * flank_factor
-  win_end <- end + size * flank_factor
+  win_start <- call.row$Start - call.row$Size * flank_factor
+  win_end <- call.row$End + call.row$Size * flank_factor
   # If it is below minimum increase accordingly
   if (win_end - win_start < total_min_size) {
     #Don't want .5 positions
@@ -658,14 +724,14 @@ make_LRR_BAF_plots <- function(call.row,
     mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
 
   if (nrow(plot.data)==0){
-    warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{start}-{end} +- {round(size/1e3)}kb')
+    warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{win_start}-{win_end}')
     warning(warn_msg)
     return(list('gg' = warn_msg, 'calls' = tibble(), 'genes' = tibble()))
   }
 
   calls <- cnv_calls %>%
-    filter(tool.overlap.state != 'combined' & seqnames == chr & end >= win_start & start < win_end) %>%
-    mutate(x_pos = (end + start) / 2,
+    filter(tool.overlap.state != 'combined' & Chr == chr & End >= win_start & Start < win_end) %>%
+    mutate(x_pos = (End + Start) / 2,
            y_pos = map2_int(CNV_type, CNV_caller, get_cnv_y),
            color = ifelse(CNV_type %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
            color = ifelse(CNV_type == 'loss', '#f46d43', color),
@@ -676,7 +742,7 @@ make_LRR_BAF_plots <- function(call.row,
                      x_pos = NA_integer_, y_pos = NA_integer_))
 
   direct_genes <- gr_genes %>%
-    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = start, end = end))) %>%
+    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = call.row$Start, end = call.row$End))) %>%
     as_tibble()
 
   high_impact_list <- call.row$high_impact_genes %>% str_split(',') %>% unlist()
@@ -716,6 +782,7 @@ make_LRR_BAF_plots <- function(call.row,
            textcolor = ifelse(color %in% c('black', 'grey30'), 'white', 'black')
     ) %>%
     separate_rows(Sample_Name, sep = '---') %>%
+    mutate(Sample_Name = factor(Sample_Name, levels = sample_headers)) %>%
     # Need to ensure table contains reference so everything is properly facet_wrapped
     bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
                      x_pos = NA_integer_, y_pos = NA_integer_))
@@ -723,7 +790,7 @@ make_LRR_BAF_plots <- function(call.row,
   panel_space_val <- unit(5, units = 'mm')
 
   cnv_track <- ggplot(calls) +
-    geom_tile(aes(x = x_pos, y = y_pos, width = length, height = .9, fill = color)) +
+    geom_tile(aes(x = x_pos, y = y_pos, width = Size, height = .9, fill = color)) +
     scale_fill_identity() +
     geom_text(aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
               vjust = 0.5, hjust = 0.5, size = 2.5) +
@@ -750,12 +817,8 @@ make_LRR_BAF_plots <- function(call.row,
                     !is.na(high_impact) ~ 'red',
                     direct_hit          ~ 'black',
                     TRUE                ~ 'grey50'
-                  ),
-        show.legend = F)
-    ) +
-    # Not readable most of the time
-    # geom_text(aes(label = ID, x = x_pos, y = y_pos),
-    # 		  vjust = 0.5, hjust = 0.5, size = 2.5) +
+                  )),
+        show.legend = F) +
     scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) +
     scale_fill_identity() +
@@ -771,7 +834,7 @@ make_LRR_BAF_plots <- function(call.row,
 
   lrr <- ggplot(plot.data) +
     geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = start, xmax = end, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
+              aes(xmin = call.row$Start, xmax = call.row$End, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
     geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) +
     geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +
@@ -792,7 +855,7 @@ make_LRR_BAF_plots <- function(call.row,
     geom_hline(yintercept = 0, col = 'black', linewidth=0.5) +
     geom_hline(yintercept = 1, col = 'black', linewidth=0.5) +
     geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = start, xmax = end, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
+              aes(xmin = call.row$Start, xmax = call.row$End, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
     geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
                size = 0.5, shape = 20, show.legend = F) +
     scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
@@ -807,10 +870,6 @@ make_LRR_BAF_plots <- function(call.row,
       panel.spacing = panel_space_val
     )
 
-  # # This still creates and empty plot area - not sure how to get rid of it
-  # header <- ggplot(calls) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
-  #   theme(axis.line = element_blank(), plot.background = element_blank(),
-  #         panel.background = element_blank(), panel.border = element_blank())
   header <- ggplot(info_data) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
     geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
               color = 'black', linewidth = 0.2) +
@@ -835,9 +894,8 @@ make_LRR_BAF_plots <- function(call.row,
 
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, reportable, reference_overlap, CNV_type, CNV_caller) %>%
-    #dplyr::rename(Chr = seqnames) %>%
-    arrange(Sample_Name, start) %>% #Chr
+    dplyr::select(Sample_Name, 1, 3:4, Call_Designation, Score, reference_overlap, CNV_type, CNV_caller) %>%
+    arrange(Sample_Name, Call_Designation, Score, Start) %>%
     rowwise() %>%
     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 
@@ -850,144 +908,100 @@ make_LRR_BAF_plots <- function(call.row,
 
 }
 
-reportable.calls <- cnv_calls %>%
-    filter(tool.overlap.state != 'pre-overlap' &
-                    sample_id == !!sample_id & reportable %in% c('critical', 'yes', 'yes, in ref.')) %>%
-    dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-    mutate(reference_overlap = factor(reference_overlap),
-           CNV_type = factor(CNV_type)) %>%
-    arrange(reportable, Chr, Start)
+cnv_calls <- cnv_calls %>%
+  ungroup() %>%
+  dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
+  mutate(CNV_type = factor(CNV_type),
+         reference_overlap = factor(reference_overlap),
+           # These are list columns
+           #high_impact = factor(high_impact),
+           #highlight = factor(highlight),
+  ) %>%
+  arrange(desc(Score), desc(Size), Chr, Start)
 
-non.reportable.calls <- cnv_calls %>%
-    filter(tool.overlap.state != 'pre-overlap' &
-                 sample_id == !!sample_id &	! reportable %in% c('critical', 'yes', 'yes, in ref.', NA)) %>%
-    dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
-    mutate(reference_overlap = factor(reference_overlap),
-           CNV_type = factor(CNV_type)) %>%
-    arrange(reportable, Chr, Start)
+primary.call.table <- cnv_calls %>%
+  filter(tool.overlap.state != 'pre-overlap' &
+           sample_id == !!sample_id &
+           Call_Designation %in% c('Critical Call', 'Reportable Call')
+  ) %>%
+  mutate(i = row_number())
+
+secondary.call.table <- cnv_calls %>%
+  filter(tool.overlap.state != 'pre-overlap' &
+           sample_id == !!sample_id &
+           Call_Designation == 'Secondary Call'
+  ) %>%
+  mutate(i = row_number())
+
+reference_gt.call.table <- cnv_calls %>%
+  filter(tool.overlap.state != 'pre-overlap' &
+           sample_id == !!sample_id &
+           Call_Designation == 'Origin Genotype'
+  ) %>%
+  mutate(i = row_number())
 
 ```
 
-```{r reportable.header, eval = include.section('reportable.table') | include.section('reportable.plots'), results='asis'}
-
-cat('## Reportable calls {.tabset}\n\n')
-
+```{r primary_cnvs.header, eval = include.section('primary_cnvs.table') | include.section('primary_cnvs.plots'), results='asis'}
+cat('## Critical and reportable CNV calls {.tabset}\n\n')
+cat('This section includes all calls with critical or primary designation (=primary calls)\n\n')
 ```
 
-```{r reportable, results='asis', eval = include.section('reportable.table')}
 
-cat('List of all reportable calls of the input samples. Overlapping calls from multiple tools with the same CNV.state (i.e. loss/gain) are merged.\n\n')
-CNV_table_output(reportable.calls, caption = 'Critical and reportable calls')
-# pdf: subchunkify?
-#  subchunkify(simple_table_output(reportable.calls %>% dplyr::select(-(12:18)),
-#                                   caption = 'Critical and reportable calls'),
-#               'critical.call.table')
+```{r primary_cnvs.table, results='asis', eval = include.section('primary_cnvs.table')}
+#cat('List of all primary CNV calls from the input sample.\n The pre-processing step merges overlapping calls from multiple callers with the same CNV_type after removing very small calls.\n\n')
+CNV_table_output(primary.call.table, caption = 'Primary CNV calls')
 cat('\n\n')
 ```
 
 
 
-```{r reportable.plots, eval = include.section('reportable.plots'), results='asis'}
-
-if (nrow(reportable.calls)>0) {
-  for (i in 1:nrow(reportable.calls)) {
-    row <- reportable.calls[i,]
-
-    state.str <- ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
-                        paste0('(', str_remove(row$reportable, '(yes|no), '), ')'), '')
-    cat(paste0('### ', row$CNV_type, ' ', state.str, ': ', row$Chr, ' - ', format_size(row$Size), '\n\n'))
-
-    res <- make_LRR_BAF_plots(row,
-                              report.setting('call.data.and.plots', 'plot.region.minsize.reportable'),
-                              report.setting('call.data.and.plots', 'plot.flanking.region.relative'))
-    if (typeof(res$gg) == 'character') {
-      cat(res$gg, '\n\n')
-      next()
-    }
-
-    if (report.setting('call.data.and.plots', 'include.plot')) {
-      subchunkify(res$gg, paste0('plot.reportable.call.',i), 5, 10)
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.call.table')) {
-      subchunkify(simple_table_output(res$calls), paste0('table.reportable.calls.',i))
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
-      gene.tb <-  res$genes
-      subchunkify(gene_table_output(gene.tb), paste0('table.reportable.genes.',i))
-      cat('\n\n')
-    }
-    cat('\n\n')
-  }
-} else {
-    cat('No reportable calls found')
-}
-
+```{r primary_cnvs.plots, eval = include.section('primary_cnvs.plots'), results='asis'}
+make_CNV_plot_section(primary.call.table, 'primary')
 cat('\n\n')
 ```
 
-```{r nonreportable.header, eval = include.section('nonreportable.table') | include.section('nonreportable.plots'), results='asis'}
-
-cat('## Non Reportable calls {.tabset}\n\n')
-
-cat('This section includes all pre-processed calls (includes merging of tools and call filtering)\n\n')
-
+```{r secondary_cnvs.header, eval = include.section('secondary_cnvs.table') | include.section('secondary_cnvs.plots'), results='asis'}
+cat('## Secondary calls {.tabset}\n\n')
+cat('This section includes call that are neither reportable, critical or matching the reference genotype\n\n')
 ```
 
 
 
-```{r non.reportable,  eval = include.section('nonreportable.table'), results='asis', cache=FALSE}
-
-CNV_table_output(non.reportable.calls, caption = 'Non reportable calls')
+```{r secondary_cnvs.table, eval = include.section('secondary_cnvs.table'), results='asis', cache=FALSE}
+CNV_table_output(secondary.call.table, caption = 'Secondary calls')
 cat('\n\n')
 ```
 
-```{r nonreportable.plots, eval = include.section('nonreportable.plots'), results='asis'}
-
-if (nrow(non.reportable.calls)>0) {
-  for (i in 1:nrow(non.reportable.calls)) {
-    row <- non.reportable.calls[i,]
-    state.str <- ifelse(row$reportable %in% c('critical', 'yes, in ref.', 'no, in ref.'),
-                        paste0(' (', str_remove(row$reportable, '(yes|no), '), ')'), '')
-    cat(paste0('### ', row$Chr, ' - ', format_size(row$Size), ': ', row$CNV_type, state.str, '\n\n'))
-
-    res <- make_LRR_BAF_plots(row,
-                              report.setting('call.data.and.plots', 'plot.region.minsize.nonreportable'),
-                              report.setting('call.data.and.plots', 'plot.flanking.region.relative'))
-    if (typeof(res$gg) == 'character') {
-      cat(res$gg, '\n\n')
-      next()
-    }
-    if (report.setting('call.data.and.plots', 'include.plot')) {
-      subchunkify(res$gg, paste0('plot.nonreportable.call.',i), 5, 10)
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.call.table')) {
-      subchunkify(simple_table_output(res$calls), paste0('table.nonreportable.calls.',i))
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
-      gene.tb <-  res$genes
-      if (report.setting('call.data.and.plots', 'include.gene.table.details') == 'Call') {
-        gene.tb <- gene.tb %>%
-          filter(direct_hit)
-      }
-      subchunkify(gene_table_output(gene.tb), paste0('table.nonreportable.genes.',i))
-      cat('\n\n')
-    }
-    cat('\n\n')
-  }
-} else {
-	cat('No non-reportable CNV calls present.')
-}
-
+```{r secondary_cnvs.plots, eval = include.section('secondary_cnvs.plots'), results='asis'}
+make_CNV_plot_section(secondary.call.table, 'secondary')
 cat('\n\n')
 ```
+
+```{r reference_gt.cnvs.header, eval = !is.na(ref_id) & (include.section('reference_gt.cnvs.table') | include.section('reference_gt.cnvs.plots')), results='asis'}
+cat('## Reference Genotype calls {.tabset}\n\n')
+cat('This section includes all calls that match the genotype of the reference sample\n\n')
+```
+
+
+
+```{r reference_gt.cnvs.table, eval = !is.na(ref_id) & include.section('reference_gt.cnvs.table'), results='asis', cache=FALSE}
+CNV_table_output(reference_gt.call.table, caption = 'Reference genotype calls')
+cat('\n\n')
+```
+
+```{r reference_gt.cnvs.plots, eval = !is.na(ref_id) & include.section('reference_gt.cnvs.plots'), results='asis'}
+make_CNV_plot_section(reference_gt.call.table, 'reference_gt')
+cat('\n\n')
+```
+
+
+
 
 
 ```{r plots.roi, eval=include_roi_plots, results='asis'}
 cat('## Regions of Interest {.tabset}\n\n')
+cat(str_glue('This section includes all regions of interest defined for {sample_name}. \n\n\n\n'))
 
 regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
@@ -997,51 +1011,33 @@ roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
 # Using all here would swallow problems; the NA check should only be needed for empty entries
 if (any(!is.na(regions)) & length(regions)>0) {
-  for (region in regions) {
 
-    region_name <- str_extract(region, '^[^|]+\\|') %>% str_remove('\\|')
-    region_name <- ifelse(is.na(region_name), 'Region', region_name)
+    fake_call_tb <- tibble(
+            sample_id = sample_id,
+            Chr = str_remove(regions, '^[^|]+\\|') %>%
+                    str_remove(':.*') %>%
+                    str_remove(regex('chr', ignore_case = T)),
+            Start = str_extract(regions, '(?<=:)[0-9]+') %>% as.numeric(),
+            End = str_extract(regions, '(?<=-)[0-9]+$') %>% as.numeric(),
+            Size = End - Start,
+            region_name = str_extract(regions, '^[^|]+\\|') %>% str_remove('\\|'),
+            Call_Designation = 'ROI'
+            ) %>%
+      mutate(Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
+             i = row_number(),
+             region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
+             Score = 0,
+             ID = region_name,
+             ) %>%
+      bind_rows(expected_final_tb)
 
-    Chr <- str_remove(region, '^[^|]+\\|') %>% str_remove(':.*') %>%
-      str_remove(regex('chr', ignore_case = T))
-    Chr <- ifelse(use_chr_str,  paste0('chr', Chr), Chr)
-    Start <- str_extract(region, '(?<=:)[0-9]+') %>% as.numeric()
-    End <- str_extract(region, '(?<=-)[0-9]+$') %>% as.numeric()
-    Size <- End - Start
+  # Rmd doesn"t auto-print output inside {}
+  print(CNV_table_output(fake_call_tb, caption = 'Regions of Interest'))
 
-    size_order <- ifelse(log10(Size) >= 6, 1e6, 1e3)
-    size_str <- ifelse(log10(Size) >= 6, 'Mb', 'kb')
+  make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 
-    cat(paste0('### ', region_name, ', ', Chr, ': ', Start, ' - ', End, ' (', round(Size/size_order, 1), size_str ,')\n\n'))
-
-    fake_tb <- tibble(Chr = Chr, Start = Start, End = End, Size = Size,
-                      high.impact.genes = NA_character_, high.impact = list(NA_character_))
-    res <- make_LRR_BAF_plots(fake_tb, roundup_oom(Size))
-    if (typeof(res$gg) == 'character') {
-      cat(res$gg, '\n\n')
-      next()
-    }
-
-    if (report.setting('call.data.and.plots', 'include.plot')) {
-      subchunkify(res$gg, paste0('plot.roi.', region_name, '-', Chr, '-', Start, '-', End), 5, 10)
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.call.table')) {
-      subchunkify(simple_table_output(res$calls), paste0('table.roi.', region))
-      cat('\n\n')
-    }
-    if (report.setting('call.data.and.plots', 'include.gene.table.details') != 'None') {
-      gene.tb <-  res$genes
-      if (report.setting('call.data.and.plots', 'include.gene.table.details') == 'Call') {
-        gene.tb <- gene.tb %>%
-          filter(direct_hit)
-      }
-      subchunkify(gene_table_output(gene.tb), paste0('table.roi.', region))
-      cat('\n\n')
-    }
-  }
 } else {
-  cat('Nothing defined.')
+  cat('No regions of interest defined.')
 }
 
 cat('\n\n')
@@ -1070,8 +1066,7 @@ genome_data <- gr_info %>% filter(centromer) %>%
   select(Chr, Start, End, CE_start, CE_end)
 
 sample.calls <- cnv_calls %>%
-    dplyr::select(seqnames, start, end, CNV_type, sample_id) %>%
-    dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
+    dplyr::select(Chr, Start, End, CNV_type, sample_id) %>%
     mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
            Value = ifelse(CNV_type == 'loss', -1, Value),
            Chr = str_remove(Chr, 'chr'))

@@ -115,9 +115,9 @@ get_static_path <- function(path, project_base=''){
 
 load_gtf_data <- function(config) {
 	gtf_file <- get_static_path(config$static_data$genome_gtf_file, config$basedir)
-	exclude_regexes <- config$settings$gene_overlap$exclude_gene_type_regex %>%
+	exclude_regexes <- config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
-	gene_type_whitelist <- config$settings$gene_overlap$include_only_these_gene_types
+	gene_type_whitelist <- config$settings$CNV_processing$gene_overlap$include_only_these_gene_types
 
 	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
 		filter(type == 'gene') %>%
@@ -156,10 +156,14 @@ expected_final_tb <- tibble(
 	length = integer(),
 	CNV_type = character(),
 	ID = character(),
+	Score = integer(),
+	Call_Designation = character(),
 	reference_overlap = logical(),
 	CNV_caller = list(),
 	n_premerged_calls = list(),
 	n_snp_probes = list(),
+	n_snp_probes_new = integer(),
+	uniq_probe_positions = integer(),
 	copynumber = list(),
 	caller_confidence = list(),
 	tool.overlap.state = character(),
@@ -171,6 +175,9 @@ expected_final_tb <- tibble(
 	high_impact_genes = character(),
 	highlight = list(),
 	highlight_genes = character(),
+	percent_gap_coverage = numeric(),
+	call_has_probe_gap = logical(),
+	high_probe_density = logical(),
 	n_genes = integer(),
 	overlapping_genes = character()
 	)
