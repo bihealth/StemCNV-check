@@ -13,9 +13,13 @@ GENOME = config['genome']
 # ================================================================
 
 rule all:
-    input: [config['chrominfo_outname'], config['array_gaps_outname'], config['array_density_outname'],
-            config['pfb_outname'], config['gcmodel_outname'],
-            config['gtf_file_outname']]
+    input:
+        config['chrominfo_outname'],
+        config['array_gaps_outname'],
+        config['array_density_outname'],
+        config['pfb_outname'],
+        config['gcmodel_outname'],
+        config['gtf_file_outname']
 
 
 #Note: PennCNV does not seem to work with UCSC chromosome style in PFB file
@@ -126,7 +130,7 @@ gaps <- complement_ranges(array) %>%
          ) %>%
   filter(!chrom_end & !chrom_start) %>%
   mutate(width_mean_sd = mean(width(.))+sd(width(.)),
-         gap_min_size = ifelse('{params.min_gap_size}' == '__mean+sd__',
+         gap_min_size = ifelse('{params.min_gap_size}' == 'auto-array',
                                unique(width_mean_sd),
                                as.numeric('{params.min_gap_size}'))) %>%
   filter(width(.) >= gap_min_size)
@@ -179,16 +183,16 @@ rule ucsc_goldenpath_download:
         genome = "hg19|hg38"
     shell:
         """
-        wget 'ftp://hgdownload.cse.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz' -O {output}.gz 2> /dev/null
+        wget 'https://hgdownload.cse.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz' -O {output}.gz 2> /dev/null
         gunzip {output}.gz
         """
 
 
 rule create_genome_info_file:
     input:
-        cytobands = os.path.join(DOWNLOAD_DIR, f"{GENOME}.cytoBand.txt"), #cytoBandIdeo.txt has info for non-assmebled chromosomes
+        cytobands = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.cytoBand.txt")), #cytoBandIdeo.txt has info for non-assmebled chromosomes
         #centromer = os.path.join(DOWNLOAD_DIR, f"{GENOME}.centromeres.txt"), #Only exists for hg38
-        chrominfo = os.path.join(DOWNLOAD_DIR, f"{GENOME}.chromInfo.txt")
+        chrominfo = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.chromInfo.txt"))
         #Note: the chromAlias.txt file might be useful if people use strange chr-/seqnames
     output: config['chrominfo_outname']
     conda:
@@ -202,7 +206,7 @@ suppressMessages(library(GenomeInfoDb))
 styles <- genomeStyles()
 
 chrominfo <- read_tsv("{input.chrominfo}", col_names = c("chr", "size", "url"), show_col_types = FALSE) %>% 
-    select(-url) %>% filter(!str_detect(chr, "_"))
+    select(-url) %>% filter(chr %in% styles$Homo_sapiens$UCSC)
 # The 'acen' labelled cytobands are the centromere areas (but much larger than what the centromere file gives)
 chrominfo <- left_join(chrominfo, #by = "chr", 
                 read_tsv("{input.cytobands}", show_col_types = FALSE, 
