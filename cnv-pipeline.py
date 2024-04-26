@@ -195,12 +195,13 @@ def check_config(args):
 
 	# Check all config entries
 	errors = []
+	allowed_plotsections = allowed_values['allowed_plotsections'] + ['__default__']
 	for flatkey, config_value in flatten(config).items():
 		# Need to change the key for variable config sections
 		flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
 		flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
 		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
-		flatkey_ = re.sub('reports:__report:call.data.and.plots:(primary|secondary|reference_gt|regions_of_interest|__default__)',
+		flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),
 						  'reports:__report:call.data.and.plots:__plotsection', flatkey_)
 		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
 		if funcs is None:

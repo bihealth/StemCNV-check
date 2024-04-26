@@ -119,11 +119,9 @@ settings:
       # These genelists are used to mark genes with high impact
       # Gene list should contain a Name as header and then one gene per line; comments (#) are allowed
       # Genes from curated and high impact lists can be scored differently, curated score takes precedence
-      highimpact_curated_lists:
-          - '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.yaml'
-      highlight_lists:
-          - '__inbuilt__/supplemental-files/genelist-cancer-hotspots.yaml'
-          - '__inbuilt__/supplemental-files/genelist-cancer-drivers.yaml'
+      high_impact_list: '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.yaml'
+      highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.yaml'
+      # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.yaml'
 
     scoring_thresholds:
       # Lower bound size thresholds / categories for scoring CNV and LOH calls
@@ -135,24 +133,22 @@ settings:
       large.cnv:       100000
       medium.loh:       10000
       medium.cnv:       10000
-      # Score thresholds for call designation as critical or reportable
-      min.impact.critical:   70
-      min.impact.reportable: 40
-      min.reliability.critical:   0.6
-      min.reliability.reportable: 0.3
+#       # Score thresholds for call designation as critical or reportable
+#       min.impact.critical:   70
+#       min.impact.reportable: 40
+#       min.reliability.critical:   0.6
+#       min.reliability.reportable: 0.3
 
     Impact_scoring:
       # Scoring for Impact of CNV and LOH calls
-      # Note: callsize scores are mutually exclusive, while per_gene scores are additive
-      highimpact_base: 70
-      highimpact_per_gene: 10
+      # Note: per_gene scores are additive if the gene is listed in multiple lists
+      highimpact_base: 50
+      highimpact_per_gene: 5
       highlight_base: 0
-      highlight_per_gene: 10
-      callsize_extreme: 75
-      callsize_very_large: 50
+      highlight_per_gene: 5
       overlap_any_gene: 0
 
-    Reliability_scoring:
+    Precision_estimates:
       # Estimated the reliability (accuracy) of CNV calls
       # These are optimised for 'extended' filter settings
       # use commented values for 'full' filter settings
@@ -191,26 +187,32 @@ settings:
     name_addition: ''
 
 reports:
-  #Multiple individual reports can be defined, file_type is necessary for each one!
-#   full-report:
-#     file_type: 'html' #REQUIRED
-  user-report:
-    file_type: 'html' #REQUIRED
-    exclude_sections:
-        - secondary_cnvs.plots
-    call.data.and.plots:
-      __default__:
-        include.gene.table.details: 'Call'
+  CNV-QC-report:
+    file_type: 'html'         #REQUIRED
+    min.impact.critical:   70 #REQUIRED
+    min.impact.reportable: 40 #REQUIRED
+
+#    #Multiple individual reports can be defined, file_type and minimum scores for reportable/critical is necessary for each one!
+#  full-report:
+#    file_type: 'html'         #REQUIRED
+#    min.impact.critical:   70 #REQUIRED
+#    min.impact.reportable: 40 #REQUIRED
+#    call.data.and.plots:
+#      __default__:
+#        # How many plots to show at least
+#        min_number_plots: 100
+#        include.gene.table.details: 'All'
+
 #  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
 #  summary-report:
-#    file_type: 'pdf'
-#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall, reportable.table, nonreportable.table, nonreportable.plots, circo.plot]
+#    file_type: 'pdf'          #REQUIRED
+#    min.impact.critical:   70 #REQUIRED
+#    min.impact.reportable: 40 #REQUIRED
+#    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
 #    call.data.and.plots:
-#      include.plot: True
 #      include.call.table: FALSE
-#      include.gene.table.details: 'Call'
 
-  #This is the default from which all reports inherit settings
+  #These are the default settings from which all reports inherit
   __default__:
     # individual sections can be included (whitelist) or excluded (blacklist) from report.
     # Default is special '__all__' for include, but a list of specific sections can also be used
@@ -223,12 +225,10 @@ reports:
     #  - QC.PennCNV
     #  - QC.CBS
     #  - QC.settings
-    #  - primary_cnvs.table
-    #  - primary_cnvs.plots
-    #  - secondary_cnvs.table
-    #  - secondary_cnvs.plots
-    #  - reference_gt.table
-    #  - reference_gt.plots
+    #  - denovo_calls.table
+    #  - denovo_calls.plots
+    #  - reference_gt_calls.table
+    #  - reference_gt_calls.plots
     #  - regions.of.interest
     #  - virtual.karyotype
     #  - SNP.dendrogram
@@ -239,18 +239,18 @@ reports:
     call.data.and.plots:
       # Which filter to apply to probe data for plotting
       filter-settings: '__default__'
-      # Settings for call detail sections (plot & tables) can be defined
-      # per call section (primary, secondary, reference_gt, regions_of_interest)
+      #Specific settings for
       __default__:
-          include.plot: True
-          include.call.table: True
-          include.gene.table.details: 'All' # Choice of: None|Call|All
-          # Minimum relative size of (each) flanking region compared to call
-          plot.flanking.region.relative: 2
-          # Minimum size of total plot region
-          plot.region.minsize: 2e6
-      secondary:
-          plot.region.minsize:  5e5
+        # How many plots to show at least
+        min_number_plots: 20
+        # Include plots, table of individual calls and table of genes
+        include.plot: True
+        include.call.table: True
+        include.gene.table.details: 'Call' # Choice of: None|Call|All
+        # Minimum relative size of (each) flanking region compared to call
+        plot.flanking.region.relative: 2
+        # Minimum size of total plot region
+        plot.region.minsize: 2e6
 
     # Thresholds for SampleLevel QC color codes in the summary table
     SampleQCwarnings:

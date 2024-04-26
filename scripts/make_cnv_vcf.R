@@ -174,13 +174,13 @@ if (args$mode == 'split-tools') {
 	lapply(config$settings$CNV.calling.tools, function(use.tool) {
 		outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.{use.tool}-cnv-calls{name_addition}.vcf')
 		processed.calls %>%
-			filter(tool.overlap.state != 'combined' & CNV_caller == use.tool) %>%
+			filter(caller_merging_state != 'combined' & CNV_caller == use.tool) %>%
 			write_to_vcf(., outvcf = outvcf)
 	})
 } else {
 	outvcf <- str_glue('{data_path}/{sample_id}/{sample_id}.combined-cnv-calls{name_addition}.vcf')
 	processed.calls %>%
-		filter(tool.overlap.state != 'pre-overlap') %>%
+		filter(caller_merging_state != 'pre-overlap') %>%
 		#some purrr walk function instead?
 		write_to_vcf(., outvcf = outvcf)
 }
