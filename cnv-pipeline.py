@@ -92,7 +92,7 @@ def check_config(args, required_only=False):
 			infostr = ""
 		if not req in config['static_data'] or not config['static_data'][req]:
 			raise InputFileError(f"Required config entry is missing: static-data:{req}")
-		if not os.path.isfile(config['static_data'][req]):
+		if not required_only and not os.path.isfile(config['static_data'][req]):
 			raise InputFileError(f"Static data file '{req}' does not exist." + infostr)
 
 	# Folders: log, data, raw-input
@@ -218,15 +218,17 @@ def check_config(args, required_only=False):
 
 ## Helper Functions ##
 
-def make_singularity_args(config, not_existing_ok=False):
+def make_singularity_args(config, tmpdir=None, not_existing_ok=False):
 	"""Collect all outside filepaths that need to be bound inside container"""
 
 	bind_points = [
 		(config['data_path'], '/outside/data'),
 		(config['raw_data_folder'], '/outside/rawdata'),
 		(config['log_path'], '/outside/logs'),
-		(SNAKEDIR, '/outside/snakedir')
+		(SNAKEDIR, '/outside/snakedir'),
 	]
+	if tmpdir is not None:
+		bind_points.append((tmpdir, '/outside/tmp'))
 
 	for name, file in config['static_data'].items():
 		# Can only mount existing files
@@ -380,7 +382,7 @@ def create_missing_staticdata(args):
 			cores=args.local_cores,
 			workdir=args.directory,
 			use_singularity=not args.no_singularity,
-			singularity_args='' if args.no_singularity else make_singularity_args(config, True),
+			singularity_args='' if args.no_singularity else make_singularity_args(config, tmpdir, True),
 			use_conda=True,
 			conda_frontend=args.conda_frontend,
 			printshellcmds=True,

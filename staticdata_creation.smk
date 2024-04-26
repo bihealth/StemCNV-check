@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from pathlib import Path
 import tempfile
 import yaml
 from scripts.py_helpers import *
@@ -11,6 +12,24 @@ DOWNLOAD_DIR = config['TMPDIR'] if 'TMPDIR' in config else tempfile.mkdtemp()
 GENOME = config['genome']
 
 # ================================================================
+
+def fix_container_path(path_in, bound_to):
+  path_in = Path(path_in)
+
+  if bound_to == 'static':
+    rel_path = path_in.name
+  else:
+    local_target = {
+      #'data': Path(DATAPATH),
+      #'rawdata': Path(IDAT_INPUT),
+      #'logs': Path(LOGPATH),
+      'snakedir': Path(SNAKEDIR),
+      'tmp': Path(DOWNLOAD_DIR)
+    }[bound_to].absolute()
+    rel_path = path_in.absolute().relative_to(local_target)
+
+  return Path('/outside/') / bound_to / rel_path
+
 
 rule all:
     input:
@@ -73,17 +92,18 @@ rule create_gcmodel_file:
     input: config['pfb_outname']
     output: config['gcmodel_outname']
     params:
-        penncnv_path = '/home/user/PennCNV' if config['use_singularity'] else '$CONDA_PREFIX/pipeline/PennCNV-1.0.5'
+        penncnv_path = '/home/user/PennCNV' if config['use_singularity'] else '$CONDA_PREFIX/pipeline/PennCNV-1.0.5',
+        download_path = fix_container_path(DOWNLOAD_DIR, 'tmp')
     container:
         "docker://genomicslab/penncnv"
     shell:
         """
         if [[ -f {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt ]]; then
-            ln -s {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt {DOWNLOAD_DIR}/{GENOME}.gc5Base.txt
+            ln -s {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt {params.download_path}/{GENOME}.gc5Base.txt
         else
-            gunzip -c {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt.gz > {DOWNLOAD_DIR}/{GENOME}.gc5Base.txt 
+            gunzip -c {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 
         fi
-        {params.penncnv_path}/cal_gc_snp.pl {DOWNLOAD_DIR}/{GENOME}.gc5Base.txt {input} -out {output}
+        {params.penncnv_path}/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {input} -out {output}
         """
 
 rule create_array_info_file:
