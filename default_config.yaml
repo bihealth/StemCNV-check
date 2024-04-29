@@ -318,3 +318,6 @@ tools:
   PennCNV:
     memory: "4000M"
     runtime: "30:00"
+  make_cnv_vcf:
+    memory: "4000M"
+    runtime: "30:00"

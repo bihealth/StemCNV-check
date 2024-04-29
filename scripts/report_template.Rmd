@@ -283,7 +283,7 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
                #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
                       '">', pmap_chr(., CNV_ID_str), '</a>'),
                #TODO: does this work for ROIs?
-               str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr.{i}.plot-1.png\'); return false;">Plot (ext.) {i}</a>')
+               str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">Plot (ext.) {i}</a>')
              )
       ) %>%
       select(sample_id, ID, i, #invis 0-2
