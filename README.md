@@ -2,10 +2,11 @@
 
 ## About
 
-SCnv-Quac (Stemcell CNV Quality Control) is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
-SCnv-Quac uses snakemake to run the complete analysis from raw data (.idat) up report generation for each sample with a single command.
+SCnv-QuaC (Stemcell CNV Quality Control) is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
+SCnv-QuaC uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file. 
 
-It requires a linux environment (or WSL on windows) and a working conda (or mamba) installation.
+SCnv-QuaC requires a linux environment (or WSL on windows) and a working conda (or mamba) installation.
+See [here](...) for instructions to install <conda/mamba>.
 
 ## Installation
 
@@ -13,15 +14,17 @@ It requires a linux environment (or WSL on windows) and a working conda (or mamb
 2. Run `conda env create -f envs/base.yml` to create a base conda environment from which to run SCnv-Quac
 3. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
+cnv-pipeline
+
 ## Setup
 
 SCnv-Quac requires a sample table and a config file to run. 
 
 The sample table (default: sample_table.txt) is a tab-separated file describing all samples to be analyzed:
 - Required columns: Sample_ID, Chip_Name, Chip_Pos, Sex, Reference_Sample
-- Optional columns (reseved): Sample_Name, Regions_of_Interest
+- Optional columns (reserved): Sample_Name, Regions_of_Interest
 - See the `sample_table_example.txt` file for a description of individual columns
-- Example files can be created using `<...> -a setup-files`
+- Example files can be created using `scnv-quac.py -a setup-files`
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  
 Required settings that are not defined by default include static files specific to the used array platform and genome build:
@@ -31,8 +34,8 @@ Required settings that are not defined by default include static files specific 
 
 Additionally, the config file needs to define the following paths:
 - raw_data_folder: path to the input directory under which the raw data (.idat) can be found. Ths folder should contain subfolders that match the Chip_Name column in the sample table (containing the array chip IDs)
-- data_path: the output of SCnv-QuaC will be writtento this path
-- log_path: the log files of SCnv-QuaC will be writtento this path
+- data_path: the output of SCnv-QuaC will be written to this path
+- log_path: the log files of SCnv-QuaC will be written to this path
 
 
 ## Usage
@@ -42,11 +45,11 @@ Automatic generation of the additional array & genome-build specific static file
 that array is available.  
 *Note*: unless provided directly this will also include download of fasta and gtf file for the reference genome build.
 
-`<...> -a make-staticdata --genome <genome_build> --snp-array-name <array_platform> [-s <sample_table> -c <config_file>]`
+`scnv-quac.py -a make-staticdata --genome <hg19|hg38> --snp-array-name <array_platform> [-s <sample_table> -c <config_file>]`
 
 To run the analysis:
 
-`<...> [-s <sample_table> -c <config_file> -a run]`
+`scnv-quac.py [-s <sample_table> -c <config_file> -a run]`
 
 ## Output
 

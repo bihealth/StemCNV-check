@@ -1,4 +1,4 @@
-name: cnv-pipeline-gtc2vcf
+name: scnv-quac-gtc2vcf
 channels:
   - conda-forge
   - bioconda

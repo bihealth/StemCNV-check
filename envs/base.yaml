@@ -1,4 +1,4 @@
-name: cnv-pipeline
+name: scnv-quac
 channels:
   - conda-forge
   - bioconda

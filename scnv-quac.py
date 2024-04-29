@@ -87,7 +87,7 @@ def check_config(args, required_only=False):
 			continue
 		if req in ('pfb_file', 'GCmodel_file', 'genomeInfo_file', 'array_density', 'array_gaps',
 				   'array_gaps_file', 'genome_fasta_file', 'genome_gtf_file'):
-			infostr = "\nYou can create it by running `cnv-pipeline -a make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
+			infostr = "\nYou can create it by running `scnv-quac -a make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
 		else:
 			infostr = ""
 		if not req in config['static_data'] or not config['static_data'][req]:
@@ -350,7 +350,7 @@ def create_missing_staticdata(args):
 		use_vcf = vcf_files[0]
 		logger.info(f'Running snakemake to get a vcf file: {use_vcf}')
 		ret = snakemake(
-			os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
+			os.path.join(SNAKEDIR, "scnv-quac.smk"),
 			local_cores=args.local_cores,
 			cores=args.local_cores,
 			workdir=args.directory,
@@ -411,7 +411,7 @@ def run_snakemake(args):
 		config = yaml.safe_load(f)
 	
 	argv = [
-		"-s", os.path.join(SNAKEDIR, "cnv-pipeline.smk"),
+		"-s", os.path.join(SNAKEDIR, "scnv-quac.smk"),
 		"-p", "--rerun-incomplete",
 		"--use-conda", "--conda-frontend", args.conda_frontend,
 	]

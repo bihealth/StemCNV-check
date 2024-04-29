@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
-# This assumes to run within the cnv-pipeline conda environment
-if [[ ! $CONDA_PREFIX == *cnv-pipeline ]]; then
-  echo "Please run this script within the cnv-pipeline conda environment"
+# This assumes to run within the scnv-quac conda environment
+if [[ ! $CONDA_PREFIX == *scnv-quac ]]; then
+  echo "Please run this script within the scnv-quac conda environment"
   exit 1
 fi
 
