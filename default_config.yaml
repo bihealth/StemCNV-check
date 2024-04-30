@@ -15,7 +15,7 @@ data_path: data     #REQUIRED
 log_path: logs      #REQUIRED
 
 settings:
-  # Select tools to use ##Outdated:and specify order of 'trust' in case of overlapping calls with different states
+  # Select tools to use
   # Currently implemented tools (=valid options): PennCNV & CBS
   CNV.calling.tools:
     - PennCNV
@@ -28,18 +28,22 @@ settings:
     # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
     # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes.
     #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
-    basic:
-        GenTrainScore: 0
-        GenCallScore:  0.2 # Illumina recommended minimum
-        Position.duplicates: keep # keep|remove|highestGC|highestGT
+    # We recommend to use these filter settings:
     extended:
         GenTrainScore: 0.7
         GenCallScore:  0.7 # Anything above this should be a stable genotype call
         Position.duplicates: highestGC # keep|remove|highestGC|highestGT
-    full:
-        GenTrainScore: 0.8
-        GenCallScore:  0.8
-        Position.duplicates: remove # keep|remove|highestGC|highestGT
+    ## Other filter settings we have tested:
+    ## This is closer to other Illumina defaults, but susceptible to noise
+    # basic:
+    #     GenTrainScore: 0
+    #     GenCallScore:  0.2 # Illumina recommended minimum
+    #     Position.duplicates: keep # keep|remove|highestGC|highestGT
+    # This filter results in somewhat higher precision, but lower recall
+    # full:
+    #     GenTrainScore: 0.8
+    #     GenCallScore:  0.8
+    #     Position.duplicates: remove # keep|remove|highestGC|highestGT
 
   default-filter-set: extended
 
@@ -124,7 +128,7 @@ settings:
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.yaml'
 
     scoring_thresholds:
-      # Lower bound size thresholds / categories for scoring CNV and LOH calls
+      # Lower bound size thresholds / categories for estimating CNV call precision
       extreme.loh:    5000000
       extreme.cnv:    2000000
       very.large.loh: 2500000
@@ -311,7 +315,7 @@ tools:
     runtime: "4:00:00"
   knitr:
     memory: "30000M"
-    runtime: "30:00"
+    runtime: "1:00:00"
   CNV.process:
     memory: "4000M"
     runtime: "30:00"

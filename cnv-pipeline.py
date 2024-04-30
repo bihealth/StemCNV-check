@@ -477,7 +477,7 @@ def setup_argparse():
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
 	group_snake.add_argument('--target', '-t', default='complete',
-							 choices=('complete', 'report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
+							 choices=('complete', 'report', 'cnv-vcf', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")

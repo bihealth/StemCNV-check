@@ -487,12 +487,17 @@ add_call_scoring <- function(tb) {
 			# Extra score  for any genes
 			(impact_scores$overlap_any_gene * n_genes),
 		  Precision_Estimate =
-			precision_extimates[[
-				ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
-				size_category]] +
-			(precision_extimates$Call_has_Gap * (probe_coverage_gap)) +
-			(precision_extimates$HighSNPDensity * (high_probe_density)),
-	  ) %>% ungroup()
+			  ifelse(CNV_type %in% c('gain', 'loss'),
+				precision_extimates[[
+					ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
+					size_category]] +
+				  (precision_extimates$Call_has_Gap * (probe_coverage_gap)) +
+				  (precision_extimates$HighSNPDensity * (high_probe_density)),
+				NA_real_
+			  )
+	  ) %>%
+	  ungroup() %>%
+	  dplyr::select(-size_category)
 
 }
 

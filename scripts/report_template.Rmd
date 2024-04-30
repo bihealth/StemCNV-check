@@ -194,7 +194,10 @@ tr_tibble <- function(tb) {
 ## Rmd related functions
 
 format_column_names <- function(n) {
-  str_replace(n, '_', ' ') %>% str_to_title() %>% str_replace('Cnv', 'CNV')
+  str_replace_all(n, '_', ' ') %>% str_to_title() %>%
+          str_replace('Cnv', 'CNV') %>%
+          str_replace('Loh', 'LOH') %>%
+          str_replace('Snp', 'SNP')
 }
 
 simple_table_output <- function(tb, caption=NULL) {
