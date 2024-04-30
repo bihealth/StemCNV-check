@@ -167,12 +167,13 @@ def check_config(args, required_only=False):
 
 	# Check all config entries
 	errors = []
+	allowed_plotsections = allowed_values['allowed_plotsections'] + ['__default__']
 	for flatkey, config_value in flatten(config).items():
 		# Need to change the key for variable config sections
 		flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
 		flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
 		flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
-		flatkey_ = re.sub('reports:__report:call.data.and.plots:(primary|secondary|reference_gt|regions_of_interest|__default__)',
+		flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),
 						  'reports:__report:call.data.and.plots:__plotsection', flatkey_)
 		funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
 		if funcs is None:
@@ -492,7 +493,7 @@ def setup_argparse():
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
 	group_snake.add_argument('--target', '-t', default='complete',
-							 choices=('complete', 'report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
+							 choices=('complete', 'report', 'cnv-vcf', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
 							 help="Final target of the pipeline. Default: %(default)s")
 	group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
 	group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
@@ -517,7 +518,7 @@ if __name__ == '__main__':
 	elif args.action == 'setup-files':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-staticdata':
-		args.snp_array_name = '_' + args.snp_array_name if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
+		args.snp_array_name = ('_' + args.snp_array_name) if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
 		args.penncnv_pfb_out = args.penncnv_pfb_out.format(genome=args.genome, array=args.snp_array_name)
 		args.penncnv_gc_out = args.penncnv_gc_out.format(genome=args.genome, array=args.snp_array_name)
 		args.array_density_out = args.array_density_out.format(genome=args.genome, array=args.snp_array_name)

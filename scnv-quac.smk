@@ -110,7 +110,7 @@ def get_cnv_vcf_output(mode):
     raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make_cnv_vcf']['mode']))
 
 def get_target_files():
-  #Target options: ('report', 'cnv-vcf', 'processed-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
+  #Target options: ('report', 'cnv-vcf', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
   all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
 
   # complete
@@ -136,7 +136,7 @@ def get_target_files():
                   sample_id = all_samples)
 
   # Target Processed-calls
-  if TARGET == 'processed-calls':
+  if TARGET == 'combined-cnv-calls':
     return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
                   sample_id = all_samples)
   # Target PennCNV

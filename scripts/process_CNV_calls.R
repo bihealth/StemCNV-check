@@ -76,7 +76,8 @@ density.quantile.cutoff <- config$settings$CNV_processing$call_processing$densit
 
 #Scoring
 score_thresholds <- config$settings$CNV_processing$scoring_thresholds
-score_values <- config$settings$CNV_processing$scoring_values
+impact_scores <- config$settings$CNV_processing$Impact_scoring
+precision_extimates<- config$settings$CNV_processing$Precision_estimates
 
 valid_name <- config$wildcard_constraints$sample_id
 if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
@@ -145,7 +146,7 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 		ov <- gr %>%
 			group_by(sample_id, CNV_type) %>%
 			reduce_ranges(ID = ID,
-			              tool.overlap.state = ifelse(plyranges::n() > 1, 'combined', 'no-overlap')) %>%
+			              caller_merging_state = ifelse(plyranges::n() > 1, 'combined', 'no-overlap')) %>%
 			as_tibble() %>%
 			mutate(group.ID = paste('combined', CNV_type, seqnames, start, end, sep='_')) %>%
 			dplyr::select(-strand, -seqnames) %>%
@@ -155,11 +156,11 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 			group_by(sample_id, CNV_type, pick(starts_with('group'))) %>%
 			# The overlap here is *not* reciprocal overlap, as we need to deal with the possibility of one tool
 			# 'merging' calls from another (or having >2 tools)
-			mutate(coverage.overlap = ifelse(tool.overlap.state == 'combined', width / group.width * 100, NA),
-			       max.ov = max(coverage.overlap)) %>%
+			mutate(overlap_merged_call = ifelse(caller_merging_state == 'combined', width / group.width * 100, NA),
+			       max.ov = max(overlap_merged_call)) %>%
 			group_by(sample_id, CNV_type, pick(starts_with('group')), CNV_caller) %>%
 			# sum doesn't work if we have the filters in there and only group by CNV_caller
-			mutate(tool.cov.sum = sum(coverage.overlap)) %>%
+			mutate(tool.cov.sum = sum(overlap_merged_call)) %>%
 			group_by(sample_id, CNV_type, seqnames, pick(starts_with('group'))) %>%
 			mutate(tool.cov.ov.median = map2(list(CNV_caller), list(tool.cov.sum),
 												\(CNV_caller, csum) tibble(CNV_caller = CNV_caller, csum = csum) %>% unique() %>%
@@ -171,46 +172,46 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 		# - require at least 50% of the merged region to be covered by a single call to prevent chained overlaps
 		# - require that the combined regions coverage from tools has a median of at least 60% (avg for only 2 tools)
 		gr.changed <- ov %>%
-			filter(tool.overlap.state == 'combined' &
+			filter(caller_merging_state == 'combined' &
 					   max.ov >= min.greatest.region.overlap &
 					   tool.cov.ov.median >= min.median.tool.coverage
 			) %>%
 			select(-start, -end, -width,-ID) %>%
 			rename_with(~str_remove(., '^group\\.')) %>%
 			summarise(across(any_of(list_cols), ~list(.)),
-					  #tool is already a list now!
-					  tool.coverage.overlap = map2(CNV_caller, list(tool.cov.sum),
+					  overlap_merged_call = NA,
+					  caller_merging_coverage = map2(CNV_caller, list(tool.cov.sum),
 													\(CNV_caller, csum) tibble(t = CNV_caller, csum = csum) %>% unique() %>%
 																	mutate(desc = paste0(t,'-', round(csum, 2))) %>%
 																	pull(desc) %>% paste(collapse = ',')
 													) %>% unlist(),
-					  tool.overlap.state = 'combined'
+					  caller_merging_state = 'combined'
 			) %>%
 			as_granges() %>%
 			ensure_list_cols()
 
 		gr.unchanged <- ov %>%
-			filter(tool.overlap.state == 'no-overlap' |
+			filter(caller_merging_state == 'no-overlap' |
 					   max.ov < min.greatest.region.overlap |
 					   tool.cov.ov.median < min.median.tool.coverage
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
-			mutate(tool.coverage.overlap = NA_character_,
-			       tool.overlap.state = 'no-overlap') %>%
+			mutate(caller_merging_coverage = NA_character_,
+				   overlap_merged_call = NA,
+			       caller_merging_state = 'no-overlap') %>%
 			as_granges() %>%
 			ensure_list_cols()
 
 		gr.pre.overlap <-ov %>%
-			filter(tool.overlap.state == 'combined' &
+			filter(caller_merging_state == 'combined' &
 					   max.ov >= min.greatest.region.overlap &
 					   tool.cov.ov.median >= min.median.tool.coverage
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
-			mutate(tool.coverage.overlap = NA_character_,
-				   overlap.coverage = list(NA),
-				   tool.overlap.state = 'pre-overlap') %>%
+			mutate(caller_merging_coverage = NA_character_,
+				   caller_merging_state = 'pre-overlap') %>%
 			as_granges() %>%
 			ensure_list_cols()
 
@@ -218,10 +219,10 @@ combine_tools <- function(tools, min.greatest.region.overlap = 50, min.median.to
 
 	} else {
 		gr <- gr %>%
-			mutate(tool.overlap.state = 'no-overlap',
+			mutate(caller_merging_state = 'no-overlap',
 				   #widths = NA,
-				   coverage.overlap = NA,
-				   tool.coverage.overlap = NA) %>%
+				   overlap_merged_call = NA,
+				   caller_merging_coverage = NA) %>%
 			ensure_list_cols()
 
 		return(gr)
@@ -270,7 +271,7 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 	
 	if (nrow(gr) > 0) {
 		gr <- gr %>%
-			group_by(granges.x.seqnames, granges.x.start, granges.x.end, tool.overlap.state.x, CNV_caller.x, CNV_type.x) %>%
+			group_by(granges.x.seqnames, granges.x.start, granges.x.end, caller_merging_state.x, CNV_caller.x, CNV_type.x) %>%
 			summarise(across(ends_with('.x'), ~ unique(.)),
 					  reference_overlap = TRUE,
 					  reference_coverage = list(reference_coverage),
@@ -347,50 +348,25 @@ parse_highligh_list <- function(yaml_obj) {
 }
 
 
-annotate_impact_lists <- function(gr, config, lists = 'high_impact') {
+annotate_impact_lists <- function(gr, config, list_name = 'high_impact') {
 	message('Annotation calls with gene lists')
 
-	if (lists == 'high_impact') {
-		config_sect <- config$settings$CNV_processing$gene_overlap$highimpact_curated_lists
-		col_name <- 'high_impact'
-	} else if (lists == 'highlight') {
-		config_sect <- config$settings$CNV_processing$gene_overlap$highlight_lists
-		col_name <- 'highlight'
-	} else {
+	if (!list_name %in% c('high_impact', 'highlight')) {
 		quit('Can only annotate "high_impact" or "highlight" lists')
 	}
-	#Don't do anything if no lists are defined
-	if (length(config_sect) == 0) {
+	yaml_file <- config$settings$CNV_processing$gene_overlap[[paste0(list_name, '_list')]] %>%
+		str_replace('__inbuilt__', config$snakedir)
+
+	#Don't do anything if no list is defined
+	if (is.na(yaml_file) | is.null(yaml_file) | yaml_file == '') {
 		return(gr)
 	}
 
-	col_name_g <- paste0(col_name, '_genes')
-
-	yaml_files <- unlist(config_sect) %>%
-		str_replace('__inbuilt__', config$snakedir)
-
-	# Make a GRList object with coordinates for each gene/position of the lists
-	highlight_lists <- lapply(yaml_files, read_yaml)
-	names(highlight_lists) <- sapply(highlight_lists, \(x) x$name)
-
-	highlight_gr <- lapply(highlight_lists, parse_highligh_list) %>%
-		GRangesList()
-	# Make a list-col & add highlight-list names that have any hits
-	gr@elementMetadata[[col_name]] <- imap(highlight_gr, function(x, name) {
-			ifelse(
-				join_overlap_left(gr, x) %>%
-					group_by(ID, CNV_type) %>%
-					reduce_ranges(type_regex = paste(type_regex, collapse="|")) %>%
-					mutate(type_check = str_detect(CNV_type, type_regex)) %>%
-					.$type_check,
-				name, NA_character_
-			)
-		}) %>%
-		pmap(\(...) na.omit(c(...)) %>% as.character())
+	highlight_gr <- read_yaml(yaml_file) %>% parse_highligh_list()
 
 	# Make an extra col listing all overlapping directly defined genes
-	gr@elementMetadata[[col_name_g]] <- NA_character_
-	ov <- group_by_overlaps(gr, unlist(highlight_gr))
+	gr@elementMetadata[[paste0(list_name, '_hits')]] <- NA_character_
+	ov <- group_by_overlaps(gr, highlight_gr)
 	if (length(ov) > 0) {
 		ov_hits <- ov %>%
 			mutate(type_check = str_detect(CNV_type, type_regex)) %>%
@@ -398,7 +374,7 @@ annotate_impact_lists <- function(gr, config, lists = 'high_impact') {
 			reduce_ranges(genes = paste(unique(gene_name[gene_hit]),collapse = ','),
 						  pos = paste(unique(section_name[!gene_hit]),collapse = ',')) %>%
 			mutate(hits = paste(genes, pos, sep=',') %>% str_remove(',$') %>% str_remove('^,'))
-		gr[ov_hits$query,]@elementMetadata[[col_name_g]] <- ov_hits$hits
+		gr[ov_hits$query,]@elementMetadata[[paste0(list_name, '_hits')]] <- ov_hits$hits
 	}
 
 	return(gr)
@@ -426,7 +402,7 @@ annotate_gaps <- function(gr, gapfile) {
 	gap_intercept <- gap_area.uniq_probes.rel[[2]]
 
 	gr <- gr %>%
-		mutate(call_has_probe_gap =  ifelse(is.na(percent_gap_coverage),
+		mutate(probe_coverage_gap =  ifelse(is.na(percent_gap_coverage),
 										 FALSE,
 										 percent_gap_coverage > min.perc.gap_area &
 												(gap_slope * percent_gap_coverage + gap_intercept) <= log2(uniq_probe_positions))
@@ -485,34 +461,43 @@ add_call_scoring <- function(tb) {
 	tb %>%
 	  rowwise() %>%
 	  mutate(
-		  Score =
+		  size_category = case_when(
+			length >= score_thresholds$extreme.loh & CNV_type %!in% c('gain', 'loss') ~ 'extreme',
+			length >= score_thresholds$extreme.cnv & CNV_type %in% c('gain', 'loss') ~ 'extreme',
+			length >= score_thresholds$very.large.loh & CNV_type %!in% c('gain', 'loss') ~ 'very_large',
+			length >= score_thresholds$very.large.cnv & CNV_type %in% c('gain', 'loss') ~ 'very_large',
+			length >= score_thresholds$large.loh & CNV_type %!in% c('gain', 'loss') ~ 'large',
+			length >= score_thresholds$large.cnv & CNV_type %in% c('gain', 'loss') ~ 'large',
+			length >= score_thresholds$medium.loh & CNV_type %!in% c('gain', 'loss') ~ 'medium',
+			length >= score_thresholds$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
+			TRUE ~ 'small'
+		  ),
+		  Impact_Score =
+			ifelse(CNV_type %in% c('gain', 'loss'),
+				   1/3 * log(length) * log(length),
+				   0.275 * log(length) * log(length)
+			) +
 			# High impact (base) & per gene/region [70, +5/g]
-			(score_values$highimpact_base * !any(length(high_impact) == 0) ) +
-			ifelse(!any(length(high_impact) == 0), score_values$highimpact_per_gene * (1 + str_count(high_impact_genes, ',')), 0) +
+			(impact_scores$highimpact_base * !is.na(high_impact_hits) ) +
+			ifelse(!is.na(high_impact_hits), impact_scores$highimpact_per_gene * (1 + str_count(high_impact_hits, ',')), 0) +
 			# Highlight (base) & per gene/region [0, +10/g]
 			# NOTE: this will count genes that are highlight AND high_impact with 15 in total
-			(score_values$highlight_base * !any(length(highlight) == 0) ) +
-			ifelse(!any(length(highlight) == 0), score_values$highlight_per_gene * (1 + str_count(highlight_genes, ',')), 0) +
-			# Size cutoff points (very large / large, [75 / 50])
-			(score_values$callsize_verylarge * (CNV_type %!in% c('gain', 'loss') & length >= score_thresholds$very.large.loh) ) +
-			(score_values$callsize_verylarge * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$very.large.cnv) ) +
-			(score_values$callsize_large * (CNV_type %!in% c('gain', 'loss') & length >= score_thresholds$large.loh & length < score_thresholds$very.large.loh) ) +
-			(score_values$callsize_large * (CNV_type  %in% c('gain', 'loss') & length >= score_thresholds$large.cnv & length < score_thresholds$very.large.cnv) ) +
-			# Extras: CallerType(combined:10, PennCNV:5), Gap (-15), HighDensity (-15)
-			case_when(
-				tool.overlap.state == 'combined' ~ score_values$caller.type.multiOverlap,
-				'PennCNV' %in% CNV_caller        ~ score_values$caller.type.PennCNV,
-				TRUE							 ~ 0
-			) +
-			(score_values$Call_has_Gap * (call_has_probe_gap)) +
-			(score_values$HighSNPDensity * (high_probe_density)),
-		Call_Designation = case_when(
-			reference_overlap            				   ~ 'Origin Genotype',
-			Score >= score_thresholds$min.score.critical   ~ 'Critical Call',
-			Score >= score_thresholds$min.score.reportable ~ 'Reportable Call',
-			TRUE                         				   ~ 'Secondary Call'
-			)
-	  ) %>% ungroup()
+			(impact_scores$highlight_base * !is.na(highlight_hits) ) +
+			ifelse(!is.na(highlight_hits), impact_scores$highlight_per_gene * (1 + str_count(highlight_hits, ',')), 0) +
+			# Extra score  for any genes
+			(impact_scores$overlap_any_gene * n_genes),
+		  Precision_Estimate =
+			  ifelse(CNV_type %in% c('gain', 'loss'),
+				precision_extimates[[
+					ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
+					size_category]] +
+				  (precision_extimates$Call_has_Gap * (probe_coverage_gap)) +
+				  (precision_extimates$HighSNPDensity * (high_probe_density)),
+				NA_real_
+			  )
+	  ) %>%
+	  ungroup() %>%
+	  dplyr::select(-size_category)
 
 }
 
@@ -585,7 +570,7 @@ if (!is.na(ref_id)) {
 		# These cols will interefere
 		dplyr::select(-length, -reference_overlap, -reference_coverage, -reference_caller,
 									-n_genes, -overlapping_genes) %>%
-		filter(tool.overlap.state != 'pre-overlap') %>%
+		filter(caller_merging_state != 'pre-overlap') %>%
 		as_granges()
 	
 	cnvs <- annotate_ref_overlap(combined_tools_sample, combined_tools_ref, min.reciprocal.coverage.with.ref)
