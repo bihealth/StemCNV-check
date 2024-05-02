@@ -137,6 +137,7 @@ load_genomeInfo <- function(config) {
 
 	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
 	gr_info <- read_tsv(get_static_path(config$static_data$genomeInfo_file, config$basedir)) %>%
+		filter(!is.na(band_start)) %>%
 		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
 		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name))
 

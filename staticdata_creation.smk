@@ -133,14 +133,18 @@ chromInfo <- read_tsv('{input.chromInfo}', show_col_types = FALSE) %>%
     group_by(chr) %>% summarise(seqlength = unique(size))
 ginfo <- Seqinfo(seqnames=chromInfo$chr %>% as.character(),
                  seqlengths=chromInfo$seqlength,
-                 isCircular= chromInfo$chr == 'chrM', genome='{params.genome}')
+                 isCircular= chromInfo$chr == 'chrMT',
+                 genome='{params.genome}')
 
 # Read pfb to get probe positions, pfb uses NCBI chromosome style
 array <- read_tsv('{input.pfb}', show_col_types = FALSE) %>%
   as_granges(seqnames = Chr, start = Position, width = 1) %>%
   #Need to filter duplicate positions, as they screw up the density
   reduce_ranges(n_probes = n())
-array <- renameSeqlevels(array, mapSeqlevels(seqnames(array) %>% as.character(), 'UCSC'))
+array <- renameSeqlevels(array,
+                         mapSeqlevels(seqnames(array) %>% as.character(), 'UCSC') %>%
+                           str_replace('chrM', 'chrMT') %>% setNames(seqnames(array) %>% as.character())
+)
 seqinfo(array) <- ginfo
 
 # Get gaps
@@ -156,15 +160,8 @@ gaps <- complement_ranges(array) %>%
   filter(width(.) >= gap_min_size)
 write_bed(gaps, '{output.gaps}')
 
-# calculate probe density, split by windows 
-
-# # --> if using remaining regions we can ignore obvious gaps, but some regions will be small and throw off the mean
-# density <- complement_ranges(gaps) %>% 
-#     filter(start != 1 & end != seqlengths(.)[as.character(seqnames)]) %>%
-#     tile_ranges(2*{params.density_windows}) %>%
-#     mutate(score = count_overlaps(., array) / width(.))
-    
-# --> if tiling the whole genome we have even windows, and mean & median are similar
+# calculate probe density 
+# by tiling the whole genome we have even windows, and mean & median are similar
 density <- chromInfo %>% as_granges(seqnames = chr, width = seqlength, start = 1) %>%
     tile_ranges({params.density_windows}) %>%
     mutate(score = count_overlaps(., array) / width(.))
@@ -210,7 +207,8 @@ rule ucsc_goldenpath_download:
 
 rule create_genome_info_file:
     input:
-        cytobands = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.cytoBand.txt")), #cytoBandIdeo.txt has info for non-assmebled chromosomes
+        cytobands = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.cytoBand.txt")),
+        #cytoBandIdeo.txt has info for non-assmebled chromosomes
         #centromer = os.path.join(DOWNLOAD_DIR, f"{GENOME}.centromeres.txt"), #Only exists for hg38
         chrominfo = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.chromInfo.txt"))
         #Note: the chromAlias.txt file might be useful if people use strange chr-/seqnames
@@ -224,20 +222,26 @@ suppressMessages(library(tidyverse))
 suppressMessages(library(GenomeInfoDb))
 
 styles <- genomeStyles()
+styles_MT <- styles$Homo_sapiens$UCSC %>% str_replace('chrM', 'chrMT')
 
 chrominfo <- read_tsv("{input.chrominfo}", col_names = c("chr", "size", "url"), show_col_types = FALSE) %>% 
-    select(-url) %>% filter(chr %in% styles$Homo_sapiens$UCSC)
+    select(-url) %>% 
+    filter(chr != 'chrMT') %>%
+    mutate(chr = str_replace(chr, 'chrM$', 'chrMT')) %>%
+    filter(chr %in% styles_MT)
 # The 'acen' labelled cytobands are the centromere areas (but much larger than what the centromere file gives)
-chrominfo <- left_join(chrominfo, #by = "chr", 
+chrominfo <- left_join(chrominfo,
                 read_tsv("{input.cytobands}", show_col_types = FALSE, 
                     col_names = c("chr", "band_start", "band_end", "band_name", "band_staining")),
                 by = "chr"
                 ) %>%
              mutate(
                 centromer = band_staining == "acen",
-                chr = factor(chr, styles$Homo_sapiens$UCSC)
+                chr = factor(chr, styles_MT)
              ) %>%
-             arrange(chr, band_start)
+             arrange(chr, band_start) %>%
+             # The hg19 cytoband file does not include chrMT, so no band_start there
+             filter(!is.na(band_start) | chr == 'chrMT')
 write_tsv(chrominfo, "{output}")
 EOF
         """

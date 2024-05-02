@@ -10,7 +10,7 @@ static_data:
     array_gaps: static-data/gaps_{genome}_{snp-array-name}.bed                   #REQUIRED, Auto-generatable
     genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv               #REQUIRED, Auto-generatable
 
-raw_data_folder: '' #REQUIRED
+raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
 data_path: data     #REQUIRED
 log_path: logs      #REQUIRED
 
@@ -46,11 +46,6 @@ settings:
     #     Position.duplicates: remove # keep|remove|highestGC|highestGT
 
   default-filter-set: extended
-
-  # Only probes from these chromosomes will be used, chromosomes will be reported in this format
-  # Note: the pseudo-autosomal region is often coded as (chr)XY on Illumina arrays
-  chromosomes: ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12",
-                "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
 
   PennCNV:
     # Specific filter setting for PennCNV, '__default__' uses `default-filter-set
@@ -179,8 +174,6 @@ settings:
       Call_has_Gap:   -0.1
       HighSNPDensity: -0.1
 
-
-
   make_cnv_vcf:
     filter-settings: '__default__'
     # mode can be 'combined-calls' (one vcf with combined calls) or 'split-tools' (once vcf per tool, with non-combined calls)
@@ -189,6 +182,12 @@ settings:
     include_states: ['gain', 'loss', 'LOH']
     # Use this to create distinct vcf files, for i.e. different CNV types. Added to filename before `.vcf`
     name_addition: ''
+
+  # Only probes from these chromosomes will be used, chromosomes will be reported in this format
+  # Note: the pseudo-autosomal region is often coded as (chr)XY on Illumina arrays, and will be ignored by default
+  chromosomes: ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12",
+                "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
+               # chrMT could probably be added for hg38, but settings are not optimised for it
 
 reports:
   CNV-QC-report:

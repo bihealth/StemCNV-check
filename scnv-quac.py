@@ -49,7 +49,8 @@ def check_sample_table(args):
 	# Give warning if sex of reference and sample don't match
 	sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
 	if sex_mismatch:
-		warnings.warn("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch), SampletableReferenceWarning)
+		logger.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+		raise SampletableReferenceError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
 	with open(args.config) as f:
 		config = yaml.safe_load(f)
@@ -111,9 +112,7 @@ def check_config(args, required_only=False):
 		return None
 
 	# Other settings: reports/*/filetype
-	if not 'reports' in config:
-		logger.warning('No reports are defined in the config, only tabular & vcf files will be created!', ConfigValueWarning)
-	else:
+	if 'reports' in config:
 		for rep in config['reports']:
 			if rep == '__default__':
 				continue
@@ -137,7 +136,6 @@ def check_config(args, required_only=False):
 			ValueError(f"{n} can not be coerced to a number")
 
 	defined_filtersets = set(config_extract(['settings', 'probe-filter-sets'], config, DEF_CONFIG).keys())
-	#defined_filtersets = set(config['settings']['probe-filter-sets'].keys()) | set(DEF_CONFIG['settings']['probe-filter-sets'].keys())
 	check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
 	def_functions = {
 		'list': lambda x, v: type(x) == list,
@@ -233,8 +231,11 @@ def make_singularity_args(config, tmpdir=None, not_existing_ok=False):
 
 	for name, file in config['static_data'].items():
 		# Can only mount existing files
-		if not_existing_ok and not os.path.isfile(file):
-			continue
+		if not os.path.isfile(file):
+			if not_existing_ok or not file:
+				continue
+			else:
+				raise FileNotFoundError(f"Static data file '{file}' does not exist.")
 		bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
 
 	return "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
@@ -323,7 +324,7 @@ def create_missing_staticdata(args):
 				cores=args.local_cores,
 				workdir=args.directory,
 				use_singularity=not args.no_singularity,
-				singularity_args='' if args.no_singularity else make_singularity_args(config, True),
+				singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
 				use_conda=True,
 				conda_frontend=args.conda_frontend,
 				printshellcmds=True,
@@ -360,7 +361,7 @@ def create_missing_staticdata(args):
 			force_incomplete=True,
 			use_conda=True,
 			use_singularity=not args.no_singularity,
-			singularity_args='' if args.no_singularity else make_singularity_args(config, True),
+			singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
 			config={'sample_table': args.sample_table,
 					'snakedir': SNAKEDIR,
 					'basedir': args.directory,

@@ -12,7 +12,8 @@ See [here](...) for instructions to install <conda/mamba>.
 
 1. Clone the repository
 2. Run `conda env create -f envs/base.yml` to create a base conda environment from which to run SCnv-Quac
-3. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
+3. You may have to make the `scnv-quac.py` script executable with `chmod +x scnv-quac.py
+4. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
 cnv-pipeline
 
@@ -50,6 +51,16 @@ that array is available.
 To run the analysis:
 
 `scnv-quac.py [-s <sample_table> -c <config_file> -a run]`
+
+## Example data
+
+This repository contains example data (using data from the Genome in a Bottle samples) that can be used to test the setup.
+After pulling the repository and creating and activating the base scnc-quac conda environment, run the following commands 
+(Note that this will download a fasta and gtf file for the human genome. If you have suitable files available locally, 
+it is recommended to replace the corresponding paths in the config.yaml to avoid unnecessary and time-consuming downloads):
+- `cd test_data`
+- `../scnv-quac.py -a make-staticdata --genome hg19 --snp-array-name testrun` 
+- `../scnv-quac.py`
 
 ## Output
 

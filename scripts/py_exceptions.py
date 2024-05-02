@@ -27,6 +27,3 @@ class ConfigValueWarning(Warning):
 
 class ConfigKeyWarning(Warning):
     """Raised when the config file contains entries that are not defined or deprecated"""
-
-class SampletableReferenceWarning(Warning):
-    """Raised when the sample_table file contains a reference that does not exist or has a non-matching sex"""
