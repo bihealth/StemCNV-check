@@ -1,0 +1,15 @@
+static_data:
+    bpm_manifest_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.bpm'
+    egt_cluster_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.egt'
+    csv_manifest_file: ''
+    genome_fasta_file: static-data/hg19.genome.fa
+    genome_gtf_file: static-data/gencode.hg19.v45.gtf
+    pfb_file: static-data/PennCNV-PFB_hg19_testrun.pfb
+    GCmodel_file: static-data/PennCNV-GCmodel_hg19_testrun.gcmodel
+    array_density: static-data/density_hg19_testrun.bed
+    array_gaps: static-data/gaps_hg19_testrun.bed
+    genomeInfo_file: static-data/UCSC_hg19_chromosome-info.tsv
+
+raw_data_folder: 'RAW'
+data_path: data
+log_path: logs

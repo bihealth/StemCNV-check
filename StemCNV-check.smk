@@ -35,8 +35,6 @@ TARGET = config['target'] if 'target' in config else 'report' #Defined by wrappe
 IDAT_INPUT = config['raw_data_folder']
 
 wildcard_constraints:
-  # This seems to cause issues -> will also make debugging harder for users
-  #filter=list(config['settings']['probe-filter-sets'].keys()),
   sample_id=config['wildcard_constraints']['sample_id'],
   #sentrix_name=config['wildcard_constraints']['sentrix_name'],
   #sentrix_pos=config['wildcard_constraints']['sentrix_pos'],
@@ -48,7 +46,6 @@ localrules:
 
 sample_data = read_sample_table(SAMPLETABLE)
 sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
-#print(sample_data)
 
 # Helper functions =============================================================
 
