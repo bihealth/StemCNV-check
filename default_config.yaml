@@ -137,16 +137,11 @@ settings:
       large.cnv:       100000
       medium.loh:       10000
       medium.cnv:       10000
-#       # Score thresholds for call designation as critical or reportable
-#       min.impact.critical:   70
-#       min.impact.reportable: 40
-#       min.reliability.critical:   0.6
-#       min.reliability.reportable: 0.3
 
     Impact_scoring:
       # Scoring for Impact of CNV and LOH calls
       # Note: per_gene scores are additive if the gene is listed in multiple lists
-      highimpact_base: 50
+      highimpact_base: 25
       highimpact_per_gene: 5
       highlight_base: 0
       highlight_per_gene: 5
@@ -193,14 +188,12 @@ settings:
 reports:
   CNV-QC-report:
     file_type: 'html'         #REQUIRED
-    min.impact.critical:   70 #REQUIRED
-    min.impact.reportable: 40 #REQUIRED
+    impact.score.critical: NA #recommended: 55
 
 #    #Multiple individual reports can be defined, file_type and minimum scores for reportable/critical is necessary for each one!
 #  full-report:
 #    file_type: 'html'         #REQUIRED
-#    min.impact.critical:   70 #REQUIRED
-#    min.impact.reportable: 40 #REQUIRED
+#    impact.score.critical: 55
 #    call.data.and.plots:
 #      __default__:
 #        # How many plots to show at least
@@ -210,14 +203,17 @@ reports:
 #  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
 #  summary-report:
 #    file_type: 'pdf'          #REQUIRED
-#    min.impact.critical:   70 #REQUIRED
-#    min.impact.reportable: 40 #REQUIRED
+#    impact.score.critical: 55
 #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
 #    call.data.and.plots:
 #      include.call.table: FALSE
 
   #These are the default settings from which all reports inherit
   __default__:
+    # Impact_Score cutoffs for labelling calls as 'Critical' or 'Reportable'
+    impact.score.critical:   NA
+    impact.score.reportable: NA
+
     # individual sections can be included (whitelist) or excluded (blacklist) from report.
     # Default is special '__all__' for include, but a list of specific sections can also be used
     include_sections: '__all__'
@@ -247,6 +243,9 @@ reports:
       __default__:
         # How many plots to show at least
         min_number_plots: 20
+        always_include: #[]
+            - 'Critical'
+            #- 'Reportable'
         # Include plots, table of individual calls and table of genes
         include.plot: True
         include.call.table: True

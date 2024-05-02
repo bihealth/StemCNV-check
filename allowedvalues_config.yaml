@@ -146,14 +146,15 @@ reports:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
-    min.impact.critical: float_ge0
-    min.impact.reportable: float_ge0
+    impact.score.critical: float_ge0
+    impact.score.reportable: float_ge0
     sample.info.extra.cols: list__insamplesheet
 
     call.data.and.plots:
       filter-settings: filterset
       __plotsection:
         min_number_plots: int_ge0
+        always_include: list__str_(Critical|Reportable)
         include.plot: bool
         include.call.table: bool
         include.gene.table.details: str_(All|Call|None)

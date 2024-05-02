@@ -474,8 +474,8 @@ add_call_scoring <- function(tb) {
 		  ),
 		  Impact_Score =
 			ifelse(CNV_type %in% c('gain', 'loss'),
-				   1/3 * log(length) * log(length),
-				   0.275 * log(length) * log(length)
+				   1/3 * log(length) * log(length) - 15,
+				   0.275 * log(length) * log(length) - 15
 			) +
 			# High impact (base) & per gene/region [70, +5/g]
 			(impact_scores$highimpact_base * !is.na(high_impact_hits) ) +

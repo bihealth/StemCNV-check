@@ -261,7 +261,7 @@ format_size <- function(size) {
   paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
 }
 
-CNV_ID_str <- function(Call_Designation, CNV_type, Chr, Size, i,
+CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
                        region_name = NULL,
                        formatting = 'nice', ...) {
   #ROIs might have user defined names
@@ -277,27 +277,27 @@ CNV_ID_str <- function(Call_Designation, CNV_type, Chr, Size, i,
 }
 
 CNV_table_output <- function(tb, plotsection, caption = NULL) {
+  always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
   # Reorder & subset columns
-    tb <- tb %>%
-      # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
-      mutate(Plot = ifelse(
-               i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_Designation == 'Critical Call',
-               paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
-               #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
-                      '">', pmap_chr(., CNV_ID_str), '</a>'),
-               #TODO: does this work for ROIs?
-               str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">Plot (ext.) {i}</a>')
-             )
-      ) %>%
-      select(sample_id, ID, i, #invis 0-2
-             Plot, Call_Designation, Impact_Score,
-             CNV_type, Chr, Start, End, Size, #invis 6-10
-             CNV_caller, high_impact_hits, highlight_hits,
-             Precision_Estimate, probe_coverage_gap, high_probe_density,
-             # invis: 17++
-             copynumber, n_snp_probes,  n_premerged_calls, caller_confidence,
-             caller_merging_coverage, caller_merging_state,
-             reference_overlap, reference_coverage, reference_caller, percent_gap_coverage )
+  tb <- tb %>%
+    # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
+    mutate(Plot = ifelse(
+             i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_Label %in% always_include,
+             paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
+             #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
+                    '">', pmap_chr(., CNV_ID_str), '</a>'),
+             str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">Plot (ext.) {i}</a>')
+           )
+    ) %>%
+    select(sample_id, ID, i, #invis 0-2
+           Plot, Call_Label, Impact_Score,
+           CNV_type, Chr, Start, End, Size, #invis 6-10
+           CNV_caller, high_impact_hits, highlight_hits,
+           Precision_Estimate, probe_coverage_gap, high_probe_density,
+           # invis: 17++
+           copynumber, n_snp_probes,  n_premerged_calls, caller_confidence,
+           caller_merging_coverage, caller_merging_state,
+           reference_overlap, reference_coverage, reference_caller, percent_gap_coverage )
 
   if (params$out_format == 'html') {
     dt <- datatable(tb %>% rename_with(format_column_names),
@@ -333,13 +333,14 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
   if (nrow(call.table) == 0) {
     return(str_glue('No {plotsection} CNV calls found.'))
   }
+  always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
   for (i in call.table$i) {
     row <- call.table[i,]
     res <- make_LRR_BAF_plots(row,
                               report.setting('call.data.and.plots', plotsection, 'plot.region.minsize'),
                               report.setting('call.data.and.plots', plotsection, 'plot.flanking.region.relative')
                               )
-    if(i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | row$Call_Designation == 'Critical Call') {
+    if(i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | row$Call_Label %in% always_include) {
       cat('### ', pmap_chr(row, CNV_ID_str, formatting = 'nice'), '\n\n')
       if (typeof(res$gg) == 'character') {
         cat(res$gg, '\n\n')
@@ -436,11 +437,11 @@ cnv_calls <- lapply(file.path(datapath, use_ids, paste0(use_ids, '.combined-cnv-
                     load_preprocessed_cnvs) %>%
   bind_rows() %>%
   mutate(
-    Call_Designation = case_when(
-            reference_overlap            				            ~ 'Reference genotype',
-            Impact_Score >= report.setting('min.impact.critical')   ~ 'Critical Call',
-            Impact_Score >= report.setting('min.impact.reportable') ~ 'Reportable Call',
-            TRUE                         				            ~ 'de-novo Call'
+    Call_Label = case_when(
+            reference_overlap            				              ~ 'Reference genotype',
+            Impact_Score >= report.setting('impact.score.critical')   ~ 'Critical',
+            Impact_Score >= report.setting('impact.score.reportable') ~ 'Reportable',
+            TRUE                         				              ~ ''
     )
   )
 
@@ -505,8 +506,8 @@ metrics <- list(
                  #highlight_calls, high_impact_calls,
                  class, .drop = F) %>%
         summarise(total_calls = n(),
-                  reportable_calls = sum(Call_Designation == 'Reportable Call'),
-                  critical_calls = sum(Call_Designation == 'Critical Call'),
+                  reportable_calls = sum(Call_Label == 'Reportable'),
+                  critical_calls = sum(Call_Label == 'Critical'),
                   ) %>%
         pivot_wider(names_from = class, values_from = matches('(total|reportable|critical)_calls'))
 )
@@ -552,9 +553,18 @@ metric.colors <- list(
                 )
         )
 
-Combined.metrics <- purrr::reduce(metrics, full_join, by = 'sample_id') %>% tr_tibble() %>%
-        mutate(` ` = format_column_names(` `))
-Combined.colors <-  purrr::reduce(metric.colors, full_join, by = 'sample_id') %>% tr_tibble()
+not_enabled_label <- c('dummy',
+                       ifelse(!is.na(report.setting('impact.score.critical')), 'dummy', 'Critical'),
+                       ifelse(!is.na(report.setting('impact.score.reportable')), 'dummy', 'Reportable')
+  ) %>% unique %>% paste(collapse = '|')
+
+Combined.metrics <- purrr::reduce(metrics, full_join, by = 'sample_id') %>%
+  tr_tibble() %>%
+  filter(!str_detect(` `, not_enabled_label)) %>%
+  mutate(` ` = format_column_names(` `))
+Combined.colors <- purrr::reduce(metric.colors, full_join, by = 'sample_id') %>%
+  tr_tibble() %>%
+  filter(!str_detect(` `, not_enabled_label))
 
 get_call_stats_tool <- function(use.tool) {
     cnv_calls %>%
@@ -567,10 +577,11 @@ get_call_stats_tool <- function(use.tool) {
         ) %>%
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
         summarise(total_calls = n(),
-                  reportable_calls = sum(Call_Designation == 'reportable'),
-                  critical_calls = sum(Call_Designation == 'critical')
+                  reportable_calls = sum(Call_Label == 'Reportable'),
+                  critical_calls = sum(Call_Label == 'Critical')
         ) %>%
         pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls')) %>%
+        dplyr::select(-matches(not_enabled_label)) %>%
         tr_tibble()
 }
 
@@ -907,8 +918,8 @@ make_LRR_BAF_plots <- function(call.row,
 
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, Call_Designation, Impact_Score, reference_overlap, CNV_type, CNV_caller) %>%
-    arrange(Sample_Name, Call_Designation, Impact_Score, Start) %>%
+    dplyr::select(Sample_Name, 1, 3:4, Call_Label, Impact_Score, reference_overlap, CNV_type, CNV_caller) %>%
+    arrange(Sample_Name, Call_Label, Impact_Score, Start) %>%
     rowwise() %>%
     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 
@@ -932,14 +943,14 @@ cnv_calls <- cnv_calls %>%
 denovo_calls.table <- cnv_calls %>%
   filter(caller_merging_state != 'pre-overlap'  &
            sample_id == !!sample_id &
-           Call_Designation != 'Reference genotype'
+           Call_Label != 'Reference genotype'
   ) %>%
   mutate(i = row_number())
 
 reference_calls.table <- cnv_calls %>%
   filter(caller_merging_state != 'pre-overlap' &
            sample_id == !!sample_id &
-           Call_Designation == 'Reference genotype'
+           Call_Label == 'Reference genotype'
   ) %>%
   mutate(i = row_number())
 
@@ -996,7 +1007,7 @@ if (any(!is.na(regions)) & length(regions)>0) {
             End = str_extract(regions, '(?<=-)[0-9]+$') %>% as.numeric(),
             Size = End - Start,
             region_name = str_extract(regions, '^[^|]+\\|') %>% str_remove('\\|'),
-            Call_Designation = 'ROI'
+            Call_Label = 'ROI'
             ) %>%
       mutate(Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
              i = row_number(),
