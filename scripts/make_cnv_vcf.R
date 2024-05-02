@@ -5,7 +5,7 @@ suppressMessages(library(argparse))
 parser <- ArgumentParser(description="Convert tsv file with CNV calls from process_CNV_calls to vcf")
 
 parser$add_argument('data_path', type = 'character', help='Path in which folders with sample data are located')
-parser$add_argument('sample_id', type = 'character', help='SCnv-QuaC sample_id')
+parser$add_argument('sample_id', type = 'character', help='StemCNV-check sample_id')
 parser$add_argument('config_path', type = 'character', help='Path to config file')
 
 parser$add_argument('-m', '--mode', type = 'character', default = 'combined-calls',

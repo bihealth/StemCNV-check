@@ -1,6 +1,7 @@
 ---
 title: "`r paste(params$sample_id, str_replace_all(params$report_name, '[\\._-]', ' '))`"
-output: 
+author: "`r paste('StemCNV-check, version:',  params$version)`"
+output:
   html_document:
     df_print: paged
     toc: true
@@ -11,10 +12,11 @@ params:
   base_path: ''
   sample_id: ''
   sampletable: 'sample_table.txt'
-  report_name: 'CNV-report'
+  report_name: 'StemCNV-check-report'
   out_format: 'html'
   configfile: 'config.yaml'
   workdir: ''
+  version: 'unversioned'
 ---
 
 <style type="text/css">
@@ -286,7 +288,7 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
              paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
              #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
                     '">', pmap_chr(., CNV_ID_str), '</a>'),
-             str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">Plot (ext.) {i}</a>')
+             paste0(str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">', pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
            )
     ) %>%
     select(sample_id, ID, i, #invis 0-2

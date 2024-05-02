@@ -34,6 +34,8 @@ datapath    <- config$data_path
 report.template  <- file.path(snakedir, "scripts", "report_template.Rmd") %>% normalizePath
 outfile     <- str_glue("{sample_id}.{report_name}.{filetype}")
 
+version <- readLines(file.path(snakedir, 'VERSION')) %>% str_trim()
+
 if (fs::is_absolute_path(datapath)) {
   workdir   <- file.path(datapath, sample_id) %>% normalizePath
 } else {
@@ -62,6 +64,7 @@ rmarkdown::render(
                 report_name = report_name,
                 out_format = filetype,
                 configfile = configfile,
-                workdir = workdir
+                workdir = workdir,
+                version = version
                 )
 )

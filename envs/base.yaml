@@ -1,4 +1,4 @@
-name: scnv-quac
+name: stemcnv-check
 channels:
   - conda-forge
   - bioconda

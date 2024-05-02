@@ -1,5 +1,5 @@
 name: StemCell-Hotspots
-source: "SCnv-QuaC, Manually curated"
+source: "StemCNV-check, Manually curated"
 gene_symbols:
   any_call:
     - BCOR

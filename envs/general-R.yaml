@@ -1,4 +1,4 @@
-name: scnv-quac-general-R
+name: stemcnv-check-general-R
 channels:
   - conda-forge
   - bioconda

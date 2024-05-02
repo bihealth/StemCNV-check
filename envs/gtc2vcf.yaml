@@ -1,4 +1,4 @@
-name: scnv-quac-gtc2vcf
+name: stemcnv-check-gtc2vcf
 channels:
   - conda-forge
   - bioconda

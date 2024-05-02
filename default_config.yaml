@@ -186,12 +186,12 @@ settings:
     name_addition: ''
 
 reports:
-  CNV-QC-report:
+  StemCNV-check-report:
     file_type: 'html'         #REQUIRED
     impact.score.critical: NA #recommended: 55
 
 #    #Multiple individual reports can be defined, file_type and minimum scores for reportable/critical is necessary for each one!
-#  full-report:
+#  StemCNV-check-full-report:
 #    file_type: 'html'         #REQUIRED
 #    impact.score.critical: 55
 #    call.data.and.plots:
@@ -201,7 +201,7 @@ reports:
 #        include.gene.table.details: 'All'
 
 #  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
-#  summary-report:
+#  StemCNV-check-report-pdf:
 #    file_type: 'pdf'          #REQUIRED
 #    impact.score.critical: 55
 #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
