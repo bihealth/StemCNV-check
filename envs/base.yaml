@@ -9,6 +9,10 @@ dependencies:
   - snakemake >=7.0,<8.0
   - pathlib
   - apptainer
+  ## needed on WSL for apptainer
+  - squashfuse
+  - fuse-overlayfs
+  ## pip / python ##
   - pip
   - pip:
     - loguru
