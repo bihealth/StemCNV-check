@@ -1,32 +1,18 @@
 #Input/Output folders
 data/*
 RAW_DATA/*
-incoming/*
 logs/*
 static-data/*
 .snakemake/*
-test/*
-test_new/*
-data_new/*
-external_data/*
-validation_data/*
-
-#Only for now
-tests/*
 
 #Rstudio & PyCharm
 .RData
 .Rhistory
 .Rproj.user
-CNV-pipeline.Rproj
+*.Rproj
 .idea/
 
 #Misc
-*.xlsx
-*.png
 .git/*
-*.test
-*.pdf
-supplemental_scripts/*
 **/*.pyc
-/data/
+**/__pycache__
