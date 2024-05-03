@@ -311,12 +311,12 @@ def create_missing_staticdata(args):
 		restart_needed = True
 		get_fasta = True
 	elif not os.path.isfile(config['static_data']['genome_fasta_file']):
-		restart_needed = config['static_data']['genome_fasta_file'] == args.gencode_fasta_out | \
-						 config['static_data']['genome_fasta_file'].format(genome=args.genome) == args.gencode_fasta_out
+		restart_needed = (config['static_data']['genome_fasta_file'] != args.gencode_fasta_out) & \
+					(config['static_data']['genome_fasta_file'].format(genome=args.genome) != args.gencode_fasta_out)
 		get_fasta = True
 
 	if get_fasta:
-		logger.info('Genome fasta file not found in config, will be downloaded from GenCode')
+		logger.info('Genome fasta file not found in config or missing, will be downloaded from GenCode')
 		with tempfile.TemporaryDirectory() as tmpdir:
 			ret = snakemake(
 				os.path.join(SNAKEDIR, "staticdata_creation.smk"),
@@ -329,14 +329,14 @@ def create_missing_staticdata(args):
 				conda_frontend=args.conda_frontend,
 				printshellcmds=True,
 				force_incomplete=True,
-				config=dict(static_snake_config, **{'TMPDIR': tmpdir}),
+				config=dict(static_snake_config, **{'TMPDIR': tmpdir, "static-data":{"genome_fasta_file": args.gencode_fasta_out}}),
 				targets=[args.gencode_fasta_out]
 			)
 		if not ret:
 			logger.error('Snakemake run to get fasta failed')
 			sys.exit(1)
 		if restart_needed:
-			logger.info('Please update the genome_fastq entry in the config and the restart this command.\n  genome_fasta_file: {args.gencode_fasta_out}')
+			logger.info(f"Please update the genome_fastq entry in the config and the restart this command.\n  genome_fasta_file: {args.gencode_fasta_out}")
 			sys.exit(0)
 
 	# Check if vcf file is present, generate one if none are

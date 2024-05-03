@@ -16,3 +16,6 @@ static-data/*
 .git/*
 **/*.pyc
 **/__pycache__
+
+#Files created from test runs
+test_data/*

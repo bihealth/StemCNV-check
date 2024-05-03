@@ -267,7 +267,7 @@ CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
                        region_name = NULL,
                        formatting = 'nice', ...) {
   #ROIs might have user defined names
-  if (!is.null(region_name) & formatting == 'nice') return(paste0('ROI: ', region_name))
+  if(!is.null(region_name) & formatting == 'nice') return(paste0('ROI: ', region_name))
   else if(!is.null(region_name)) return(paste0('ROI-',region_name))
   # All other calls
   if (formatting == 'nice') {
@@ -288,7 +288,7 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
              paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
              #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
                     '">', pmap_chr(., CNV_ID_str), '</a>'),
-             paste0(str_glue('<a href="" onclick="window.open(\'./{image_folder}/CNV_call.{plotsection}.nr{i}.plot-1.png\'); return false;">', pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
+             paste0('<a href="" onclick="window.open(\'./', image_folder, "/CNV_call.", plotsection, ".nr", i, '.plot-1.png\'); return false;">', pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
            )
     ) %>%
     select(sample_id, ID, i, #invis 0-2
