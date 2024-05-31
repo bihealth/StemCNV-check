@@ -240,7 +240,7 @@ get_accurate_snp_probe_count <- function(gr) {
 	n_snp_uniq <- count_overlaps(gr, snp_probe_positions)
 
 	gr$n_snp_probes <- n_snp
-	gr$uniq_probe_positions <- n_snp_uniq
+	gr$n_uniq_probe_positions <- n_snp_uniq
 
 	gr
 
@@ -405,7 +405,7 @@ annotate_gaps <- function(gr, gapfile) {
 		mutate(probe_coverage_gap =  ifelse(is.na(percent_gap_coverage),
 										 FALSE,
 										 percent_gap_coverage > min.perc.gap_area &
-												(gap_slope * percent_gap_coverage + gap_intercept) <= log2(uniq_probe_positions))
+												(gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probe_positions))
 		)
 
 	return(gr)
@@ -484,8 +484,8 @@ add_call_scoring <- function(tb) {
 			# NOTE: this will count genes that are highlight AND high_impact with 15 in total
 			(impact_scores$highlight_base * !is.na(highlight_hits) ) +
 			ifelse(!is.na(highlight_hits), impact_scores$highlight_per_gene * (1 + str_count(highlight_hits, ',')), 0) +
-			# Extra score  for any genes
-			(impact_scores$overlap_any_gene * n_genes),
+			# Extra score per any overallped gene
+			(impact_scores$overlap_per_gene * n_genes),
 		  Precision_Estimate =
 			  ifelse(CNV_type %in% c('gain', 'loss'),
 				precision_extimates[[

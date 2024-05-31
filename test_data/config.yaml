@@ -13,3 +13,8 @@ static_data:
 raw_data_folder: 'RAW'
 data_path: data
 log_path: logs
+
+reports:
+  StemCNV-check-report:
+    file_type: 'html'
+    impact.score.critical: 55

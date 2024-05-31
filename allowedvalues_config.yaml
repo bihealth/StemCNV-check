@@ -65,10 +65,10 @@ settings:
       merge.distance: int_ge0
       merge.before.filter: bool
       filter-settings: filterset
-      tool.overlap.greatest.call.min.perc: float_le100
-      tool.overlap.median.cov.perc: float_le100
+      tool.overlap.greatest.call.min.perc: float_le100_ge0
+      tool.overlap.median.cov.perc: float_le100_ge0
       ## Reference comparison
-      min.reciprocal.coverage.with.ref: float_le100
+      min.reciprocal.coverage.with.ref: float_le100_ge0
 
     gene_overlap:
       exclude_gene_type_regex: list__str
@@ -87,10 +87,13 @@ settings:
       medium.cnv: int
 
     Impact_scoring:
-      highimpact_base: int
-      highimpact_per_gene: int
-      highlight_base: int
-      highlight_per_gene: int
+      #TODO all of these should just be numeric
+      highimpact_base: int_ge0
+      highimpact_per_gene: int_ge0
+      highlight_base: int_ge0
+      highlight_per_gene: int_ge0
+      overlap_per_gene: int_ge0
+      roi_overlap: int_ge0
 
     Precision_estimates:
       multiple_Callers:

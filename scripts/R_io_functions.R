@@ -162,7 +162,7 @@ expected_final_tb <- tibble(
 	CNV_caller = list(),
 	n_premerged_calls = list(),
 	n_snp_probes = list(),
-	uniq_probe_positions = integer(),
+	n_uniq_probe_positions = integer(),
 	copynumber = list(),
 	Precision_Estimate = double(),
 	caller_confidence = list(),

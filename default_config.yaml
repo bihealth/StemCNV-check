@@ -140,7 +140,8 @@ settings:
       highimpact_per_gene: 5
       highlight_base: 0
       highlight_per_gene: 5
-      overlap_any_gene: 0
+      overlap_per_gene: 1
+      roi_overlap: 50
 
     Precision_estimates:
       # Estimated the reliability (accuracy) of CNV calls
@@ -264,7 +265,7 @@ reports:
         - critical_calls_LOH
         - high_impact_calls
       call_rate: [0.995, 0.99]  #red; Callrate fails if it is *below* these values
-      SNP_distance_to_reference: [1, 5]
+      SNP_distance_to_reference: [2, 5]
       loss_gain_log2ratio: [2, 4]
       total_calls_CNV: [10, 50]
       total_calls_LOH: [30, 75]
