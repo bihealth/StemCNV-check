@@ -9,13 +9,13 @@ output:
   pdf_document:
     default
 params:
-  base_path: '/home/vonkunic_c/Misc-Projects/StemCNV-analysis/test_new'
-  sample_id: 'HG001'
-  sampletable: '/home/vonkunic_c/Misc-Projects/StemCNV-analysis/test_new/sample_table.txt'
+  base_path: ''
+  sample_id: ''
+  sampletable: 'sample_table.txt'
   report_name: 'StemCNV-check-report'
   out_format: 'html'
-  configfile: '/home/vonkunic_c/Misc-Projects/StemCNV-analysis/test_new/full_testconfig.yaml'
-  workdir: '/home/vonkunic_c/Misc-Projects/StemCNV-analysis/test_new/data/HG001'
+  configfile: 'config.yaml'
+  workdir: ''
   version: 'unversioned'
 ---
 
@@ -304,9 +304,9 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
            Plot, Call_Label, Impact_Score,
            CNV_type, Chr, Size,
            Start, End, #invis 9-10
-           CNV_caller, high_impact_hits, highlight_hits,
+           CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
            Precision_Estimate, probe_coverage_gap, high_probe_density,
-           # invis: 17++
+           # invis: 18++
            copynumber, n_snp_probes, n_uniq_probe_positions, n_premerged_calls, caller_confidence,
            caller_merging_coverage,
            percent_gap_coverage )
@@ -326,9 +326,10 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
             'Start position of the CNV call',
             'End position of the CNV call',
             'Caller tools detecting this CNV call',
-            'High impact hits overlapping with this CNV call',
-            'Highlight hits overlapping with this CNV call',
-            #TODO: add a doi here, once available
+            'High impact hotspots overlapping with this CNV call',
+            'Highlight hotspots overlapping with this CNV call',
+            'Regions of interest overlapping with this CNV call',
+            #TODO: add a doi for precision benchmark once available
             'Precision estimate of the CNV call, based on internal benchmarking',
             'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. See config min.perc.gap_area and gap_area.uniq_probes.rel for details',
             'Call has higher probe density than {density.quantile.cutoff} percent of the the array',
@@ -354,7 +355,7 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
               buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
               columnDefs = list(
                 #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0:2,9:10,17:(ncol(tb)-1)), visible = FALSE)
+                list(targets = c(0:2,9:10,18:(ncol(tb)-1)), visible = FALSE)
               )
             ),
             callback = JS(
@@ -585,7 +586,7 @@ metric.colors <- list(
                  SNPs_post_filter = 'white'),
     mutate(metrics[[3]],
                  SNP_distance_to_reference = ifelse(SNP_distance_to_reference == '-', 'white',
-                                              apply_gr_th(SNP_distance_to_reference, SNP_distance_to_ref_warning,
+                                              apply_greq_th(SNP_distance_to_reference, SNP_distance_to_ref_warning,
                                                           warn_color('SNP_distance_to_ref_warning'))
                  )),
     mutate(metrics[[4]],

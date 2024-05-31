@@ -144,6 +144,92 @@ load_genomeInfo <- function(config) {
 	gr_info
 }
 
+tb_to_gr_by_position <- function(tb, gr_info, colname = 'position', format = 'position') {
+
+	if (format == 'position') {
+		no_match <- tb %>% filter(!str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+'))
+
+		gr <- tb %>%
+			filter(str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+')) %>%
+			mutate(
+				seqnames = str_remove(!!sym(colname),':.*'),
+				start = str_extract(!!sym(colname), '(?<=:)[0-9]+') %>% as.numeric(),
+				end = str_extract(!!sym(colname), '(?<=-)[0-9]+$') %>% as.numeric()
+			) %>% select(-!!sym(colname)) %>% as_granges()
+	}
+	else if (format == 'gband') {
+		no_match <- tb %>% filter(!str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
+		tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
+
+		filter_regex <- paste0('^(',
+			paste(str_replace(unlist(tb[, colname]), fixed('.'), '\\.'), collapse='|'),
+			')')
+		gr <- gr_info %>%
+			filter(str_detect(section_name, filter_regex)) %>%
+			mutate(section_name_match = str_extract(section_name, filter_regex)) %>%
+			group_by(section_name_match) %>%
+			reduce_ranges() %>%
+			as_tibble() %>%
+			left_join(tb, by = c('section_name_match' = colname)) %>%
+			dplyr::rename(hotspot = section_name_match) %>%
+			as_granges()
+	}
+	else {
+		stop('Unknown format for position data')
+	}
+
+	if (nrow(no_match) > 0) {
+		warning(paste('Could not convert the following positions:', paste(no_match[, colname], collapse = ', ')))
+	}
+
+	return(gr)
+}
+
+# Hotspot list based annotation
+parse_hotspot_list <- function(tb) {
+
+	sub_tb_name <-tb %>%
+		filter(mapping == 'gene_name')
+	sub_tb_pos <-tb %>%
+		filter(mapping == 'position')
+	sub_tb_gband <- tb %>%
+		filter(mapping == 'gband')
+
+	empty_gr <- GRanges(
+						list_name = character(),
+						hotspot = character(),
+						mapping = character(),
+						call_type = character(),
+						impact_score = numeric(),
+						source = character(),
+						comment = character()
+						)
+
+	if (nrow(sub_tb_name) > 0) {
+		gr_name <- gr_genes %>%
+			select(-source, -type, -gene_id, -gene_type) %>%
+			filter(gene_name %in% sub_tb_name$hotspot) %>%
+			as_tibble() %>%
+			rename(hotspot = gene_name) %>%
+			left_join(sub_tb_name) %>%
+			as_granges()
+	} else {
+		gr_name <- empty_gr
+	}
+
+	if (nrow(sub_tb_pos) > 0) {
+		gr_pos <- tb_to_gr_by_position(sub_tb_pos, gr_info, 'hotspot', 'position')
+	} else {
+		gr_pos <- empty_gr
+	}
+
+	if (nrow(sub_tb_gband) > 0) {
+		gr_gband <- tb_to_gr_by_position(sub_tb_gband, gr_info, 'hotspot', 'gband')
+	} else {
+		gr_gband <- empty_gr
+	}
+	bind_ranges(gr_name, gr_pos, gr_gband)
+}
 
 # Output
 
@@ -173,6 +259,7 @@ expected_final_tb <- tibble(
 	reference_coverage = list(),
 	high_impact_hits = character(),
 	highlight_hits = character(),
+	ROI_hits = character(),
 	percent_gap_coverage = numeric(),
 	probe_coverage_gap = logical(),
 	high_probe_density = logical(),
@@ -200,3 +287,4 @@ get_SNP_clustering_IDs <- function(config_entry, sample_id, sampletable) {
     ids <- c(ids, single.ids[single.ids %in% sampletable$Sample_ID])
 	ids
 }
+

@@ -116,11 +116,14 @@ settings:
       # Example: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
       include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
       # These genelists are used to mark genes with high impact
-      # Gene list should contain a Name as header and then one gene per line; comments (#) are allowed
-      # Genes from curated and high impact lists can be scored differently, curated score takes precedence
-      high_impact_list: '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.yaml'
-      highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.yaml'
-      # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.yaml'
+      # Gene lists files are tabular (tsv) and need the following columns:
+      # list_name, hotspot, mapping, call_type, impact_score, source, comment
+      # list_name, hotspot, mapping, call_type, need to be filled out
+      # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
+      # call_type can be 'any', 'gain', 'loss' or 'LOH'
+      high_impact_list: '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.tsv'
+      highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+      # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 
     scoring_thresholds:
       # Lower bound size thresholds / categories for estimating CNV call precision
@@ -135,13 +138,15 @@ settings:
 
     Impact_scoring:
       # Scoring for Impact of CNV and LOH calls
-      # Note: per_gene scores are additive if the gene is listed in multiple lists
-      highimpact_base: 25
-      highimpact_per_gene: 5
-      highlight_base: 0
-      highlight_per_gene: 5
-      overlap_per_gene: 1
-      roi_overlap: 50
+      # Base scores are used once for each CNV overlapping a gene/region of the specific type
+      roi_hit_base:    50
+      highimpact_base: 20
+      highlight_base:   0
+      # Genes are scored _once_ based on category, other regions are also scored as if they were one gene
+      per_gene_roi:        10
+      per_gene_highimpact: 10
+      per_gene_highlight:   5
+      per_gene_any:       0.2
 
     Precision_estimates:
       # Estimated the reliability (accuracy) of CNV calls

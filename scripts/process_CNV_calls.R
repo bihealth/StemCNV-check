@@ -87,6 +87,15 @@ use_chr <- get_chromosome_set()
 gr_genes <- load_gtf_data(config)
 gr_info  <- load_genomeInfo(config)
 
+high_impact_tb <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
+	str_replace('__inbuilt__', config$snakedir) %>%
+	read_tsv() %>%
+	parse_hotspot_list()
+highlight_tb <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
+	str_replace('__inbuilt__', config$snakedir) %>%
+	read_tsv() %>%
+	parse_hotspot_list()
+
 ########################
 # Function definitions #
 ########################
@@ -304,76 +313,26 @@ annotate_ref_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref
 	
 }
 
-parse_highligh_list <- function(yaml_obj) {
-
-	if (!is.null(yaml_obj$gene_symbol)) {
-		hit_type_tb <- tibble(
-			gene_name = unlist(yaml_obj$gene_symbol),
-			type_regex = names(unlist(yaml_obj$gene_symbol)) %>%
-				str_remove("[0-9]+$") %>% str_replace("any_call", ".*")
-		)
-
-		all_genes <- unlist(yaml_obj$gene_symbol)
-		gr_g <- gr_genes %>%
-			mutate(gene_hit = TRUE) %>%
-			filter(gene_name %in% all_genes)
-		gr_g$type_regex <- left_join(as_tibble(gr_g@elementMetadata), hit_type_tb) %>% pull(type_regex)
-	} else {
-		gr_g <- GRanges(gene_name = character(),
-						gene_hit = logical(),
-						type_regex = character())
-	}
-
-	if (!is.null(yaml_obj$genome_bands)) {
-		hit_type_tb <- tibble(
-			section_name_match = unlist(yaml_obj$genome_bands),
-			type_regex = names(unlist(yaml_obj$genome_bands)) %>%
-				str_remove("[0-9]+$") %>% str_replace("any_call", ".*")
-		)
-		filter_regex <- paste0('^(',
-						paste(str_replace(unlist(yaml_obj$genome_bands), fixed('.'), '\\.'), collapse='|'),
-						')')
-		gr_pos <- gr_info %>%
-			mutate(gene_hit = FALSE) %>%
-			filter(str_detect(section_name, filter_regex)) %>%
-			mutate(section_name_match = str_extract(section_name, filter_regex))
-		gr_pos$type_regex <- left_join(as_tibble(gr_pos@elementMetadata), hit_type_tb) %>% pull(type_regex)
-	} else {
-		gr_pos <- GRanges(section_name = character(),
-		                  gene_hit = logical())
-	}
-
-	bind_ranges(gr_g, gr_pos)
-
-}
-
-
-annotate_impact_lists <- function(gr, config, list_name = 'high_impact') {
+# Annotate calls with hotspot / gene lists
+annotate_impact_lists <- function(gr, list_name = 'high_impact') {
 	message('Annotation calls with gene lists')
 
-	if (!list_name %in% c('high_impact', 'highlight')) {
+	if (list_name == 'high_impact') {
+		hotspot_gr <- high_impact_tb
+	} else if (list_name == 'highlight') {
+		hotspot_gr <- highlight_tb
+	} else {
 		quit('Can only annotate "high_impact" or "highlight" lists')
 	}
-	yaml_file <- config$settings$CNV_processing$gene_overlap[[paste0(list_name, '_list')]] %>%
-		str_replace('__inbuilt__', config$snakedir)
-
-	#Don't do anything if no list is defined
-	if (is.na(yaml_file) | is.null(yaml_file) | yaml_file == '') {
-		return(gr)
-	}
-
-	highlight_gr <- read_yaml(yaml_file) %>% parse_highligh_list()
 
 	# Make an extra col listing all overlapping directly defined genes
 	gr@elementMetadata[[paste0(list_name, '_hits')]] <- NA_character_
-	ov <- group_by_overlaps(gr, highlight_gr)
+	ov <- group_by_overlaps(gr, hotspot_gr)
 	if (length(ov) > 0) {
 		ov_hits <- ov %>%
-			mutate(type_check = str_detect(CNV_type, type_regex)) %>%
+			mutate(type_check = str_detect(CNV_type, str_replace(call_type, '^any$', '.*'))) %>%
 			filter(type_check) %>%
-			reduce_ranges(genes = paste(unique(gene_name[gene_hit]),collapse = ','),
-						  pos = paste(unique(section_name[!gene_hit]),collapse = ',')) %>%
-			mutate(hits = paste(genes, pos, sep=',') %>% str_remove(',$') %>% str_remove('^,'))
+			reduce_ranges(hits = paste(unique(hotspot),collapse = ','))
 		gr[ov_hits$query,]@elementMetadata[[paste0(list_name, '_hits')]] <- ov_hits$hits
 	}
 
@@ -435,6 +394,48 @@ annotate_high_density <- function(gr, density_file) {
 	gr
 }
 
+annotate_roi <- function(gr, sample_id, sampletable) {
+
+	if (! 'Regions_of_Interest' %in% colnames(sampletable)) {
+		return(gr)
+	}
+
+	message('Annotating calls with ROI')
+
+	roi <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
+
+	if (is.na(roi) | is.null(roi) | roi == '') {
+		return(gr)
+	}
+
+	roi_gr <- roi %>% str_split(';') %>% unlist() %>%
+		as_tibble() %>% rename(roi = value) %>%
+		mutate(hotspot = str_remove(roi, '^.*\\|'),
+			   mapping = case_when(
+				   str_detect(roi, '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+') ~ 'position',
+				   str_detect(roi, '[0-9XY]{1,2}(p|q)[0-9.]+') ~ 'gband',
+				   TRUE ~ 'gene_name'
+			   ),
+			   roi_name = str_extract('^[^|]+\\|') %>% str_remove('\\|'),
+			   roi_name = case_when(
+				   mapping == 'gene_name' ~ hotspot,
+				   is.na(roi_name) ~ paste0('ROI_', seq_along(roi_name)),
+				   TRUE  ~ roi_name
+			   ),
+		) %>%
+		parse_highligh_list()
+
+
+	gr$ROI_hits <- NA_character_
+	ov <- group_by_overlaps(gr, roi_gr)
+	if (length(ov) > 0) {
+		ov_hits <- ov %>%
+			reduce_ranges(hits = paste(unique(roi_name),collapse = ','))
+		gr[ov_hits$query,]$ROI_hits <- ov_hits$hits
+	}
+
+	gr
+}
 
 
 # Sanitize output & add gene overlap annotation
@@ -477,15 +478,39 @@ add_call_scoring <- function(tb) {
 				   1/3 * log(length) * log(length) - 15,
 				   0.275 * log(length) * log(length) - 15
 			) +
-			# High impact (base) & per gene/region [70, +5/g]
+			# Base score for hitting HI / HL / ROI
 			(impact_scores$highimpact_base * !is.na(high_impact_hits) ) +
-			ifelse(!is.na(high_impact_hits), impact_scores$highimpact_per_gene * (1 + str_count(high_impact_hits, ',')), 0) +
-			# Highlight (base) & per gene/region [0, +10/g]
-			# NOTE: this will count genes that are highlight AND high_impact with 15 in total
-			(impact_scores$highlight_base * !is.na(highlight_hits) ) +
-			ifelse(!is.na(highlight_hits), impact_scores$highlight_per_gene * (1 + str_count(highlight_hits, ',')), 0) +
-			# Extra score per any overallped gene
-			(impact_scores$overlap_per_gene * n_genes),
+		    (impact_scores$highlight_base * !is.na(highlight_hits) ) +
+		    (impact_scores$roi_hit_base * !is.na(ROI_hits) ) +
+		    # Per gene/region score:
+			# - scores per ROI (gene & others handeled the same)
+			ifelse(!is.na(ROI_hits), (1 + str_count(ROI_hits, ',')) * impact_scores$pere_gene_roi, 0) +
+			# - scores per non-gene HI / HL
+			(high_impact_tb %>% as_tibble() %>%
+				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(high_impact_hits, ','))) %>%
+				mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highimpact, impact_score)) %>%
+				pull(impact_score) %>%	sum()) +
+			(highlight_tb %>% as_tibble() %>%
+				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(highlight_hits, ','))) %>%
+				mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highlight, impact_score)) %>%
+				pull(impact_score) %>%	sum()) +
+			# - score all genes that aren't also an ROI, use scores from tsv where available
+			# dplyr will generate a bunch of warnings for calls without any genes
+			suppressWarnings(bind_rows(
+				high_impact_tb %>% as_tibble() %>%
+					mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highimpact, impact_score)),
+				highlight_tb %>% as_tibble() %>%
+					mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highlight, impact_score)),
+				str_split(overlapping_genes, ',') %>% unlist() %>%
+					as_tibble() %>% rename(hotspot = value) %>%
+					mutate(mapping = 'gene_name', impact_score = impact_scores$per_gene_any)
+			  	) %>%
+				filter(hotspot %in% unlist(str_split(overlapping_genes, ',')) &
+						   hotspot %!in% unlist(str_split(ROI_hits, ',')) &
+						   mapping == 'gene_name') %>%
+				group_by(hotspot) %>% summarise(impact_score = max(impact_score)) %>%
+				pull(impact_score) %>% sum())
+		  ,
 		  Precision_Estimate =
 			  ifelse(CNV_type %in% c('gain', 'loss'),
 				precision_extimates[[
@@ -580,8 +605,9 @@ if (!is.na(ref_id)) {
 }
 
 cnvs <- cnvs %>%
-	annotate_impact_lists(config, 'high_impact') %>%
-	annotate_impact_lists(config, 'highlight') %>%
+	annotate_impact_lists('high_impact') %>%
+	annotate_impact_lists('highlight') %>%
+	annotate_roi(sample_id, sampletable) %>%
 	annotate_gaps(config$static_data$array_gaps) %>%
 	annotate_high_density(config$static_data$array_density) %>%
 	finalise_gr_to_tb() %>%

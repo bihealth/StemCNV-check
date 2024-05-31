@@ -87,13 +87,13 @@ settings:
       medium.cnv: int
 
     Impact_scoring:
-      #TODO all of these should just be numeric
-      highimpact_base: int_ge0
-      highimpact_per_gene: int_ge0
-      highlight_base: int_ge0
-      highlight_per_gene: int_ge0
-      overlap_per_gene: int_ge0
-      roi_overlap: int_ge0
+      roi_hit_base: float_ge0
+      highimpact_base: float_ge0
+      highlight_base: float_ge0
+      per_gene_roi: float_ge0
+      per_gene_highimpact: float_ge0
+      per_gene_highlight: float_ge0
+      per_gene_any: float_ge0
 
     Precision_estimates:
       multiple_Callers:
