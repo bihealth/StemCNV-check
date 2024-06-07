@@ -186,11 +186,19 @@ tb_to_gr_by_position <- function(tb, gr_info, colname = 'position', format = 'po
 }
 
 # Hotspot list based annotation
-parse_hotspot_list <- function(tb) {
+parse_hotspot_list <- function(listname, config, gr_genes, gr_info) {
 
-	sub_tb_name <-tb %>%
+	if (listname %!in% c('high_impact', 'highlight')) {
+		quit('Only "high_impact" or "highlight" lists are defined')
+	}
+
+	tb <- config$settings$CNV_processing$gene_overlap[[paste0(listname, '_list')]] %>%
+        str_replace('__inbuilt__', config$snakedir) %>%
+        read_tsv()
+
+	sub_tb_name <- tb %>%
 		filter(mapping == 'gene_name')
-	sub_tb_pos <-tb %>%
+	sub_tb_pos <- tb %>%
 		filter(mapping == 'position')
 	sub_tb_gband <- tb %>%
 		filter(mapping == 'gband')
@@ -210,15 +218,17 @@ parse_hotspot_list <- function(tb) {
 			select(-source, -type, -gene_id, -gene_type) %>%
 			filter(gene_name %in% sub_tb_name$hotspot) %>%
 			as_tibble() %>%
-			rename(hotspot = gene_name) %>%
+			dplyr::rename(hotspot = gene_name) %>%
 			left_join(sub_tb_name) %>%
 			as_granges()
+		message('parsed gene names')
 	} else {
 		gr_name <- empty_gr
 	}
 
 	if (nrow(sub_tb_pos) > 0) {
 		gr_pos <- tb_to_gr_by_position(sub_tb_pos, gr_info, 'hotspot', 'position')
+		message('parsed gene positions')
 	} else {
 		gr_pos <- empty_gr
 	}

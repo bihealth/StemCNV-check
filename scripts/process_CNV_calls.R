@@ -87,14 +87,8 @@ use_chr <- get_chromosome_set()
 gr_genes <- load_gtf_data(config)
 gr_info  <- load_genomeInfo(config)
 
-high_impact_tb <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
-	str_replace('__inbuilt__', config$snakedir) %>%
-	read_tsv() %>%
-	parse_hotspot_list()
-highlight_tb <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
-	str_replace('__inbuilt__', config$snakedir) %>%
-	read_tsv() %>%
-	parse_hotspot_list()
+high_impact_gr <- parse_hotspot_list('high_impact', config, gr_genes, gr_info)
+highlight_gr <- parse_hotspot_list('highlight', config, gr_genes, gr_info)
 
 ########################
 # Function definitions #
@@ -318,9 +312,9 @@ annotate_impact_lists <- function(gr, list_name = 'high_impact') {
 	message('Annotation calls with gene lists')
 
 	if (list_name == 'high_impact') {
-		hotspot_gr <- high_impact_tb
+		hotspot_gr <- high_impact_gr
 	} else if (list_name == 'highlight') {
-		hotspot_gr <- highlight_tb
+		hotspot_gr <- highlight_gr
 	} else {
 		quit('Can only annotate "high_impact" or "highlight" lists')
 	}
@@ -486,20 +480,20 @@ add_call_scoring <- function(tb) {
 			# - scores per ROI (gene & others handeled the same)
 			ifelse(!is.na(ROI_hits), (1 + str_count(ROI_hits, ',')) * impact_scores$pere_gene_roi, 0) +
 			# - scores per non-gene HI / HL
-			(high_impact_tb %>% as_tibble() %>%
+			(high_impact_gr %>% as_tibble() %>%
 				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(high_impact_hits, ','))) %>%
 				mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highimpact, impact_score)) %>%
 				pull(impact_score) %>%	sum()) +
-			(highlight_tb %>% as_tibble() %>%
+			(highlight_gr %>% as_tibble() %>%
 				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(highlight_hits, ','))) %>%
 				mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highlight, impact_score)) %>%
 				pull(impact_score) %>%	sum()) +
 			# - score all genes that aren't also an ROI, use scores from tsv where available
 			# dplyr will generate a bunch of warnings for calls without any genes
 			suppressWarnings(bind_rows(
-				high_impact_tb %>% as_tibble() %>%
+				high_impact_gr %>% as_tibble() %>%
 					mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highimpact, impact_score)),
-				highlight_tb %>% as_tibble() %>%
+				highlight_gr %>% as_tibble() %>%
 					mutate(impact_score = ifelse(is.na(impact_score), impact_scores$per_gene_highlight, impact_score)),
 				str_split(overlapping_genes, ',') %>% unlist() %>%
 					as_tibble() %>% rename(hotspot = value) %>%
