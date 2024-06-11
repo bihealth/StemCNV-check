@@ -303,12 +303,11 @@ CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
   }
 }
 
-format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, list = 'high_impact') {
-
-  if (list == "high_impact") {
+format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, listtype = 'high_impact') {
+  if (listtype == "high_impact") {
     gene_details <- high_impact_tb
     shorthand <- 'HI'
-  } else if (list == "highlight") {
+  } else if (listtype == "highlight") {
     gene_details <- highlight_tb
     shorthand <- 'HL'
   } else {
@@ -325,7 +324,7 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, list = 'high_impa
                  out_str = ifelse(
                    hotspot != "" & !is.na(list_name),
                    paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
-                          str_glue('{list} list name: {list_name}&#013;'), #\\n
+                          str_glue('{listtype} list name: {list_name}&#013;'), #\\n
                           ifelse(!is.na(impact_score), str_glue('custom impact_score: {impact_score}&#013;'), ''),
                           str_glue('Annotation source:&#013;{source}'),
                           str_glue('">{hotspot}</span>')),
@@ -338,10 +337,13 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, list = 'high_impa
                   hotspot = base::paste(out_str, collapse='')
           ) %>%
           mutate(hotspot = ifelse(hotspot == 'NA', '-', hotspot))
-  #message(hotspot_vec)
-  message(tb$hotspot)
 
-  return(tb$hotspot)
+  if (nrow(tb) == 0 | all(is.na(hotspot_vec) | hotspot_vec == 'NA')) {
+    out_vec <- ifelse(is.na(hotspot_vec), '-', hotspot_vec)
+    return(out_vec)
+  } else {
+    return(tb$hotspot)
+  }
 }
 
 CNV_table_output <- function(tb, plotsection, caption = NULL) {
