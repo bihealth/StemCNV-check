@@ -186,15 +186,17 @@ tb_to_gr_by_position <- function(tb, gr_info, colname = 'position', format = 'po
 }
 
 # Hotspot list based annotation
-parse_hotspot_list <- function(listname, config, gr_genes, gr_info) {
+parse_hotspot_list <- function(listname_or_tb, config, gr_genes, gr_info) {
 
-	if (listname %!in% c('high_impact', 'highlight')) {
-		quit('Only "high_impact" or "highlight" lists are defined')
+	if (is_tibble(listname_or_tb)) {
+		tb <- listname_or_tb
+	} else if (is.character(listname_or_tb) & listname_or_tb %in% c('high_impact', 'highlight')) {
+		tb <- config$settings$CNV_processing$gene_overlap[[paste0(listname_or_tb, '_list')]] %>%
+        	str_replace('__inbuilt__', config$snakedir) %>%
+        	read_tsv()
+	} else {
+		quit('Only tibble or "high_impact" or "highlight" lists are defined')
 	}
-
-	tb <- config$settings$CNV_processing$gene_overlap[[paste0(listname, '_list')]] %>%
-        str_replace('__inbuilt__', config$snakedir) %>%
-        read_tsv()
 
 	sub_tb_name <- tb %>%
 		filter(mapping == 'gene_name')

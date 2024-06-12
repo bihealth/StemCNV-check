@@ -410,14 +410,14 @@ annotate_roi <- function(gr, sample_id, sampletable) {
 				   str_detect(roi, '[0-9XY]{1,2}(p|q)[0-9.]+') ~ 'gband',
 				   TRUE ~ 'gene_name'
 			   ),
-			   roi_name = str_extract('^[^|]+\\|') %>% str_remove('\\|'),
+			   roi_name = str_extract(roi, '^[^|]+\\|') %>% str_remove('\\|'),
 			   roi_name = case_when(
 				   mapping == 'gene_name' ~ hotspot,
 				   is.na(roi_name) ~ paste0('ROI_', seq_along(roi_name)),
 				   TRUE  ~ roi_name
 			   ),
 		) %>%
-		parse_highligh_list()
+		parse_hotspot_list(config, gr_genes, gr_info)
 
 
 	gr$ROI_hits <- NA_character_
