@@ -10,7 +10,7 @@ StemCNV-check requires a linux environment (or WSL on windows) and a working con
 ## Installation
 
 1. Clone this git repository
-2. Run `conda env create -f envs/base.yaml` to create a base conda environment from which to run StemCNV-check. Run all StemCNV-check commands from within this environment (`conda activate stemcnv-check`).
+2. Run `conda env create -f envs/StemCNV-check.yaml` to create a base conda environment from which to run StemCNV-check. Run all StemCNV-check commands from within this environment (`conda activate stemcnv-check`).
 3. You may have to make the `StemCNV-check.py` script executable with `chmod +x StemCNV-check.py`
 4. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 

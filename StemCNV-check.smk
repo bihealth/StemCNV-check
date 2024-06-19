@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 import tempfile
-import yaml
+from ruamel.yaml import YAML
 from scripts.py_helpers import *
 from scripts.py_exceptions import *
 # Configuration ================================================================
@@ -22,6 +22,7 @@ else:
   f, CONFIGFILE = tempfile.mkstemp(suffix = '.yaml', text=True)
   os.close(f)
   removetempconfig = True
+  yaml = YAML()
   with open(CONFIGFILE, 'w') as yamlout:
     yaml.dump(config, yamlout)
 
@@ -312,8 +313,8 @@ if config['use_singularity']:
   rule run_PennCNV:
     input:
       tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb=config['static_data']['pfb_file'],
-      gcmodel=config['static_data']['GCmodel_file']
+      pfb=config['static_data']['penncnv_pfb_file'],
+      gcmodel=config['static_data']['penncnv_GCmodel_file']
     output:
       tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
       err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
@@ -332,8 +333,8 @@ if config['use_singularity']:
       snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
       tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
       tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
-      pfb=fix_container_path(config['static_data']['pfb_file'],'static'),
-      gcmodel=fix_container_path(config['static_data']['GCmodel_file'],'static'),
+      pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
+      gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
       logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
       logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
     log:
@@ -347,8 +348,8 @@ else:
   rule run_PennCNV:
     input:
       tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb = config['static_data']['pfb_file'],
-      gcmodel = config['static_data']['GCmodel_file']
+      pfb = config['static_data']['penncnv_pfb_file'],
+      gcmodel = config['static_data']['penncnv_GCmodel_file']
     output:
       tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
       err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),

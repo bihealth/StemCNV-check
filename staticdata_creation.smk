@@ -33,18 +33,18 @@ def fix_container_path(path_in, bound_to):
 
 rule all:
     input:
-        config['chrominfo_outname'],
-        config['array_gaps_outname'],
-        config['array_density_outname'],
-        config['pfb_outname'],
-        config['gcmodel_outname'],
-        config['gtf_file_outname']
+        config['genomeInfo_file'],
+        config['array_gaps_file'],
+        config['array_density_file'],
+        config['penncnv_pfb_file'],
+        config['penncnv_GCmodel_file'],
+        config['genome_gtf_file']
 
 
 #Note: PennCNV does not seem to work with UCSC chromosome style in PFB file
 rule create_pfb_from_vcf:
     input: config['vcf_input_file']
-    output: config['pfb_outname']
+    output: config['penncnv_pfb_file']
     conda:
         "envs/general-R.yaml"
     #shell: "Rscript {SNAKEDIR}/scripts/make_PFB_from_vcf.R {input} {output}"
@@ -89,8 +89,8 @@ EOF
 #also get the gc5base.bw file from UCSCand make the GC model from that?
 # -> PennCNV comes with a wig2gc5base python script (though that has a hard coded 'source' file in it?
 rule create_gcmodel_file:
-    input: config['pfb_outname']
-    output: config['gcmodel_outname']
+    input: config['penncnv_pfb_file']
+    output: config['penncnv_GCmodel_file']
     params:
         penncnv_path = '/home/user/PennCNV' if config['use_singularity'] else '$CONDA_PREFIX/pipeline/PennCNV-1.0.5',
         download_path = fix_container_path(DOWNLOAD_DIR, 'tmp')
@@ -108,11 +108,11 @@ rule create_gcmodel_file:
 
 rule create_array_info_file:
     input:
-        pfb = config['pfb_outname'],
-        chromInfo = config['chrominfo_outname']
+        pfb = config['penncnv_pfb_file'],
+        chromInfo = config['genomeInfo_file']
     output:
-        density = config['array_density_outname'],
-        gaps = config['array_gaps_outname']
+        density = config['array_density_file'],
+        gaps = config['array_gaps_file']
     params:
         min_gap_size = config['min_gap_size'],
         density_windows = config['density_windows'],
@@ -171,7 +171,7 @@ EOF
 """
 
 rule gencode_v45_gtf_download:
-    output: config['gtf_file_outname']
+    output: config['genome_gtf_file']
     # Source gtf GRCh38:
     params:
         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
@@ -183,7 +183,7 @@ rule gencode_v45_gtf_download:
         """
 
 rule gencode_v45_genomeFasta_download:
-    output: config['genomeFasta_file_outname']
+    output: config['genome_fasta_file']
     # Source gtf GRCh38:
     params:
         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
@@ -212,7 +212,7 @@ rule create_genome_info_file:
         #centromer = os.path.join(DOWNLOAD_DIR, f"{GENOME}.centromeres.txt"), #Only exists for hg38
         chrominfo = ancient(os.path.join(DOWNLOAD_DIR, f"{GENOME}.chromInfo.txt"))
         #Note: the chromAlias.txt file might be useful if people use strange chr-/seqnames
-    output: config['chrominfo_outname']
+    output: config['genomeInfo_file']
     conda:
         "envs/general-R.yaml"
     shell:

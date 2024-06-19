@@ -1,25 +1,28 @@
+##!minimal
 static_data:
     bpm_manifest_file: '' #REQUIRED
     egt_cluster_file: ''  #REQUIRED
     csv_manifest_file: '' #Optional (leave empty if not used)
     genome_fasta_file: 'static-data/{genome}.genome.fa'                          #REQUIRED, Auto-generatable
     genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                      #REQUIRED, Auto-generatable
-    pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
-    GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
-    array_density: static-data/density_{genome}_{snp-array-name}.bed             #REQUIRED, Auto-generatable
-    array_gaps: static-data/gaps_{genome}_{snp-array-name}.bed                   #REQUIRED, Auto-generatable
+    penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
+    penncnv_GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
+    array_density_file: static-data/density_{genome}_{snp-array-name}.bed             #REQUIRED, Auto-generatable
+    array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                   #REQUIRED, Auto-generatable
     genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv               #REQUIRED, Auto-generatable
 
 raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
 data_path: data     #REQUIRED
 log_path: logs      #REQUIRED
 
+##!medium
 settings:
   # Select tools to use
   # Currently implemented tools (=valid options): PennCNV & CBS
   CNV.calling.tools:
     - PennCNV
     - CBS
+##!advanced
   probe-filter-sets:
     # Each section here defines a set of SNP probe filters
     # each set can be applied to individual or all steps of the pipeline, but using only one set is recommended
@@ -87,9 +90,9 @@ settings:
       # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density
       min.snp: 5
       min.length: 1000
-      # This is -so far- only applied to the Call region itself
+      # This is only applied to the Call region itself
       min.snp.density: 10 #snps per Mb
-      # SNP probe count is re-calculated for all CNV calls (per tool and after merging) with a singular filter-set
+      # SNP probe count (total and unique positions) is re-calculated for all CNV calls (per tool and after merging) with a singular filter-set
       filter-settings: '__default__'
       ## Calls from multiple tools are combined and combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
@@ -110,6 +113,7 @@ settings:
       # (calculated from array attribute summary) are flagged as having "high SNP density"
       density.quantile.cutoff: 0.99
 
+##!medium
     gene_overlap:
       # These options determine which genes are read from the gtf file
       exclude_gene_type_regex: []
@@ -125,17 +129,6 @@ settings:
       highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 
-    scoring_thresholds:
-      # Lower bound size thresholds / categories for estimating CNV call precision
-      extreme.loh:    5000000
-      extreme.cnv:    2000000
-      very.large.loh: 2500000
-      very.large.cnv:  400000
-      large.loh:       100000
-      large.cnv:       100000
-      medium.loh:       10000
-      medium.cnv:       10000
-
     Impact_scoring:
       # Scoring for Impact of CNV and LOH calls
       # Base scores are used once for each CNV overlapping a gene/region of the specific type
@@ -148,6 +141,18 @@ settings:
       per_gene_highlight:   5
       per_gene_any:       0.2
 
+##!advanced
+    scoring_thresholds:
+      # Lower bound size thresholds / categories for estimating CNV call precision
+      extreme.loh:    5000000
+      extreme.cnv:    2000000
+      very.large.loh: 2500000
+      very.large.cnv:  400000
+      large.loh:       100000
+      large.cnv:       100000
+      medium.loh:       10000
+      medium.cnv:       10000
+
     Precision_estimates:
       # Estimated the reliability (accuracy) of CNV calls
       # These are optimised for 'extended' filter settings
@@ -159,7 +164,6 @@ settings:
         medium:     0.8
         small:      0.2 # full: 0.5
       PennCNV:
-      # Note: accuracy of LOH is calls is not well established
         extreme:    1.0
         very_large: 1.0
         large:      0.8 # full: 1.0
@@ -171,7 +175,6 @@ settings:
         large:      0.4
         medium:     0.15
         small:      0.1  # full: 0.2
-      #TODO: get better estimates!
       Call_has_Gap:   -0.1
       HighSNPDensity: -0.1
 
@@ -190,11 +193,13 @@ settings:
                 "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
                # chrMT could probably be added for hg38, but settings are not optimised for it
 
+##!minimal
 reports:
   StemCNV-check-report:
     file_type: 'html'         #REQUIRED
     impact.score.critical: NA #recommended: 55
 
+##!medium
 #    #Multiple individual reports can be defined, file_type and minimum scores for reportable/critical is necessary for each one!
 #  StemCNV-check-full-report:
 #    file_type: 'html'         #REQUIRED
@@ -278,8 +283,6 @@ reports:
       reportable_calls_LOH: [5, 10]
       critical_calls_CNV: [1, 1] #red
       critical_calls_LOH: [1, 1] #red
-      # highlight_calls: [2, 5]
-      # high_impact_calls: [1, 1] #red
 
     SNP_comparison:
       # Which filter to apply to probe data for SNP comparison
@@ -295,7 +298,7 @@ reports:
       dendrogram.color.by: 'Chip_Name'
       dendrogram.shape.by: 'Chip_Name'
 
-
+##!complete
 wildcard_constraints:
   sample_id: "[a-zA-Z0-9-_]+"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'

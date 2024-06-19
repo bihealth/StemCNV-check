@@ -12,10 +12,10 @@ static_data:
     egt_cluster_file: str
     genome_fasta_file: str
     genome_gtf_file: str
-    pfb_file: str
-    GCmodel_file: str
-    array_density: str
-    array_gaps: str
+    penncnv_pfb_file: str
+    penncnv_GCmodel_file: str
+    array_density_file: str
+    array_gaps_file: str
     genomeInfo_file: str
 
 raw_data_folder: str

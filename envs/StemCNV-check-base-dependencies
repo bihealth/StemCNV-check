@@ -1,0 +1,8 @@
+python >=3.11
+snakemake >=7.0,<8.0
+pathlib
+apptainer
+squashfuse
+fuse-overlayfs
+pip:loguru
+pip:ruamel.yaml

@@ -8,11 +8,11 @@ from loguru import logger
 
 import os
 import re
-import subprocess
+import shutil
 import sys
 import tempfile
 import warnings
-import yaml
+import ruamel.yaml as ruamel_yaml
 from collections import defaultdict
 from snakemake import main, snakemake
 from scripts.py_helpers import *
@@ -20,7 +20,8 @@ from scripts.py_exceptions import *
 
 SNAKEDIR = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(SNAKEDIR, 'default_config.yaml')) as f:
-	DEF_CONFIG = yaml.safe_load(f)
+	yaml = ruamel_yaml.YAML(typ='safe')
+	DEF_CONFIG = yaml.load(f)
 
 ### Sanity checks ###
 def check_sample_table(args):
@@ -53,7 +54,8 @@ def check_sample_table(args):
 		raise SampletableReferenceError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 	# Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
 	with open(args.config) as f:
-		config = yaml.safe_load(f)
+		yaml = ruamel_yaml.YAML(typ='safe')
+		config = yaml.load(f)
 
 	for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
 		pattern = config_extract(['wildcard_constraints', constraint], config, DEF_CONFIG)
@@ -74,10 +76,11 @@ def check_sample_table(args):
 
 def check_config(args, required_only=False):
 
+	yaml = ruamel_yaml.YAML(typ='safe')
 	with open(args.config) as f:
-		config = yaml.safe_load(f)
+		config = yaml.load(f)
 	with open(os.path.join(SNAKEDIR, 'allowedvalues_config.yaml')) as f:
-		allowed_values = yaml.safe_load(f)
+		allowed_values = yaml.load(f)
 
 	## Check required enrties
 
@@ -86,7 +89,7 @@ def check_config(args, required_only=False):
 		# Optional
 		if req == 'csv_manifest_file':
 			continue
-		if req in ('pfb_file', 'GCmodel_file', 'genomeInfo_file', 'array_density', 'array_gaps',
+		if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'genomeInfo_file', 'array_density_file', 'array_gaps_file',
 				   'array_gaps_file', 'genome_fasta_file', 'genome_gtf_file'):
 			infostr = "\nYou can create it by running `StemCNV-check -a make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
 		else:
@@ -251,7 +254,8 @@ def make_PennCNV_sexfile(args):
 	# tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
 	# Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
 	with open(args.config) as f:
-		config = yaml.safe_load(f)
+		yaml = ruamel_yaml.YAML(typ='safe')
+		config = yaml.load(f)
 
 	basepath = args.directory
 	datapath = config['data_path']
@@ -273,9 +277,28 @@ def make_PennCNV_sexfile(args):
 ### Actions ###
 
 def copy_setup_files(args):
-	subprocess.call(['cp', f"{SNAKEDIR}/default_config.yaml", args.config])
-	subprocess.call(['cp', f"{SNAKEDIR}/sample_table_example.txt", args.sample_table])
-	logger.info('Created example files: ...')
+
+	logger.info(f'Creating empty config and sample table files. Config details: {args.config_details}')
+
+	if os.path.exists(args.sample_table) and not args.overwrite:
+		logger.info(f"Sample table already exists: {args.sample_table}. Use --overwrite to replace it.")
+	else:
+		shutil.copyfile(os.path.join(SNAKEDIR, 'sample_table_example.txt'), args.sample_table)
+
+	if os.path.exists(args.config) and not args.overwrite:
+		logger.info(f"Config file already exists: {args.config}. Use --overwrite to replace it.")
+	else:
+		with open(f"{SNAKEDIR}/default_config.yaml") as fin, open(args.config, 'w') as fout:
+			modes = ('minimal', 'medium', 'advanced', 'complete')
+			use_mode = args.config_details
+			write_lines = False
+			for line in fin:
+				if line.startswith('##!'):
+					write_lines = modes.index(line[3:-1]) <= modes.index(use_mode)
+					continue
+				if write_lines:
+					fout.write(line)
+
 
 
 def create_missing_staticdata(args):
@@ -285,8 +308,10 @@ def create_missing_staticdata(args):
 	logger.info('Starting to check for missing static data files ...')
 	# bpm & egt files are needed
 	check_config(args, required_only=True)
+	# typ = 'safe' prevents round-trip writeout
+	yaml = ruamel_yaml.YAML()
 	with open(args.config) as f:
-		config = yaml.safe_load(f)
+		config = yaml.load(f)
 
 	static_snake_config = {
 		'snakedir': SNAKEDIR,
@@ -294,26 +319,27 @@ def create_missing_staticdata(args):
 		'TMPDIR': '',
 		'genome': args.genome,
 		'vcf_input_file': '',
-		'pfb_outname': args.penncnv_pfb_out,
-		'gcmodel_outname': args.penncnv_gc_out,
-		'chrominfo_outname': args.chromosome_info_out,
-		'array_density_outname': args.array_density_out,
-		'array_gaps_outname': args.array_gaps_out,
-		'gtf_file_outname': args.gencode_gtf_out,
-		'genomeFasta_file_outname': args.gencode_fasta_out,
 		'density_windows': config_extract(('settings', 'array_attribute_summary', 'density.windows',), config, DEF_CONFIG),
 		'min_gap_size': config_extract(('settings', 'array_attribute_summary', 'min.gap.size',), config, DEF_CONFIG),
 		}
 
-	# fasta file is needed to get vcf files
+	static_files = ('genome_fasta_file', 'genome_gtf_file', 'penncnv_pfb_file', 'penncnv_GCmodel_file',
+				 'genomeInfo_file', 'array_density_file', 'array_gaps_file')
+
+	# fasta file needs to be available before the other files
 	get_fasta = False
-	if 'genome_fasta_file' not in config['static_data'] or not config['static_data']['genome_fasta_file']:
-		restart_needed = True
-		get_fasta = True
-	elif not os.path.isfile(config['static_data']['genome_fasta_file']):
-		restart_needed = (config['static_data']['genome_fasta_file'] != args.gencode_fasta_out) & \
-					(config['static_data']['genome_fasta_file'].format(genome=args.genome) != args.gencode_fasta_out)
-		get_fasta = True
+	fix_fasta_entry = False
+	for file in static_files:
+		if file not in config['static_data'] or not config['static_data'][file]:
+			static_snake_config.update({file: getattr(args, file.lower())})
+			if file == 'genome_fasta_file':
+				get_fasta = True
+				fix_fasta_entry = True
+		elif not os.path.isfile(config['static_data'][file]):
+			static_snake_config.update({file: getattr(args, file.lower())})
+			if file == 'genome_fasta_file':
+				get_fasta = True
+				fix_fasta_entry = config['static_data'][file] != args.genome_fasta_file
 
 	if get_fasta:
 		logger.info('Genome fasta file not found in config or missing, will be downloaded from GenCode')
@@ -329,15 +355,21 @@ def create_missing_staticdata(args):
 				conda_frontend=args.conda_frontend,
 				printshellcmds=True,
 				force_incomplete=True,
-				config=dict(static_snake_config, **{'TMPDIR': tmpdir, "static-data":{"genome_fasta_file": args.gencode_fasta_out}}),
-				targets=[args.gencode_fasta_out]
+				config=dict(static_snake_config, **{'TMPDIR': tmpdir, "static-data":{"genome_fasta_file": args.genome_fasta_file}}),
+				targets=[args.genome_fasta_file]
 			)
 		if not ret:
 			logger.error('Snakemake run to get fasta failed')
 			sys.exit(1)
-		if restart_needed:
-			logger.info(f"Please update the genome_fastq entry in the config and the restart this command.\n  genome_fasta_file: {args.gencode_fasta_out}")
+		if fix_fasta_entry and not args.edit_config_inplace:
+			logger.info(f"Please update the genome_fastq entry in the config and the restart this command.\n  genome_fasta_file: {args.genome_fasta_file}")
 			sys.exit(0)
+		elif fix_fasta_entry:
+			logger.info(f"Updating config file with new genome_fasta_file entry: {args.genome_fasta_file}")
+			config['static_data']['genome_fasta_file'] = args.genome_fasta_file
+			with open(args.config, 'w') as f:
+				yaml.dump(config, f)
+
 
 	# Check if vcf file is present, generate one if none are
 	sample_data = read_sample_table(args.sample_table)
@@ -350,7 +382,7 @@ def create_missing_staticdata(args):
 		use_vcf = vcf_present[0]
 	else:
 		use_vcf = vcf_files[0]
-		logger.info(f'Running snakemake to get a vcf file: {use_vcf}')
+		logger.info(f'Running first steps of StemCNV-check to get a vcf file: {use_vcf}')
 		ret = snakemake(
 			os.path.join(SNAKEDIR, "StemCNV-check.smk"),
 			local_cores=args.local_cores,
@@ -392,15 +424,18 @@ def create_missing_staticdata(args):
 			config=dict(static_snake_config, **{'TMPDIR': tmpdir, 'vcf_input_file': use_vcf}),
 		)
 
-	if ret:
-		logger.info("""All files generated, add/update the following lines in the static-data section of your config file:
-  genome_fasta_file: {0.gencode_fasta_out}
-  genome_gtf_file: {0.gencode_gtf_out}	
-  pfb_file: {0.penncnv_pfb_out}
-  GCmodel_file: {0.penncnv_gc_out}
-  array_density: {0.array_density_out}
-  array_gaps: {0.array_gaps_out}
-  genomeInfo_file: {0.chromosome_info_out}""".format(args))
+	update_str = '\n'.join([f"  {entry}: {file}" for entry, file in static_snake_config.items() if entry in static_files])
+
+	if ret and args.edit_config_inplace:
+		logger.info('Updating config file with new static data entries:\n' + update_str)
+		for file in static_files:
+			if file in static_snake_config.keys():
+				config['static_data'][file] = static_snake_config[file]
+		with open(args.config, 'w') as f:
+			yaml.dump(config, f)
+	elif ret:
+		logger.info("Missing static files generated, please update the following lines in the static-data section of your config file (written to stdout):")
+		sys.stdout.write(update_str)
 
 	return ret
 
@@ -410,7 +445,8 @@ def run_snakemake(args):
 	# Ensure that sexfile for PennCNV exists
 	make_PennCNV_sexfile(args)
 	with open(args.config) as f:
-		config = yaml.safe_load(f)
+		yaml = ruamel_yaml.YAML(typ='safe')
+		config = yaml.load(f)
 	
 	argv = [
 		"-s", os.path.join(SNAKEDIR, "StemCNV-check.smk"),
@@ -473,22 +509,27 @@ def setup_argparse():
 							 help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
 	group_basic.add_argument('--verbose', '-v', action='store_true', help="Verbose output")
 
+	group_setupfiles = parser.add_argument_group("setup-files", "Details for setup-files")
+	group_setupfiles.add_argument('--config-details', default='minimal', choices=('minimal', 'medium', 'advanced', 'complete'), help="Level of detail for the config file. Default: %(default)s")
+	group_setupfiles.add_argument('--overwrite', action='store_true', help="Allow overwriting of existing files")
+
 	group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
 	group_static.add_argument('--genome', default='hg38', choices=('hg19', 'hg38'), help="Genome build to use (UCSC names). Default: %(default)s")
 	group_static.add_argument('--snp-array-name', default=None, help="A name or identifier string for the snp-array, can used in filesnames. No Default.")
-	group_static.add_argument('--penncnv-pfb-out', default='static-data/PennCNV-PFB_{genome}{array}.pfb',
+	group_static.add_argument('--edit-config-inplace', action='store_true', help = "Edit the config file in place with updated static-data entries")
+	group_static.add_argument('--penncnv-pfb-file', default='static-data/PennCNV-PFB_{genome}{array}.pfb',
 							   help="Filename for generated PFB file. Default: %(default)s")
-	group_static.add_argument('--penncnv-gc-out', default='static-data/PennCNV-GCmodel_{genome}{array}.gcmodel',
+	group_static.add_argument('--penncnv-gcmodel-file', default='static-data/PennCNV-GCmodel_{genome}{array}.gcmodel',
 							   help="Filename for generated GCmodel file. Default: %(default)s")
-	group_static.add_argument('--array-density-out', default='static-data/density_{genome}{array}.bed',
+	group_static.add_argument('--array-density-file', default='static-data/density_{genome}{array}.bed',
 							   help="Filename for generated bed file with probe density. Default: %(default)s")
-	group_static.add_argument('--array-gaps-out', default='static-data/gaps_{genome}{array}.bed',
+	group_static.add_argument('--array-gaps-file', default='static-data/gaps_{genome}{array}.bed',
 							  help="Filename for generated bed file with probe gaps. Default: %(default)s")
-	group_static.add_argument('--chromosome-info-out', default='static-data/UCSC_{genome}_chromosome-info.tsv',
+	group_static.add_argument('--genomeinfo-file', default='static-data/UCSC_{genome}_chromosome-info.tsv',
 							   help="Filename for generated chromosome info file. Default: %(default)s")
-	group_static.add_argument('--gencode-gtf-out', default='static-data/gencode.{genome}.v45.gtf',
+	group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf',
 							   help="Filename for generated chromosome info file. Default: %(default)s")
-	group_static.add_argument('--gencode-fasta-out', default='static-data/{genome}.genome.fa',
+	group_static.add_argument('--genome-fasta-file', default='static-data/{genome}.genome.fa',
 							   help="Filename for generated chromosome info file. Default: %(default)s")
 
 	group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
@@ -520,13 +561,13 @@ if __name__ == '__main__':
 		ret = copy_setup_files(args)
 	elif args.action == 'make-staticdata':
 		args.snp_array_name = ('_' + args.snp_array_name) if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
-		args.penncnv_pfb_out = args.penncnv_pfb_out.format(genome=args.genome, array=args.snp_array_name)
-		args.penncnv_gc_out = args.penncnv_gc_out.format(genome=args.genome, array=args.snp_array_name)
-		args.array_density_out = args.array_density_out.format(genome=args.genome, array=args.snp_array_name)
-		args.array_gaps_out = args.array_gaps_out.format(genome=args.genome, array=args.snp_array_name)
-		args.chromosome_info_out = args.chromosome_info_out.format(genome=args.genome)
-		args.gencode_gtf_out = args.gencode_gtf_out.format(genome=args.genome)
-		args.gencode_fasta_out = args.gencode_fasta_out.format(genome=args.genome)
+		args.penncnv_pfb_file = args.penncnv_pfb_file.format(genome=args.genome, array=args.snp_array_name)
+		args.penncnv_gcmodel_file = args.penncnv_gcmodel_file.format(genome=args.genome, array=args.snp_array_name)
+		args.array_density_file = args.array_density_file.format(genome=args.genome, array=args.snp_array_name)
+		args.array_gaps_file = args.array_gaps_file.format(genome=args.genome, array=args.snp_array_name)
+		args.genomeinfo_file = args.genomeinfo_file.format(genome=args.genome)
+		args.genome_gtf_file = args.genome_gtf_file.format(genome=args.genome)
+		args.genome_fasta_file = args.genome_fasta_file.format(genome=args.genome)
 		if not os.path.isdir(args.directory):
 			os.makedirs(args.directory)
 		ret = create_missing_staticdata(args)
