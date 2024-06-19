@@ -104,7 +104,7 @@ settings:
       # summary) and log2 number of unique probe positions. The two values represent slope and intercept of
       # slope * percent_gap_area + gap_intercept ~ log2(uniq_snp_positions), calls above that line "have gaps"
       gap_area.uniq_probes.rel: [-12, 12.5]
-      min.perc.gap_area: 1/3
+      min.perc.gap_area: 0.33
       ## HighDensity flagging of calls
       # Calls that have a probe density which is higher than the top {density.quantile.cutoff} [%] of the array windows
       # (calculated from array attribute summary) are flagged as having "high SNP density"

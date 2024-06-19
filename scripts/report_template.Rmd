@@ -72,6 +72,8 @@ get_script_dir <- function() {
   }
 }
 source(file.path(get_script_dir(), 'R_io_functions.R'))
+source(file.path(get_script_dir(), 'R_table_functions.R'))
+source(file.path(get_script_dir(), 'R_plotting_functions.R'))
 
 config_parse <- function(args, report_name) {
   subconfig <- config$reports[[report_name]]
@@ -204,14 +206,6 @@ tr_tibble <- function(tb) {
   tb[2:nrow(tb),]
 }
 
-vector_to_js <- function(v) {
-  if (is.null(names(v))) {
-    return(paste0("['", paste(v, collapse = "','"), "']"))
-  } else {
-    return(paste0('{', paste0(paste0("'", names(v), "': '", v, "'"), collapse = ', '), '}'))
-  }
-}
-
 ## Rmd related functions
 
 format_column_names <- function(n) {
@@ -219,73 +213,6 @@ format_column_names <- function(n) {
           str_replace('Cnv', 'CNV') %>%
           str_replace('Loh', 'LOH') %>%
           str_replace('Snp', 'SNP')
-}
-
-simple_table_output <- function(tb, caption=NULL) {
-  if (params$out_format == 'html') {
-    return(datatable(tb, caption = caption,
-                     options = list(dom = 't', pageLength = nrow(tb)), rownames = FALSE))
-  } else {
-    return(kable(tb, caption = caption))
-  }
-}
-
-gene_table_output <- function(tb, plotsection, caption = NULL, extra_cols = c()) {
-
-  if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') == 'Call') {
-    tb <- filter(tb, direct_hit)
-    gene_area <- 'call'
-  } else {
-    extra_cols <- c(extra_cols, 'direct_hit')
-    gene_area <- 'plot'
-  }
-  if (nrow(tb) == 0) {
-    return(str_glue('No genes in the {gene_area} area.'))
-  }
-  tb <- tb %>%
-    mutate(
-      across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)),
-      high_impact = factor(ifelse(high_impact, 'hit', '-'), levels = c('hit', '-')),
-      highlight = factor(ifelse(highlight, 'hit', '-'), levels = c('hit', '-')),
-      name_is_geneid = str_detect(gene_name, 'ENSG[0-9]{11}'),
-      # REEV: gene_id *should* work, but won't if they are deprectated/not in Annonars
-      REEV = str_glue("<a href='https://reev.bihealth.org/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
-      GTex = str_glue("<a href='https://gtexportal.org/home/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
-      NCBI = ifelse(name_is_geneid, '-', str_glue("<a href='https://pubmed.ncbi.nlm.nih.gov/?term={gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>")),
-      Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
-      #Reformat gene name
-      gene_name = ifelse(
-              high_impact == 'hit',
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, 'high_impact')),
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, 'highlight'))
-              ),
-    ) %>%
-    arrange(high_impact, highlight, desc(direct_hit), start) %>%
-    select(gene_name, gene_id, seqnames, start, end, high_impact, highlight, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
-  if (params$out_format == 'html') {
-    colors1 <- ifelse(tb$high_impact == 'hit', 'red' , 'white')
-    colors2 <- ifelse(tb$highlight == 'hit', 'orange', 'white')
-    dt <- datatable(tb, rownames = FALSE, escape = FALSE,
-                     options = list(dom = 'Bftilp', pageLength = 10,
-                                    extensions = c('Buttons'),
-                                    buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-                                    columnDefs = list(list(
-                                      targets = 1:6, visible = FALSE
-                                    ))
-                     )) %>%
-        formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
-        formatStyle('highlight', backgroundColor = styleRow(1:nrow(tb), colors2))
-    return(dt)
-  } else {
-    tb <- tb %>% select(gene_name, gene_id, high_impact, highlight, any_of(extra_cols))
-    return(kable(tb, caption = caption))
-  }
-}
-
-format_size <- function(size) {
-  oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
-  num <- round(size / oom_f)
-  paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
 }
 
 CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
@@ -303,145 +230,11 @@ CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
   }
 }
 
-format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, listtype = 'high_impact') {
-  if (listtype == "high_impact") {
-    gene_details <- high_impact_tb
-    shorthand <- 'HI'
-  } else if (listtype == "highlight") {
-    gene_details <- highlight_tb
-    shorthand <- 'HL'
-  } else {
-    stop(str_glue("Unsupported list type '{list}', only 'high_impact' and 'highlight' are defined"))
-  }
 
-  tb <- tibble(hotspot = str_split(hotspot_vec, ','),
-               CNV_type = CNVtype_vec) %>%
-          mutate(id = 1:dplyr::n()) %>%
-          unnest(hotspot) %>%
-          left_join(gene_details) %>%
-          filter(is.na(call_type) | call_type %in% c(CNV_type, 'any') ) %>%
-          mutate(source = str_replace(source, '\\n', '&#013;'),
-                 out_str = ifelse(
-                   hotspot != "" & !is.na(list_name),
-                   paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
-                          str_glue('{listtype} list name: {list_name}&#013;'), #\\n
-                          ifelse(!is.na(impact_score), str_glue('custom impact_score: {impact_score}&#013;'), ''),
-                          str_glue('Annotation source:&#013;{source}'),
-                          str_glue('">{hotspot}</span>')),
-                   hotspot
-                 )
-          ) %>%
-          group_by(id) %>%
-          summarise(
-                  sep = ifelse(all(str_detect(out_str, '^<')), "", ', '),
-                  hotspot = base::paste(out_str, collapse='')
-          ) %>%
-          mutate(hotspot = ifelse(hotspot == 'NA', '-', hotspot))
-
-  if (nrow(tb) == 0 | all(is.na(hotspot_vec) | hotspot_vec == 'NA')) {
-    out_vec <- ifelse(is.na(hotspot_vec), '-', hotspot_vec)
-    return(out_vec)
-  } else {
-    return(tb$hotspot)
-  }
-}
-
-CNV_table_output <- function(tb, plotsection, caption = NULL) {
-  always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
-  # Reorder & subset columns
-  tb <- tb %>%
-    # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
-    mutate(Plot = ifelse(
-             i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_Label %in% always_include,
-             paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
-             #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
-                    '">Nr. ', i, '</a>'),
-             #       '">', pmap_chr(., CNV_ID_str), '</a>'),
-             paste0('<a href="" onclick="window.open(\'./', image_folder, "/CNV_call.", plotsection, ".nr", i, '.plot-1.png\'); return false;">',
-                    'Nr. ', i,' (ext. plot)</a>')
-              # pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
-             ),
-           Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-           high_impact_hits = map2_chr(high_impact_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, 'high_impact')),
-           highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, 'highlight')),
-    ) %>%
-    select(sample_id, ID, i, #invis 0-2
-           Plot, Call_Label, Impact_Score,
-           CNV_type, Chr, Size,
-           Start, End, #invis 9-10
-           CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
-           Precision_Estimate, probe_coverage_gap, high_probe_density,
-           # invis: 18++
-           copynumber, n_snp_probes, n_uniq_probe_positions, n_premerged_calls, caller_confidence,
-           caller_merging_coverage,
-           percent_gap_coverage )
-
-  if (params$out_format == 'html') {
-
-    column_help_text <- c(
-            'Sample_ID from the input "sample_table"',
-            'Internal ID for the CNV call',
-            'Number of the CNV call, sorted by descending Impact Score',
-            'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch to the active plot below, without hightlighting the correct tab. For other CNVs it will open the plot in a new browser tab.',
-            'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
-            'Impact score of the CNV call, calculated based on size, overlap high impact or highlight list, or other genes',
-            'Type of CNV call (gain, loss, LOH)',
-            'Chromosome of the CNV call',
-            'Size of the CNV call (in base pairs)',
-            'Start position of the CNV call',
-            'End position of the CNV call',
-            'Caller tools detecting this CNV call',
-            'High impact hotspots overlapping with this CNV call',
-            'Highlight hotspots overlapping with this CNV call',
-            'Regions of interest overlapping with this CNV call',
-            #TODO: add a doi for precision benchmark once available
-            'Precision estimate of the CNV call, based on internal benchmarking',
-            'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. See config min.perc.gap_area and gap_area.uniq_probes.rel for details',
-            'Call has higher probe density than {density.quantile.cutoff} percent of the the array',
-            '(Estimated) copy number of the CNV call',
-            'Number of SNP probes (post filtering) in the CNV call area',
-            'Number of unique probe positions (post filtering) in the CNV call area',
-            'Number of calls from the caller before merging, comma separated for mutliple callers',
-            'Call confidence of the caller where available, comma separated for multiple callers',
-            'For calls with multiple CNV callers: percentage overlap of each caller with the combined call area',
-            'Percentage of the CNV call area with a gap probe coverage'
-    )
-
-
-    dt <- datatable(tb %>% rename_with(format_column_names),
-            rownames = FALSE,
-            escape = FALSE,
-            extensions = c('Buttons', 'Scroller'),
-            filter = 'top',
-            caption = caption,
-            options = list(
-              scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
-              dom = 'Bftilp',
-              buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-              columnDefs = list(
-                #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0:2,9:10,18:(ncol(tb)-1)), visible = FALSE)
-              )
-            ),
-            callback = JS(
-              "var info_text = ", vector_to_js(column_help_text), ";",
-              "header = table.columns().header();",
-              "for (var i = 0; i < info_text.length; i++) {",
-              "  $(header[i]).attr('title', info_text[i]);",
-              "};"
-            )
-          ) %>%
-      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
-      formatRound(c('Impact Score'), digits = 2, mark='.')
-    return(dt)
-  } else {
-    tb <- tb %>% select(CNV_type, Impact_Score,
-                        Chr, Start, End, Size, CNV_caller,
-                        high_impact_hits, highlight_hits,
-                        Precision_Estimate, probe_coverage_gap, high_probe_density
-    ) %>% rename_with(format_column_names)
-    return(kable(tb, caption = caption))
-  }
+format_size <- function(size) {
+  oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
+  num <- round(size / oom_f)
+  paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
 }
 
 make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
@@ -452,6 +245,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
   for (i in call.table$i) {
     row <- call.table[i,]
     res <- make_LRR_BAF_plots(row,
+                              raw_LRR_BAF, cnv_calls, gr_genes, gr_info,
                               report.setting('call.data.and.plots', plotsection, 'plot.region.minsize'),
                               report.setting('call.data.and.plots', plotsection, 'plot.flanking.region.relative')
                               )
@@ -721,55 +515,7 @@ write_tsv(export.tb, file.path(workdir, str_glue('{sample_id}.summary-check.tsv'
 
 ```{r qc.summary, eval = include.section('QC.summary'), results='asis'}
 cat('### Summary\n\n')
-if (params$out_format == 'html') {
-
-  summary_row_help <- c(
-          "Call Rate" = 'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be determined.\\nLow values are strong indicator of sample quality issues that also impact make any further analysis including CNV calling.',
-          "Computed Gender" = 'The Illumina computed gender (sex) based on X and Y chromosome probes.\\nMismtaches with annotated sex can indicate  annotation mistakes, sample swaps, or severe quality issues.',
-          "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
-          "SNP Distance To Reference" = 'The number of probes with a different genotype than the reference sample.\\nIncreased values can indicate a sample swap or a considerable number of genomic mutations between sample and references.',
-          "Loss Gain Log2ratio" = 'The log2 transformed ratio of loss and gain CNV calls.\\nDeviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
-          "Total Calls CNV" = 'The total number of CNV (gain/loss) calls.',
-          "Total Calls LOH" = 'The total number of LOH calls.'
-  )
-  #TODO: add actual tresholds
-  if (!str_detect(not_enabled_label, 'reportable')) {
-    summary_row_help <- c(summary_row_help,
-           "Reportable Calls CNV" = 'The number of CNV calls with an Impact Score above the reportable threshold.',
-           "Reportable Calls LOH" = 'The number of LOH calls with an Impact Score above the reportable threshold.'
-    )
-  }
-  if (!str_detect(not_enabled_label, 'critical')) {
-    summary_row_help <- c(summary_row_help,
-           "Critical Calls CNV" = 'The number of CNV calls with an Impact Score above the critical threshold.',
-           "Critical Calls LOH" = 'The number of LOH calls with an Impact Score above the critical threshold.'
-    )
-  }
-  datatable(Combined.metrics,
-            options = list(
-              dom = 't',
-              pageLength = nrow(Combined.metrics),
-              rowCallback = JS(
-                "function(row, data, displayNum, displayIndex, dataIndex) {",
-                  "let help_text = ", vector_to_js(summary_row_help), ";",
-                  #"console.log('hover-test: ' + help_text[data[0]]);",
-                  "$('td', row).attr('title', help_text[data[0]]);",
-                "}")
-            ),
-            rownames = FALSE) %>%
-      formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])), textAlign = 'center') %>%
-      # DT can take specification of non-existing columns - just need a workaround for the sample_header call
-      formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), textAlign = 'center')
-} else {
-
-  tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
-    column_spec(2, background = unlist(Combined.colors[, sample_headers[[1]]]))
-  if (!is.na(ref_id)) {
-     tbout <- column_spec(tbout, 3, background = unlist(Combined.colors[, sample_headers[[2]]]))
-  }
-  tbout
-}
-
+summary_table(Combined.metrics, Combined.colors, sample_headers)
 cat('\n\n')
 ```
 
@@ -855,229 +601,6 @@ cat('\n\n')
 # CNV calling
 
 ```{r CNV.call.functions}
-
-get_cnv_y <- function(CNV_type, CNV_caller) {
-    # Go by tool order (start from 1)
-    out <- match(CNV_caller, cnv_tools)
-    # For PennCNV LOH & gain/loss may overlap and need separate tracks
-    out <- ifelse(CNV_type %!in% c('gain', 'loss'), 1-out, out)
-    out
-}
-
-make_LRR_BAF_plots <- function(call.row,
-                               total_min_size = 2e6, flank_factor = 2) {
-
-  chr <- call.row$Chr
-
-  if (total_min_size < 1e4) {
-    warning(str_glue('Re-Setting Minimum size window around primary plot area (CNV/region: {chr}:{call.row$Start}-{call.row$End}) to at least 10kb'))
-    total_min_size <- 1e4
-  }
-
-  # Set initial plot window as Call size * (1+2*flank_factor)
-  win_start <- call.row$Start - call.row$Size * flank_factor
-  win_end <- call.row$End + call.row$Size * flank_factor
-  # If it is below minimum increase accordingly
-  if (win_end - win_start < total_min_size) {
-    #Don't want .5 positions
-    win_start <- win_start - floor((total_min_size - win_end + win_start)/2)
-    win_end <- win_end + ceiling((total_min_size - win_end + win_start)/2)
-  }
-
-  #Shrink down ends if they overlap 0/Chr_Max (from what is covered by probes)
-  chr_max <- raw_LRR_BAF %>% filter(Chr == chr) %>% pull(Position) %>% max()
-  win_start <- max(win_start, 0)
-  win_end <- min(win_end, chr_max)
-
-  # get raw LRR & BAF data; mark filtered points
-  plot.data <- raw_LRR_BAF %>%
-    filter(Chr == chr & Position >= win_start & Position <= win_end) %>%
-    mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
-
-  if (nrow(plot.data)==0){
-    warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{win_start}-{win_end}')
-    warning(warn_msg)
-    return(list('gg' = warn_msg, 'calls' = tibble(), 'genes' = tibble()))
-  }
-
-  calls <- cnv_calls %>%
-    filter(caller_merging_state != 'combined' & Chr == chr & End >= win_start & Start < win_end) %>%
-    mutate(x_pos = (End + Start) / 2,
-           y_pos = map2_int(CNV_type, CNV_caller, get_cnv_y),
-           color = ifelse(CNV_type %!in% c('gain', 'loss'), 'grey50', '#1a9850'),
-           color = ifelse(CNV_type == 'loss', '#f46d43', color),
-           Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
-           ) %>%
-    # Need to ensure table contains reference so everything is properly facet_wrapped
-    bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
-                     x_pos = NA_integer_, y_pos = NA_integer_))
-
-  direct_genes <- gr_genes %>%
-    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = call.row$Start, end = call.row$End))) %>%
-    as_tibble()
-
-  high_impact_list <- call.row$high_impact_hits %>% str_split(',') %>% unlist()
-  highlight_list <- call.row$highlight_hits %>% str_split(',') %>% unlist()
-  gene.data <- gr_genes %>%
-    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
-    as_tibble() %>%
-    mutate(x_pos = (end + start) / 2,
-           y_pos = ifelse(strand == '+', 1, 0),
-           Sample_Name = paste(sample_headers, collapse = '---'),
-           direct_hit = gene_id %in% direct_genes$gene_id,
-           high_impact = gene_name %in% high_impact_list,
-           highlight = gene_name %in% highlight_list,
-    ) %>%
-    separate_rows(Sample_Name, sep = '---') %>%
-    # Need to ensure table contains reference so everything is properly facet_wrapped
-    bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
-                     x_pos = NA_integer_, y_pos = NA_integer_))
-
-  info_data <- gr_info %>%
-    filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
-    as_tibble() %>%
-    mutate(x_pos = (end + start) / 2,
-           y_pos = 0,
-           Sample_Name = paste(sample_headers, collapse = '---'),
-           color = case_when(
-             section_name %in% high_impact_list ~ 'red',
-             section_name %in% highlight_list ~ 'orange',
-             band_staining == 'gpos100' ~ 'black',
-             band_staining ==  'gpos50' ~ 'grey30',
-             band_staining ==  'gpos25' ~ 'grey70',
-             centromer ~ 'lightblue',
-             TRUE ~ 'white'
-           ),
-           textcolor = ifelse(color %in% c('black', 'grey30'), 'white', 'black')
-    ) %>%
-    separate_rows(Sample_Name, sep = '---') %>%
-    mutate(Sample_Name = factor(Sample_Name, levels = sample_headers)) %>%
-    # Need to ensure table contains reference so everything is properly facet_wrapped
-    bind_rows(tibble(Sample_Name = factor(sample_headers, levels = sample_headers),
-                     x_pos = NA_integer_, y_pos = NA_integer_))
-
-  panel_space_val <- unit(5, units = 'mm')
-
-  cnv_track <- ggplot(calls) +
-    geom_tile(aes(x = x_pos, y = y_pos, width = Size, height = .9, fill = color)) +
-    scale_fill_identity() +
-    geom_text(aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
-              vjust = 0.5, hjust = 0.5, size = 2.5) +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
-                       limits = c(win_start, win_end), oob = oob_keep) +
-    scale_y_continuous(expand = expansion()) +
-    facet_wrap(~Sample_Name, nrow = 1) +
-    theme_classic() +
-    theme(axis.title = element_blank(),
-          axis.line = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          plot.background = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          strip.background = element_blank(),
-          strip.text.x = element_blank(),
-          panel.spacing = panel_space_val) +
-    labs(y = 'Calls')
-
-  gene_track <- ggplot(gene.data) +
-    geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9,
-                  fill = case_when(
-                    high_impact ~ 'red',
-                    highlight   ~ 'orange',
-                    direct_hit  ~ 'black',
-                    TRUE        ~ 'grey50'
-                  )),
-        show.legend = F) +
-    scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
-    scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) +
-    scale_fill_identity() +
-    facet_wrap(~Sample_Name, nrow = 1) +
-    theme_void() +
-    theme(
-      strip.background = element_blank(),
-      strip.text.x = element_blank(),
-      axis.title.y = element_text(angle = 90, vjust = 1),
-      panel.spacing = panel_space_val
-    ) +
-    labs(y = 'Genes')
-
-  lrr <- ggplot(plot.data) +
-    geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = call.row$Start, xmax = call.row$End, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
-    geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) +
-    geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
-               size = 0.5, shape = 20, show.legend = F) +
-    scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
-    theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
-                       limits = c(win_start, win_end), position = 'top') +
-    scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
-    labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) +
-    facet_wrap(~Sample_Name, nrow = 1) +
-    theme(
-      strip.background = element_blank(),
-      strip.text.x = element_blank(),
-      panel.spacing = panel_space_val
-    )
-
-  baf <- ggplot(plot.data) +
-    geom_hline(yintercept = 0, col = 'black', linewidth=0.5) +
-    geom_hline(yintercept = 1, col = 'black', linewidth=0.5) +
-    geom_rect(data = tibble(Sample_Name = sample_headers),
-              aes(xmin = call.row$Start, xmax = call.row$End, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
-    geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
-               size = 0.5, shape = 20, show.legend = F) +
-    scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
-    theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
-    scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) +
-    labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) +
-    facet_wrap(~Sample_Name, nrow = 1) +
-    theme(
-      strip.background = element_blank(),
-      strip.text.x = element_blank(),
-      panel.spacing = panel_space_val
-    )
-
-  header <- ggplot(info_data) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
-    geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
-              color = 'black', linewidth = 0.2) +
-    scale_fill_identity() +
-    geom_text(aes(label = section_name, x = x_pos, y = y_pos, color = textcolor),
-              vjust = 0.5, hjust = 0.5, size = 2.5, show.legend = F) +
-    scale_color_identity() +
-    theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
-    scale_y_continuous(expand = expansion()) +
-    theme(axis.line = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          plot.background = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.spacing = panel_space_val)
-
-  n_cnvs <- length(na.omit(unique(calls$CNV_type)))
-  gg <- header / cnv_track / lrr / baf / cnv_track / gene_track + plot_layout(heights = c(1, n_cnvs, 10, 10, n_cnvs, 2))
-
-  calls <- calls %>%
-    filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, Call_Label, Impact_Score, reference_overlap, CNV_type, CNV_caller) %>%
-    arrange(Sample_Name, Call_Label, Impact_Score, Start) %>%
-    rowwise() %>%
-    mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
-
-  gene.data <- gene.data %>%
-    filter(!is.na(x_pos)) %>%
-    dplyr::select(seqnames, start, end, width, strand, high_impact, highlight, direct_hit, gene_name, gene_type, gene_id) %>%
-    mutate(CNVtype = as.character(call.row$CNV_type)) %>%
-    unique()
-
-  list('gg' = gg, 'calls' = calls, 'genes' = gene.data)
-
-}
 
 cnv_calls <- cnv_calls %>%
   ungroup() %>%
@@ -1177,79 +700,6 @@ cat('\n\n')
 ```
 
 # Sample comparison  {.tabset}
-
-
-```{r virtual.karyotype, eval = include.section('virtual.karyotype'), results='asis'}
-
-cat('## Virtual Karyotype\n\n')
-
-if (!is.na(ref_id)) {
-  cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
-}
-
-# Use prepared static data table (genome build specific, UCSC derived) instead of inbuilt RIdeogram
-# data(human_karyotype, package="RIdeogram")
-genome_data <- gr_info %>% filter(centromer) %>%
-  group_by(size) %>%
-  reduce_ranges() %>%
-  as.data.frame() %>%
-  dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
-  mutate(Start = 0,
-         Chr = str_remove(Chr, 'chr')) %>%
-  select(Chr, Start, End, CE_start, CE_end)
-
-sample.calls <- cnv_calls %>%
-    dplyr::select(Chr, Start, End, CNV_type, sample_id) %>%
-    mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
-           Value = ifelse(CNV_type == 'loss', -1, Value),
-           Chr = str_remove(Chr, 'chr'))
-overlay.tb <- sample.calls %>%
-    filter(sample_id == !!sample_id) %>%
-    dplyr::select(Chr, Start, End, Value)
-
-#This should not be the case unless there are 0 calls that generated images
-if (!dir.exists(file.path(workdir, image_folder))) {
-    dir.create(file.path(workdir, image_folder))
-}
-
-svg_file1 <- tempfile(fileext = '.svg')
-#somehow 'convertSVG' can't deal with absolute paths
-png_file1 <- file.path(image_folder, 'virtualKaryotype_ideogram.png')
-
-ideogram(genome_data, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
-convertSVG(svg_file1, file = png_file1)
-
-if (params$out_format == 'html') {
-    cat(paste0('<img src="', png_file1, '" width="800" />'))
-} else {
-  #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
-  include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
-}
-
-if (!is.na(ref_id)) {
-  refdata <- sample.calls %>%
-        filter(sample_id == ref_id) %>%
-        dplyr::select(Chr, Start, End, Value)
-
-  svg_file2 <- tempfile(fileext = '.svg')
-  png_file2 <- file.path(image_folder, 'virtualKaryotype_ideogram_vsRef.png')
-
-  ideogram(genome_data, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
-         colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
-  convertSVG(svg_file2, file = png_file2)
-
-  if (params$out_format == 'html') {
-    cat(paste0('<img src="', png_file2, '" width="800" />'))
-  } else {
-    include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
-  }
-}
-
-cat('\n\n')
-
-```
-
-
 
 ```{r snp.dendrogram, results='asis', eval = include.section('SNP.dendrogram')}
 
@@ -1393,9 +843,72 @@ subchunkify(gg, 'snp.dendrogram.plot', 8, 10)
 
 ```
 
+```{r virtual.karyotype, eval = include.section('virtual.karyotype'), results='asis'}
 
+cat('## Virtual Karyotype\n\n')
 
+if (!is.na(ref_id)) {
+  cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
+}
 
+# Use prepared static data table (genome build specific, UCSC derived) instead of inbuilt RIdeogram
+# data(human_karyotype, package="RIdeogram")
+genome_data <- gr_info %>% filter(centromer) %>%
+  group_by(size) %>%
+  reduce_ranges() %>%
+  as.data.frame() %>%
+  dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
+  mutate(Start = 0,
+         Chr = str_remove(Chr, 'chr')) %>%
+  select(Chr, Start, End, CE_start, CE_end)
 
+sample.calls <- cnv_calls %>%
+    dplyr::select(Chr, Start, End, CNV_type, sample_id) %>%
+    mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
+           Value = ifelse(CNV_type == 'loss', -1, Value),
+           Chr = str_remove(Chr, 'chr'))
+overlay.tb <- sample.calls %>%
+    filter(sample_id == !!sample_id) %>%
+    dplyr::select(Chr, Start, End, Value)
 
+#This should not be the case unless there are 0 calls that generated images
+if (!dir.exists(file.path(workdir, image_folder))) {
+    dir.create(file.path(workdir, image_folder))
+}
 
+svg_file1 <- tempfile(fileext = '.svg')
+#somehow 'convertSVG' can't deal with absolute paths
+png_file1 <- file.path(image_folder, 'virtualKaryotype_ideogram.png')
+
+ideogram(genome_data, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
+convertSVG(svg_file1, file = png_file1)
+
+if (params$out_format == 'html') {
+    cat(paste0('<img src="', png_file1, '" width="800" />'))
+} else {
+  #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
+  include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
+}
+
+if (!is.na(ref_id)) {
+  refdata <- sample.calls %>%
+        filter(sample_id == ref_id) %>%
+        dplyr::select(Chr, Start, End, Value)
+
+  svg_file2 <- tempfile(fileext = '.svg')
+  png_file2 <- file.path(image_folder, 'virtualKaryotype_ideogram_vsRef.png')
+
+  ideogram(genome_data, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
+         colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
+  convertSVG(svg_file2, file = png_file2)
+
+  if (params$out_format == 'html') {
+    cat(paste0('<img src="', png_file2, '" width="800" />'))
+  } else {
+    include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
+  }
+}
+
+cat('\n\n')
+
+```

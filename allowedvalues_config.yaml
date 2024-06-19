@@ -69,6 +69,10 @@ settings:
       tool.overlap.median.cov.perc: float_le100_ge0
       ## Reference comparison
       min.reciprocal.coverage.with.ref: float_le100_ge0
+      ## CNV annotations
+      gap_area.uniq_probes.rel: list_len2__float
+      min.perc.gap_area: float_le1_ge0
+      density.quantile.cutoff: float_le1_ge0
 
     gene_overlap:
       exclude_gene_type_regex: list__str
@@ -149,8 +153,8 @@ reports:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
-    impact.score.critical: float_ge0
-    impact.score.reportable: float_ge0
+    impact.score.critical: '[0-9.]+|NA'
+    impact.score.reportable: '[0-9.]+|NA'
     sample.info.extra.cols: list__insamplesheet
 
     call.data.and.plots:
