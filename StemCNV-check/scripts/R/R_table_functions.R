@@ -198,8 +198,8 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
               "};"
             )
           ) %>%
-      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
-      formatRound(c('Impact Score'), digits = 2, mark='.')
+      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '..') %>%
+      formatRound(c('Impact Score'), digits = 2, mark= '..')
     return(dt)
   } else {
     tb <- tb %>% select(CNV_type, Impact_Score,

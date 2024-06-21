@@ -53,7 +53,7 @@ get_sample_info <- function(sample_id, value, sampletable){
 read_raw <- function(filename) {
     read_tsv(filename, show_col_types = FALSE) %>%
                 rename_with(~ str_remove(., '.*\\.')) %>%
-        dplyr::select(-any_of(c('Index', 'Address', 'R', 'Theta')),
+        dplyr::select(-any_of(c('Index', 'Address', '', 'Theta')),
                                     -contains('Frac'), -contains('X'), -contains('Y')) %>%
         mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
                Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
@@ -144,105 +144,6 @@ load_genomeInfo <- function(config) {
 	gr_info
 }
 
-tb_to_gr_by_position <- function(tb, gr_info, colname = 'position', format = 'position') {
-
-	if (format == 'position') {
-		no_match <- tb %>% filter(!str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+'))
-
-		gr <- tb %>%
-			filter(str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+')) %>%
-			mutate(
-				seqnames = str_remove(!!sym(colname),':.*'),
-				start = str_extract(!!sym(colname), '(?<=:)[0-9]+') %>% as.numeric(),
-				end = str_extract(!!sym(colname), '(?<=-)[0-9]+$') %>% as.numeric()
-			) %>% select(-!!sym(colname)) %>% as_granges()
-	}
-	else if (format == 'gband') {
-		no_match <- tb %>% filter(!str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
-		tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
-
-		filter_regex <- paste0('^(',
-			paste(str_replace(unlist(tb[, colname]), fixed('.'), '\\.'), collapse='|'),
-			')')
-		gr <- gr_info %>%
-			filter(str_detect(section_name, filter_regex)) %>%
-			mutate(section_name_match = str_extract(section_name, filter_regex)) %>%
-			group_by(section_name_match) %>%
-			reduce_ranges() %>%
-			as_tibble() %>%
-			left_join(tb, by = c('section_name_match' = colname)) %>%
-			dplyr::rename(hotspot = section_name_match) %>%
-			as_granges()
-	}
-	else {
-		stop('Unknown format for position data')
-	}
-
-	if (nrow(no_match) > 0) {
-		warning(paste('Could not convert the following positions:', paste(no_match[, colname], collapse = ', ')))
-	}
-
-	return(gr)
-}
-
-# Hotspot list based annotation
-parse_hotspot_list <- function(listname_or_tb, config, gr_genes, gr_info) {
-
-	if (is_tibble(listname_or_tb)) {
-		tb <- listname_or_tb
-	} else if (is.character(listname_or_tb) & listname_or_tb %in% c('high_impact', 'highlight')) {
-		tb <- config$settings$CNV_processing$gene_overlap[[paste0(listname_or_tb, '_list')]] %>%
-        	str_replace('__inbuilt__', config$snakedir) %>%
-        	read_tsv()
-	} else {
-		quit('Only tibble or "high_impact" or "highlight" lists are defined')
-	}
-
-	sub_tb_name <- tb %>%
-		filter(mapping == 'gene_name')
-	sub_tb_pos <- tb %>%
-		filter(mapping == 'position')
-	sub_tb_gband <- tb %>%
-		filter(mapping == 'gband')
-
-	empty_gr <- GRanges(
-						list_name = character(),
-						hotspot = character(),
-						mapping = character(),
-						call_type = character(),
-						impact_score = numeric(),
-						source = character(),
-						comment = character()
-						)
-
-	if (nrow(sub_tb_name) > 0) {
-		gr_name <- gr_genes %>%
-			select(-source, -type, -gene_id, -gene_type) %>%
-			filter(gene_name %in% sub_tb_name$hotspot) %>%
-			as_tibble() %>%
-			dplyr::rename(hotspot = gene_name) %>%
-			left_join(sub_tb_name) %>%
-			as_granges()
-		message('parsed gene names')
-	} else {
-		gr_name <- empty_gr
-	}
-
-	if (nrow(sub_tb_pos) > 0) {
-		gr_pos <- tb_to_gr_by_position(sub_tb_pos, gr_info, 'hotspot', 'position')
-		message('parsed gene positions')
-	} else {
-		gr_pos <- empty_gr
-	}
-
-	if (nrow(sub_tb_gband) > 0) {
-		gr_gband <- tb_to_gr_by_position(sub_tb_gband, gr_info, 'hotspot', 'gband')
-	} else {
-		gr_gband <- empty_gr
-	}
-	bind_ranges(gr_name, gr_pos, gr_gband)
-}
-
 # Output
 
 ## Default table structure for CNVs
@@ -279,6 +180,13 @@ expected_final_tb <- tibble(
 	overlapping_genes = character()
 	)
 list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
+
+ensure_list_cols <- function(tb.or.gr){
+	as_tibble(tb.or.gr) %>%
+		rowwise() %>%
+		mutate(across(any_of(list_cols), ~ list(.))) %>%
+		as_granges()
+}
 
 # Other report functions
 

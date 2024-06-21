@@ -68,12 +68,12 @@ get_script_dir <- function() {
     return(normalizePath(check) %>% dirname())
   } else {
     # likely testing in IDE
-	return ('scripts')
+	return ('StemCNV-check/scripts')
   }
 }
-source(file.path(get_script_dir(), 'R_io_functions.R'))
-source(file.path(get_script_dir(), 'R_table_functions.R'))
-source(file.path(get_script_dir(), 'R_plotting_functions.R'))
+source(file.path(get_script_dir(), 'R/R_io_functions.R'))
+source(file.path(get_script_dir(), 'R/R_table_functions.R'))
+source(file.path(get_script_dir(), 'R/R_plotting_functions.R'))
 
 config_parse <- function(args, report_name) {
   subconfig <- config$reports[[report_name]]

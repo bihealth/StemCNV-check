@@ -107,7 +107,7 @@ make_LRR_BAF_plots <- function(call.row,
     scale_fill_identity() +
     geom_text(aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
               vjust = 0.5, hjust = 0.5, size = 2.5) +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
+    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','),
                        limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion()) +
     facet_wrap(~Sample_Name, nrow = 1) +
@@ -154,7 +154,7 @@ make_LRR_BAF_plots <- function(call.row,
                size = 0.5, shape = 20, show.legend = F) +
     scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
     theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','),
+    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','),
                        limits = c(win_start, win_end), position = 'top') +
     scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
     labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) +
@@ -174,7 +174,7 @@ make_LRR_BAF_plots <- function(call.row,
                size = 0.5, shape = 20, show.legend = F) +
     scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
     theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) +
     labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) +
     facet_wrap(~Sample_Name, nrow = 1) +
@@ -192,7 +192,7 @@ make_LRR_BAF_plots <- function(call.row,
               vjust = 0.5, hjust = 0.5, size = 2.5, show.legend = F) +
     scale_color_identity() +
     theme_classic() +
-    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '.', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+    scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
     scale_y_continuous(expand = expansion()) +
     theme(axis.line = element_blank(),
           axis.title = element_blank(),
