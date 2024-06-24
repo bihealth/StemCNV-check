@@ -7,6 +7,15 @@ vector_to_js <- function(v) {
   }
 }
 
+format_column_names <- function(n) {
+  str_replace_all(n, '_', ' ') %>%
+    str_to_title() %>%
+    str_replace('Cnv', 'CNV') %>%
+    str_replace('Loh', 'LOH') %>%
+    str_replace('Snp', 'SNP') %>%
+    str_replace('Roi', 'ROI') %>%
+    str_replace('Id', 'ID')
+}
 
 simple_table_output <- function(tb, caption=NULL) {
   if (params$out_format == 'html') {
@@ -70,15 +79,13 @@ summary_table <- function(Combined.metrics, Combined.colors, sample_headers) {
 
 }
 
-format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, listtype = 'high_impact') {
-  if (listtype == "high_impact") {
-    gene_details <- high_impact_tb
+format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, listname = 'high_impact') {
+  if (listname == "high_impact") {
     shorthand <- 'HI'
-  } else if (listtype == "highlight") {
-    gene_details <- highlight_tb
+  } else if (listname == "highlight") {
     shorthand <- 'HL'
   } else {
-    stop(str_glue("Unsupported list type '{list}', only 'high_impact' and 'highlight' are defined"))
+    stop(str_glue("Unsupported list type '{listname}', only 'high_impact' and 'highlight' are defined"))
   }
 
   tb <- tibble(hotspot = str_split(hotspot_vec, ','),
@@ -86,24 +93,31 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, listtype = 'high_
           mutate(id = 1:dplyr::n()) %>%
           unnest(hotspot) %>%
           left_join(gene_details) %>%
-          filter(is.na(call_type) | call_type %in% c(CNV_type, 'any') ) %>%
-          mutate(source = str_replace_all(source, '\\n', '&#013;'),
-                 out_str = ifelse(
-                   hotspot != "" & !is.na(list_name),
-                   paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
-                          str_glue('{listtype} list name: {list_name}&#013;'), #\\n
-                          ifelse(!is.na(impact_score), str_glue('custom impact_score: {impact_score}&#013;'), ''),
-                          str_glue('Annotation source:&#013;{source}'),
-                          str_glue('">{hotspot}</span>')),
-                   hotspot
-                 )
+          mutate(
+            do_format = case_when(
+              is.na(call_type) ~ FALSE,
+              call_type == CNV_type ~ TRUE,
+              call_type == 'any' ~ TRUE,
+              TRUE ~ FALSE
+            ),
+            source = str_replace_all(source, '\\\\n', '&#013;') %>%
+              str_replace_all('\\n', '&#013;'),
+            out_str = ifelse(
+              hotspot != "" & !is.na(list_name) & do_format,
+              paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
+                     str_glue('{listname} list name: {list_name}&#013;'), #\\n
+                     ifelse(!is.na(impact_score), str_glue('custom impact_score: {impact_score}&#013;'), ''),
+                     str_glue('Annotation source:&#013;{source}'),
+                     str_glue('">{hotspot}</span>')),
+             hotspot
+            )
           ) %>%
           group_by(id) %>%
           summarise(
                   sep = ifelse(all(str_detect(out_str, '^<')), "", ', '),
                   hotspot = base::paste(out_str, collapse='')
           ) %>%
-          mutate(hotspot = ifelse(hotspot == 'NA', '-', hotspot))
+          mutate(hotspot = ifelse(hotspot %in% c('', 'NA'), '-', hotspot))
 
   if (nrow(tb) == 0 | all(is.na(hotspot_vec) | hotspot_vec == 'NA')) {
     out_vec <- ifelse(is.na(hotspot_vec), '-', hotspot_vec)
@@ -113,7 +127,7 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, listtype = 'high_
   }
 }
 
-CNV_table_output <- function(tb, plotsection, caption = NULL) {
+CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, caption = NULL) {
   always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
   # Reorder & subset columns
   tb <- tb %>%
@@ -129,8 +143,8 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
               # pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
              ),
            Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-           high_impact_hits = map2_chr(high_impact_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, 'high_impact')),
-           highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, 'highlight')),
+           high_impact_hits = map2_chr(high_impact_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
+           highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
     ) %>%
     select(sample_id, ID, i, #invis 0-2
            Plot, Call_Label, Impact_Score,
@@ -211,7 +225,7 @@ CNV_table_output <- function(tb, plotsection, caption = NULL) {
   }
 }
 
-gene_table_output <- function(tb, plotsection, caption = NULL, extra_cols = c()) {
+gene_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, caption = NULL, extra_cols = c()) {
 
   if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') == 'Call') {
     tb <- filter(tb, direct_hit)
@@ -237,8 +251,8 @@ gene_table_output <- function(tb, plotsection, caption = NULL, extra_cols = c())
       #Reformat gene name
       gene_name = ifelse(
               high_impact == 'hit',
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, 'high_impact')),
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, 'highlight'))
+              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact')),
+              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight'))
               ),
     ) %>%
     arrange(high_impact, highlight, desc(direct_hit), start) %>%
