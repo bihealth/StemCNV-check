@@ -208,13 +208,6 @@ tr_tibble <- function(tb) {
 
 ## Rmd related functions
 
-format_column_names <- function(n) {
-  str_replace_all(n, '_', ' ') %>% str_to_title() %>%
-          str_replace('Cnv', 'CNV') %>%
-          str_replace('Loh', 'LOH') %>%
-          str_replace('Snp', 'SNP')
-}
-
 CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
                        region_name = NULL,
                        formatting = 'nice', ...) {
@@ -265,7 +258,8 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
       }
       if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') != 'None') {
         gene.tb <-  res$genes
-        subchunkify(gene_table_output(gene.tb, plotsection), str_glue('CNV_call.{plotsection}.nr{i}.table.genes'))
+        subchunkify(gene_table_output(gene.tb, plotsection, high_impact_tb, highlight_tb),
+                    str_glue('CNV_call.{plotsection}.nr{i}.table.genes'))
         cat('\n\n')
       }
       cat('\n\n')
@@ -632,7 +626,7 @@ cat('This section describes all de-novo CNV calls, meaning calls without a match
 ```
 
 ```{r denovo_calls.table, results='asis', eval = include.section('denovo_calls.table')}
-CNV_table_output(denovo_calls.table, 'denovo', caption = 'de-novo CNV calls')
+CNV_table_output(denovo_calls.table, 'denovo', high_impact_tb, highlight_tb, caption = 'de-novo CNV calls')
 cat('\n\n')
 ```
 
@@ -646,7 +640,7 @@ cat('This section describes all CNV calls that match the reference sample.\n\n')
 ```
 
 ```{r reference_gt_calls.table, results='asis', eval = !is.na(ref_id) & include.section('reference_gt_calls.table')}
-CNV_table_output(reference_calls.table, 'reference_gt', caption = 'reference genotype CNV calls')
+CNV_table_output(reference_calls.table, 'reference_gt', high_impact_tb, highlight_tb, caption = 'reference genotype CNV calls')
 cat('\n\n')
 ```
 
@@ -688,7 +682,7 @@ if (any(!is.na(regions)) & length(regions)>0) {
       bind_rows(expected_final_tb)
 
   # Rmd doesn"t auto-print output inside {}
-  print(CNV_table_output(fake_call_tb, 'regions_of_interest', caption = 'Regions of Interest'))
+  print(CNV_table_output(fake_call_tb, 'regions_of_interest', high_impact_tb, highlight_tb, caption = 'Regions of Interest'))
 
   make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 
