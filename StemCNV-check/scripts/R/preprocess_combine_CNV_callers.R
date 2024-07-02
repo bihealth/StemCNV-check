@@ -32,7 +32,9 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 												\(CNV_caller, csum) tibble(CNV_caller = CNV_caller, csum = csum) %>% unique() %>%
 																pull(csum) %>% median()
 												),
-			)
+			) %>% 
+			# This makes testing *much* easier
+			arrange(CNV_type, CNV_caller, start)
 
 		#Now filter based on overlap of tool(CNV_caller) calls with merged region to check if the overlap can be accepted
 		# - require at least 50% of the merged region to be covered by a single call to prevent chained overlaps

@@ -37,12 +37,12 @@ get_script_dir <- function() {
 	}
 }
 source(file.path(get_script_dir(), 'R/R_io_functions.R'))
-source(file.path(get_script_dir(), 'R/calls_prefilter_merge.R'))
-source(file.path(get_script_dir(), 'R/combine_CNV_callers.R'))
-source(file.path(get_script_dir(), 'R/annotate_reference_overlap.R'))
-source(file.path(get_script_dir(), 'R/annotate_impact_lists.R'))
-source(file.path(get_script_dir(), 'R/annotate_array_features.R'))
-source(file.path(get_script_dir(), 'R/annotate_cnv-check-score.R'))
+source(file.path(get_script_dir(), 'R/preprocess_calls_prefilter_merge.R'))
+source(file.path(get_script_dir(), 'R/preprocess_combine_CNV_callers.R'))
+source(file.path(get_script_dir(), 'R/preprocess_annotate_reference_overlap.R'))
+source(file.path(get_script_dir(), 'R/preprocess_annotate_impact_lists.R'))
+source(file.path(get_script_dir(), 'R/preprocess_annotate_array_features.R'))
+source(file.path(get_script_dir(), 'R/preprocess_annotate_cnv-check-score.R'))
 
 ##################
 # Variable setup #
