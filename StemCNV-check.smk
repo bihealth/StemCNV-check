@@ -510,6 +510,9 @@ system("touch {output}")
 EOF
 """
 
+# def get_report_config(wildcards):
+#   return config['reports'][wildcards.report]
+
 rule knit_report:
   input:
     get_report_sample_input
@@ -521,6 +524,8 @@ rule knit_report:
   wildcard_constraints:
     ext="(pdf|html)"
   threads: get_tool_resource('knitr', 'threads')
+  # params:
+  #   config = get_report_config
   resources:
     time=get_tool_resource('knitr', 'runtime'),
     mem_mb=get_tool_resource('knitr', 'memory'),

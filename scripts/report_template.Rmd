@@ -439,12 +439,11 @@ metric.colors <- list(
                  SNPs_post_filter = 'white'),
     mutate(metrics[[3]],
                  SNP_distance_to_reference = ifelse(SNP_distance_to_reference == '-', 'white',
-                                              apply_greq_th(SNP_distance_to_reference, SNP_distance_to_ref_warning,
-                                                          warn_color('SNP_distance_to_ref_warning'))
+                                              apply_greq_th(as.integer(SNP_distance_to_reference), SNP_distance_to_ref_warning,'SNP_distance_to_ref_warning')
                  )),
     mutate(metrics[[4]],
                  loss_gain_log2ratio = ifelse(loss_gain_log2ratio == 'div/0', 'white',
-                    apply_greq_th(abs(loss_gain_log2ratio), ratio_CNV_warnings, 'loss_gain_log2ratio')),
+                    apply_greq_th(abs(as.numeric(loss_gain_log2ratio)), ratio_CNV_warnings, 'loss_gain_log2ratio')),
                  total_calls_CNV = apply_greq_th(total_calls_CNV, total_CNV_warnings, 'total_calls_CNV'),
                  total_calls_LOH = apply_greq_th(total_calls_LOH, total_LOH_warnings, 'total_calls_LOH'),
                  reportable_calls_CNV = apply_greq_th(reportable_calls_CNV, reportable_CNV_warnings, 'reportable_calls_CNV'),
