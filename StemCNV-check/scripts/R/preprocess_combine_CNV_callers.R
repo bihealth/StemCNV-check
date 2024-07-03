@@ -22,7 +22,7 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 			group_by(sample_id, CNV_type, pick(starts_with('group'))) %>%
 			# The overlap here is *not* reciprocal overlap, as we need to deal with the possibility of one tool
 			# 'merging' calls from another (or having >2 tools)
-			mutate(overlap_merged_call = ifelse(caller_merging_state == 'combined', width / group.width * 100, NA),
+			mutate(overlap_merged_call = ifelse(caller_merging_state == 'combined', width / group.width * 100, NA_real_),
 			       max.ov = max(overlap_merged_call)) %>%
 			group_by(sample_id, CNV_type, pick(starts_with('group')), CNV_caller) %>%
 			# sum doesn't work if we have the filters in there and only group by CNV_caller
@@ -65,8 +65,8 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
-			mutate(caller_merging_coverage = NA_character_,
-				   overlap_merged_call = NA,
+			mutate(overlap_merged_call = NA_real_,
+				   caller_merging_coverage = NA_character_,
 			       caller_merging_state = 'no-overlap') %>%
 			as_granges() %>%
 			ensure_list_cols()
@@ -87,10 +87,13 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 
 	} else {
 		gr <- gr %>%
-			mutate(caller_merging_state = 'no-overlap',
-				   #widths = NA,
-				   overlap_merged_call = NA,
-				   caller_merging_coverage = NA) %>%
+			#plyranges::mutate fails on empty gr
+			as_tibble() %>%
+			mutate(
+				overlap_merged_call = NA_real_,
+				caller_merging_coverage = NA_character_,
+				caller_merging_state = 'no-overlap'
+			) %>%
 			ensure_list_cols()
 
 		return(gr)

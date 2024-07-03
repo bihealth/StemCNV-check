@@ -123,3 +123,33 @@ test_that("merge then filter calls", {
     prefilter_calls(min.snps, min.length, min.dens) %>%
     expect_equal(as_granges(merged_filtered_tb, seqnames=Chr))  
 } )
+
+# add tests for empty callsets
+empty_tb <- raw_tb %>%
+  filter(sample_id == 'non_existent_sample')
+empty_gr <- merged_tb %>%
+  dplyr::rename(seqnames = Chr) %>%
+  filter(sample_id == 'non_existent_sample') %>%
+  as_granges()
+
+test_that("filter empty calls", {
+  min.length <- 1000
+  min.snps <- 5
+  min.dens <- 10
+  
+  prefilter_calls(empty_tb, min.snps, min.length, min.dens) %>%
+    expect_equal(empty_tb) 
+  
+  prefilter_calls(empty_gr, min.snps, min.length, min.dens) %>%
+    expect_equal(empty_gr)
+} )
+
+test_that("merge empty calls", {
+  merge.distance <- 500
+
+  merge_calls(empty_tb, merge.distance) %>%
+    expect_equal(empty_gr)        
+  
+  merge_calls(empty_gr, merge.distance) %>%
+    expect_equal(empty_gr)
+} )

@@ -28,13 +28,22 @@ annotate_reference_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.wi
 					  reference_caller = list(unlist(reference_caller)),
 			) %>%
 			dplyr::rename_with(~ str_remove(., '.x$') %>% str_remove('^granges.x.')) %>%
+			# Preserve original column order
+			select(any_of(colnames(as_tibble(gr_in))), 
+						 reference_overlap, reference_coverage, reference_caller
+			) %>%
 			as_granges()
 
 		# `gr` only has (filtered) overlaps, need to rebuild the full callset if matching ref calls were found
 		# Get Original regions not in the merged call set by ID
 		non.ovs <- gr_in %>% filter(ID %!in% gr$ID)
 		# mutate fails on empty GRanges object
-		if (length(non.ovs) > 0) { non.ovs <- non.ovs %>% mutate(reference_overlap = FALSE) }
+		if (length(non.ovs) > 0) { non.ovs <- non.ovs %>% 
+			mutate(reference_overlap = FALSE,
+			       reference_coverage = NA_real_,
+				   reference_caller = NA_character_
+			)
+		}
 
 		gr_out <- bind_ranges(
 			# Calls with matching reference
@@ -45,11 +54,13 @@ annotate_reference_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.wi
 
 	} else {
 		gr_out <- gr_in %>%
+			as_tibble() %>%
 			mutate(reference_overlap = FALSE,
-				   reference_coverage = list(NA),
-				   reference_caller = list(NA))
+				   reference_coverage = rep(NA_real_, length(gr_in)) %>% as.list(),
+				   reference_caller = rep(NA_character_, length(gr_in)) %>% as.list()) %>%
+			as_granges()
 	}
-
+	
 	gr_out
 
 }

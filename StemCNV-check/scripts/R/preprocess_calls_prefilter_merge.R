@@ -1,7 +1,9 @@
 merge_calls <- function(df.or.GR, merge.distance) {
 	message('Merging nearby raw calls')
 	if (is.data.frame(df.or.GR)) {
-		df.or.GR <- as_granges(df.or.GR, seqnames = Chr)
+		df.or.GR <- df.or.GR %>%
+			dplyr::rename(seqnames = Chr) %>%
+			as_granges()
 	}
 	df.or.GR %>%
 		group_by(CNV_type, sample_id, CNV_caller) %>%
