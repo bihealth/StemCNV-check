@@ -90,12 +90,6 @@ read_CBS <- function(filename) {
 }
 
 
-## GADA / MAD
-
-read_GADA <- function(filename) {
-	read_tsv(filename, show_col_types = F)
-}
-
 ## preprocessed
 
 load_preprocessed_cnvs <- function(fname){
@@ -125,7 +119,7 @@ load_gtf_data <- function(config) {
 	if (exclude_regexes != ''){
 		gr_genes <- filter(gr_genes, !str_detect(gene_type, exclude_regexes))
 	}
-	if (typeof(gene_type_whitelist) == 'list' & length(gene_type_whitelist) > 0){
+	if (is.character(gene_type_whitelist) & length(gene_type_whitelist) > 0){
 		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
 	}
 	gr_genes

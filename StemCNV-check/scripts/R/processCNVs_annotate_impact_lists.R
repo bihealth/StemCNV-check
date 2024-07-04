@@ -1,46 +1,75 @@
-tb_to_gr_by_position <- function(tb, gr_info, colname = 'position', format = 'position') {
+tb_to_gr_by_position <- function(tb, colname = 'position') {
 
-	if (format == 'position') {
-		no_match <- tb %>% filter(!str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+'))
-
-		gr <- tb %>%
-			filter(str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+')) %>%
-			mutate(
-				seqnames = str_remove(!!sym(colname),':.*'),
-				start = str_extract(!!sym(colname), '(?<=:)[0-9]+') %>% as.numeric(),
-				end = str_extract(!!sym(colname), '(?<=-)[0-9]+$') %>% as.numeric()
-			) %>% select(-!!sym(colname)) %>% as_granges()
-	}
-	else if (format == 'gband') {
-		no_match <- tb %>% filter(!str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
-		tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
-
-		filter_regex <- paste0('^(',
-			paste(str_replace(unlist(tb[, colname]), fixed('..'), '\\.'), collapse='|'),
-			')')
-		gr <- gr_info %>%
-			filter(str_detect(section_name, filter_regex)) %>%
-			mutate(section_name_match = str_extract(section_name, filter_regex)) %>%
-			group_by(section_name_match) %>%
-			reduce_ranges() %>%
-			as_tibble() %>%
-			left_join(tb, by = c('section_name_match' = colname)) %>%
-			dplyr::rename(hotspot = section_name_match) %>%
-			as_granges()
-	}
-	else {
-		stop('Unknown format for position data')
+	if(nrow(tb) == 0){
+		tb %>%
+			mutate(seqnames = character(),
+			       start = integer(),
+					end = integer()) %>%
+			as_granges() %>%
+			return()
 	}
 
+	no_match <- tb %>% filter(!str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+'))
 	if (nrow(no_match) > 0) {
-		warning(paste('Could not convert the following positions:', paste(no_match[, colname], collapse = ', ')))
+		stop(paste('The following positions can not be converted:', paste(no_match[, colname], collapse = ', ')))
 	}
+
+	gr <- tb %>%
+		filter(str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+')) %>%
+		mutate(
+			seqnames = str_remove(!!sym(colname),':.*'),
+			start = str_extract(!!sym(colname), '(?<=:)[0-9]+') %>% as.numeric(),
+			end = str_extract(!!sym(colname), '(?<=-)[0-9]+$') %>% as.numeric()
+		) %>% as_granges()
 
 	return(gr)
 }
 
+tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
+
+	if(nrow(tb) == 0){
+		return(tb %>%
+			mutate(seqnames = character(),
+			       start = integer(),
+					end = integer()) %>%
+			as_granges()
+			)
+	}
+
+	no_match <- tb %>% filter(!str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+')) %>%
+		pull(!!sym(colname))
+	if (length(no_match) > 0) {
+		stop(paste('The following band_names can not be converted:', paste(no_match, collapse = ', ')))
+	}
+
+	tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
+	filter_regex <- paste0('^(',
+		paste(str_replace(unlist(tb[, colname]), fixed('..'), '\\.'), collapse='|'),
+		')')
+
+	gr.tb <- gr_info %>%
+		filter(str_detect(section_name, filter_regex)) %>%
+		mutate(!!colname := str_extract(section_name, filter_regex)) %>%
+		group_by(!!sym(colname)) %>%
+		reduce_ranges() %>%
+		as_tibble()
+
+
+	not_matched <- tb[colname][!tb[colname] %in% gr.tb[colname]]
+	if (length(not_matched)) {
+		stop(paste('The following band_names could not be identified in the reference data:', paste(not_matched, collapse = ', ')))
+	}
+
+	left_join(gr.tb, tb, by = colname) %>%
+		as_granges()
+}
+
 # Hotspot list based annotation
 parse_hotspot_table <- function(tb, gr_genes, gr_info) {
+
+	if (any(tb$mapping %!in% c('gene_name', 'position', 'gband'))) {
+		stop('Invalid mapping types in hotspot table')
+	}
 
 	sub_tb_name <- tb %>%
 		filter(mapping == 'gene_name')
@@ -67,24 +96,24 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 			dplyr::rename(hotspot = gene_name) %>%
 			left_join(sub_tb_name) %>%
 			as_granges()
-		message('parsed gene names')
+		#message('parsed gene names')
 	} else {
 		gr_name <- empty_gr
 	}
 
 	if (nrow(sub_tb_pos) > 0) {
-		gr_pos <- tb_to_gr_by_position(sub_tb_pos, gr_info, 'hotspot', 'position')
-		message('parsed gene positions')
+		gr_pos <- tb_to_gr_by_position(sub_tb_pos, 'hotspot')
+		#message('parsed gene positions')
 	} else {
 		gr_pos <- empty_gr
 	}
 
 	if (nrow(sub_tb_gband) > 0) {
-		gr_gband <- tb_to_gr_by_position(sub_tb_gband, gr_info, 'hotspot', 'gband')
+		gr_gband <- tb_to_gr_by_gband(sub_tb_gband, gr_info, 'hotspot')
 	} else {
 		gr_gband <- empty_gr
 	}
-	bind_ranges(gr_name, gr_pos, gr_gband)
+	bind_ranges(empty_gr, gr_name, gr_pos, gr_gband)
 }
 
 annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
@@ -97,17 +126,17 @@ annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
 		ov_hits <- ov %>%
 			mutate(type_check = str_detect(CNV_type, str_replace(call_type, '^any$', '.*'))) %>%
 			filter(type_check) %>%
-			reduce_ranges(hits = paste(unique(hotspot),collapse = ','))
+			reduce_ranges(hits = paste(unique(sort(hotspot)),collapse = ','))
 		gr[ov_hits$query,]@elementMetadata[[paste0(list_name, '_hits')]] <- ov_hits$hits
 	}
 
 	return(gr)
 }
 
-annotate_roi <- function(gr, sample_id, sampletable) {
+annotate_roi <- function(gr, sample_id, sampletable, gr_genes, gr_info) {
 
 	if (! 'Regions_of_Interest' %in% colnames(sampletable)) {
-		return(gr)
+		return(gr %>% mutate(ROI_hits = NA_character_))
 	}
 
 	message('Annotating calls with ROI')
@@ -115,11 +144,11 @@ annotate_roi <- function(gr, sample_id, sampletable) {
 	roi <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
 
 	if (is.na(roi) | is.null(roi) | roi == '') {
-		return(gr)
+		return(gr %>% mutate(ROI_hits = NA_character_))
 	}
 
 	roi_gr <- roi %>% str_split(';') %>% unlist() %>%
-		as_tibble() %>% rename(roi = value) %>%
+		as_tibble() %>% dplyr::rename(roi = value) %>%
 		mutate(hotspot = str_remove(roi, '^.*\\|'),
 			   mapping = case_when(
 				   str_detect(roi, '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+') ~ 'position',

@@ -3,9 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-
 source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/preprocess_annotate_reference_overlap.R'))
+source(test_path('../../StemCNV-check/scripts/R/processCNVs_annotate_reference_overlap.R'))
 
 # Example calls for testing
 
@@ -102,23 +101,3 @@ test_that("Annotate CNVs with empty input", {
                                        min.reciprocal.coverage.with.ref) %>%
     expect_equal(expexted_gr)        
 } )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#TODO:
-# add test for empty case callset
-# add test for empty reference callset

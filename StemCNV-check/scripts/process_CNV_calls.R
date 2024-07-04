@@ -37,12 +37,12 @@ get_script_dir <- function() {
 	}
 }
 source(file.path(get_script_dir(), 'R/R_io_functions.R'))
-source(file.path(get_script_dir(), 'R/preprocess_calls_prefilter_merge.R'))
-source(file.path(get_script_dir(), 'R/preprocess_combine_CNV_callers.R'))
-source(file.path(get_script_dir(), 'R/preprocess_annotate_reference_overlap.R'))
-source(file.path(get_script_dir(), 'R/preprocess_annotate_impact_lists.R'))
-source(file.path(get_script_dir(), 'R/preprocess_annotate_array_features.R'))
-source(file.path(get_script_dir(), 'R/preprocess_annotate_cnv-check-score.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_calls_prefilter_merge.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_combine_CNV_callers.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_annotate_reference_overlap.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_annotate_impact_lists.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_annotate_array_features.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_annotate_cnv-check-score.R'))
 
 ##################
 # Variable setup #
@@ -93,14 +93,22 @@ use_chr <- get_chromosome_set()
 gr_genes <- load_gtf_data(config)
 gr_info  <- load_genomeInfo(config)
 
-high_impact_gr <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
-	str_replace('__inbuilt__', config$snakedir) %>%
-    read_tsv() %>%
-	parse_hotspot_table(gr_genes, gr_info)
-highlight_gr <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
-	str_replace('__inbuilt__', config$snakedir) %>%
-    read_tsv() %>%
-	parse_hotspot_table(gr_genes, gr_info)
+HI_file <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
+	str_replace('__inbuilt__', config$snakedir)
+if (!is.null(HI_file)) {
+	high_impact_gr <- read_tsv(HI_file) %>%
+		parse_hotspot_table(gr_genes, gr_info)
+} else {
+	high_impact_gr <- GRanges()
+}
+HL_file <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
+	str_replace('__inbuilt__', config$snakedir)
+if (!is.null(HL_file)) {
+	highlight_gr <- read_tsv(HL_file) %>%
+		parse_hotspot_table(gr_genes, gr_info)
+} else {
+	highlight_gr <- GRanges()
+}
 
 ########################
 # Function definitions #
@@ -208,7 +216,7 @@ if (!is.na(ref_id)) {
 cnvs <- cnvs %>%
 	annotate_impact_lists(high_impact_gr, 'high_impact') %>%
 	annotate_impact_lists(highlight_gr, 'highlight') %>%
-	annotate_roi(sample_id, sampletable) %>%
+	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
 	annotate_gaps(config$static_data$array_gaps) %>%
 	annotate_high_density(config$static_data$array_density) %>%
 	finalise_gr_to_tb() %>%

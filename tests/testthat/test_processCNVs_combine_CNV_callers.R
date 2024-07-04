@@ -5,7 +5,7 @@ library(plyranges)
 
 
 source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/preprocess_combine_CNV_callers.R'))
+source(test_path('../../StemCNV-check/scripts/R/processCNVs_combine_CNV_callers.R'))
 
 # Example calls (toolA and toolB):
 
