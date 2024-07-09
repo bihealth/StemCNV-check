@@ -106,7 +106,9 @@ settings:
       # Values to determine 'call_has_probe_gap' based on coverage percentage with gap areas (from array attribute
       # summary) and log2 number of unique probe positions. The two values represent slope and intercept of
       # slope * percent_gap_area + gap_intercept ~ log2(uniq_snp_positions), calls above that line "have gaps"
-      gap_area.uniq_probes.rel: [-12, 12.5]
+      # These defaults mean that calls with larger % gap area need fewer unique probes to be flagged as "having a gap"
+      # Specifically, calls with 33% gap need >=373 probes, 50% >=91 probes, 75% >= 12 probes, 85% >= 5 probes to be flagged
+      gap_area.uniq_probes.rel: [-12, 12.5] # slope, intercept
       min.perc.gap_area: 0.33
       ## HighDensity flagging of calls
       # Calls that have a probe density which is higher than the top {density.quantile.cutoff} [%] of the array windows

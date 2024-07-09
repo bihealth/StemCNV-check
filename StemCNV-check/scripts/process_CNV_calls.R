@@ -217,8 +217,8 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(high_impact_gr, 'high_impact') %>%
 	annotate_impact_lists(highlight_gr, 'highlight') %>%
 	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
-	annotate_gaps(config$static_data$array_gaps) %>%
-	annotate_high_density(config$static_data$array_density) %>%
+	annotate_gaps(config$static_data$array_gaps, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
+	annotate_high_density(config$static_data$array_density, density.quantile.cutoff) %>%
 	finalise_gr_to_tb() %>%
 	annotate_cnv.check.score()
 

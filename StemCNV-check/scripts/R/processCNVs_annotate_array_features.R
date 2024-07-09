@@ -15,22 +15,29 @@ get_accurate_snp_probe_count <- function(gr, unfiltered.snps.file) {
 
 }
 
-annotate_gaps <- function(gr, gapfile) {
+annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) {
 	message('Annotation calls with gaps')
 
 	gap_areas <- read_bed(gapfile) %>%
 		select(-name, -score) %>%
 		mutate(gap_size = width) %>%
 		filter(seqnames %in% get_chromosome_set())
-
-	# This assumes that calls _fully_ overlap gaps
-	# which should be given since gaps are defined larte intre-probe distances
-	gr$percent_gap_coverage <- join_overlap_left(gr, gap_areas) %>%
+	
+	gap_ovs <- join_overlap_left(gr, gap_areas) %>%
 		group_by(ID) %>%
 		reduce_ranges(gap_size_sum = sum(gap_size)) %>%
-		mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width)) %>%
-		as_tibble() %>%
-		pull(perc_gap)
+		mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width)) 
+	
+	# Ensure that calls _fully_ overlap gaps
+	# This should be given since gaps are defined as / derived from large inter-probe distances
+	if (find_overlaps_within(gap_areas, gap_ovs) %>% length() != length(gap_ovs)) {
+		stop(str_glue('Gaps defined by "{gapfile}" are not contained within CNV calls!'))
+	}
+	if (find_overlaps_within(gr, gap_areas) %>% length() > 0) {
+		stop(str_glue('Gaps defined by "{gapfile}" fully overlap some CNV calls!'))
+	}
+	
+	gr$percent_gap_coverage <- gap_ovs$perc_gap
 
 	gap_slope <- gap_area.uniq_probes.rel[[1]]
 	gap_intercept <- gap_area.uniq_probes.rel[[2]]
@@ -45,7 +52,7 @@ annotate_gaps <- function(gr, gapfile) {
 	return(gr)
 }
 
-annotate_high_density <- function(gr, density_file) {
+annotate_high_density <- function(gr, density_file, density.quantile.cutoff) {
 	message('Annotation calls for high probe density')
 
 	array_density <- read_bed(density_file) %>%
@@ -54,17 +61,17 @@ annotate_high_density <- function(gr, density_file) {
 		filter(seqnames %in% get_chromosome_set()) %>%
 		filter(density > 0)
 
-	density_quantile_cutoff <- quantile(array_density$density, density.quantile.cutoff)
+	density_value_cutoff <- quantile(array_density$density, density.quantile.cutoff)
 
 	call_densities <- join_overlap_left(gr, array_density) %>%
 		group_by(ID) %>%
-		# partially overlap density windows might overproportionally affect calls this way
-		# This only matters for very small calls thogub (and density in neighbouring windows will be similarish)
+		# partially overlapping density windows might over-proportionally affect calls (since we don't the density for % overlapped)
+		# However, this only matters for very small calls (and density in neighbouring windows will likely be similar/correlated anyway)
 		reduce_ranges(density = mean(density)) %>%
 		as_tibble() %>%
 		pull(density)
 
-	gr$high_probe_density <- call_densities > density_quantile_cutoff
+	gr$high_probe_density <- call_densities > density_value_cutoff
 
 	gr
 }
