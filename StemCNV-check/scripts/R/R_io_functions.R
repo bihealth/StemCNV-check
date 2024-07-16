@@ -5,7 +5,7 @@ get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 	# Use given config if possible
 	if(!is.null(use.config)) {
 		use_chromosomes <- use.config$settings$chromosomes
-	# else check outer scope for config object
+	# Else check outer scope for config object, note: some dangers to testing
 	} else if(exists('config')) {
 		use_chromosomes <- config$settings$chromosomes
 	} else {
@@ -150,7 +150,7 @@ expected_final_tb <- tibble(
 	length = integer(),
 	CNV_type = character(),
 	ID = character(),
-	Impact_Score = double(),
+	`Check-Score` = double(),
 	reference_overlap = logical(),
 	CNV_caller = list(),
 	n_premerged_calls = list(),

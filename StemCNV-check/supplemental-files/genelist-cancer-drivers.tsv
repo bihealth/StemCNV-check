@@ -1,4 +1,4 @@
-list_name	hotspot	mapping	call_type	impact_score	source	comment
+list_name	hotspot	mapping	call_type	check_score	source	comment
 CancerDrivers	ABCC4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
 CancerDrivers	ABL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
 CancerDrivers	ABL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	

@@ -81,9 +81,10 @@ density.quantile.cutoff <- config$settings$CNV_processing$call_processing$densit
 
 
 #Scoring
-score_thresholds <- config$settings$CNV_processing$scoring_thresholds
-impact_scores <- config$settings$CNV_processing$Impact_scoring
-precision_extimates<- config$settings$CNV_processing$Precision_estimates
+check_scores <- config$settings$CNV_processing$Check_score_values
+#Precision esitmation
+size_categories <- config$settings$CNV_processing$Precision$size_categories
+precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 
 valid_name <- config$wildcard_constraints$sample_id
 if (!str_detect(sample_id, valid_name)) {stop('Sample id does not match supplied or default wildcard constraints!')}
@@ -109,33 +110,6 @@ if (!is.null(HL_file)) {
 } else {
 	highlight_gr <- GRanges()
 }
-
-########################
-# Function definitions #
-########################
-
-
-# Sanitize output & add gene overlap annotation
-finalise_gr_to_tb <- function(gr) {
-
-	gr$n_genes <- count_overlaps(gr, gr_genes)
-	gr$overlapping_genes <- NA_character_
-	ov_genes <- group_by_overlaps(gr, gr_genes) %>% reduce_ranges(genes = paste(gene_name, collapse = ','))
-	gr[ov_genes$query,]$overlapping_genes <- ov_genes$genes
-
-	tb <- as_tibble(gr) %>%
-		rowwise() %>%
-		mutate(across(any_of(list_cols), ~ list(.))) %>%
-		bind_rows(expected_final_tb) %>%
-		rowwise() %>%
-		mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
-		dplyr::select(one_of(colnames(expected_final_tb)))
-
-	return(tb)
-}
-
-
-
 
 ############
 # Run code #
@@ -219,8 +193,9 @@ cnvs <- cnvs %>%
 	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
 	annotate_gaps(config$static_data$array_gaps, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
 	annotate_high_density(config$static_data$array_density, density.quantile.cutoff) %>%
-	finalise_gr_to_tb() %>%
-	annotate_cnv.check.score()
+	finalise_gr_to_tb(gr_genes) %>%
+	annotate_cnv.check.score(high_impact_gr, highlight_gr, check_scores) %>%
+	annotate_precision.estimates(size_categories, precision_estimates)
 
 		
 outname.tsv <- file.path(datapath, sample_id, paste0(sample_id, '.combined-cnv-calls.tsv'))

@@ -97,6 +97,8 @@ test_that('tb_to_gr_by_gband', {
 
 test_that('parse_hotspot_table', {
   tb <- read_tsv(test_path('../data/minimal-hotspots.tsv'))
+  gr_info <- load_genomeInfo(config)
+  gr_genes <- load_gtf_data(config)
 
   expected_gr <- tibble(
     seqnames = 'chr1',
@@ -107,7 +109,7 @@ test_that('parse_hotspot_table', {
     hotspot = c('DDX11L1', 'dummyC', 'chr1:40000-50000', '1p36', '1p35.2', '1q21'),
     mapping = c('gene_name', 'gene_name', 'position', 'gband', 'gband', 'gband'),
     call_type = c('any', 'gain', 'any', 'loss', 'any', 'gain'),
-    impact_score = c(NA, 15, NA, NA, 12, NA),
+    check_score = c(NA, 15, NA, NA, 12, NA),
     source = c('dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy\\n dummy'),
     comment = NA
   ) %>% as_granges()

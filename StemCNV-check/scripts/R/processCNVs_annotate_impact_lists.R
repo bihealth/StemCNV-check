@@ -83,7 +83,7 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 						hotspot = character(),
 						mapping = character(),
 						call_type = character(),
-						impact_score = numeric(),
+						check_score = numeric(),
 						source = character(),
 						comment = character()
 						)

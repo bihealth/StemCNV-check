@@ -1,4 +1,4 @@
-list_name	hotspot	mapping	call_type	impact_score	source	comment
+list_name	hotspot	mapping	call_type	check_score	source	comment
 StemCell-Hotspots	BCOR	gene_name	any		StemCNV-check curation; doi.org/10.1038/s41588-022-01147-3	
 StemCell-Hotspots	OGG1	gene_name	any		StemCNV-check curation; doi.org/10.1038/s41588-022-01147-3	
 StemCell-Hotspots	DNMT3A	gene_name	any		StemCNV-check curation; doi.org/10.1038/s41588-022-01147-3	

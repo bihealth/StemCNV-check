@@ -1,4 +1,4 @@
-list_name	hotspot	mapping	call_type	impact_score	source	comment
+list_name	hotspot	mapping	call_type	check_score	source	comment
 CancerHotspots	ACVR1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
 CancerHotspots	AKT1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
 CancerHotspots	AKT3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	

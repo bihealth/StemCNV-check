@@ -41,14 +41,14 @@ summary_table <- function(Combined.metrics, Combined.colors, sample_headers) {
     #TODO: add actual tresholds into the help text
     if (!str_detect(not_enabled_label, 'reportable')) {
       summary_row_help <- c(summary_row_help,
-             "Reportable Calls CNV" = 'The number of CNV calls with an Impact Score above the reportable threshold.',
-             "Reportable Calls LOH" = 'The number of LOH calls with an Impact Score above the reportable threshold.'
+             "Reportable Calls CNV" = 'The number of CNV calls with a Check-Score above the reportable threshold.',
+             "Reportable Calls LOH" = 'The number of LOH calls with a Check-Score above the reportable threshold.'
       )
     }
     if (!str_detect(not_enabled_label, 'critical')) {
       summary_row_help <- c(summary_row_help,
-             "Critical Calls CNV" = 'The number of CNV calls with an Impact Score above the critical threshold.',
-             "Critical Calls LOH" = 'The number of LOH calls with an Impact Score above the critical threshold.'
+             "Critical Calls CNV" = 'The number of CNV calls with a Check-Score above the critical threshold.',
+             "Critical Calls LOH" = 'The number of LOH calls with a Check-Score above the critical threshold.'
       )
     }
     datatable(Combined.metrics,
@@ -106,7 +106,7 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, lis
               hotspot != "" & !is.na(list_name) & do_format,
               paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
                      str_glue('{listname} list name: {list_name}&#013;'), #\\n
-                     ifelse(!is.na(impact_score), str_glue('custom impact_score: {impact_score}&#013;'), ''),
+                     ifelse(!is.na(check_score), str_glue('custom Check-Score: {check_score}&#013;'), ''),
                      str_glue('Annotation source:&#013;{source}'),
                      str_glue('">{hotspot}</span>')),
              hotspot
@@ -147,7 +147,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
            highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
     ) %>%
     select(sample_id, ID, i, #invis 0-2
-           Plot, Call_Label, Impact_Score,
+           Plot, Call_Label, `Check-Score`,
            CNV_type, Chr, Size,
            Start, End, #invis 9-10
            CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
@@ -162,10 +162,10 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
     column_help_text <- c(
             'Sample_ID from the input "sample_table"',
             'Internal ID for the CNV call',
-            'Number of the CNV call, sorted by descending Impact Score',
+            'Number of the CNV call, sorted by descending Check-Score',
             'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch to the active plot below, without hightlighting the correct tab. For other CNVs it will open the plot in a new browser tab.',
             'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
-            'Impact score of the CNV call, calculated based on size, overlap high impact or highlight list, or other genes',
+            'Check-Score of the CNV call, calculated based on size, overlap high impact or highlight list, or other genes',
             'Type of CNV call (gain, loss, LOH)',
             'Chromosome of the CNV call',
             'Size of the CNV call (in base pairs)',
@@ -213,10 +213,10 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             )
           ) %>%
       formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '..') %>%
-      formatRound(c('Impact Score'), digits = 2, mark= '..')
+      formatRound(c('Check-Score'), digits = 2, mark= '..')
     return(dt)
   } else {
-    tb <- tb %>% select(CNV_type, Impact_Score,
+    tb <- tb %>% select(CNV_type, `Check-Score`,
                         Chr, Start, End, Size, CNV_caller,
                         high_impact_hits, highlight_hits,
                         Precision_Estimate, probe_coverage_gap, high_probe_density

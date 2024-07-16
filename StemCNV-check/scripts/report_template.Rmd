@@ -342,8 +342,8 @@ cnv_calls <- lapply(file.path(datapath, use_ids, paste0(use_ids, '.combined-cnv-
   mutate(
     Call_Label = case_when(
             reference_overlap            				              ~ 'Reference genotype',
-            Impact_Score >= report.setting('impact.score.critical')   ~ 'Critical',
-            Impact_Score >= report.setting('impact.score.reportable') ~ 'Reportable',
+            `Check-Score` >= report.setting('impact.score.critical')   ~ 'Critical',
+            `Check-Score` >= report.setting('impact.score.reportable') ~ 'Reportable',
             TRUE                         				              ~ ''
     )
   )
@@ -602,7 +602,7 @@ cnv_calls <- cnv_calls %>%
   mutate(CNV_type = factor(CNV_type),
          reference_overlap = factor(reference_overlap),
   ) %>%
-  arrange(desc(Impact_Score), desc(Size), Chr, Start)
+  arrange(desc(`Check-Score`), desc(Size), Chr, Start)
 
 denovo_calls.table <- cnv_calls %>%
   filter(caller_merging_state != 'pre-overlap'  &
@@ -676,7 +676,7 @@ if (any(!is.na(regions)) & length(regions)>0) {
       mutate(Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
              i = row_number(),
              region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
-             Impact_Score = 0,
+             `Check-Score` = 0,
              ID = region_name,
              ) %>%
       bind_rows(expected_final_tb)

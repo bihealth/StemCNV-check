@@ -123,7 +123,7 @@ settings:
       include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
       # These genelists are used to mark genes with high impact
       # Gene lists files are tabular (tsv) and need the following columns:
-      # list_name, hotspot, mapping, call_type, impact_score, source, comment
+      # list_name, hotspot, mapping, call_type, check_score, source, comment
       # list_name, hotspot, mapping, call_type, need to be filled out
       # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
       # call_type can be 'any', 'gain', 'loss' or 'LOH'
@@ -131,8 +131,8 @@ settings:
       highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 
-    Impact_scoring:
-      # Scoring for Impact of CNV and LOH calls
+    Check_score_values:
+      # Scoring for CNV and LOH calls
       # Base scores are used once for each CNV overlapping a gene/region of the specific type
       roi_hit_base:    50
       highimpact_base: 20
@@ -144,41 +144,42 @@ settings:
       per_gene_any:       0.2
 
 ##!advanced
-    scoring_thresholds:
-      # Lower bound size thresholds / categories for estimating CNV call precision
-      extreme.loh:    5000000
-      extreme.cnv:    2000000
-      very.large.loh: 2500000
-      very.large.cnv:  400000
-      large.loh:       100000
-      large.cnv:       100000
-      medium.loh:       10000
-      medium.cnv:       10000
-
-    Precision_estimates:
-      # Estimated the reliability (accuracy) of CNV calls
-      # These are optimised for 'extended' filter settings
-      # use commented values for 'full' filter settings
-      multiple_Callers:
-        extreme:    1.0
-        very_large: 1.0
-        large:      0.8 # full: 1.0
-        medium:     0.8
-        small:      0.2 # full: 0.5
-      PennCNV:
-        extreme:    1.0
-        very_large: 1.0
-        large:      0.8 # full: 1.0
-        medium:     0.6
-        small:      0.2 # full: 0.5
-      CBS:
-        extreme:    0.6  # full: 0.7
-        very_large: 0.6  # full: 0.7
-        large:      0.4
-        medium:     0.15
-        small:      0.1  # full: 0.2
-      Call_has_Gap:   -0.1
-      HighSNPDensity: -0.1
+    Precision:
+      size_categories:
+        # Lower bound size thresholds / categories for estimating CNV call precision
+        extreme.loh:    5000000
+        extreme.cnv:    2000000
+        very.large.loh: 2500000
+        very.large.cnv:  400000
+        large.loh:       100000
+        large.cnv:       100000
+        medium.loh:       10000
+        medium.cnv:       10000
+   
+      estimate_values:
+        # Estimated the reliability (accuracy) of CNV calls
+        # These are optimised for 'extended' filter settings
+        # use commented values for 'full' filter settings
+        multiple_Callers:
+          extreme:    1.0
+          very_large: 1.0
+          large:      0.8 # full: 1.0
+          medium:     0.8
+          small:      0.2 # full: 0.5
+        PennCNV:
+          extreme:    1.0
+          very_large: 1.0
+          large:      0.8 # full: 1.0
+          medium:     0.6
+          small:      0.2 # full: 0.5
+        CBS:
+          extreme:    0.6  # full: 0.7
+          very_large: 0.6  # full: 0.7
+          large:      0.4
+          medium:     0.15
+          small:      0.1  # full: 0.2
+        Call_has_Gap:   -0.1
+        HighSNPDensity: -0.1
 
   make_cnv_vcf:
     filter-settings: '__default__'
@@ -222,7 +223,7 @@ reports:
 
   #These are the default settings from which all reports inherit
   __default__:
-    # Impact_Score cutoffs for labelling calls as 'Critical' or 'Reportable'
+    # Check-Score cutoffs for labelling calls as 'Critical' or 'Reportable'
     impact.score.critical:   NA
     impact.score.reportable: NA
 

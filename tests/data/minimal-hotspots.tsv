@@ -1,4 +1,4 @@
-list_name	hotspot	mapping	call_type	impact_score	source	comment
+list_name	hotspot	mapping	call_type	check_score	source	comment
 test-list	DDX11L1	gene_name	any		dummy	
 test-list	dummyC	gene_name	gain	15	dummy	
 test-list	chr1:40000-50000	position	any		dummy	
