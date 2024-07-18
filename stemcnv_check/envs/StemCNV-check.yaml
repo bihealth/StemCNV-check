@@ -17,6 +17,3 @@ dependencies:
   - pip:
     - loguru
     - ruamel.yaml
-  # # Needed to build local PennCNV
-  # - perl = 5.32 #seems to be only version under which PennCNV builds properly
-  # - gcc # in case not available, i.e. on some WSL distros

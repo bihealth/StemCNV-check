@@ -4,13 +4,16 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  # Base
   - r-base >=4.3 #might need higher to be compatible with latest bioconductor
   - r-tidyverse
   - r-argparse
   - r-yaml
   - r-sessioninfo
-  - r-devtools
   - r-vcfr
+  #Dev
+  - r-devtools
+  - r-testthat
   # CBS
   - bioconductor-dnacopy = 1.76.0 # previous version 1.68.0 for r4.1; 1.76 has bugfix
   ## Postprocessing ##
@@ -25,8 +28,3 @@ dependencies:
   - r-kableextra
   - r-tinytex # Not all systems have latex
   - r-patchwork
-  ## Considered / Not implemented yet ##
-  #- r-plotly
-  #- r-circlize # new/untested
-  #- r-biocircos # requires r4.2? new/untested
-  #- r-rcircos # new/untested

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import importlib.resources
 import os
 from pathlib import Path
 import tempfile
 from ruamel.yaml import YAML
-from scripts.py_helpers import *
-from scripts.py_exceptions import *
+from .. import STEM_CNV_CHECK
+from ..helpers import read_sample_table, config_extract, collect_SNP_cluster_ids
+from ..exceptions import *
 # Configuration ================================================================
 
 
@@ -28,7 +30,7 @@ else:
 
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
-SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.path.dirname(os.path.realpath(__file__)) #Defined by wrapper
+SNAKEDIR = importlib.resources.files(STEM_CNV_CHECK)
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
 DATAPATH = config['data_path'] if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
 LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
@@ -76,7 +78,7 @@ def get_tool_resource(tool ,resource):
 
 
 # singularity_args="-B {}:/outside/data,{}:/outside/rawdata,{}:/outside/logs,{}:/outside/snakedir".format(
-# 	config['data_path'], config['raw_data_path'], config['log_path'], SNAKEDIR),
+#     config['data_path'], config['raw_data_path'], config['log_path'], SNAKEDIR),
 
 def fix_container_path(path_in, bound_to):
   path_in = Path(path_in)
@@ -237,7 +239,7 @@ rule relink_gencall:
   output:
     os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   params:
-    gtc_link_path = lambda wildcards: os.path.join('..', 'gtc', get_chip(wildcards, outtype='file'))
+    gtc_link_path = lambda wildcards: os.path.join('../..','gtc', get_chip(wildcards, outtype='file'))
   shell:
     'ln -s "{params.gtc_link_path}" "{output}"'
   
@@ -262,7 +264,7 @@ rule run_gtc2vcf_tsv:
     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.out.log")
   conda:
-    "envs/gtc2vcf.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
 
@@ -287,7 +289,7 @@ rule run_gtc2vcf_vcf:
     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
   conda:
-    "envs/gtc2vcf.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
   shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_filter_tsv:
@@ -304,7 +306,7 @@ rule run_filter_tsv:
     err=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
     out=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   shell:
     'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} {CONFIGFILE} > {log.out} 2> {log.err}'
 
@@ -390,7 +392,7 @@ rule run_CBS:
     err=os.path.join(LOGPATH, "CBS", "{sample_id}", "error.log"),
     out=os.path.join(LOGPATH, "CBS", "{sample_id}", "out.log")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs", "general-R.yaml")
   shell:
     "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
@@ -451,7 +453,7 @@ rule run_process_CNV_calls:
     err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
     out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   shell:
     "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
@@ -492,7 +494,7 @@ rule check_latex_installation:
   output:
     os.path.join(LOGPATH, "report", "_latex_installation_check")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   shell:
     """
 Rscript - << 'EOF'
@@ -529,7 +531,7 @@ rule knit_report:
     err=os.path.join(LOGPATH, "report", "{sample_id}", "{report}-{ext}.error.log"),
     out=os.path.join(LOGPATH, "report", "{sample_id}", "{report}-{ext}.out.log")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   shell:
     "Rscript {SNAKEDIR}/scripts/knit_report.R {wildcards.sample_id} {wildcards.report} {CONFIGFILE} > {log.out} 2> {log.err}"
 
@@ -552,6 +554,6 @@ rule run_make_cnv_vcf:
     err=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","error.log"),
     out=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","out.log")
   conda:
-    "envs/general-R.yaml"
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   shell:
     "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"

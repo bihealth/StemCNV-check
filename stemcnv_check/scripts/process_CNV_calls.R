@@ -42,7 +42,7 @@ source(file.path(get_script_dir(), 'R/processCNVs_combine_CNV_callers.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_annotate_reference_overlap.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_annotate_impact_lists.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_annotate_array_features.R'))
-source(file.path(get_script_dir(), 'R/processCNVs_annotate_cnv-check-score.R'))
+source(file.path(get_script_dir(), 'R/processCNVs_annotate_check-score.R'))
 
 ##################
 # Variable setup #

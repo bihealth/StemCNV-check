@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-import yaml
-from scripts.py_helpers import *
-from scripts.py_exceptions import *
+from ..exceptions import *
+from .. import STEM_CNV_CHECK
 
 SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.path.dirname(os.path.realpath(__file__)) #Defined by wrapper
 DOWNLOAD_DIR = config['TMPDIR'] if 'TMPDIR' in config else tempfile.mkdtemp()
@@ -14,21 +14,21 @@ GENOME = config['genome']
 # ================================================================
 
 def fix_container_path(path_in, bound_to):
-  path_in = Path(path_in)
+    path_in = Path(path_in)
 
-  if bound_to == 'static':
-    rel_path = path_in.name
-  else:
-    local_target = {
-      #'data': Path(DATAPATH),
-      #'rawdata': Path(IDAT_INPUT),
-      #'logs': Path(LOGPATH),
-      'snakedir': Path(SNAKEDIR),
-      'tmp': Path(DOWNLOAD_DIR)
-    }[bound_to].absolute()
-    rel_path = path_in.absolute().relative_to(local_target)
+    if bound_to == 'static':
+        rel_path = path_in.name
+    else:
+        local_target = {
+            # 'data': Path(DATAPATH),
+            # 'rawdata': Path(IDAT_INPUT),
+            # 'logs': Path(LOGPATH),
+            'snakedir': Path(SNAKEDIR),
+            'tmp': Path(DOWNLOAD_DIR)
+        }[bound_to].absolute()
+        rel_path = path_in.absolute().relative_to(local_target)
 
-  return Path('/outside/') / bound_to / rel_path
+    return Path('/outside/') / bound_to / rel_path
 
 
 rule all:
@@ -46,7 +46,7 @@ rule create_pfb_from_vcf:
     input: config['vcf_input_file']
     output: config['penncnv_pfb_file']
     conda:
-        "envs/general-R.yaml"
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
     #shell: "Rscript {SNAKEDIR}/scripts/make_PFB_from_vcf.R {input} {output}"
     shell: """
 Rscript - << 'EOF'
@@ -118,7 +118,7 @@ rule create_array_info_file:
         density_windows = config['density_windows'],
         genome = config['genome']
     conda:
-        "envs/general-R.yaml"
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
     shell:
         """
 Rscript - << 'EOF'
@@ -214,7 +214,7 @@ rule create_genome_info_file:
         #Note: the chromAlias.txt file might be useful if people use strange chr-/seqnames
     output: config['genomeInfo_file']
     conda:
-        "envs/general-R.yaml"
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
     shell:
         """
 Rscript - << 'EOF'
