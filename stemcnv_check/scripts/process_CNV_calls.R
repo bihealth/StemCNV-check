@@ -20,6 +20,8 @@ suppressMessages(library(yaml))
 `%!in%` <- Negate(`%in%`)
 options(dplyr.summarise.inform = FALSE)
 
+config <- read_yaml(args$configfile)
+
 get_script_dir <- function() {
 	match <- commandArgs(trailingOnly = FALSE) %>%
 		str_subset('--file=') %>%
@@ -33,7 +35,7 @@ get_script_dir <- function() {
         return(normalizePath(check) %>% dirname())
 	} else {
 		# likely testing in IDE
-		return ('StemCNV-check/scripts')
+		return ('stemcnv_check/scripts')
 	}
 }
 source(file.path(get_script_dir(), 'R/R_io_functions.R'))
@@ -50,7 +52,6 @@ source(file.path(get_script_dir(), 'R/processCNVs_annotate_check-score.R'))
 
 datapath <- args$data_path
 sample_id <- args$sample_id
-config <- read_yaml(args$configfile)
 sampletable <- read_tsv(args$sampletablefile, col_types = 'cccccc', comment = '#')
 
 sex <- get_sample_info(sample_id, 'sex', sampletable)
@@ -97,7 +98,7 @@ gr_info  <- load_genomeInfo(config)
 HI_file <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
 	str_replace('__inbuilt__', config$snakedir)
 if (!is.null(HI_file)) {
-	high_impact_gr <- read_tsv(HI_file) %>%
+	high_impact_gr <- read_tsv(HI_file, show_col_types = FALSE) %>%
 		parse_hotspot_table(gr_genes, gr_info)
 } else {
 	high_impact_gr <- GRanges()
@@ -105,7 +106,7 @@ if (!is.null(HI_file)) {
 HL_file <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
 	str_replace('__inbuilt__', config$snakedir)
 if (!is.null(HL_file)) {
-	highlight_gr <- read_tsv(HL_file) %>%
+	highlight_gr <- read_tsv(HL_file, show_col_types = FALSE) %>%
 		parse_hotspot_table(gr_genes, gr_info)
 } else {
 	highlight_gr <- GRanges()

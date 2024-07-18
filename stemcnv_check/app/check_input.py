@@ -96,7 +96,7 @@ def check_config(args, required_only=False):
             continue
         if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'genomeInfo_file', 'array_density_file', 'array_gaps_file',
                    'array_gaps_file', 'genome_fasta_file', 'genome_gtf_file'):
-            infostr = "\nYou can create it by running `StemCNV-check -a make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
+            infostr = "\nYou can create it by running `StemCNV-check make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
         else:
             infostr = ""
         if not req in config['static_data'] or not config['static_data'][req]:

@@ -4,13 +4,14 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from ruamel.yaml import YAML
-from .. import STEM_CNV_CHECK
-from ..helpers import read_sample_table, config_extract, collect_SNP_cluster_ids
-from ..exceptions import *
+import ruamel.yaml as ruamel_yaml
+from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check.helpers import read_sample_table, config_extract, collect_SNP_cluster_ids
+from stemcnv_check.exceptions import *
+
+SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
+
 # Configuration ================================================================
-
-
 if not config:
   # This should not happen unless the snakefile is invoked directly from cmd-line
   # try to load a baseline config file
@@ -24,13 +25,14 @@ else:
   f, CONFIGFILE = tempfile.mkstemp(suffix = '.yaml', text=True)
   os.close(f)
   removetempconfig = True
-  yaml = YAML()
-  with open(CONFIGFILE, 'w') as yamlout:
-    yaml.dump(config, yamlout)
+
+yaml = ruamel_yaml.YAML(typ='safe')
+config['snakedir'] = SNAKEDIR
+with open(CONFIGFILE, 'w') as yamlout:
+  yaml.dump(config, yamlout)
 
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
-SNAKEDIR = importlib.resources.files(STEM_CNV_CHECK)
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
 DATAPATH = config['data_path'] if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
 LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
@@ -239,7 +241,7 @@ rule relink_gencall:
   output:
     os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   params:
-    gtc_link_path = lambda wildcards: os.path.join('../..','gtc', get_chip(wildcards, outtype='file'))
+    gtc_link_path = lambda wildcards: os.path.join('..','gtc', get_chip(wildcards, outtype='file'))
   shell:
     'ln -s "{params.gtc_link_path}" "{output}"'
   

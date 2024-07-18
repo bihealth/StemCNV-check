@@ -23,19 +23,21 @@ annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.r
 		mutate(gap_size = width) %>%
 		filter(seqnames %in% get_chromosome_set())
 	
+	# Sanity check: Are any CNV breakpoints in gap?
+	# This should never happen since CNVs & gaps are derived from probes
+	start_or_end_in_gap <- bind_ranges(
+		gr %>% anchor_start() %>% mutate(width = 1),
+		gr %>% anchor_end() %>% mutate(width = 1)
+	) %>% filter_by_overlaps(gap_areas)
+	if ( length(start_or_end_in_gap) > 0 ) {
+		call_ids <- start_or_end_in_gap$ID %>% unique() %>% paste(collapse = ', ')
+		stop(str_glue('CNV call endpoint(s) overlap with gap areas from "{gapfile}": {call_ids}'))
+	}
+	
 	gap_ovs <- join_overlap_left(gr, gap_areas) %>%
 		group_by(ID) %>%
 		reduce_ranges(gap_size_sum = sum(gap_size)) %>%
-		mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width)) 
-	
-	# Ensure that calls _fully_ overlap gaps
-	# This should be given since gaps are defined as / derived from large inter-probe distances
-	if (find_overlaps_within(gap_areas, gap_ovs) %>% length() != length(gap_ovs)) {
-		stop(str_glue('Gaps defined by "{gapfile}" are not contained within CNV calls!'))
-	}
-	if (find_overlaps_within(gr, gap_areas) %>% length() > 0) {
-		stop(str_glue('Gaps defined by "{gapfile}" fully overlap some CNV calls!'))
-	}
+		mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width))
 	
 	gr$percent_gap_coverage <- gap_ovs$perc_gap
 

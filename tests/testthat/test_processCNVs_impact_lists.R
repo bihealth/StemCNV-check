@@ -3,8 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/processCNVs_annotate_impact_lists.R'))
+source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_impact_lists.R'))
 
 
 config <- list(
@@ -53,7 +53,8 @@ test_that('tb_to_gr_by_position', {
   )
 })
 
-
+#TODO: somehow this didn't/doesn't catch all possible issues
+# function failed before, due to not correctly checking for all matched gband names
 test_that('tb_to_gr_by_gband', {
   gr_info <- load_genomeInfo(config)
 

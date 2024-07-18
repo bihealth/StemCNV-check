@@ -3,8 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/processCNVs_annotate_check-score.R'))
+source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score.R'))
 
 # Functions:
 # - finalize_gr_to_tb # Note: will be relaced once VEP is in place

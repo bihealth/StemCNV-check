@@ -44,7 +44,7 @@ tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
 
 	tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
 	filter_regex <- paste0('^(',
-		paste(str_replace(unlist(tb[, colname]), fixed('..'), '\\.'), collapse='|'),
+		paste(str_replace(unlist(tb[, colname]), fixed('.'), '\\.'), collapse='|'),
 		')')
 
 	gr.tb <- gr_info %>%
@@ -54,9 +54,8 @@ tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
 		reduce_ranges() %>%
 		as_tibble()
 
-
-	not_matched <- tb[colname][!tb[colname] %in% gr.tb[colname]]
-	if (length(not_matched)) {
+	not_matched <- tb[unlist(tb[colname]) %!in% unlist(gr.tb[colname]), colname]
+	if (any(unlist(tb[colname]) %!in% unlist(gr.tb[colname]))) {
 		stop(paste('The following band_names could not be identified in the reference data:', paste(not_matched, collapse = ', ')))
 	}
 

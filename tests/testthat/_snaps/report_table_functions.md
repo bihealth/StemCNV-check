@@ -1,8 +1,8 @@
 # format_hotspots_to_badge
 
     Code
-      cat(paste(format_hotspots_to_badge(input_hotspot_vector, input_CNVtype_vector, gene_details, "high_impact"),
-      collapse = "\n"))
+      cat(paste(format_hotspots_to_badge(input_hotspot_vector, input_CNVtype_vector,
+        gene_details, "high_impact"), collapse = "\n"))
     Message
       [1m[22mJoining with `by = join_by(hotspot)`
     Output

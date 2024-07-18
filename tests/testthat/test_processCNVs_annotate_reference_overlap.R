@@ -3,8 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/processCNVs_annotate_reference_overlap.R'))
+source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_reference_overlap.R'))
 
 # Example calls for testing
 
@@ -31,7 +31,7 @@ sample_cnvs <- tibble(
   overlap_merged_call = NA_real_,
   caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA),
   caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap')
-) %>% as_granges()
+)
 
 ref_cnvs <- tibble(   
   seqnames = 'chr1',
@@ -55,41 +55,44 @@ ref_cnvs <- tibble(
   as_granges()
 
 test_that("Annotate CNVs with ref", {
+  #Note: this test will fail if `sample_cnvs` is converted to a granges object first and then
+  # (changed back &) mutated, because somehow that makes the list columns appear as class 'AsIs'
   min.reciprocal.coverage.with.ref <- 80
   
-  expexted_gr <- sample_cnvs %>%
-    as_tibble() %>%
+  expected_gr <- sample_cnvs %>%
     mutate(reference_overlap = c(T, T, F, F, F, F),
            reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_) %>% as.list(),
            reference_caller = list(c('toolA','toolB'), 'faketool', NA_character_, NA_character_,NA_character_,NA_character_)
     ) %>%
     as_granges()
   
-  annotate_reference_overlap(sample_cnvs, ref_cnvs, min.reciprocal.coverage.with.ref) %>%
-    expect_equal(expexted_gr)        
+  annotate_reference_overlap(as_granges(sample_cnvs), ref_cnvs, min.reciprocal.coverage.with.ref) %>% 
+    expect_equal(expected_gr) 
 } )
 
 test_that("Annotate CNVs empty ref", {
   min.reciprocal.coverage.with.ref <- 80
   
-  expexted_gr <- sample_cnvs %>%
-    as_tibble() %>%
+  expected_gr <- sample_cnvs %>%
+    # This is somehow needed to successfully run the test via Rscript
+    as_granges() %>% as_tibble() %>%
     mutate(reference_overlap = F, 
            reference_coverage = rep(NA_real_, 6) %>% as.list(),
            reference_caller = rep(NA_character_, 6) %>% as.list()
     ) %>%
     as_granges()
   
-  annotate_reference_overlap(sample_cnvs, ref_cnvs %>% filter(sample_id == 'non_existent_sample'), 
+  annotate_reference_overlap(as_granges(sample_cnvs), ref_cnvs %>% filter(sample_id == 'non_existent_sample'), 
                                        min.reciprocal.coverage.with.ref) %>%
-    expect_equal(expexted_gr)        
+    expect_equal(expected_gr)        
 } )
 
 test_that("Annotate CNVs with empty input", {
   min.reciprocal.coverage.with.ref <- 80
   
-  expexted_gr <- sample_cnvs %>%
-    as_tibble() %>%
+  expected_gr <- sample_cnvs %>%
+    # This is somehow needed to successfully run the test via Rscript
+    as_granges() %>% as_tibble() %>%
     mutate(reference_overlap = F, 
            reference_coverage = rep(NA_real_, 6) %>% as.list(),
            reference_caller = rep(NA_character_, 6) %>% as.list()
@@ -97,7 +100,8 @@ test_that("Annotate CNVs with empty input", {
     as_granges() %>%
     filter(sample_id == 'non_existent_sample')
   
-  annotate_reference_overlap(sample_cnvs %>% filter(sample_id == 'non_existent_sample'), ref_cnvs, 
-                                       min.reciprocal.coverage.with.ref) %>%
-    expect_equal(expexted_gr)        
+  annotate_reference_overlap(sample_cnvs %>% as_granges() %>%
+                               filter(sample_id == 'non_existent_sample'), 
+                             ref_cnvs, min.reciprocal.coverage.with.ref) %>%
+    expect_equal(expected_gr)        
 } )

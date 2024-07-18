@@ -3,8 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
-source(test_path('../../StemCNV-check/scripts/R/processCNVs_annotate_array_features.R'))
+source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_array_features.R'))
 
 # Functions:
 # - get_accurate_snp_probe_count !Note: this will be phased out with vcf overhauls
@@ -59,6 +59,7 @@ test_that("Annotate CNVs with gaps", {
   annotate_gaps(sample_cnvs, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
     expect_equal(expexted_gr)        
   
+  # Call partially overlapping a gap (one endpoint in gap)
   expect_error(
     annotate_gaps(
       sample_cnvs %>% bind_ranges(
@@ -66,16 +67,9 @@ test_that("Annotate CNVs with gaps", {
               as_granges()
       ),
       gapfile, min.perc.gap_area, gap_area.uniq_probes.rel
-  ))
-  
-  expect_error(
-    annotate_gaps(
-      sample_cnvs %>% bind_ranges(
-            tibble(seqnames = 'chr1', start = 5600000, end = 6400000, ID = 'error_test2') %>%
-              as_granges()
-      ),
-      gapfile, min.perc.gap_area, gap_area.uniq_probes.rel
-  ))
+    ),
+    regexp = 'CNV call endpoint\\(s\\) overlap with gap areas from ".+/data/gaps_minimal.bed": error_test'
+  )
   
 } )
 

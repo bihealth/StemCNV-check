@@ -9,7 +9,6 @@ import sys
 
 from loguru import logger as logging
 
-#Somehow this fails
 from . import __version__
 from .app.check_input import check_config, check_sample_table
 from .app.run_workflow import run_stemcnv_check_workflow
@@ -24,15 +23,17 @@ def setup_argparse():
 
     parser = argparse.ArgumentParser(description="StemCNV-check: A pipeline to check the quality of SNP-array data for stem cell lines")
 
-    # parser.add_argument(
-    #     "--version",
-    #     action="version",
-    #     version=f"%(prog)s {__version__}",
-    # )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+
+    parser.add_argument('action', nargs='?', default='run', choices=('run', 'setup-files', 'make-staticdata'),
+                             help='Action to perform. Default: %(default)s')
 
     group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
-    group_basic.add_argument('--action', '-a', default='run', choices=('run', 'setup-files', 'make-staticdata'), help='Action to perform. Default: %(default)s')
     group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
     group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
     group_basic.add_argument('--directory', '-d', default=os.getcwd(),

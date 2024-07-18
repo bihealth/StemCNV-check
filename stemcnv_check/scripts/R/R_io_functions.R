@@ -9,7 +9,7 @@ get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 	} else if(exists('config')) {
 		use_chromosomes <- config$settings$chromosomes
 	} else {
-		warning('Setting Chromosomes to default wihtout using config!')
+		message('Setting Chromosomes to default wihtout using config!')
 		use_chromosomes <- paste0('chr', c(1:22, 'X', 'Y'))
 	}
 
@@ -130,7 +130,8 @@ load_gtf_data <- function(config) {
 load_genomeInfo <- function(config) {
 
 	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
-	gr_info <- read_tsv(get_static_path(config$static_data$genomeInfo_file, config$basedir)) %>%
+	gr_info <- read_tsv(get_static_path(config$static_data$genomeInfo_file, config$basedir),
+	                    show_col_types = FALSE) %>%
 		filter(!is.na(band_start)) %>%
 		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
 		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name))
@@ -143,6 +144,7 @@ load_genomeInfo <- function(config) {
 ## Default table structure for CNVs
 expected_final_tb <- tibble(
 	sample_id = character(),
+	#Note: due to refatcoring this is can be executed WITHOUT a config object in scope
 	seqnames = factor(c(), levels = get_chromosome_set()),
 	start = integer(),
 	end = integer(),

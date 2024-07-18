@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/processCNVs_calls_prefilter_merge.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_calls_prefilter_merge.R'))
 
 # Example calls:
 # - <1000bp,    will be filtered

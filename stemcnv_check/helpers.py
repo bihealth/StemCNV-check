@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Helper functions for pipeline"""
+import importlib.resources
 import os
+import ruamel.yaml as ruamel_yaml
+from . import STEM_CNV_CHECK
 from .exceptions import *
 from collections import OrderedDict
 from loguru import logger as logging
@@ -46,58 +49,60 @@ def read_sample_table(filename, with_opt=False):
 
 
 def make_singularity_args(config, tmpdir=None, not_existing_ok=False):
-	"""Collect all outside filepaths that need to be bound inside container"""
+    """Collect all outside filepaths that need to be bound inside container"""
 
-	bind_points = [
-		(config['data_path'], '/outside/data'),
-		(config['raw_data_folder'], '/outside/rawdata'),
-		(config['log_path'], '/outside/logs'),
-		(SNAKEDIR, '/outside/snakedir'),
-	]
-	if tmpdir is not None:
-		bind_points.append((tmpdir, '/outside/tmp'))
+    bind_points = [
+        (config['data_path'], '/outside/data'),
+        (config['raw_data_folder'], '/outside/rawdata'),
+        (config['log_path'], '/outside/logs'),
+        (importlib.resources.files(STEM_CNV_CHECK), '/outside/snakedir'),
+    ]
+    if tmpdir is not None:
+        bind_points.append((tmpdir, '/outside/tmp'))
 
-	for name, file in config['static_data'].items():
-		# Can only mount existing files
-		if not os.path.isfile(file):
-			if not_existing_ok or not file:
-				continue
-			else:
-				raise FileNotFoundError(f"Static data file '{file}' does not exist.")
-		bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
+    for name, file in config['static_data'].items():
+        # Can only mount existing files
+        if not os.path.isfile(file):
+            if not_existing_ok or not file:
+                continue
+            else:
+                raise FileNotFoundError(f"Static data file '{file}' does not exist.")
+        bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
 
-	return "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
+    return "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
 
 
-# This is done outside of snakemake so that the file can be updated without this triggering reruns
+# This is done outside snakemake so that the file can be updated without this triggering reruns
 # (which it would independently of mtime if created by a rule)
 def make_PennCNV_sexfile(args):
-	"""Make the `sexfile` that PennCNV requires from the sampletable & config. Needs to be updated for each run,
-	but would trigger snakemake reruns if done as a snakemake rule"""
-	#Description of needed format:
-	# A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
-	# tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
-	# Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
-	with open(args.config) as f:
-		yaml = ruamel_yaml.YAML(typ='safe')
-		config = yaml.load(f)
+    """Make the `sexfile` that PennCNV requires from the sampletable & config. Needs to be updated for each run,
+    but would trigger snakemake reruns if done as a snakemake rule"""
+    #Description of needed format:
+    # A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
+    # tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
+    # Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
+    yaml = ruamel_yaml.YAML(typ='safe')
+    with open(args.config) as f:
+        config = yaml.load(f)
+    with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
+        default_config = yaml.load(f)
 
-	basepath = args.directory
-	datapath = config['data_path']
-	outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
+    basepath = args.directory
+    datapath = config['data_path']
+    outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
 
-	filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, DEF_CONFIG)
-	if filter == '__default__':
-		filter = config_extract(['settings', 'default-filter-set'], config, DEF_CONFIG)
+    filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, default_config)
+    if filter == '__default__':
+        filter = config_extract(['settings', 'default-filter-set'], config, default_config)
 
-	sample_data = read_sample_table(args.sample_table)
+    sample_data = read_sample_table(args.sample_table)
 
-	with open(outfilename, 'w') as f:
-		for sample_id, _, _, sex, _ in sample_data:
-			inputfile = os.path.join(basepath, datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
-			# Ensure its consistently 'm'/'f'
-			sex = sex.lower()[0]
-			f.write(f"{inputfile}\t{sex}\n")
+    with open(outfilename, 'w') as f:
+        for sample_id, _, _, sex, _ in sample_data:
+            inputfile = os.path.join(basepath, datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
+            # Ensure its consistently 'm'/'f'
+            sex = sex.lower()[0]
+            f.write(f"{inputfile}\t{sex}\n")
 
 
 def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):

@@ -4,10 +4,9 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from ..exceptions import *
-from .. import STEM_CNV_CHECK
+from stemcnv_check.exceptions import *
+from stemcnv_check import STEM_CNV_CHECK
 
-SNAKEDIR = config['snakedir'] if 'snakedir' in config else os.path.dirname(os.path.realpath(__file__)) #Defined by wrapper
 DOWNLOAD_DIR = config['TMPDIR'] if 'TMPDIR' in config else tempfile.mkdtemp()
 GENOME = config['genome']
 
@@ -20,25 +19,22 @@ def fix_container_path(path_in, bound_to):
         rel_path = path_in.name
     else:
         local_target = {
-            # 'data': Path(DATAPATH),
-            # 'rawdata': Path(IDAT_INPUT),
-            # 'logs': Path(LOGPATH),
-            'snakedir': Path(SNAKEDIR),
+            'snakedir': Path(importlib.resources.files(STEM_CNV_CHECK)),
             'tmp': Path(DOWNLOAD_DIR)
         }[bound_to].absolute()
         rel_path = path_in.absolute().relative_to(local_target)
 
     return Path('/outside/') / bound_to / rel_path
 
-
-rule all:
-    input:
-        config['genomeInfo_file'],
-        config['array_gaps_file'],
-        config['array_density_file'],
-        config['penncnv_pfb_file'],
-        config['penncnv_GCmodel_file'],
-        config['genome_gtf_file']
+# 
+# rule all:
+#     input:
+#         config['genomeInfo_file'],
+#         config['array_gaps_file'],
+#         config['array_density_file'],
+#         config['penncnv_pfb_file'],
+#         config['penncnv_GCmodel_file'],
+#         config['genome_gtf_file']
 
 
 #Note: PennCNV does not seem to work with UCSC chromosome style in PFB file
@@ -184,7 +180,7 @@ rule gencode_v45_gtf_download:
 
 rule gencode_v45_genomeFasta_download:
     output: config['genome_fasta_file']
-    # Source gtf GRCh38:
+    # Source fasta GRCh38:
     params:
         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
         release_path = "GRCh38.p14.genome.fa.gz" if GENOME == "hg38" else "GRCh37_mapping/GRCh37.primary_assembly.genome.fa.gz"

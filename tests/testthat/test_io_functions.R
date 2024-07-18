@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../StemCNV-check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
 
 #  Functions to test:
 # - [ ] get_chromosome_set

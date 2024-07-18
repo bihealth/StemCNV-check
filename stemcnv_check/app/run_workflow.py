@@ -14,7 +14,7 @@ def run_stemcnv_check_workflow(args):
         config = yaml.load(f)
 
     argv = [
-        "-s", importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk'),
+        "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
         "-p", "--rerun-incomplete",
         "--use-conda", "--conda-frontend", args.conda_frontend,
     ]
@@ -30,9 +30,9 @@ def run_stemcnv_check_workflow(args):
 
     argv += [
         '-d', args.directory,
-        '--configfile', importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
+        '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
+        args.config,
         '--config', f'sample_table={args.sample_table}',
-        #f'snakedir={SNAKEDIR}',
         f'basedir={args.directory}',
         f'configfile={args.config}',
         f'target={args.target}',

@@ -2,8 +2,8 @@ library(tidyverse)
 library(plyranges)
 library(testthat)
 
-source(test_path("../../StemCNV-check/scripts/R/R_io_functions.R"))
-source(test_path("../../StemCNV-check/scripts/R/R_table_functions.R"))
+source(test_path("../../stemcnv_check/scripts/R/R_io_functions.R"))
+source(test_path("../../stemcnv_check/scripts/R/R_table_functions.R"))
 
 # Functions to test:
 # - [ ] vector_to_js
@@ -27,7 +27,7 @@ test_that("format_hotspots_to_badge", {
   # 5 - gene hit & gband hit matching CNV (loss)
   # 6 - gene hit & gband hit not matching CNV (Note: theoretically possible)
 
-  gene_details <- read_tsv(test_path('../../StemCNV-check/supplemental-files/HighImpact-stemcell-hotspots.tsv'), 
+  gene_details <- read_tsv(test_path('../../stemcnv_check/supplemental-files/HighImpact-stemcell-hotspots.tsv'), 
                            show_col_types = FALSE)
   
   # Compare the output with the expected output
