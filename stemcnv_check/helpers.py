@@ -3,6 +3,7 @@
 import importlib.resources
 import os
 import ruamel.yaml as ruamel_yaml
+import warnings
 from . import STEM_CNV_CHECK
 from .exceptions import *
 from collections import OrderedDict
@@ -126,7 +127,7 @@ def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):
     return ids
 
 
-def config_extract(entry_kws, config, def_config, verbose=False):
+def config_extract(entry_kws, config, def_config):
     key_tree = list(entry_kws)
     subconfig = config
     subconfig_def = def_config
@@ -140,10 +141,11 @@ def config_extract(entry_kws, config, def_config, verbose=False):
         elif entry in subconfig_def:
             subconfig = subconfig_def[entry]
             subconfig_def = subconfig_def[entry]
-            if verbose:
-                print('Warning: Using config default values for: ' + ' : '.join(used_entries))
+            logging.debug('Using config default values for: ' + ' : '.join(used_entries))
         else:
-            logging.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated", ConfigKeyWarning)
+            logging.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated")
+            # warnings.warn(' : '.join(used_entries) + " is not a valid config entry or has been deprecated",
+            #               ConfigKeyWarning)
             return None
 
     return subconfig

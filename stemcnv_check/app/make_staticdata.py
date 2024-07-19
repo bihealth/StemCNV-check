@@ -15,7 +15,7 @@ def create_missing_staticdata(args):
     """
     Use the staticdata_creation.smk workflow to generate missing static files.
     This includes download of fasta and gtf files unless they are already defined in the config.
-    Runs first steps of of the main StemCNV-check workflow to generate a vcf file if none are present.
+    Runs first steps of the main StemCNV-check workflow to generate a vcf file if none are present.
     This is done because the vcf files generated with gtc2vcf contain the full information about GT
     (background) counts from the egt clusterfile, that can be used to make the pfb file for PennCNV.
     """

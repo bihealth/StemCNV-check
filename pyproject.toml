@@ -40,7 +40,7 @@ Homepage = "https://github.com/bihealth/StemCNV-check"
 Issues = "https://github.com/bihealth/StemCNV-check/issues"
 
 [project.optional-dependencies]
-test = []
+test = ["pyfakefs"]
 dev = []
 all = []
 
@@ -63,7 +63,10 @@ exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov=snappy_pipeline --cov-report=xml"
+pythonpath = [
+  "."
+]
+#addopts = "--cov=snappy_pipeline --cov-report=xml"
 testpaths = [
     "tests",
 ]
