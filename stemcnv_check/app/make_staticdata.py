@@ -21,7 +21,7 @@ def create_missing_staticdata(args):
     """
     logging.info('Starting to check for missing static data files ...')
     # bpm & egt files are needed
-    check_config(args, required_only=True)
+    check_config(args.config, args.sample_table, required_only=True)
 
     # typ = 'safe' prevents round-trip writeout
     yaml = ruamel_yaml.YAML()

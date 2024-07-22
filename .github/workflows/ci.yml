@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches_ignore: []
+    
+jobs:
+  cancel-previous:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+    steps:
+      - uses: khan/pull-request-workflow-cancel@1.0.0
+        with:
+          workflows: "main.yml"
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          
+  testing-R:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+    steps:
+      - name: Install Python via conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          conda-channels: defaults,bioconda,conda-forge
+      - name: Checkout repository
+        uses: actions/checkout@v4
+#         with:
+#           lfs: true
+#           fetch-depth: 2
+      - name: Install mamba
+        run: conda install -y mamba>=1.0.0
+      - name: Prepare environment.yml file
+        run: cp stemcnv_check/envs/general-R.yaml /tmp/environment.yml
+      - name: Update environment using mamba
+        run: mamba env update --name root --file /tmp/environment.yml
+      - name: Run tests
+        run: Rscript -e "testthat::test_local()"
+#         env:
+#           DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
+#           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
+
+  testing-py:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: pip install .[test]
+      
+      - run: pytest
+
+        

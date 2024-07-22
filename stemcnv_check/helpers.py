@@ -143,7 +143,7 @@ def config_extract(entry_kws, config, def_config):
             subconfig_def = subconfig_def[entry]
             logging.debug('Using config default values for: ' + ' : '.join(used_entries))
         else:
-            logging.warning(' : '.join(used_entries) + " is not a valid config entry or has been deprecated")
+            logging.warning('"' + ' : '.join(used_entries) + '" is not a valid config entry or has been deprecated')
             # warnings.warn(' : '.join(used_entries) + " is not a valid config entry or has been deprecated",
             #               ConfigKeyWarning)
             return None

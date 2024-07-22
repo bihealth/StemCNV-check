@@ -7,7 +7,7 @@ import tempfile
 import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import read_sample_table, config_extract, collect_SNP_cluster_ids
-from stemcnv_check.exceptions import *
+from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
 
@@ -411,7 +411,7 @@ def get_ref_id(wildcards, get_sex=False):
       ref_sex = ref_sex[0].lower()
     except IndexError:
       # Somehow no match
-      raise SampletableReferenceError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
+      raise SampleConstraintError(f"Listed reference sample can not be found in sample-table: '{ref_id}'")
   else:
     ref_id = False
     ref_sex = False

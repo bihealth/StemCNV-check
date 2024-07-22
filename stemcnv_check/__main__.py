@@ -84,12 +84,13 @@ def setup_argparse():
 
 
 
-def main():
-    args = setup_argparse().parse_args()
+def main(argv):
+    parser = setup_argparse()
+    args = parser.parse_args(argv)
 
     if args.action == 'run':
-        check_sample_table(args)
-        check_config(args)
+        check_sample_table(args.sample_table, args.config)
+        check_config(args.config, args.sample_table)
         if not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = run_stemcnv_check_workflow(args)
@@ -112,5 +113,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
 

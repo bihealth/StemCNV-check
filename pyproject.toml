@@ -29,10 +29,8 @@ dependencies = [
     "ruamel.yaml ~=0.18.6",
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake ~=7.32.0",
-    
-    #TODO
-    # loguru
-    
+    # Nicer logging
+    "loguru ~=0.7.2"
 ]
 
 [project.urls]
@@ -40,25 +38,28 @@ Homepage = "https://github.com/bihealth/StemCNV-check"
 Issues = "https://github.com/bihealth/StemCNV-check/issues"
 
 [project.optional-dependencies]
-test = ["pyfakefs"]
-dev = []
-all = []
+test = [
+    "pytest ~=7.2.0",
+    "pyfakefs ~=5.6.0"
+]
+#dev = []
+#all = []
 
 [project.scripts]
 
 [tool.setuptools]
-packages = []
+packages = [ "stemcnv_check"]
 
 [tool.setuptools.dynamic]
 version = {attr = "stemcnv_check.version.__version__"}
 
 
-[tool.coverage.run]
-omit = []
-#relative_files = true
-
-[tool.coverage.report]
-exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
+#[tool.coverage.run]
+#omit = []
+##relative_files = true
+#
+#[tool.coverage.report]
+#exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
 
 
 [tool.pytest.ini_options]

@@ -30,7 +30,7 @@ settings:
         GenCallScore:  float_le1_ge0
         Position.duplicates: str_(keep|remove|highestGC|highestGT)
 
-  chromosomes: list
+  chromosomes: list__str__(chr)?[0-9XY]+
 
   default-filter-set: filtersetnodefault
 
@@ -77,8 +77,8 @@ settings:
     gene_overlap:
       exclude_gene_type_regex: list__str
       include_only_these_gene_types: list__str
-      highimpact_curated_lists: str
-      highlight_lists: str
+      high_impact_list: str
+      highlight_list: str
 
     Check_score_values:
       roi_hit_base: float_ge0
@@ -161,12 +161,12 @@ reports:
       filter-settings: filterset
       __plotsection:
         min_number_plots: int_ge0
-        always_include: list__str_(Critical|Reportable)
+        always_include: list__str__(Critical|Reportable)
         include.plot: bool
         include.call.table: bool
         include.gene.table.details: str_(All|Call|None)
         plot.flanking.region.relative: float_ge0
-        plot.region.minsize: int_ge10000
+        plot.region.minsize: float_ge10000
 
     SampleQCwarnings:
       warning_level2_red: list__str

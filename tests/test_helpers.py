@@ -1,10 +1,9 @@
-import pathlib
 import pytest
 import textwrap
 import stemcnv_check.helpers as helpers
 import importlib.resources
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.exceptions import ConfigKeyWarning, ConfigValueError
+from stemcnv_check.exceptions import ConfigValueError
 from unittest.mock import patch, MagicMock
 from collections import OrderedDict
 
