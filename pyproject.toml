@@ -79,5 +79,5 @@ norecursedirs = [
 ]
 filterwarnings = [
     "error",
-    # "ignore::DeprecationWarning",
+    "ignore::DeprecationWarning",
 ]
