@@ -1,24 +1,39 @@
 ##!minimal
 static_data:
+    # beadpool manifest file (.bpm) from Illumina, 
+    # needs to matching both the SNP array used and the desired genome version (usually A1 for hg19 and A2 for hg38)
     bpm_manifest_file: '' #REQUIRED
+    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
     egt_cluster_file: ''  #REQUIRED
+    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
     csv_manifest_file: '' #Optional (leave empty if not used)
-    genome_fasta_file: 'static-data/{genome}.genome.fa'                          #REQUIRED, Auto-generatable
-    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                      #REQUIRED, Auto-generatable
+    # fasta file with the genome sequence
+    genome_fasta_file: 'static-data/{genome}.genome.fa'                                 #REQUIRED, Auto-generatable
+    # gtf file with gene annotations
+    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                             #REQUIRED, Auto-generatable
+    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
     penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
+    # PennCNV GC model file, containing GC content values, calculated by PennCNV
     penncnv_GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
-    array_density_file: static-data/density_{genome}_{snp-array-name}.bed             #REQUIRED, Auto-generatable
-    array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                   #REQUIRED, Auto-generatable
-    genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv               #REQUIRED, Auto-generatable
+    # bed file with windows of very high array density, calculated by stemcnv-check
+    array_density_file: static-data/density_{genome}_{snp-array-name}.bed                #REQUIRED, Auto-generatable
+    # bed file with windows of probes gaps on the array
+    array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
+    # tabular files with chromosome and gband details, derived form UCSC information
+    genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
 
+# Folder in which raw data files (.idat) can be found
+# Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
 raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
+# Output folder, where stemcnv-check will write results
 data_path: data     #REQUIRED
+# Output folder, where stemcnv-check will write log files
 log_path: logs      #REQUIRED
 
 ##!medium
 settings:
   # Select tools to use
-  # Currently implemented tools (=valid options): PennCNV & CBS
+  # Currently implemented tools (=valid options): PennCNV, CBS
   CNV.calling.tools:
     - PennCNV
     - CBS
@@ -48,6 +63,7 @@ settings:
     #     GenCallScore:  0.8
     #     Position.duplicates: remove # keep|remove|highestGC|highestGT
 
+  # Default filter set to use for all tools
   default-filter-set: extended
 
   PennCNV:
@@ -75,8 +91,8 @@ settings:
     LRR.female.X.gain:        0.5   #CN3
     LRR.female.X.gain.large:  1.05  #CN4+
 
+  # Values used by `stemcnv-check make-staticdata` to generate density and gap bed files
   array_attribute_summary:
-    # FutureFeature
     density.windows: 100000     #window size for probe density calculation (0.5Mb)
     min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
 
@@ -198,25 +214,30 @@ settings:
 
 ##!minimal
 reports:
+  # Any number of reports can be defined, the default is 'StemCNV-check-report'
+  # All reports inherit from the default settings, but can overwrite specific parts
   StemCNV-check-report:
     file_type: 'html'         #REQUIRED
     impact.score.critical: NA #recommended: 55
 
 ##!medium
-#    #Multiple individual reports can be defined, file_type and minimum scores for reportable/critical is necessary for each one!
+#   Any number of reports can be defined, the default is 'StemCNV-check-report'.
+#   file_type (html or pdf) needs to be defined for each one.
+#   Note: report generation is optimised for html format, and pdf reports may have issues, especially with larger tables
+#
 #  StemCNV-check-full-report:
 #    file_type: 'html'         #REQUIRED
-#    impact.score.critical: 55
+#    impact.score.critical: NA #recommended: 55
 #    call.data.and.plots:
 #      __default__:
-#        # How many plots to show at least
+#        # How many plots to show at least, this strongly influences the filesize of the report
 #        min_number_plots: 100
 #        include.gene.table.details: 'All'
 
-#  # Reports with complete features are are optimised for html, below is a reduced set that works reasonably well for pdf
+#  # These reduced settings works reasonably well for pdf
 #  StemCNV-check-report-pdf:
 #    file_type: 'pdf'          #REQUIRED
-#    impact.score.critical: 55
+#    impact.score.critical: NA #recommended: 55
 #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
 #    call.data.and.plots:
 #      include.call.table: FALSE
@@ -302,11 +323,13 @@ reports:
       dendrogram.shape.by: 'Chip_Name'
 
 ##!complete
+# These contraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid
 wildcard_constraints:
   sample_id: "[a-zA-Z0-9-_]+"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
   sentrix_name: '[0-9]+'
 
+# These settings are used to define the resources snakemake allocates for each tool
 tools:
   __default__:
     threads: 1

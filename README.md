@@ -9,14 +9,18 @@ StemCNV-check requires a linux environment (or WSL on windows) and a working con
 
 ## Installation
 
+StemCNV-check will be made available through the bioconda channel in the future. 
+
+For now, only installation 'from source' is possible:
+
 1. Clone this git repository
-2. Run `conda env create -f envs/StemCNV-check.yaml` to create a base conda environment from which to run StemCNV-check. Run all StemCNV-check commands from within this environment (`conda activate stemcnv-check`).
-3. You may have to make the `StemCNV-check.py` script executable with `chmod +x StemCNV-check.py`
+2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12 
+3. Install both dependencies and the stemcnv-check script with pip `pip install -e .`. For development, use `pip install -e .[test]`
 4. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
 ## Setup
 
-StemCNV-check requires a sample table and a config file to run. Example files can be created using `StemCNV-check.py -a setup-files`
+StemCNV-check requires a sample table and a config file to run. Example files can be created using `stemcnv-check setup-files`.
 
 The sample table (default: sample_table.txt) is a tab-separated file describing all samples to be analyzed:
 - Required columns: Sample_ID, Chip_Name, Chip_Pos, Sex, Reference_Sample
@@ -37,22 +41,25 @@ Additionally, the config file needs to define the following paths:
 
 ## Usage
 
-Before the first analysis sample table and config file need to be set up (see above).
+Before the first analysis sample table and config file need to be set up (see above). 
+Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.txt" and "config.yaml" file.  
+
 Automatic generation of the additional array & genome-build specific static files can only be done if sample data for 
 that array is available.  
-*Note*: unless provided directly this will also include download of fasta and gtf file for the reference genome build.
+*Note*: unless specified directly in the config this will also include download of fasta and gtf file for the reference genome build.
 
-`StemCNV-check.py -a make-staticdata --genome <hg19|hg38> --snp-array-name <array_platform> [-s <sample_table> -c <config_file>]`
+`stemcnv-check make-staticdata --genome <hg19|hg38> --snp-array-name <array_platform> [-s <sample_table>] [-c <config_file>]`
 
 To run the analysis:
 
-`StemCNV-check.py [-s <sample_table> -c <config_file> -a run]`
+`stemcnv-check [run] [-s <sample_table>] [-c <config_file>]`
+
 
 ## Example data
 
 This repository contains example data (using data from the Genome in a Bottle samples) that can be used to test the setup.
 After pulling the repository and creating and activating the base StemCNV-check conda environment, test data can be downloaded via [git LFS](https://git-lfs.com/) and StemCNV-check can be run with the following commands.  
-(Note that this will download a fasta and gtf file for the human genome. If you have suitable files available locally, 
+(Note that this will also include the download a fasta and gtf file for the human genome. If you have suitable files available locally, 
 it is recommended to replace the corresponding paths in the config.yaml to avoid unnecessary and time-consuming downloads):
 
 Install git lfs and pull test data:
@@ -62,8 +69,8 @@ Install git lfs and pull test data:
 
 Run the test data:
 - `cd test_data`
-- `../StemCNV-check.py -a make-staticdata --genome hg19 --snp-array-name testrun` 
-- `../StemCNV-check.py`
+- `../stemcnv-check make-staticdata --genome hg19 --snp-array-name testrun` 
+- `../stemcnv-check`
 
 ## Output
 

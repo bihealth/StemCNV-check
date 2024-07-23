@@ -17,10 +17,6 @@ from .app.setup_files import setup_control_files
 
 def setup_argparse():
 
-    #TODO: add verbosity levels; prettify logs
-    logging.remove()
-    logging.add(sys.stderr, level="INFO")
-
     parser = argparse.ArgumentParser(description="StemCNV-check: A pipeline to check the quality of SNP-array data for stem cell lines")
 
     parser.add_argument(
@@ -44,7 +40,8 @@ def setup_argparse():
     group_basic.add_argument('--conda-frontend', default='mamba', choices=('mamba', 'conda'), help="Conda frontend to use. Default: %(default)s")
     group_basic.add_argument('--no-singularity', action='store_true',
                              help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
-    group_basic.add_argument('--verbose', '-v', action='store_true', help="Verbose output")
+    group_basic.add_argument('--verbose', '-v', action='count', default=0,
+                             help="More verbose output, maximum verbosity at -vv")
 
     group_setupfiles = parser.add_argument_group("setup-files", "Details for setup-files")
     group_setupfiles.add_argument('--config-details', default='minimal', choices=('minimal', 'medium', 'advanced', 'complete'), help="Level of detail for the config file. Default: %(default)s")
@@ -83,10 +80,19 @@ def setup_argparse():
     return parser
 
 
+def main(argv=None):
 
-def main(argv):
     parser = setup_argparse()
     args = parser.parse_args(argv)
+
+    if not args.verbose:
+        sys.tracebacklimit = 0
+    logging.remove(0)
+    logging.add(sys.stderr,
+                level=["WARNING", "INFO", "DEBUG"][min(args.verbose, 2)],
+                backtrace=args.verbose > 0,
+                diagnose=args.verbose > 1,
+                )
 
     if args.action == 'run':
         check_sample_table(args.sample_table, args.config)

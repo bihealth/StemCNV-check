@@ -46,6 +46,7 @@ test = [
 #all = []
 
 [project.scripts]
+stemcnv-check = "stemcnv_check.__main__:main"
 
 [tool.setuptools]
 packages = [ "stemcnv_check"]
@@ -78,5 +79,5 @@ norecursedirs = [
 ]
 filterwarnings = [
     "error",
-    "ignore::DeprecationWarning",
+    # "ignore::DeprecationWarning",
 ]
