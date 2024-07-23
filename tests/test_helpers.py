@@ -108,7 +108,7 @@ def test_config_extract(caplog):
 
     assert helpers.config_extract(('cat', 'nested', 'key3'), config_dict, default_config) is None
     assert caplog.records[-1].levelname == 'WARNING'
-    assert "cat : nested : key3 is not a valid config entry or has been deprecated" == caplog.records[-1].message
+    assert '"cat : nested : key3" is not a valid config entry or has been deprecated' == caplog.records[-1].message
 
 
 def test_make_PennCNV_sexfile(sample_table_minimal, fs):
