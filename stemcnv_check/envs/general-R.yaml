@@ -1,0 +1,30 @@
+name: stemcnv-check-general-R
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Base
+  - r-base >=4.3 #might need higher to be compatible with latest bioconductor
+  - r-tidyverse
+  - r-argparse
+  - r-yaml
+  - r-sessioninfo
+  - r-vcfr
+  #Dev
+  - r-devtools
+  - r-testthat
+  # CBS
+  - bioconductor-dnacopy = 1.76.0 # previous version 1.68.0 for r4.1; 1.76 has bugfix
+  ## Postprocessing ##
+  - bioconductor-plyranges = 1.22.0 # previous version 1.14.0 for r4.1; no changes
+  - bioconductor-genomeinfodb
+  ## Report ##
+  - r-ggpubr
+  - r-dendextend
+  - r-rideogram # N/A for r4.3
+  - r-rcolorbrewer
+  - r-DT
+  - r-kableextra
+  - r-tinytex # Not all systems have latex
+  - r-patchwork

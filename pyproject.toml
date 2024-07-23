@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "StemCNV-check"
+authors = [
+  { name="Nicolai von Kügelgen", email="nicolai.von-kuegelgen@bih-charite.de" },
+]
+description = "CNV Based Quality Control Workflow for Stem Cell SNP Array Data"
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = ["bioinformatics"]
+license = {text = "MIT License"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: R"
+]
+dynamic = ["version"]
+dependencies = [
+    "setuptools ~=68.1.2",
+    # Nice, round-trip enabled YAML parsing
+    "ruamel.yaml ~=0.18.6",
+    # Snakemake is used for providing the actual wrapper calling functionality
+    "snakemake ~=7.32.0",
+    # Nicer logging
+    "loguru ~=0.7.2"
+]
+
+[project.urls]
+Homepage = "https://github.com/bihealth/StemCNV-check"
+Issues = "https://github.com/bihealth/StemCNV-check/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest ~=7.2.0",
+    "pyfakefs ~=5.6.0"
+]
+#dev = []
+#all = []
+
+[project.scripts]
+
+[tool.setuptools]
+packages = [ "stemcnv_check"]
+
+[tool.setuptools.dynamic]
+version = {attr = "stemcnv_check.version.__version__"}
+
+
+#[tool.coverage.run]
+#omit = []
+##relative_files = true
+#
+#[tool.coverage.report]
+#exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+pythonpath = [
+  "."
+]
+#addopts = "--cov=snappy_pipeline --cov-report=xml"
+testpaths = [
+    "tests",
+]
+norecursedirs = [
+    "docs",
+    "*.egg-info",
+    ".git"
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+]
