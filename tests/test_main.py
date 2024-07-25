@@ -22,7 +22,7 @@ def test_main_run(mock_check, mock_run_workflow, mock_logging, fs):
         main(["--help"])
         assert e.value.code == 0
 
-    fs.create_file('sample_table.txt',
+    fs.create_file('sample_table.tsv',
                    contents='Sample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\nSample1\t123456789000\tR01C03\tM\t\n')
     fs.create_file('config.yaml', contents='static_data: {}\n')
     fs.create_dir('rundirectory')
