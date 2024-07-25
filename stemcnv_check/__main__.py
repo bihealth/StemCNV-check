@@ -115,9 +115,9 @@ def main(argv=None):
             os.makedirs(args.directory)
         ret = create_missing_staticdata(args)
 
-    sys.exit(ret)
+    return ret
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    sys.exit(main())
 

@@ -6,14 +6,17 @@ from stemcnv_check import STEM_CNV_CHECK
 
 @patch('stemcnv_check.__main__.check_config')
 @patch('stemcnv_check.__main__.run_stemcnv_check_workflow')
-def test_main_run(mock_check, mock_run_workflow, fs):
+@patch('stemcnv_check.__main__.logging')
+def test_main_run(mock_check, mock_run_workflow, mock_logging, fs):
 
     mock_check.return_value = 0
     mock_run_workflow.return_value = 0
+    mock_logging.add.return_value = 0
+    mock_logging.remove.return_value = 0
 
     with pytest.raises(FileNotFoundError) as e:
-        main([])
-        assert e.value.code != 0
+        ret_val = main([])
+        assert ret_val != 0
 
     with pytest.raises(SystemExit) as e:
         main(["--help"])
@@ -28,7 +31,6 @@ def test_main_run(mock_check, mock_run_workflow, fs):
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
 
-    with pytest.raises(SystemExit) as e:
-        main([])
-        assert e.value.code == 0
+    ret_val = main([])
+    assert ret_val == 0
 

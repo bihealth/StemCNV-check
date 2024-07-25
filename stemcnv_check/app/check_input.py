@@ -26,7 +26,7 @@ def flatten(dictionary, parent_key='', separator=':'):
 
 
 ### Sanity checks ###
-@logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError))
+@logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError), reraise=True)
 def check_sample_table(sample_table_file, config_file):
 
     if not os.path.isfile(sample_table_file):
@@ -87,7 +87,7 @@ def check_sample_table(sample_table_file, config_file):
                 raise SampleFormattingError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
-@logging.catch((FileNotFoundError, ConfigValueError), message='')
+@logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
 def check_config(config_file, sample_table_file, required_only=False):
 
     if not os.path.isfile(config_file):

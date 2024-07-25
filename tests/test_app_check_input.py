@@ -130,7 +130,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     assert not fs.isdir('data') and not fs.isdir('logs') and not fs.isdir('rawdata')
     update_config(testconfig)
     check_config('config.yaml', 'sample_table.txt', required_only=True)
-    logrecords = caplog.records
+    logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['WARNING'] * 3
     assert [rec.message for rec in logrecords] == [
         f"Entry for required setting '{dirname}' is not an existing folder ({testconfig[dirname]})! Creating it now."
