@@ -12,7 +12,7 @@ def setup_control_files(args):
     if os.path.exists(args.sample_table) and not args.overwrite:
         logging.info(f"Sample table already exists: {args.sample_table}. Use --overwrite to replace it.")
     else:
-        shutil.copyfile(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.txt'), args.sample_table)
+        shutil.copyfile(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'), args.sample_table)
 
     if os.path.exists(args.config) and not args.overwrite:
         logging.info(f"Config file already exists: {args.config}. Use --overwrite to replace it.")

@@ -24,4 +24,4 @@ Sample_Name	Chip_Name	Chip_Pos	Sample_ID	Sex	Reference_Sample	Sample_Group	Regio
 Cellline-A MasterBank	123456789000	R01C01	Cellline-A-MB	Female		ExampleCellines	Example1|chr1:100000-200000
 Cellline-A WorkingBank	123456789001	R01C01	Cellline-A-WB	Female	Cellline-A-MB	ExampleCellines	Example1|chr1:100000-200000;chr11:60000-70000
 Cellline-B MasterBank	123456789000	R01C02	Cellline-B-MB	Male		ExampleCellines	Example1|chr1:100000-200000;chr11:60000-70000
-Cellline-B-1 clone1	123456789001	R01C02	Cellline-B-1-cl1	Male	Cellline-B-MB	ExampleCellines		Example1|chr1:100000-200000;chr11:60000-70000
+Cellline-B-1 clone1	123456789001	R01C02	Cellline-B-1-cl1	Male	Cellline-B-MB	ExampleCellines	Example1|chr1:100000-200000;chr11:60000-70000

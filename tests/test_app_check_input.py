@@ -199,7 +199,7 @@ def test_default_config(full_config_block, fs):
     """Check that the actual default cnfig passes the check_config function"""
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
-    sample_table = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.txt')
+    sample_table = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv')
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
     fs.add_real_file(sample_table, read_only=True)
