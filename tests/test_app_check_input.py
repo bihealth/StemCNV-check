@@ -62,7 +62,7 @@ def test_check_sample_table(fs):
         """)
 
     fs.create_file('config.yaml', contents='data_path: data\nraw_data_folder: rawdata\nlog_path: logs\n')
-    sampletable = fs.create_file('sample_table.txt', contents=base_sample_table)
+    sampletable = fs.create_file('sample_table.tsv', contents=base_sample_table)
 
     # Check for missing file
     with pytest.raises(FileNotFoundError):
@@ -70,37 +70,37 @@ def test_check_sample_table(fs):
 
     # Checks:
     # - success
-    check_sample_table('sample_table.txt', 'config.yaml')
+    check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - dup ID
     sampletable.set_contents(base_sample_table + 'Sample1\t123456789000\tR01C01\tM\t\n')
     with pytest.raises(SampleConstraintError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - missing sex
     sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\t\tSample1\n')
     with pytest.raises(SampleConstraintError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - sex mis-format
     sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\twoman\tSample1\n')
     with pytest.raises(SampleFormattingError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - unknown ref
     sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\tf\tSample0\n')
     with pytest.raises(SampleConstraintError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - ref sex mismatch
     sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\tf\tSample1\n')
     with pytest.raises(SampleConstraintError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - wildcard constraint (mis)match
     sampletable.set_contents(base_sample_table + 'Sample3\tChipName\tR01C03\tm\tSample1\n')
     with pytest.raises(SampleConstraintError):
-        check_sample_table('sample_table.txt', 'config.yaml')
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
     #FIXME: - ROI formatting (needs to be adapted to new format allowing gband, gene or pos-string)
 
@@ -112,7 +112,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
-    fs.create_file('sample_table.txt',
+    fs.create_file('sample_table.tsv',
                    contents='Sample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\nSample1\tChip1\t1\tM\tSample2\n')
 
     yaml = ruamel_yaml.YAML()
@@ -129,7 +129,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     # Also check that warnings are raised for missing folders and that they are created
     assert not fs.isdir('data') and not fs.isdir('logs') and not fs.isdir('rawdata')
     update_config(testconfig)
-    check_config('config.yaml', 'sample_table.txt', required_only=True)
+    check_config('config.yaml', 'sample_table.tsv', required_only=True)
     logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['WARNING'] * 3
     assert [rec.message for rec in logrecords] == [
@@ -142,27 +142,27 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     testconfig['static_data']['egt_cluster_file'] = 'missing.bpm'
     update_config(testconfig)
     with pytest.raises(FileNotFoundError):
-        check_config('config.yaml', 'sample_table.txt')
+        check_config('config.yaml', 'sample_table.tsv')
 
     # Check for fail on missing required entries
     del testconfig['static_data']['egt_cluster_file']
     update_config(testconfig)
     with pytest.raises(ConfigValueError):
-        check_config('config.yaml', 'sample_table.txt', required_only=True)
+        check_config('config.yaml', 'sample_table.tsv', required_only=True)
 
     # Check without req_only all static files need to exist
     with pytest.raises(FileNotFoundError):
-        check_config('config.yaml', 'sample_table.txt')
+        check_config('config.yaml', 'sample_table.tsv')
 
     # With files existing, the check should pass
     prepare_fakefs_config(default_config, full_config_block, fs)
-    check_config('config.yaml', 'sample_table.txt')
+    check_config('config.yaml', 'sample_table.tsv')
 
     # Check for warning on unknown entries
     testconfig = deepcopy(full_config_block)
     testconfig['unknown_entry'] = 'nonsense'
     update_config(testconfig)
-    check_config('config.yaml', 'sample_table.txt')
+    check_config('config.yaml', 'sample_table.tsv')
     logrecord = caplog.records[-1]
     assert logrecord.levelname == 'WARNING'
     assert logrecord.message == '"unknown_entry" is not a valid config entry or has been deprecated'
@@ -177,7 +177,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     testconfig['settings']['CNV.calling.tools'] = ['PennCNV', 'GATK']
     update_config(testconfig)
     with pytest.raises(ConfigValueError):
-        check_config('config.yaml', 'sample_table.txt')
+        check_config('config.yaml', 'sample_table.tsv')
     logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['ERROR'] * 3
     assert [rec.message for rec in logrecords] == [

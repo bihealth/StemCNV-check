@@ -22,10 +22,10 @@ For now, only installation 'from source' is possible:
 
 StemCNV-check requires a sample table and a config file to run. Example files can be created using `stemcnv-check setup-files`.
 
-The sample table (default: sample_table.txt) is a tab-separated file describing all samples to be analyzed:
+The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed:
 - Required columns: Sample_ID, Chip_Name, Chip_Pos, Sex, Reference_Sample
 - Optional columns (reserved): Sample_Name, Regions_of_Interest
-- See the `sample_table_example.txt` file (of the sample_table.txt created bye the setup-files command) for a description of individual columns
+- See the `sample_table_example.tsv` file (of the sample_table.tsv created bye the setup-files command) for a description of individual columns
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  
 Required settings that are not defined by default include static files specific to the used array platform and genome build:
@@ -42,7 +42,7 @@ Additionally, the config file needs to define the following paths:
 ## Usage
 
 Before the first analysis sample table and config file need to be set up (see above). 
-Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.txt" and "config.yaml" file.  
+Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" and "config.yaml" file.  
 
 Automatic generation of the additional array & genome-build specific static files can only be done if sample data for 
 that array is available.  

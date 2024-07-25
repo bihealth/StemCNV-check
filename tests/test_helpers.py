@@ -116,13 +116,13 @@ def test_make_PennCNV_sexfile(sample_table_minimal, fs):
     actual_def_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(actual_def_config, read_only=True)
 
-    fs.create_file(file_path='sample_table.txt', contents=sample_table_minimal)
+    fs.create_file(file_path='sample_table.tsv', contents=sample_table_minimal)
     fs.create_file(file_path='dummy_config.yaml', contents='data_path: data')
     fs.create_dir('dirpath')
 
     args = MagicMock(directory='dirpath',
                      config='dummy_config.yaml',
-                     sample_table='sample_table.txt')
+                     sample_table='sample_table.tsv')
 
     helpers.make_PennCNV_sexfile(args)
 
@@ -134,8 +134,8 @@ def test_make_PennCNV_sexfile(sample_table_minimal, fs):
 
 
 def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
-    fs.create_file('sample_table.txt', contents=sample_table_extra_cols)
-    sample_data_full = helpers.read_sample_table('sample_table.txt', with_opt=True)
+    fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
+    sample_data_full = helpers.read_sample_table('sample_table.tsv', with_opt=True)
 
     all_ids = ['Cellline-A-MB', 'Cellline-A-WB', 'Cellline-B-MB', 'Cellline-B-1-cl1']
 

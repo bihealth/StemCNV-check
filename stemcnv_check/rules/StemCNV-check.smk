@@ -33,7 +33,7 @@ with open(CONFIGFILE, 'w') as yamlout:
   yaml.dump(config, yamlout)
 
 
-SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
+SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.tsv' # Defined by wrapper
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
 DATAPATH = config['data_path'] # if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
 LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])

@@ -11,7 +11,7 @@ output:
 params:
   base_path: ''
   sample_id: ''
-  sampletable: 'sample_table.txt'
+  sampletable: 'sample_table.tsv'
   report_name: 'StemCNV-check-report'
   out_format: 'html'
   configfile: 'config.yaml'
