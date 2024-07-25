@@ -31,7 +31,7 @@ def setup_argparse():
     group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
     group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
-    group_basic.add_argument('--sample-table', '-s', default='sample_table.txt', help="Filename of sample table. Default: %(default)s")
+    group_basic.add_argument('--sample-table', '-s', default='sample_table.tsv', help="Filename of sample table. Default: %(default)s")
     group_basic.add_argument('--directory', '-d', default=os.getcwd(),
                              help="Directory to run pipeline in. Default: $CWD")
 
