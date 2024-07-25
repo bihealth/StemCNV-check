@@ -28,7 +28,7 @@ settings:
     __filterset:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
-        Position.duplicates: str_(keep|remove|highestGC|highestGT)
+        Position.duplicates: str_(keep|remove|highest-GenCall|highest-GenTrain)
 
   chromosomes: list__str__(chr)?[0-9XY]+
 

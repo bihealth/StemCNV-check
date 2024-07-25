@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from stemcnv_check.exceptions import *
 from stemcnv_check import STEM_CNV_CHECK
 
 DOWNLOAD_DIR = config['TMPDIR'] if 'TMPDIR' in config else tempfile.mkdtemp()

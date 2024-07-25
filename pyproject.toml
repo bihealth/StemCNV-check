@@ -42,8 +42,12 @@ test = [
     "pytest ~=7.2.0",
     "pyfakefs ~=5.6.0"
 ]
-#dev = []
-#all = []
+dev = [
+    "vcfpy ~= 0.13.8"
+]
+all = [
+    "stemcnv-check[test,dev]",
+]
 
 [project.scripts]
 stemcnv-check = "stemcnv_check.__main__:main"

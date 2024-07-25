@@ -10,6 +10,7 @@ from stemcnv_check.helpers import read_sample_table, config_extract, collect_SNP
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
+# workflow.basedir ?
 
 # Configuration ================================================================
 if not config:
@@ -34,10 +35,12 @@ with open(CONFIGFILE, 'w') as yamlout:
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.txt' # Defined by wrapper
 BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
-DATAPATH = config['data_path'] if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
+DATAPATH = config['data_path'] # if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
 LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
 TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
+
+print(BASEPATH, DATAPATH)
 
 wildcard_constraints:
   sample_id=config['wildcard_constraints']['sample_id'],
@@ -52,52 +55,9 @@ localrules:
 sample_data = read_sample_table(SAMPLETABLE)
 sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
 
-# Helper functions =============================================================
-
-def get_tool_filter_settings(tool):
-  if tool.split(':')[0] == 'report':
-    report_settings = config['reports'][tool.split(':')[1]]
-    out = config_extract((tool.split(':')[2], 'filter-settings'), report_settings, config['reports']['__default__'])
-  elif tool.count(':') == 2 and tool.split(':')[1] == 'CNV_processing':
-    out = config['settings']['CNV_processing']['call_processing']['filter-settings']
-  else:
-    out = config['settings'][tool]['filter-settings']
-  if out == '__default__':
-    out = config['settings']['default-filter-set']
-  return out
-
-
-def get_tool_resource(tool ,resource):
-  if not resource in ('threads', 'memory', 'runtime', 'partition', 'cmd-line-params'):
-    raise KeyError(f"This resource can not be defined: {resource}")
-  if not tool in config['tools']:
-    return config['tools']['__default__'][resource]
-  else:
-    if resource in config['tools'][tool]:
-      return config['tools'][tool][resource]
-    else:
-      return config['tools']['__default__'][resource]
-
-
-# singularity_args="-B {}:/outside/data,{}:/outside/rawdata,{}:/outside/logs,{}:/outside/snakedir".format(
-#     config['data_path'], config['raw_data_path'], config['log_path'], SNAKEDIR),
-
-def fix_container_path(path_in, bound_to):
-  path_in = Path(path_in)
-
-  if bound_to == 'static':
-    rel_path = path_in.name
-  else:
-    local_target = {
-      'data': Path(DATAPATH),
-      'rawdata': Path(IDAT_INPUT),
-      'logs': Path(LOGPATH),
-      'snakedir': Path(SNAKEDIR),
-    }[bound_to].absolute()
-    rel_path = path_in.absolute().relative_to(local_target)
-
-  return Path('/outside/') / bound_to / rel_path
-
+include: 'common.smk'
+include: 'illumina_raw_processing.smk'
+include: "SNP_processing.smk"
 
 # Rules ========================================================================
 
@@ -169,82 +129,83 @@ rule all:
     if removetempconfig:
       os.remove(CONFIGFILE)
 
-if config['use_singularity']:
-  rule run_gencall:
-    input:
-      bpm = config['static_data']['bpm_manifest_file'],
-      egt = config['static_data']['egt_cluster_file'],
-      idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}"),
-    output:
-      os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
-    threads: get_tool_resource('GenCall', 'threads')
-    resources:
-      time=get_tool_resource('GenCall', 'runtime'),
-      mem_mb=get_tool_resource('GenCall', 'memory'),
-      partition=get_tool_resource('GenCall', 'partition')
-    params:
-      options = get_tool_resource('GenCall', 'cmd-line-params'),
-      outpath = lambda wildcards: fix_container_path(os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), 'data'),
-      bpm = fix_container_path(config['static_data']['bpm_manifest_file'],'static'),
-      egt = fix_container_path(config['static_data']['egt_cluster_file'],'static'),
-      idat_path= lambda wildcards: fix_container_path(os.path.join(IDAT_INPUT, wildcards.sentrix_name),'rawdata'),
-      logerr = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall",wildcards.sentrix_name,"error.log"),'logs'),
-      logout = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall", wildcards.sentrix_name,"out.log"),'logs')
-    log:
-      err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-      out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log"),
-    container:
-        # Not sure if we need to use a specific version here
-        "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
-    shell:
-      '/usr/gitc/iaap/iaap-cli/iaap-cli gencall "{params.bpm}" "{params.egt}" "{params.outpath}" --idat-folder "{params.idat_path}" --output-gtc {params.options} -t {threads} > {params.logout} 2> {params.logerr} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {params.outpath}/_done || exit 1'
-else:
-  rule run_gencall:
-    input:
-      bpm = config['static_data']['bpm_manifest_file'],
-      egt = config['static_data']['egt_cluster_file'],
-      idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
-    output:
-      os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
-    threads: get_tool_resource('GenCall', 'threads')
-    resources:
-      time = get_tool_resource('GenCall', 'runtime'),
-      mem_mb = get_tool_resource('GenCall', 'memory'),
-      partition = get_tool_resource('GenCall', 'partition')
-    params:
-      options = get_tool_resource('GenCall', 'cmd-line-params'),
-      outpath = os.path.join(DATAPATH, "gtc", "{sentrix_name}"),
-    log:
-      err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-      out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log")
-    shell:
-      # local command version, assume iaap-cli is on PATH
-      'LANG="en_US.UTF-8" iaap-cli gencall "{input.bpm}" "{input.egt}" "{params.outpath}" --idat-folder "{input.idat_path}" --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
+
+# if config['use_singularity']:
+#   rule run_gencall:
+#     input:
+#       bpm = config['static_data']['bpm_manifest_file'],
+#       egt = config['static_data']['egt_cluster_file'],
+#       idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}"),
+#     output:
+#       os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
+#     threads: get_tool_resource('GenCall', 'threads')
+#     resources:
+#       runtime=get_tool_resource('GenCall', 'runtime'),
+#       mem_mb=get_tool_resource('GenCall', 'memory'),
+#       partition=get_tool_resource('GenCall', 'partition')
+#     params:
+#       options = get_tool_resource('GenCall', 'cmd-line-params'),
+#       outpath = lambda wildcards: fix_container_path(os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), 'data'),
+#       bpm = fix_container_path(config['static_data']['bpm_manifest_file'],'static'),
+#       egt = fix_container_path(config['static_data']['egt_cluster_file'],'static'),
+#       idat_path= lambda wildcards: fix_container_path(os.path.join(IDAT_INPUT, wildcards.sentrix_name),'rawdata'),
+#       logerr = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall",wildcards.sentrix_name,"error.log"),'logs'),
+#       logout = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall", wildcards.sentrix_name,"out.log"),'logs')
+#     log:
+#       err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
+#       out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log"),
+#     container:
+#         # Not sure if we need to use a specific version here
+#         "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
+#     shell:
+#       '/usr/gitc/iaap/iaap-cli/iaap-cli gencall "{params.bpm}" "{params.egt}" "{params.outpath}" --idat-folder "{params.idat_path}" --output-gtc {params.options} -t {threads} > {params.logout} 2> {params.logerr} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {params.outpath}/_done || exit 1'
+# else:
+#   rule run_gencall:
+#     input:
+#       bpm = config['static_data']['bpm_manifest_file'],
+#       egt = config['static_data']['egt_cluster_file'],
+#       idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
+#     output:
+#       os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
+#     threads: get_tool_resource('GenCall', 'threads')
+#     resources:
+#       time = get_tool_resource('GenCall', 'runtime'),
+#       mem_mb = get_tool_resource('GenCall', 'memory'),
+#       partition = get_tool_resource('GenCall', 'partition')
+#     params:
+#       options = get_tool_resource('GenCall', 'cmd-line-params'),
+#       outpath = os.path.join(DATAPATH, "gtc", "{sentrix_name}"),
+#     log:
+#       err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
+#       out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log")
+#     shell:
+#       # local command version, assume iaap-cli is on PATH
+#       'LANG="en_US.UTF-8" iaap-cli gencall "{input.bpm}" "{input.egt}" "{params.outpath}" --idat-folder "{input.idat_path}" --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
 
 
-# The iaap-cli will *always* generate filenames derived from the sentrix name & pos
-def get_chip(wildcards, outtype = 'dir_path'):
-  """Get the chip name from a sample_id
-  Values for outtype: 'dirpath' | 'file'"""
-  chip_name, chip_pos = [(n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id][0]
-  if outtype == 'dir_path':
-    return os.path.join(DATAPATH, 'gtc', chip_name)
-  elif outtype == 'file':
-    return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
-
-#Note:
-# the *.gtc output files from gencall will *always* match the idat_file names
-# --> maybe better to switch from Chip_Name & Chip_Pos to Folder_Name & IDAT_Name ?!
-rule relink_gencall:
-  input:
-    lambda wildcards: os.path.join(get_chip(wildcards), '_done')
-  output:
-    os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
-  params:
-    gtc_link_path = lambda wildcards: os.path.join('..','gtc', get_chip(wildcards, outtype='file'))
-  shell:
-    'ln -s "{params.gtc_link_path}" "{output}"'
-  
+# # The iaap-cli will *always* generate filenames derived from the sentrix name & pos
+# def get_chip(wildcards, outtype = 'dir_path'):
+#   """Get the chip name from a sample_id
+#   Values for outtype: 'dirpath' | 'file'"""
+#   chip_name, chip_pos = [(n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id][0]
+#   if outtype == 'dir_path':
+#     return os.path.join(DATAPATH, 'gtc', chip_name)
+#   elif outtype == 'file':
+#     return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
+# 
+# #Note:
+# # the *.gtc output files from gencall will *always* match the idat_file names
+# # --> maybe better to switch from Chip_Name & Chip_Pos to Folder_Name & IDAT_Name ?!
+# rule relink_gencall:
+#   input:
+#     lambda wildcards: os.path.join(get_chip(wildcards), '_done')
+#   output:
+#     os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+#   params:
+#     gtc_link_path = lambda wildcards: os.path.join('..','gtc', get_chip(wildcards, outtype='file'))
+#   shell:
+#     'ln -s "{params.gtc_link_path}" "{output}"'
+#   
 
 rule run_gtc2vcf_tsv:
   input:
@@ -256,7 +217,7 @@ rule run_gtc2vcf_tsv:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"),
   threads: get_tool_resource('gtc2vcf', 'threads')
   resources:
-    time=get_tool_resource('gtc2vcf', 'runtime'),
+    runtime=get_tool_resource('gtc2vcf', 'runtime'),
     mem_mb=get_tool_resource('gtc2vcf', 'memory'),
     partition=get_tool_resource('gtc2vcf', 'partition')
   params:
@@ -270,29 +231,29 @@ rule run_gtc2vcf_tsv:
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
 
-rule run_gtc2vcf_vcf:
-  input:
-    bpm=config['static_data']['bpm_manifest_file'],
-    egt=config['static_data']['egt_cluster_file'],
-    genome=config['static_data']['genome_fasta_file'],
-    gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
-  output:
-    vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
-    metatxt = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
-  threads: get_tool_resource('gtc2vcf', 'threads')
-  resources:
-    time=get_tool_resource('gtc2vcf', 'runtime'),
-    mem_mb=get_tool_resource('gtc2vcf', 'memory'),
-    partition=get_tool_resource('gtc2vcf', 'partition')
-  params:
-    options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
-    csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
-  log:
-    err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
-    out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
-  conda:
-    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
-  shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
+# rule run_gtc2vcf_vcf:
+#   input:
+#     bpm=config['static_data']['bpm_manifest_file'],
+#     egt=config['static_data']['egt_cluster_file'],
+#     genome=config['static_data']['genome_fasta_file'],
+#     gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+#   output:
+#     vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
+#     metatxt = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
+#   threads: get_tool_resource('gtc2vcf', 'threads')
+#   resources:
+#     runtime=get_tool_resource('gtc2vcf', 'runtime'),
+#     mem_mb=get_tool_resource('gtc2vcf', 'memory'),
+#     partition=get_tool_resource('gtc2vcf', 'partition')
+#   params:
+#     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
+#     csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
+#   log:
+#     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
+#     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
+#   conda:
+#     importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
+#   shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
 
 rule run_filter_tsv:
   input:
@@ -301,7 +262,7 @@ rule run_filter_tsv:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
   threads: get_tool_resource('filter_tsv', 'threads')
   resources:
-    time=get_tool_resource('filter_tsv', 'runtime'),
+    runtime=get_tool_resource('filter_tsv', 'runtime'),
     mem_mb=get_tool_resource('filter_tsv', 'memory'),
     partition=get_tool_resource('filter_tsv', 'partition')
   log:
@@ -324,7 +285,7 @@ if config['use_singularity']:
       err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
     threads: get_tool_resource('PennCNV','threads')
     resources:
-      time=get_tool_resource('PennCNV','runtime'),
+      runtime=get_tool_resource('PennCNV','runtime'),
       mem_mb=get_tool_resource('PennCNV','memory'),
       partition=get_tool_resource('PennCNV','partition')
     wildcard_constraints:
@@ -359,7 +320,7 @@ else:
       err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
     threads: get_tool_resource('PennCNV', 'threads')
     resources:
-      time=get_tool_resource('PennCNV', 'runtime'),
+      runtime=get_tool_resource('PennCNV', 'runtime'),
       mem_mb=get_tool_resource('PennCNV', 'memory'),
       partition=get_tool_resource('PennCNV', 'partition')
     wildcard_constraints:
@@ -383,7 +344,7 @@ rule run_CBS:
     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CBS.tsv")
   threads: get_tool_resource('CBS', 'threads')
   resources:
-    time=get_tool_resource('CBS', 'runtime'),
+    runtime=get_tool_resource('CBS', 'runtime'),
     mem_mb=get_tool_resource('CBS', 'memory'),
     partition=get_tool_resource('CBS', 'partition')
   params:
@@ -444,7 +405,7 @@ rule run_process_CNV_calls:
     os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv")
   threads: get_tool_resource('CNV.process', 'threads')
   resources:
-    time=get_tool_resource('CNV.process', 'runtime'),
+    runtime=get_tool_resource('CNV.process', 'runtime'),
     mem_mb=get_tool_resource('CNV.process', 'memory'),
     partition=get_tool_resource('CNV.process', 'partition')
   params:
@@ -531,7 +492,7 @@ rule knit_report:
   # params:
   #   config = get_report_config
   resources:
-    time=get_tool_resource('knitr', 'runtime'),
+    runtime=get_tool_resource('knitr', 'runtime'),
     mem_mb=get_tool_resource('knitr', 'memory'),
     partition=get_tool_resource('knitr', 'partition')
   log:
@@ -551,8 +512,8 @@ rule run_make_cnv_vcf:
     get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
   threads: get_tool_resource('make_cnv_vcf', 'threads')
   resources:
-    time=get_tool_resource('make_cnv_vcf', 'runtime'),
-    mem_mb=get_tool_resource('make_cnv_vcf', 'memory'),
+    runtime=get_tool_resource('make_cnv_vcf', 'runtime'),
+    mem_mb=get_tool_resource('make_cnv_vcf','memory'),
     partition=get_tool_resource('make_cnv_vcf', 'partition')
   params:
     include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),

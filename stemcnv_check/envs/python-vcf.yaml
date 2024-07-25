@@ -1,0 +1,10 @@
+name: stemcnv-check-python-vcf
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python = 3.12
+  - pip:
+    - vcfpy >= 0.13.8
+    - loguru
