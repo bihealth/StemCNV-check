@@ -9,6 +9,7 @@ static_data:
     array_density_file: static-data/density_hg19_testrun.bed
     array_gaps_file: static-data/gaps_hg19_testrun.bed
     genomeInfo_file: static-data/UCSC_hg19_chromosome-info.tsv
+    VEP_cache_path: '__default__'
 
 raw_data_folder: 'RAW'
 data_path: data

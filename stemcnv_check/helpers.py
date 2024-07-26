@@ -3,9 +3,9 @@
 import importlib.resources
 import os
 import ruamel.yaml as ruamel_yaml
-import warnings
+import pathlib
 from . import STEM_CNV_CHECK
-from .exceptions import *
+from .exceptions import SampleConstraintError, ConfigValueError
 from collections import OrderedDict
 from loguru import logger as logging
 
@@ -23,7 +23,7 @@ def read_sample_table(filename, with_opt=False):
         header = header.split('\t')
         if not all(col in header for col in cols):
             missing = [c for c in cols if c not in header]
-            raise SampletableDefaultColError('Not all required sample_table columns found. Missing columns: ' + ', '.join(missing))
+            raise SampleConstraintError('Not all required sample_table columns found. Missing columns: ' + ', '.join(missing))
         # add optinal cols
         if with_opt:
             cols = cols + [c for c in header if c not in cols]
@@ -88,7 +88,10 @@ def make_PennCNV_sexfile(args):
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
 
-    basepath = args.directory
+    if args.directory:
+        basepath = args.directory
+    else:
+        basepath = '.'
     datapath = config['data_path']
     outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
 
@@ -149,3 +152,58 @@ def config_extract(entry_kws, config, def_config):
             return None
 
     return subconfig
+
+
+def get_cache_dir(args):
+    """Check if given path can be used for caching, get default (in install dir or home) otherwise, create the path"""
+    def check_path_usable(path):
+        if path.is_dir() and os.access(path, os.W_OK):
+            logging.debug(f"Using existing cache directory: {path}")
+            return path
+        else:
+            try:
+                path.mkdir()
+                logging.debug(f"Created cache directory: {path}")
+                return path
+            except PermissionError:
+                logging.debug(f"Could not create cache in {path}")
+                return None
+    if args.cache != 'none' and args.cache_path:
+        # Check if user supplied path is usable
+        cache_path = check_path_usable(pathlib.Path(args.cache_path))
+        if cache_path:
+            return cache_path
+        else:
+            logging.warning(f"Could not use cache directory '{args.cache_path}'")
+    elif args.cache != 'none':
+        auto_paths = [('install-dir', importlib.resources.files(STEM_CNV_CHECK).joinpath('.stemcnv-check-cache')),
+                      ('home', pathlib.Path('~/.stemcnv-check-cache').expanduser())]
+        for name, path in auto_paths:
+            if args.cache != 'auto' and args.cache != name:
+                continue
+            cache_path = check_path_usable(path)
+            if cache_path:
+                return cache_path
+
+    # Nothing worked, return None & don't use specific cache
+    logging.info("No cache directory can be used, conda and docker images will be stored in snakemake project directory")
+    return None
+
+
+def get_vep_cache_path(config_entry, cache_path):
+    # If given use specific path
+    if config_entry not in ('__cache-dir__', '__default__'):
+        return config_entry
+
+    # Use same location as cache for conda & docker from workflow
+    if config_entry == '__cache-dir__':
+        if not cache_path:
+            logging.info('No StemCNV-check cache defined, using default cache path for ~/.vep')
+        else:
+            vep_cache_path = os.path.join(cache_path, 'vep')
+            os.makedirs(vep_cache_path, exist_ok=True)
+            return vep_cache_path
+
+    # Fall back to VEP default
+    vep_cache_path = pathlib.Path('~/.vep').expanduser()
+    return str(vep_cache_path)

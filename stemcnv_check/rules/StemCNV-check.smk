@@ -34,13 +34,11 @@ with open(CONFIGFILE, 'w') as yamlout:
 
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.tsv' # Defined by wrapper
-BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
+# BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
 DATAPATH = config['data_path'] # if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
-LOGPATH = config['log_path'] if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
+LOGPATH = config['log_path'] # if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
 TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
-
-print(BASEPATH, DATAPATH)
 
 wildcard_constraints:
   sample_id=config['wildcard_constraints']['sample_id'],

@@ -6,7 +6,7 @@ import ruamel.yaml as ruamel_yaml
 from snakemake import snakemake
 from .check_input import check_config
 from .. import STEM_CNV_CHECK
-from ..helpers import config_extract, make_singularity_args, read_sample_table
+from ..helpers import config_extract, make_singularity_args, read_sample_table, get_cache_dir, get_vep_cache_path
 from loguru import logger as logging
 
 import importlib.resources
@@ -32,7 +32,14 @@ def create_missing_staticdata(args):
     with default_config.open() as f:
         DEF_CONFIG = yaml.load(f)
 
+    cache_path = get_cache_dir(args)
+    use_cache = cache_path is not None
 
+    vep_cache_path = get_vep_cache_path(
+        config_extract(('static_data', 'VEP_cache_path'), config, DEF_CONFIG),
+        cache_path
+    )
+    vep_genome = 'GRCh38' if args.genome == 'hg38' else 'GRCh37'
     static_snake_config = {
         'use_singularity': not args.no_singularity,
         'TMPDIR': '',
@@ -40,7 +47,9 @@ def create_missing_staticdata(args):
         'vcf_input_file': '',
         'density_windows': config_extract(('settings', 'array_attribute_summary', 'density.windows',), config, DEF_CONFIG),
         'min_gap_size': config_extract(('settings', 'array_attribute_summary', 'min.gap.size',), config, DEF_CONFIG),
-        }
+        'vep_cache_path': vep_cache_path,
+        'vep_cache': os.path.join(vep_cache_path, f'.{vep_genome}.done')
+    }
 
     static_files = {'genome_fasta_file', 'genome_gtf_file', 'penncnv_pfb_file', 'penncnv_GCmodel_file',
                     'genomeInfo_file', 'array_density_file', 'array_gaps_file'}
@@ -57,6 +66,8 @@ def create_missing_staticdata(args):
     static_snake_config.update({
         file: getattr(args, file.lower()) for file in missing_files
     })
+    if not os.path.isfile(os.path.join(vep_cache_path, '.done')):
+        missing_files.add('vep_cache')
 
     if not missing_files:
         logging.info('All static files are present')
@@ -72,7 +83,9 @@ def create_missing_staticdata(args):
                 workdir=args.directory,
                 use_singularity=not args.no_singularity,
                 singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
+                singularity_prefix=cache_path if use_cache and not args.no_singularity else None,
                 use_conda=True,
+                conda_prefix=cache_path if use_cache else None,
                 conda_frontend=args.conda_frontend,
                 printshellcmds=True,
                 force_incomplete=True,
@@ -94,7 +107,7 @@ def create_missing_staticdata(args):
     # Check if vcf file is present, generate one if none are
     sample_data = read_sample_table(args.sample_table)
     datapath = config_extract(('data_path',), config, DEF_CONFIG)
-    vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
+    vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
                  sample_id, _, _, _, _ in sample_data]
     vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 
@@ -112,10 +125,13 @@ def create_missing_staticdata(args):
             printshellcmds=True,
             force_incomplete=True,
             use_conda=True,
+            conda_prefix=cache_path if use_cache else None,
             use_singularity=not args.no_singularity,
             singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
+            singularity_prefix=cache_path if use_cache and not args.no_singularity else None,
             config={'sample_table': args.sample_table,
-                    'basedir': args.directory,
+                    # 'basedir': args.directory,
+                    'static_data': {'VEP_cache_path': vep_cache_path},
                     'configfile': args.config,
                     'use_singularity': not args.no_singularity
                     },
@@ -136,7 +152,9 @@ def create_missing_staticdata(args):
             workdir=args.directory,
             use_singularity=not args.no_singularity,
             singularity_args='' if args.no_singularity else make_singularity_args(config, tmpdir, True),
+            singularity_prefix=cache_path if use_cache and not args.no_singularity else None,
             use_conda=True,
+            conda_prefix=cache_path if use_cache else None,
             conda_frontend=args.conda_frontend,
             printshellcmds=True,
             force_incomplete=True,
@@ -146,12 +164,14 @@ def create_missing_staticdata(args):
         )
 
     update_str = '\n'.join([f"  {entry}: {file}" for entry, file in static_snake_config.items()
-                            if entry in missing_files and
+                            if entry in missing_files and entry != 'vep_cache' and
                             entry in config['static_data'] and entry != config['static_data'][file]])
 
     if ret and args.edit_config_inplace and update_str:
         logging.info('Missing static files generated. Updating config file with new static data entries:\n' + update_str)
         for file in missing_files:
+            if file == 'vep_cache':
+                continue
             config['static_data'][file] = static_snake_config[file]
         with open(args.config, 'w') as f:
             yaml.dump(config, f)

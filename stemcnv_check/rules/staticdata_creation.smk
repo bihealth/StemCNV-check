@@ -241,3 +241,11 @@ EOF
         """
 
 
+rule download_vep_cache:
+    output: os.path.join(config['vep_cache_path'], '.{genome}.done')
+    conda:
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","vep-annotation.yaml")
+    params:
+        cache_path = config['vep_cache_path']
+    shell:
+        "vep_install -a cf -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output}"

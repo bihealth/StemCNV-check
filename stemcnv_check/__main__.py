@@ -32,8 +32,8 @@ def setup_argparse():
 
     group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
     group_basic.add_argument('--sample-table', '-s', default='sample_table.tsv', help="Filename of sample table. Default: %(default)s")
-    group_basic.add_argument('--directory', '-d', default=os.getcwd(),
-                             help="Directory to run pipeline in. Default: $CWD")
+    group_basic.add_argument('--directory', '-d', default=None,
+                             help="Directory to run pipeline in. Default: current directory")
 
     # group_basic.add_argument('--non-interactive', '-y', action="store_true",
     #                          help="Skip all interactive questions of the wrapper")
@@ -68,6 +68,13 @@ def setup_argparse():
 
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
+    group_snake.add_argument('--cache-path', default=None,
+                             help="Override auto-selection of a cache path to a specific directory"
+                             )
+    group_snake.add_argument('--cache', default='auto', choices=['auto', 'install-dir', 'home', 'none'],
+                             help="Selection of cache directory. By default (auto) try install-dir, then home, then none."
+                                  " The cache is used for workflow created metadata (conda envs, singularity images, VEP data).")
+    
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'cnv-vcf', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
                              help="Final target of the pipeline. Default: %(default)s")
@@ -97,7 +104,7 @@ def main(argv=None):
     if args.action == 'run':
         check_sample_table(args.sample_table, args.config)
         check_config(args.config, args.sample_table)
-        if not os.path.isdir(args.directory):
+        if args.directory and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = run_stemcnv_check_workflow(args)
     elif args.action == 'setup-files':
@@ -111,7 +118,7 @@ def main(argv=None):
         args.genomeinfo_file = args.genomeinfo_file.format(genome=args.genome)
         args.genome_gtf_file = args.genome_gtf_file.format(genome=args.genome)
         args.genome_fasta_file = args.genome_fasta_file.format(genome=args.genome)
-        if not os.path.isdir(args.directory):
+        if args.directory and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = create_missing_staticdata(args)
 

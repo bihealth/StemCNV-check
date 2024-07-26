@@ -21,6 +21,12 @@ static_data:
     array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
     # tabular files with chromosome and gband details, derived form UCSC information
     genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
+    # Path to download the VEP cache to
+    # Can be:
+    #   1) '__cache-dir__' to use the same location that the --cache-path points to (falls back to 3)
+    #   2) '__default__' to use the default VEP cache path ($Home/.vep)
+    #   3) a given path
+    VEP_cache_path: '__cache-dir__'                                                      #REQUIRED, Auto-generatable
 
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)

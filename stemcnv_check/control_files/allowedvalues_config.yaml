@@ -17,6 +17,7 @@ static_data:
     array_density_file: str
     array_gaps_file: str
     genomeInfo_file: str
+    VEP_cache_path: str
 
 raw_data_folder: str
 data_path: str
