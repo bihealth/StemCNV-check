@@ -63,7 +63,7 @@ def setup_argparse():
                                help="Filename for generated chromosome info file. Default: %(default)s")
     group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf',
                                help="Filename for generated chromosome info file. Default: %(default)s")
-    group_static.add_argument('--genome-fasta-file', default='static-data/{genome}.genome.fa',
+    group_static.add_argument('--genome-fasta-file', default='static-data/{genome}.genome.fa.gz',
                                help="Filename for generated chromosome info file. Default: %(default)s")
 
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")

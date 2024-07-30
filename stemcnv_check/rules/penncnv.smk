@@ -3,68 +3,99 @@ import os
 
 # New rules needed:
 # ?? write penncnv sex file (only for sample)
-# - extract tsv SNP file from vcf
-# - run auto, x & Y calling
-# - combine calls and write out as vcf
+rule prep_PennCNV_sexfile:
+  input: os.path.join(DATAPATH, "{sample_id}","{sample_id}.vcf")
+  output: temp(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.sexfile.txt"))
+  log: os.path.join(LOGPATH,"PennCNV","{sample_id}","sexfile.log")
+  params: 
+    sex_info = get_ref_id(wildcards, True)
+  shell:
+    #TODO check if clause
+    'echo -e "{DATAPATH}/{wildcards.sample_id}/{wildcards.sample_id}.penncnv.input.tsv}\t{sex_info[2]}" > {output}; '
+    'if [[ "{sex_info[1]}" != "" ]]; then echo -e "{DATAPATH}/{sex_info[1]}/{sex_info[1]}.penncnv.input.tsv}\t{sex_info[3]}" >> {output}; fi'
 
-if config['use_singularity']:
-  rule run_PennCNV:
-    input:
-      tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb=config['static_data']['penncnv_pfb_file'],
-      gcmodel=config['static_data']['penncnv_GCmodel_file']
-    output:
-      tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
-    threads: get_tool_resource('PennCNV','threads')
-    resources:
-      runtime=get_tool_resource('PennCNV','runtime'),
-      mem_mb=get_tool_resource('PennCNV','memory'),
-      partition=get_tool_resource('PennCNV','partition')
-    wildcard_constraints:
-      chr='chrx|chry|auto'
-    params:
-      filter=get_tool_filter_settings('PennCNV'),
-      chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
-      #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
-      do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
-      snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
-      tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
-      tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
-      pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
-      gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
-      logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
-      logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
-    log:
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
-      out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
-    container:
-      "docker://genomicslab/penncnv"
-    shell:
-      '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
-else:
-  rule run_PennCNV:
-    input:
-      tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb = config['static_data']['penncnv_pfb_file'],
-      gcmodel = config['static_data']['penncnv_GCmodel_file']
-    output:
-      tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
-    threads: get_tool_resource('PennCNV', 'threads')
-    resources:
-      runtime=get_tool_resource('PennCNV', 'runtime'),
-      mem_mb=get_tool_resource('PennCNV', 'memory'),
-      partition=get_tool_resource('PennCNV', 'partition')
-    wildcard_constraints:
-      chr='chrx|chry|auto'
-    params:
-      filter = get_tool_filter_settings('PennCNV'),
-      chrom = lambda wildcards: '' if wildcards.chr == 'auto' else '-'+wildcards.chr,
-      #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
-      do_loh = lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards, True)[2] == 'm') else '-loh'
-    log:
-      err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
-      out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
-    shell:
-      'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/supplemental-files/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+
+# - extract tsv SNP file from vcf
+rule prep_PennCNV_input:
+  input:
+    vcf=os.path.join(DATAPATH, "{sample_id}","{sample_id}.vcf")
+  output:
+    tsv=temp(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.input.tsv"))
+  log: 
+    os.path.join(LOGPATH,"PennCNV","{sample_id}","input.log")
+  conda:      
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","vembrane.yaml")
+  params:
+    filter = get_tool_filter_settings('PennCNV')
+  shell:
+    'vembrane filter \'"PASS" in FILTER\' {input.vcf} 2> {log}|'
+    'vembrane table --header \'Name, Chr, Position, Log R Ratio, B Allele Freq\''
+    ' --long \'ID, CHROM, POS, FORMAT["BAF"][SAMPLE], FORMAT["LRR"][SAMPLE]\' > {output.tsv} 2>> {log}'
+
+
+# - run auto, x & Y calling
+rule run_PennCNV:
+  input:
+    tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.input.tsv"),
+    sexfile=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.sexfile.txt"),
+    pfb=config['static_data']['penncnv_pfb_file'],
+    gcmodel=config['static_data']['penncnv_GCmodel_file']
+  output:
+    tsv=temp(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv")),
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
+  threads: get_tool_resource('PennCNV','threads')
+  resources:
+    runtime=get_tool_resource('PennCNV','runtime'),
+    mem_mb=get_tool_resource('PennCNV','memory'),
+    partition=get_tool_resource('PennCNV','partition')
+  wildcard_constraints:
+    chr='chrx|chry|auto'
+  params:
+    filter=get_tool_filter_settings('PennCNV'),
+    chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
+    #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
+    do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
+    snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
+    tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
+    tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
+    pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
+    sexfile=fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv.sexfile.txt"),'data'),
+    gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
+    logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
+    logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
+  log:
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
+    out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
+  container:
+    "docker://genomicslab/penncnv"
+  shell:
+    '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence '
+    '-hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} '
+    '--sexfile {params.sexfile}  {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
+
+
+def get_penncnv_output(wildcards, files = 'tsv'):
+  _, _, sex, _ = get_ref_id(wildcards, True) 
+  chrs = ['auto','chrx']
+  if sex: chrs.append('chry')
+  
+  if files == 'tsv':
+    return expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"), chr=chrs)
+  elif files == 'log':
+    return expand(os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"), chr=chrs)
+  else:
+    raise ValueError("Invalid file type requested: {}".format(files))
+
+# - combine calls and write out as vcf
+rule combined_PennCNV_output:
+  input:
+    tsvs=get_penncnv_output(wildcards, 'tsv'),
+    logs=get_penncnv_output(wildcards, 'log')
+  output:
+    vcf=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.vcf.gz"),
+    #TODO: how to best handle this?
+    stats=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.stats.tsv")
+  conda:
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
+  script: 
+    "scripts/combine_penncnv.R"

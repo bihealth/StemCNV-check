@@ -58,6 +58,11 @@ settings:
     density.windows: int_ge0
     min.gap.size: str_([0-9+]|auto-array)
 
+  VEP_annotation:
+    enabled: bool
+    mode: str_(offline-cache|database)'
+    VEP_cache_path: str # '__default__', '__cache-dir__' or path
+    
   CNV_processing:
     call_processing:
       min.snp: int

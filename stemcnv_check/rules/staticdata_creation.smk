@@ -185,7 +185,6 @@ rule gencode_v45_genomeFasta_download:
     shell:
         """
         wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
-        gunzip {output}.gz
         """
 
 rule ucsc_goldenpath_download:
@@ -248,4 +247,6 @@ rule download_vep_cache:
     params:
         cache_path = config['vep_cache_path']
     shell:
-        "vep_install -a cf -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output}"
+        # -r {params.cache_path}/plugins 
+        # -a f > automatically get ensembl genome fasta; can replace fasta & gtf
+        "vep_install -a cp -g DosageSensivity -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output}"

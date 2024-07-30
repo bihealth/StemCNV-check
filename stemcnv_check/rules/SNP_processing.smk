@@ -2,9 +2,11 @@ import os
 import importlib.resources
 from stemcnv_check import STEM_CNV_CHECK
 
+
+
 rule filter_snp_vcf:
   input: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf")
-  output: pipe(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf"))
+  output: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf")
   threads: get_tool_resource('filter_snp_vcf', 'threads')
   resources:
     runtime=get_tool_resource('filter_snp_vcf', 'runtime'),
@@ -14,9 +16,16 @@ rule filter_snp_vcf:
     err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
     #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
   conda:
-    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
   script:
-    '../scripts/filter_snp_vcf.py'
+    '../scripts/filter_snp_vcf.R'
+# vcfpy changes the vcf too much, i.e.
+# - add new contigs to header
+# - merges variants at same position into multi-allelic
+  # conda:
+  #   importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
+  # script:
+  #   '../scripts/filter_snp_vcf.py'
     
 
 rule annotate_snp_vcf:
@@ -47,9 +56,9 @@ rule annotate_snp_vcf:
         '--force_overwrite '
         '--assembly {params.genomeversion} '
 
-        #'--cache '
+        '--cache '
         #'--cache_version 112 '
-        #'--dir_cache {params.vep_cache_path} '
+        '--dir_cache {params.vep_cache_path} '
         #> possibly useful to figure out protein coverage
         '--total_length '
         #'--numbers' # would add EXON,INTRON fields

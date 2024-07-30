@@ -8,9 +8,9 @@ static_data:
     # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
     csv_manifest_file: '' #Optional (leave empty if not used)
     # fasta file with the genome sequence
-    genome_fasta_file: 'static-data/{genome}.genome.fa'                                 #REQUIRED, Auto-generatable
+    genome_fasta_file: 'static-data/{genome}.genome.fa.gz'                               #REQUIRED, Auto-generatable
     # gtf file with gene annotations
-    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                             #REQUIRED, Auto-generatable
+    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                              #REQUIRED, Auto-generatable
     # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
     penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
     # PennCNV GC model file, containing GC content values, calculated by PennCNV
@@ -21,12 +21,6 @@ static_data:
     array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
     # tabular files with chromosome and gband details, derived form UCSC information
     genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
-    # Path to download the VEP cache to
-    # Can be:
-    #   1) '__cache-dir__' to use the same location that the --cache-path points to (falls back to 3)
-    #   2) '__default__' to use the default VEP cache path ($Home/.vep)
-    #   3) a given path
-    VEP_cache_path: '__cache-dir__'                                                      #REQUIRED, Auto-generatable
 
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
@@ -101,6 +95,17 @@ settings:
   array_attribute_summary:
     density.windows: 100000     #window size for probe density calculation (0.5Mb)
     min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
+   
+  # Settings for annotation SNPs CNVs with ensembl vep
+  VEP_annotation:
+    mode: 'offline-cache' # 'database' or 'offline-cache'
+    enabled: True
+    # Path to download the VEP cache to
+    # Can be:
+    #   1) a specific path
+    #   2) '__cache-dir__' to use the same location that the --cache-path points to (falls back to 3)
+    #   3) '__default__' to use the default VEP cache path ($Home/.vep)
+    VEP_cache_path: '__cache-dir__'
 
   CNV_processing:
     call_processing:
