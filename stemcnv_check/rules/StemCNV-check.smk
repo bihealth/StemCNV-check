@@ -104,9 +104,9 @@ def fix_container_path(path_in, bound_to):
 def get_cnv_vcf_output(mode):
   addition = config['settings']['make_cnv_vcf']['name_addition']
   if mode == 'combined-calls':
-    return os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls{addition}.vcf")
+    return os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.combined-cnv-calls{0}.vcf".format(addition))
   elif mode == 'split-tools':
-    return [os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls{addition}.vcf")
+    return [os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.{tool}-cnv-calls{0}.vcf".format(addition))
             for tool in config['settings']['CNV.calling.tools']]
   else:
     raise ConfigValueError('Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(config['settings']['make_cnv_vcf']['mode']))
