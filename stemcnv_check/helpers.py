@@ -49,7 +49,7 @@ def read_sample_table(filename, with_opt=False):
 
 
 
-def make_singularity_args(config, tmpdir=None, not_existing_ok=False):
+def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
     """Collect all outside filepaths that need to be bound inside container"""
 
     bind_points = [
@@ -90,7 +90,9 @@ def make_PennCNV_sexfile(args):
 
     basepath = args.directory
     datapath = config['data_path']
-    outfilename = os.path.join(basepath, "penncnv-sexfile.txt")
+    outfilename = "penncnv-sexfile.txt"
+    if basepath:
+        outfilename = os.path.join(basepath, outfilename)
 
     filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, default_config)
     if filter == '__default__':
@@ -100,7 +102,9 @@ def make_PennCNV_sexfile(args):
 
     with open(outfilename, 'w') as f:
         for sample_id, _, _, sex, _ in sample_data:
-            inputfile = os.path.join(basepath, datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
+            inputfile = os.path.join(datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
+            if basepath:
+                inputfile = os.path.join(basepath, inputfile)
             # Ensure its consistently 'm'/'f'
             sex = sex.lower()[0]
             f.write(f"{inputfile}\t{sex}\n")

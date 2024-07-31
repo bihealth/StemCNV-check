@@ -1,10 +1,12 @@
 import importlib.resources
+import os
+
 import ruamel.yaml as ruamel_yaml
 
-from snakemake import main
+from snakemake.cli import main
 from loguru import logger as logging
 from .. import STEM_CNV_CHECK
-from ..helpers import make_PennCNV_sexfile, make_singularity_args
+from ..helpers import make_PennCNV_sexfile, make_apptainer_args
 
 def run_stemcnv_check_workflow(args):
     # Ensure that sexfile for PennCNV exists
@@ -15,30 +17,24 @@ def run_stemcnv_check_workflow(args):
 
     argv = [
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
-        "-p", "--rerun-incomplete",
-        "--use-conda", "--conda-frontend", args.conda_frontend,
-    ]
-    if args.no_singularity:
-        logging.warning(
-            "Running without singularity containers is a legacy feature, pipeline will fail without local PennCNV installation based on the install.sh script!")
-        use_singularity = False
-    else:
-        argv += ["--use-singularity",
-                 "--singularity-args", make_singularity_args(config)
-                 ]
-        use_singularity = True
+        "--printshellcmds", "--rerun-incomplete",
+        "--sdm", "conda", "apptainer",
+        "--apptainer-args", make_apptainer_args(config),
+        #"--conda-frontend", args.conda_frontend,
+        ]
+    if args.directory:
+        argv += ["--directory", args.directory]
 
+    basedir = args.directory if args.directory else os.getcwd()
     argv += [
-        '-d', args.directory,
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
         args.config,
         '--config', f'sample_table={args.sample_table}',
-        f'basedir={args.directory}',
+        f'basedir={basedir}',
         f'configfile={args.config}',
         f'target={args.target}',
-        f'use_singularity={use_singularity}'
     ]
-
+    #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:
         argv += [
             "--profile", args.cluster_profile,

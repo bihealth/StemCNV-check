@@ -75,18 +75,18 @@ def test_make_singularity_args(mock_resource_files, fs):
               }}
     expected = "-B /path/to/data:/outside/data,/path/to/rawdata:/outside/rawdata,/path/to/logs:/outside/logs," + \
                "/fake/snakedir:/outside/snakedir"
-    assert expected == helpers.make_singularity_args(config, not_existing_ok=True)
+    assert expected == helpers.make_apptainer_args(config, not_existing_ok=True)
 
     with pytest.raises(FileNotFoundError):
-        helpers.make_singularity_args(config)
+        helpers.make_apptainer_args(config)
 
-    assert expected + ',/tmp/tmpdir:/outside/tmp' == helpers.make_singularity_args(config, 
-                                                                                   tmpdir='/tmp/tmpdir', not_existing_ok=True)
+    assert expected + ',/tmp/tmpdir:/outside/tmp' == helpers.make_apptainer_args(config,
+                                                                                 tmpdir='/tmp/tmpdir', not_existing_ok=True)
 
 
     fs.create_file('relative/genome.fasta')
     expected += ",relative/genome.fasta:/outside/static/genome.fasta"
-    assert expected == helpers.make_singularity_args(config)
+    assert expected == helpers.make_apptainer_args(config)
 
 
 def test_config_extract(caplog):

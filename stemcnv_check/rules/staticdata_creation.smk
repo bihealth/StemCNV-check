@@ -88,18 +88,17 @@ rule create_gcmodel_file:
     input: config['penncnv_pfb_file']
     output: config['penncnv_GCmodel_file']
     params:
-        penncnv_path = '/home/user/PennCNV' if config['use_singularity'] else '$CONDA_PREFIX/pipeline/PennCNV-1.0.5',
         download_path = fix_container_path(DOWNLOAD_DIR, 'tmp')
     container:
         "docker://genomicslab/penncnv"
     shell:
         """
-        if [[ -f {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt ]]; then
-            ln -s {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt {params.download_path}/{GENOME}.gc5Base.txt
+        if [[ -f /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt ]]; then
+            ln -s /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt {params.download_path}/{GENOME}.gc5Base.txt
         else
-            gunzip -c {params.penncnv_path}/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 
+            gunzip -c /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 
         fi
-        {params.penncnv_path}/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {input} -out {output}
+        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {input} -out {output}
         """
 
 rule create_array_info_file:

@@ -2,11 +2,13 @@ import os
 import sys
 import tempfile
 import ruamel.yaml as ruamel_yaml
+from pathlib import Path
 
-from snakemake import snakemake
+from snakemake.api import SnakemakeApi
+from snakemake.settings.types import ResourceSettings, ConfigSettings, DeploymentSettings, DAGSettings, OutputSettings, DeploymentMethod
 from .check_input import check_config
 from .. import STEM_CNV_CHECK
-from ..helpers import config_extract, make_singularity_args, read_sample_table
+from ..helpers import config_extract, make_apptainer_args, read_sample_table
 from loguru import logger as logging
 
 import importlib.resources
@@ -34,7 +36,6 @@ def create_missing_staticdata(args):
 
 
     static_snake_config = {
-        'use_singularity': not args.no_singularity,
         'TMPDIR': '',
         'genome': args.genome,
         'vcf_input_file': '',
@@ -64,24 +65,37 @@ def create_missing_staticdata(args):
 
     if get_fasta:
         logging.info('Genome fasta file not found in config or missing, will be downloaded from GenCode')
-        with tempfile.TemporaryDirectory() as tmpdir:
-            ret = snakemake(
-                importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'staticdata_creation.smk'),
-                local_cores=args.local_cores,
-                cores=args.local_cores,
-                workdir=args.directory,
-                use_singularity=not args.no_singularity,
-                singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
-                use_conda=True,
-                conda_frontend=args.conda_frontend,
-                printshellcmds=True,
-                force_incomplete=True,
-                config=dict(static_snake_config, **{'TMPDIR': tmpdir}),
-                targets=[args.genome_fasta_file]
+        with (SnakemakeApi(output_settings=OutputSettings(printshellcmds=True)) as api,
+              tempfile.TemporaryDirectory() as tmpdir):
+            result = (
+                api.workflow(
+                    snakefile=importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'staticdata_creation.smk'),
+                    workdir=args.directory,
+                    resource_settings=ResourceSettings(
+                        cores=args.local_cores,
+                        local_cores=args.local_cores,
+                        nodes=args.jobs,
+                    ),
+                    config_settings=ConfigSettings(
+                        config=dict(static_snake_config, **{'TMPDIR': tmpdir})
+                    ),
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    deployment_settings=DeploymentSettings(
+                        deployment_method=DeploymentMethod.parse_choices_set({'conda', 'apptainer'}),
+                        apptainer_args=make_apptainer_args(config, not_existing_ok=True),
+                    ),
+                    # storage_provider_settings=None,
+                )
+                .dag(
+                    DAGSettings(targets=[args.genome_fasta_file],
+                                force_incomplete=True)
+                )
+                .execute_workflow()
             )
-        if not ret:
-            logging.error('Snakemake run to get fasta failed')
-            sys.exit(1)
+        # if not result:
+        #     logging.error('Snakemake run to get fasta failed')
+        #     sys.exit(1)
         if fix_fasta_entry and not args.edit_config_inplace:
             logging.info(f"Please update the genome_fastq entry in the config and the restart this command.\n  genome_fasta_file: {args.genome_fasta_file}")
             sys.exit(0)
@@ -94,7 +108,7 @@ def create_missing_staticdata(args):
     # Check if vcf file is present, generate one if none are
     sample_data = read_sample_table(args.sample_table)
     datapath = config_extract(('data_path',), config, DEF_CONFIG)
-    vcf_files = [os.path.join(args.directory, datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
+    vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.unprocessed.vcf") for
                  sample_id, _, _, _, _ in sample_data]
     vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 
@@ -103,62 +117,88 @@ def create_missing_staticdata(args):
     else:
         use_vcf = vcf_files[0]
         logging.info(f'Running first steps of StemCNV-check to get a vcf file: {use_vcf}')
-        ret = snakemake(
-            importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk'),
-            local_cores=args.local_cores,
-            cores=args.local_cores,
-            workdir=args.directory,
-            configfiles=[importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'), args.config],
-            printshellcmds=True,
-            force_incomplete=True,
-            use_conda=True,
-            use_singularity=not args.no_singularity,
-            singularity_args='' if args.no_singularity else make_singularity_args(config, not_existing_ok=True),
-            config={'sample_table': args.sample_table,
-                    'basedir': args.directory,
-                    'configfile': args.config,
-                    'use_singularity': not args.no_singularity
-                    },
-            targets=[use_vcf]
-        )
+        print(make_apptainer_args(config, not_existing_ok=True))
+        with SnakemakeApi(output_settings=OutputSettings(printshellcmds=True)) as api:
+            result = (
+                    api.workflow(
+                        snakefile=importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk'),
+                        workdir=args.directory,
+                        resource_settings=ResourceSettings(
+                            cores=args.local_cores,
+                            local_cores=args.local_cores,
+                            nodes=args.jobs,
+                        ),
+                        config_settings=ConfigSettings(
+                            configfiles=[
+                                importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
+                                Path(args.config)
+                            ],
+                            config={
+                                'sample_table': args.sample_table,
+                                'basedir': args.directory,
+                                'configfile': args.config,
+                                'target': 'SNP-probe-data',
+                            }
+                        ),
+                        deployment_settings=DeploymentSettings(
+                            deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
+                            apptainer_args=make_apptainer_args(config, not_existing_ok=True),
+                        ),
+                    )
+                    .dag(
+                        DAGSettings(targets=[use_vcf],
+                                    force_incomplete=True)
+                    )
+                    .execute_workflow()
+                )
 
-        if not ret:
-            logging.error('Snakemake run to get vcf failed')
-            sys.exit(1)
+        # if not result:
+        #     logging.error('Snakemake run to get vcf failed')
+        #     sys.exit(1)
 
     # Run snakemake to generate missing static files
     logging.info(f'Running staticdata creation workflow')
-    with tempfile.TemporaryDirectory() as tmpdir:
-        ret = snakemake(
-            importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'staticdata_creation.smk'),
-            local_cores=args.local_cores,
-            cores=args.local_cores,
-            workdir=args.directory,
-            use_singularity=not args.no_singularity,
-            singularity_args='' if args.no_singularity else make_singularity_args(config, tmpdir, True),
-            use_conda=True,
-            conda_frontend=args.conda_frontend,
-            printshellcmds=True,
-            force_incomplete=True,
-            config=dict(static_snake_config, **{'TMPDIR': tmpdir, 'vcf_input_file': use_vcf}),
-            # Skip rule all, only get specific files
-            targets=[static_snake_config[file] for file in missing_files]
+
+    with (SnakemakeApi(output_settings=OutputSettings(printshellcmds=True)) as api,
+          tempfile.TemporaryDirectory() as tmpdir):
+        result = (
+            api.workflow(
+                snakefile=importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'staticdata_creation.smk'),
+                workdir=args.directory,
+                resource_settings=ResourceSettings(
+                    cores=args.local_cores,
+                    local_cores=args.local_cores,
+                    nodes=args.jobs,
+                ),
+                config_settings=ConfigSettings(
+                    config=dict(static_snake_config, **{'TMPDIR': tmpdir, 'vcf_input_file': use_vcf})
+                ),
+                deployment_settings=DeploymentSettings(
+                    deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
+                    apptainer_args=make_apptainer_args(config, tmpdir=tmpdir, not_existing_ok=True),
+                )
+            )
+            .dag(
+                DAGSettings(targets=[static_snake_config[file] for file in missing_files],
+                            force_incomplete=True)
+            )
+            .execute_workflow()
         )
 
     update_str = '\n'.join([f"  {entry}: {file}" for entry, file in static_snake_config.items()
                             if entry in missing_files and
-                            entry in config['static_data'] and entry != config['static_data'][file]])
+                            entry in config['static_data'] and file != config['static_data'][entry]])
 
-    if ret and args.edit_config_inplace and update_str:
+    if args.edit_config_inplace and update_str:
         logging.info('Missing static files generated. Updating config file with new static data entries:\n' + update_str)
         for file in missing_files:
             config['static_data'][file] = static_snake_config[file]
         with open(args.config, 'w') as f:
             yaml.dump(config, f)
-    elif ret and update_str:
+    elif update_str:
         logging.info("Missing static files generated, please update the following lines in the static-data section of your config file (written to stdout):")
         sys.stdout.write(update_str + '\n')
-    elif ret:
+    else:
         logging.info("Missing static files generated.")
 
-    return ret
+    return True
