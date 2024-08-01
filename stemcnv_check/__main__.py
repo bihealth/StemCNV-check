@@ -37,9 +37,7 @@ def setup_argparse():
 
     # group_basic.add_argument('--non-interactive', '-y', action="store_true",
     #                          help="Skip all interactive questions of the wrapper")
-    group_basic.add_argument('--conda-frontend', default='mamba', choices=('mamba', 'conda'), help="Conda frontend to use. Default: %(default)s")
-    group_basic.add_argument('--no-singularity', action='store_true',
-                             help="Do not use singularity/docker, you will need a local PennCNV installation instead (see install.sh)")
+    # group_basic.add_argument('--conda-frontend', default='mamba', choices=('mamba', 'conda'), help="Conda frontend to use. Default: %(default)s")
     group_basic.add_argument('--verbose', '-v', action='count', default=0,
                              help="More verbose output, maximum verbosity at -vv")
 
@@ -104,7 +102,7 @@ def main(argv=None):
     if args.action == 'run':
         check_sample_table(args.sample_table, args.config)
         check_config(args.config, args.sample_table)
-        if args.directory and not os.path.isdir(args.directory):
+        if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = run_stemcnv_check_workflow(args)
     elif args.action == 'setup-files':
@@ -118,7 +116,7 @@ def main(argv=None):
         args.genomeinfo_file = args.genomeinfo_file.format(genome=args.genome)
         args.genome_gtf_file = args.genome_gtf_file.format(genome=args.genome)
         args.genome_fasta_file = args.genome_fasta_file.format(genome=args.genome)
-        if args.directory and not os.path.isdir(args.directory):
+        if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = create_missing_staticdata(args)
 

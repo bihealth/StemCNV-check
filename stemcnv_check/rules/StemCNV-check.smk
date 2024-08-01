@@ -10,7 +10,6 @@ from stemcnv_check.helpers import read_sample_table, config_extract, collect_SNP
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
-# workflow.basedir ?
 
 # Configuration ================================================================
 if not config:
@@ -34,9 +33,9 @@ with open(CONFIGFILE, 'w') as yamlout:
 
 
 SAMPLETABLE = config['sample_table'] if 'sample_table' in config else 'sample_table.tsv' # Defined by wrapper
-# BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
-DATAPATH = config['data_path'] # if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
-LOGPATH = config['log_path'] # if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
+BASEPATH = config['basedir'] if 'basedir' in config else os.getcwd() #Defined by wrapper
+DATAPATH = config['data_path'] #if os.path.isabs(config['data_path']) else os.path.join(BASEPATH, config['data_path'])
+LOGPATH = config['log_path'] #if os.path.isabs(config['log_path']) else os.path.join(BASEPATH, config['log_path'])
 TARGET = config['target'] if 'target' in config else 'report' #Defined by wrapper
 IDAT_INPUT = config['raw_data_folder']
 
@@ -118,7 +117,6 @@ def get_target_files():
   if TARGET == 'SNP-probe-data':
     return expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"), sample_id = all_samples) + \
       expand(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"), sample_id = all_samples)
-
 
 rule all:
   input:
@@ -272,67 +270,40 @@ rule run_filter_tsv:
     'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} {CONFIGFILE} > {log.out} 2> {log.err}'
 
 
-if config['use_singularity']:
-  rule run_PennCNV:
-    input:
-      tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb=config['static_data']['penncnv_pfb_file'],
-      gcmodel=config['static_data']['penncnv_GCmodel_file']
-    output:
-      tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
-    threads: get_tool_resource('PennCNV','threads')
-    resources:
-      runtime=get_tool_resource('PennCNV','runtime'),
-      mem_mb=get_tool_resource('PennCNV','memory'),
-      partition=get_tool_resource('PennCNV','partition')
-    wildcard_constraints:
-      chr='chrx|chry|auto'
-    params:
-      filter=get_tool_filter_settings('PennCNV'),
-      chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
-      #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
-      do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
-      snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
-      tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
-      tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
-      pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
-      gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
-      logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
-      logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
-    log:
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
-      out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
-    container:
-      "docker://genomicslab/penncnv"
-    shell:
-      '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
-else:
-  rule run_PennCNV:
-    input:
-      tsv = os.path.join(DATAPATH, "{sample_id}", "{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-      pfb = config['static_data']['penncnv_pfb_file'],
-      gcmodel = config['static_data']['penncnv_GCmodel_file']
-    output:
-      tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv"),
-      err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
-    threads: get_tool_resource('PennCNV', 'threads')
-    resources:
-      runtime=get_tool_resource('PennCNV', 'runtime'),
-      mem_mb=get_tool_resource('PennCNV', 'memory'),
-      partition=get_tool_resource('PennCNV', 'partition')
-    wildcard_constraints:
-      chr='chrx|chry|auto'
-    params:
-      filter = get_tool_filter_settings('PennCNV'),
-      chrom = lambda wildcards: '' if wildcards.chr == 'auto' else '-'+wildcards.chr,
-      #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
-      do_loh = lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards, True)[2] == 'm') else '-loh'
-    log:
-      err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
-      out=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.out.log")
-    shell:
-      'PennCNV_detect -test {params.do_loh} {params.chrom} -confidence -hmm {SNAKEDIR}/supplemental-files/hhall_loh.hmm -pfb {input.pfb} -gcmodel {input.gcmodel} {input.tsv} -out {output.tsv} > {log.out} 2> {log.err}'
+rule run_PennCNV:
+  input:
+    tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
+    pfb=config['static_data']['penncnv_pfb_file'],
+    gcmodel=config['static_data']['penncnv_GCmodel_file']
+  output:
+    tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
+  threads: get_tool_resource('PennCNV','threads')
+  resources:
+    runtime=get_tool_resource('PennCNV','runtime'),
+    mem_mb=get_tool_resource('PennCNV','memory'),
+    partition=get_tool_resource('PennCNV','partition')
+  wildcard_constraints:
+    chr='chrx|chry|auto'
+  params:
+    filter=get_tool_filter_settings('PennCNV'),
+    chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
+    #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
+    do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
+    snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
+    tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
+    tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
+    pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
+    gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
+    logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
+    logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
+  log:
+    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
+    out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
+  container:
+    "docker://genomicslab/penncnv"
+  shell:
+    '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
 
 
 rule run_CBS:

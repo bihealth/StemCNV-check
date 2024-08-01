@@ -1,10 +1,11 @@
 import importlib.resources
-import ruamel.yaml as ruamel_yaml
 import os
-from snakemake import main
+import ruamel.yaml as ruamel_yaml
+
+from snakemake.cli import main
 from loguru import logger as logging
 from .. import STEM_CNV_CHECK
-from ..helpers import make_PennCNV_sexfile, make_singularity_args, get_cache_dir, get_vep_cache_path, config_extract
+from ..helpers import make_PennCNV_sexfile, make_apptainer_args, get_cache_dir, get_vep_cache_path, config_extract
 
 def run_stemcnv_check_workflow(args):
     # Ensure that sexfile for PennCNV exists
@@ -18,9 +19,13 @@ def run_stemcnv_check_workflow(args):
 
     argv = [
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
-        "-p", "--rerun-incomplete",
-        "--use-conda", "--conda-frontend", args.conda_frontend,
-    ]
+        "--printshellcmds", "--rerun-incomplete",
+        "--sdm", "conda", "apptainer",
+        "--apptainer-args", make_apptainer_args(config),
+        #"--conda-frontend", args.conda_frontend,
+        ]
+    if args.directory:
+        argv += ["--directory", args.directory]
 
     # make snakemake write conda & singularity files to an "external" cache-path, NOT individual project paths
     # This saves disk space when using multiple projects with the same conda envs
@@ -40,36 +45,18 @@ def run_stemcnv_check_workflow(args):
         cache_path
     )
 
-    if args.no_singularity:
-        logging.warning(
-            "Running without singularity containers is a legacy feature, pipeline will fail without local PennCNV installation based on the install.sh script!")
-        use_singularity = False
-    else:
-        argv += ["--use-singularity",
-                 "--singularity-args", make_singularity_args(config)
-                 ]
-        use_singularity = True
-        if cache_path:
-            argv += [
-                "--singularity-prefix", cache_path
-            ]
-
-    if args.directory:
-        argv += ["--directory", args.directory]
-
-
+    basedir = args.directory if args.directory else os.getcwd()
     argv += [
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
         args.config,
         '--config', f'sample_table={args.sample_table}',
-        # f'basedir={args.directory}',
+        f'basedir={basedir}',
         f'configfile={args.config}',
         f'target={args.target}',
-        f'use_singularity={use_singularity}',
         f'genome_build={args.genome}',
         f'static_data={{"VEP_cache_path":{vep_cache_path}}}'
     ]
-
+    #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:
         argv += [
             "--profile", args.cluster_profile,
