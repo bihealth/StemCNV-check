@@ -15,7 +15,7 @@ For now, only installation 'from source' is possible:
 
 1. Clone this git repository
 2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12 
-3. Install both dependencies and the stemcnv-check script with pip `pip install -e .`. For development, use `pip install -e .[test]`
+3. Install both dependencies and the stemcnv-check script with pip `pip install -e .`. For development, use `pip install -e .[all]`
 4. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
 ## Setup
@@ -48,9 +48,9 @@ Automatic generation of the additional array & genome-build specific static file
 that array is available.  
 *Note*: unless specified directly in the config this will also include download of fasta and gtf file for the reference genome build.
 
-`stemcnv-check make-staticdata --genome <hg19|hg38> --snp-array-name <array_platform> [-s <sample_table>] [-c <config_file>]`
+`stemcnv-check make-staticdata [-s <sample_table>] [-c <config_file>]`
 
-To run the analysis:
+To start the analysis, simply invoke the (implied) run command:
 
 `stemcnv-check [run] [-s <sample_table>] [-c <config_file>]`
 
@@ -69,7 +69,7 @@ Install git lfs and pull test data:
 
 Run the test data:
 - `cd test_data`
-- `../stemcnv-check make-staticdata --genome hg19 --snp-array-name testrun` 
+- `../stemcnv-check make-staticdata` 
 - `../stemcnv-check`
 
 ## Output

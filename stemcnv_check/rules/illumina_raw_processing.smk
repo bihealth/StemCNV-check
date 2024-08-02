@@ -52,14 +52,15 @@ rule relink_gencall:
         gtc_link_path=lambda wildcards: os.path.join('..','gtc',get_chip(wildcards,outtype='file'))
     shell:
         'ln -s "{params.gtc_link_path}" "{output}"'
+    
 
-
+#TODO: input functions to get correct fasta (& later correct manifest files)
 rule run_gtc2vcf_vcf:
   input:
     bpm=config['static_data']['bpm_manifest_file'],
     egt=config['static_data']['egt_cluster_file'],
-    genome=config['static_data']['genome_fasta_file'],
-    gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+    genome=get_genome_fasta,
+    gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
   output:
     vcf = pipe(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf")),
     metatxt = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),

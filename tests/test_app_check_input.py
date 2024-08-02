@@ -15,6 +15,8 @@ def minimal_config_block():
             'bpm_manifest_file': 'static/manifest.bpm',
             'egt_cluster_file': 'static/cluster.egt',
         },
+        'genome_version': 'hg38',
+        'array_name': 'example',
         'raw_data_folder': 'rawdata',
         'data_path': 'data',
         'log_path': 'logs',
@@ -32,6 +34,7 @@ def full_config_block(minimal_config_block):
         'array_density_file': 'static/density.bed',
         'array_gaps_file': 'static/gaps.bed',
         'genomeInfo_file': 'static/genome_info.tsv',
+        'vep_cache_dir': '__cache-dir__',
     })
     return block
 

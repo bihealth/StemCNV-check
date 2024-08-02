@@ -126,83 +126,6 @@ rule all:
       os.remove(CONFIGFILE)
 
 
-# if config['use_singularity']:
-#   rule run_gencall:
-#     input:
-#       bpm = config['static_data']['bpm_manifest_file'],
-#       egt = config['static_data']['egt_cluster_file'],
-#       idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}"),
-#     output:
-#       os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
-#     threads: get_tool_resource('GenCall', 'threads')
-#     resources:
-#       runtime=get_tool_resource('GenCall', 'runtime'),
-#       mem_mb=get_tool_resource('GenCall', 'memory'),
-#       partition=get_tool_resource('GenCall', 'partition')
-#     params:
-#       options = get_tool_resource('GenCall', 'cmd-line-params'),
-#       outpath = lambda wildcards: fix_container_path(os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), 'data'),
-#       bpm = fix_container_path(config['static_data']['bpm_manifest_file'],'static'),
-#       egt = fix_container_path(config['static_data']['egt_cluster_file'],'static'),
-#       idat_path= lambda wildcards: fix_container_path(os.path.join(IDAT_INPUT, wildcards.sentrix_name),'rawdata'),
-#       logerr = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall",wildcards.sentrix_name,"error.log"),'logs'),
-#       logout = lambda wildcards: fix_container_path(os.path.join(LOGPATH,"GenCall", wildcards.sentrix_name,"out.log"),'logs')
-#     log:
-#       err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-#       out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log"),
-#     container:
-#         # Not sure if we need to use a specific version here
-#         "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
-#     shell:
-#       '/usr/gitc/iaap/iaap-cli/iaap-cli gencall "{params.bpm}" "{params.egt}" "{params.outpath}" --idat-folder "{params.idat_path}" --output-gtc {params.options} -t {threads} > {params.logout} 2> {params.logerr} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {params.outpath}/_done || exit 1'
-# else:
-#   rule run_gencall:
-#     input:
-#       bpm = config['static_data']['bpm_manifest_file'],
-#       egt = config['static_data']['egt_cluster_file'],
-#       idat_path = os.path.join(IDAT_INPUT, "{sentrix_name}")
-#     output:
-#       os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done")
-#     threads: get_tool_resource('GenCall', 'threads')
-#     resources:
-#       time = get_tool_resource('GenCall', 'runtime'),
-#       mem_mb = get_tool_resource('GenCall', 'memory'),
-#       partition = get_tool_resource('GenCall', 'partition')
-#     params:
-#       options = get_tool_resource('GenCall', 'cmd-line-params'),
-#       outpath = os.path.join(DATAPATH, "gtc", "{sentrix_name}"),
-#     log:
-#       err = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-#       out = os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log")
-#     shell:
-#       # local command version, assume iaap-cli is on PATH
-#       'LANG="en_US.UTF-8" iaap-cli gencall "{input.bpm}" "{input.egt}" "{params.outpath}" --idat-folder "{input.idat_path}" --output-gtc {params.options} -t {threads} > {log.out} 2> {log.err} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {output} || exit 1'
-
-
-# # The iaap-cli will *always* generate filenames derived from the sentrix name & pos
-# def get_chip(wildcards, outtype = 'dir_path'):
-#   """Get the chip name from a sample_id
-#   Values for outtype: 'dirpath' | 'file'"""
-#   chip_name, chip_pos = [(n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id][0]
-#   if outtype == 'dir_path':
-#     return os.path.join(DATAPATH, 'gtc', chip_name)
-#   elif outtype == 'file':
-#     return os.path.join(chip_name, chip_name + '_' + chip_pos + '.gtc')
-# 
-# #Note:
-# # the *.gtc output files from gencall will *always* match the idat_file names
-# # --> maybe better to switch from Chip_Name & Chip_Pos to Folder_Name & IDAT_Name ?!
-# rule relink_gencall:
-#   input:
-#     lambda wildcards: os.path.join(get_chip(wildcards), '_done')
-#   output:
-#     os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
-#   params:
-#     gtc_link_path = lambda wildcards: os.path.join('..','gtc', get_chip(wildcards, outtype='file'))
-#   shell:
-#     'ln -s "{params.gtc_link_path}" "{output}"'
-#   
-
 rule run_gtc2vcf_tsv:
   input:
     bpm=config['static_data']['bpm_manifest_file'],
@@ -227,83 +150,60 @@ rule run_gtc2vcf_tsv:
   shell:
     'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
 
-# rule run_gtc2vcf_vcf:
+
+# rule run_filter_tsv:
 #   input:
-#     bpm=config['static_data']['bpm_manifest_file'],
-#     egt=config['static_data']['egt_cluster_file'],
-#     genome=config['static_data']['genome_fasta_file'],
-#     gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc")
+#     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
 #   output:
-#     vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
-#     metatxt = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
-#   threads: get_tool_resource('gtc2vcf', 'threads')
+#     tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
+#   threads: get_tool_resource('filter_tsv', 'threads')
 #   resources:
-#     runtime=get_tool_resource('gtc2vcf', 'runtime'),
-#     mem_mb=get_tool_resource('gtc2vcf', 'memory'),
-#     partition=get_tool_resource('gtc2vcf', 'partition')
-#   params:
-#     options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
-#     csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
+#     runtime=get_tool_resource('filter_tsv', 'runtime'),
+#     mem_mb=get_tool_resource('filter_tsv', 'memory'),
+#     partition=get_tool_resource('filter_tsv', 'partition')
 #   log:
-#     err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
-#     out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
+#     err=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
+#     out=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
 #   conda:
-#     importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
-#   shell: 'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} -o {output.vcf} {input.gtc} > {log.out} 2> {log.err}'
-
-rule run_filter_tsv:
-  input:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv")
-  output:
-    tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.filtered-data-{filter}.tsv")
-  threads: get_tool_resource('filter_tsv', 'threads')
-  resources:
-    runtime=get_tool_resource('filter_tsv', 'runtime'),
-    mem_mb=get_tool_resource('filter_tsv', 'memory'),
-    partition=get_tool_resource('filter_tsv', 'partition')
-  log:
-    err=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.error.log"),
-    out=os.path.join(LOGPATH, "filter_tsv", "{sample_id}", "{filter}.out.log")
-  conda:
-    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-  shell:
-    'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} {CONFIGFILE} > {log.out} 2> {log.err}'
-
-
-rule run_PennCNV:
-  input:
-    tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
-    pfb=config['static_data']['penncnv_pfb_file'],
-    gcmodel=config['static_data']['penncnv_GCmodel_file']
-  output:
-    tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
-    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
-  threads: get_tool_resource('PennCNV','threads')
-  resources:
-    runtime=get_tool_resource('PennCNV','runtime'),
-    mem_mb=get_tool_resource('PennCNV','memory'),
-    partition=get_tool_resource('PennCNV','partition')
-  wildcard_constraints:
-    chr='chrx|chry|auto'
-  params:
-    filter=get_tool_filter_settings('PennCNV'),
-    chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
-    #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
-    do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
-    snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
-    tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
-    tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
-    pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
-    gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
-    logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
-    logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
-  log:
-    err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
-    out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
-  container:
-    "docker://genomicslab/penncnv"
-  shell:
-    '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
+#     importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
+#   shell:
+#     'Rscript {SNAKEDIR}/scripts/filter_data.R -f {wildcards.filter} {input.tsv} {output.tsv} {CONFIGFILE} > {log.out} 2> {log.err}'
+# 
+# 
+# rule run_PennCNV:
+#   input:
+#     tsv=os.path.join(DATAPATH,"{sample_id}","{{sample_id}}.filtered-data-{0}.tsv".format(get_tool_filter_settings('PennCNV'))),
+#     pfb=config['static_data']['penncnv_pfb_file'],
+#     gcmodel=config['static_data']['penncnv_GCmodel_file']
+#   output:
+#     tsv=os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv-{chr}.tsv"),
+#     err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log")
+#   threads: get_tool_resource('PennCNV','threads')
+#   resources:
+#     runtime=get_tool_resource('PennCNV','runtime'),
+#     mem_mb=get_tool_resource('PennCNV','memory'),
+#     partition=get_tool_resource('PennCNV','partition')
+#   wildcard_constraints:
+#     chr='chrx|chry|auto'
+#   params:
+#     filter=get_tool_filter_settings('PennCNV'),
+#     chrom=lambda wildcards: '' if wildcards.chr == 'auto' else '-' + wildcards.chr,
+#     #Male sex chromosomes can't have LOH, but PennCNV does not exclude it if run with -loh
+#     do_loh=lambda wildcards: '' if (wildcards.chr != 'auto' and get_ref_id(wildcards,True)[2] == 'm') else '-loh',
+#     snakedir = fix_container_path(SNAKEDIR, 'snakedir'),
+#     tsvout=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".penncnv-"+wildcards.chr+".tsv"),'data'),
+#     tsvin=lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, wildcards.sample_id+".filtered-data-{}.tsv".format(get_tool_filter_settings('PennCNV'))),'data'),
+#     pfb=fix_container_path(config['static_data']['penncnv_pfb_file'],'static'),
+#     gcmodel=fix_container_path(config['static_data']['penncnv_GCmodel_file'],'static'),
+#     logerr=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".error.log"),'logs'),
+#     logout=lambda wildcards:fix_container_path(os.path.join(LOGPATH,"PennCNV", wildcards.sample_id, wildcards.chr+".out.log"),'logs')
+#   log:
+#     err=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.error.log"),
+#     out=os.path.join(LOGPATH,"PennCNV","{sample_id}","{chr}.out.log")
+#   container:
+#     "docker://genomicslab/penncnv"
+#   shell:
+#     '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence -hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
 
 
 rule run_CBS:

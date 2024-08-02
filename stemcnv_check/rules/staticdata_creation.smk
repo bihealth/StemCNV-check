@@ -163,28 +163,29 @@ write_bed(density, '{output.density}')
 EOF
 """
 
-rule gencode_v45_gtf_download:
-    output: config['genome_gtf_file']
-    # Source gtf GRCh38:
-    params:
-        ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
-        release_path = "gencode.v45.basic.annotation.gtf.gz" if GENOME == "hg38" else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
-    shell:
-        """
-        wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
-        gunzip {output}.gz
-        """
+# rule gencode_v45_gtf_download:
+#     output: config['genome_gtf_file']
+#     # Source gtf GRCh38:
+#     params:
+#         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
+#         release_path = "gencode.v45.basic.annotation.gtf.gz" if GENOME == "hg38" else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
+#     shell:
+#         """
+#         wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
+#         gunzip {output}.gz
+#         """
 
-rule gencode_v45_genomeFasta_download:
-    output: config['genome_fasta_file']
-    # Source fasta GRCh38:
-    params:
-        ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
-        release_path = "GRCh38.p14.genome.fa.gz" if GENOME == "hg38" else "GRCh37_mapping/GRCh37.primary_assembly.genome.fa.gz"
-    shell:
-        """
-        wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
-        """
+# #FIXME: the gencode fa.gz files are gzip not bgzip compressed
+# rule gencode_v45_genomeFasta_download:
+#     output: config['genome_fasta_file']
+#     # Source fasta GRCh38:
+#     params:
+#         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
+#         release_path = "GRCh38.p14.genome.fa.gz" if GENOME == "hg38" else "GRCh37_mapping/GRCh37.primary_assembly.genome.fa.gz"
+#     shell:
+#         """
+#         wget {params.ftp_base}/{params.release_path} -O {output} 2> /dev/null
+#         """
 
 rule ucsc_goldenpath_download:
     output: temp("{DOWNLOAD_DIR}/{genome}.{filename}.txt")
@@ -238,14 +239,25 @@ write_tsv(chrominfo, "{output}")
 EOF
         """
 
+rule download_vep_fasta:
+    output:
+        os.path.join(config['vep_fasta_path'], 'homo_sapiens', '112_{genome}', 'Homo_sapiens.{genome}.dna.toplevel.fa.gz')
+    conda:
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","vep-annotation.yaml")
+    params:
+        fasta_path = config['vep_fasta_path']
+    shell:
+        "vep_install -a f -s homo_sapiens -y {wildcards.genome} -c {params.fasta_path}"
 
 rule download_vep_cache:
-    output: os.path.join(config['vep_cache_path'], '.{genome}.done')
+    output:
+        done = os.path.join(config['vep_cache_path'], '.{genome}.done'),
+        folder = directory(os.path.join(config['vep_cache_path'], 'homo_sapiens', '112_{genome}'))
     conda:
         importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","vep-annotation.yaml")
     params:
         cache_path = config['vep_cache_path']
     shell:
-        # -r {params.cache_path}/plugins 
+        # -r {params.cache_path}/plugins; check if needed or if it follows -c
         # -a f > automatically get ensembl genome fasta; can replace fasta & gtf
-        "vep_install -a cp -g DosageSensivity -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output}"
+        "vep_install -a cp -g DosageSensitivity -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output.done}"

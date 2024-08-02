@@ -22,6 +22,19 @@ static_data:
     # tabular files with chromosome and gband details, derived form UCSC information
     genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
 
+global_settings:
+    # By default all conda environments and apptainer images are stored to a common cache
+    # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
+    cache_dir: '~/.stem-cnv-check'
+    # fasta files can be compressed, but *only* with bgzip!
+    # The default will let VEP download appropriate files,
+    # but you can also specify a path if you already have files on the system
+    hg19_genome_fasta: '__use-vep__'
+    hg38_genome_fasta: '__use-vep__'
+
+genome_version: hg38   #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
+array_name: ExampleArray  #REQUIRED
+
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
 raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
@@ -356,6 +369,10 @@ tools:
   gtc2vcf:
     cmd-line-params: ""
     memory: 10000 # "10000MB"
+    runtime: "4h"
+  VEP:
+    threads: 2  
+    memory: 10000 # "8000MB"
     runtime: "4h"
   knitr:
     memory: 30000 # "30000MB"

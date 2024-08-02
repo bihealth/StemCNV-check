@@ -52,3 +52,13 @@ def get_tool_resource(tool ,resource):
       return config['tools'][tool][resource]
     else:
       return config['tools']['__default__'][resource]
+
+def get_genome_fasta(wildcards):
+  """Get the correct genome fasta file"""
+  # #FIXME: future    
+  # chip = get_sample_info(wildcards.sample_id)['array_name']
+  # genome = config['array_definitions'][chip]['genome_version']
+  if config['genome_version'] in ('hg38', 'GRCh38'):
+    return config['global_settings']['hg38_genome_fasta']
+  else:
+    return config['global_settings']['hg19_genome_fasta']

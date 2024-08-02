@@ -17,7 +17,9 @@ static_data:
     array_density_file: str
     array_gaps_file: str
     genomeInfo_file: str
-    VEP_cache_path: str
+
+genome_version: str_(hg38|GRCh38|hg19|GRCh37)
+array_name: str
 
 raw_data_folder: str
 data_path: str
@@ -60,7 +62,7 @@ settings:
 
   VEP_annotation:
     enabled: bool
-    mode: str_(offline-cache|database)'
+    mode: str_(offline-cache|database)
     VEP_cache_path: str # '__default__', '__cache-dir__' or path
     
   CNV_processing:

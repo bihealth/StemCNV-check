@@ -13,9 +13,9 @@ def run_stemcnv_check_workflow(args):
     with open(args.config) as f:
         yaml = ruamel_yaml.YAML(typ='safe')
         config = yaml.load(f)
-    default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
-    with default_config.open() as f:
-        DEF_CONFIG = yaml.load(f)
+    config_def_file = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
+    with config_def_file.open() as f:
+        default_config = yaml.load(f)
 
     argv = [
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
@@ -39,10 +39,19 @@ def run_stemcnv_check_workflow(args):
     # Some disc space could be cleared by using these options:
     # --cleanup-containers
     # --conda-cleanup-envs
-    # Use this to overwrite the place-holder in the given config
+
+    # Define / overwrite place-holder values for VEP downloaded data
     vep_cache_path = get_vep_cache_path(
-        config_extract(('static_data', 'VEP_cache_path'), config, DEF_CONFIG),
+        config_extract(('settings', 'VEP_annotation', 'VEP_cache_path'), config, default_config),
         cache_path
+    )
+    hg19_fasta = config_extract(('global_settings', 'hg19_genome_fasta'), config, default_config).replace(
+        '__use-vep__',
+        os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', '112_GRCh37', 'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz')
+    )
+    hg38_fasta = config_extract(('global_settings', 'hg38_genome_fasta'), config, default_config).replace(
+        '__use-vep__',
+        os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', '112_GRCh38', 'Homo_sapiens.GRCh38.dna.toplevel.fa.gz')
     )
 
     basedir = args.directory if args.directory else os.getcwd()
@@ -53,8 +62,8 @@ def run_stemcnv_check_workflow(args):
         f'basedir={basedir}',
         f'configfile={args.config}',
         f'target={args.target}',
-        f'genome_build={args.genome}',
-        f'static_data={{"VEP_cache_path":{vep_cache_path}}}'
+        f'use_vep_cache={vep_cache_path}',
+        f"global_settings='{{hg19_genome_fasta: {hg19_fasta}, hg38_genome_fasta: {hg38_fasta}}}'"
     ]
     #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:

@@ -46,8 +46,8 @@ def setup_argparse():
     group_setupfiles.add_argument('--overwrite', action='store_true', help="Allow overwriting of existing files")
 
     group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
-    group_static.add_argument('--genome', default='hg38', choices=('hg19', 'hg38'), help="Genome build to use (UCSC names). Default: %(default)s")
-    group_static.add_argument('--snp-array-name', default=None, help="A name or identifier string for the snp-array, can used in filesnames. No Default.")
+    # group_static.add_argument('--genome', default='hg38', choices=('hg19', 'hg38'), help="Genome build to use (UCSC names). Default: %(default)s")
+    # group_static.add_argument('--snp-array-name', default=None, help="A name or identifier string for the snp-array, can used in filesnames. No Default.")
     group_static.add_argument('--edit-config-inplace', action='store_true', help = "Edit the config file in place with updated static-data entries")
     group_static.add_argument('--penncnv-pfb-file', default='static-data/PennCNV-PFB_{genome}{array}.pfb',
                                help="Filename for generated PFB file. Default: %(default)s")
@@ -67,11 +67,11 @@ def setup_argparse():
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
 
     group_snake.add_argument('--cache-path', default=None,
-                             help="Override auto-selection of a cache path to a specific directory"
+                             help="Override auto-selection of the cache path to a specific directory."
                              )
-    group_snake.add_argument('--cache', default='auto', choices=['auto', 'install-dir', 'home', 'none'],
-                             help="Selection of cache directory. By default (auto) try install-dir, then home, then none."
-                                  " The cache is used for workflow created metadata (conda envs, singularity images, VEP data).")
+    group_snake.add_argument('--no-cache', action='store_true',
+                             help="Do not use the a chache directory. The cache is used for workflow created metadata "
+                             "(conda envs, singularity images, and VEP data). The default cache path is ~/.")
     
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'cnv-vcf', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-probe-data'),
@@ -108,14 +108,14 @@ def main(argv=None):
     elif args.action == 'setup-files':
         ret = setup_control_files(args)
     elif args.action == 'make-staticdata':
-        args.snp_array_name = ('_' + args.snp_array_name) if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
-        args.penncnv_pfb_file = args.penncnv_pfb_file.format(genome=args.genome, array=args.snp_array_name)
-        args.penncnv_gcmodel_file = args.penncnv_gcmodel_file.format(genome=args.genome, array=args.snp_array_name)
-        args.array_density_file = args.array_density_file.format(genome=args.genome, array=args.snp_array_name)
-        args.array_gaps_file = args.array_gaps_file.format(genome=args.genome, array=args.snp_array_name)
-        args.genomeinfo_file = args.genomeinfo_file.format(genome=args.genome)
-        args.genome_gtf_file = args.genome_gtf_file.format(genome=args.genome)
-        args.genome_fasta_file = args.genome_fasta_file.format(genome=args.genome)
+        # args.snp_array_name = ('_' + args.snp_array_name) if args.snp_array_name and not args.snp_array_name[0] in ".-_" else ""
+        # args.penncnv_pfb_file = args.penncnv_pfb_file.format(genome=args.genome, array=args.snp_array_name)
+        # args.penncnv_gcmodel_file = args.penncnv_gcmodel_file.format(genome=args.genome, array=args.snp_array_name)
+        # args.array_density_file = args.array_density_file.format(genome=args.genome, array=args.snp_array_name)
+        # args.array_gaps_file = args.array_gaps_file.format(genome=args.genome, array=args.snp_array_name)
+        # args.genomeinfo_file = args.genomeinfo_file.format(genome=args.genome)
+        # args.genome_gtf_file = args.genome_gtf_file.format(genome=args.genome)
+        # args.genome_fasta_file = args.genome_fasta_file.format(genome=args.genome)
         if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = create_missing_staticdata(args)

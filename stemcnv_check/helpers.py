@@ -172,25 +172,28 @@ def get_cache_dir(args):
             except PermissionError:
                 logging.debug(f"Could not create cache in {path}")
                 return None
-    if args.cache != 'none' and args.cache_path:
+    if not args.no_cache and args.cache_path:
         # Check if user supplied path is usable
         cache_path = check_path_usable(pathlib.Path(args.cache_path))
         if cache_path:
             return cache_path
         else:
             logging.warning(f"Could not use cache directory '{args.cache_path}'")
-    elif args.cache != 'none':
-        auto_paths = [('install-dir', importlib.resources.files(STEM_CNV_CHECK).joinpath('.stemcnv-check-cache')),
-                      ('home', pathlib.Path('~/.stemcnv-check-cache').expanduser())]
+    elif not args.no_cache:
+        auto_paths = [
+            #('install-dir', importlib.resources.files(STEM_CNV_CHECK).joinpath('.stemcnv-check-cache')),
+            ('home', pathlib.Path('~/.stemcnv-check-cache').expanduser())
+        ]
         for name, path in auto_paths:
-            if args.cache != 'auto' and args.cache != name:
-                continue
             cache_path = check_path_usable(path)
             if cache_path:
                 return cache_path
+    else:
+        logging.info("No cache directory will be used, conda and docker images will be stored in snakemake project directory")
+        return None
 
     # Nothing worked, return None & don't use specific cache
-    logging.info("No cache directory can be used, conda and docker images will be stored in snakemake project directory")
+    logging.info("Cache directory is not writable! Conda and docker images will be stored in snakemake project directory")
     return None
 
 
@@ -202,7 +205,7 @@ def get_vep_cache_path(config_entry, cache_path):
     # Use same location as cache for conda & docker from workflow
     if config_entry == '__cache-dir__':
         if not cache_path:
-            logging.info('No StemCNV-check cache defined, using default cache path for ~/.vep')
+            logging.info('No StemCNV-check cache defined, falling back to default VEP cache path: ~/.vep')
         else:
             vep_cache_path = os.path.join(cache_path, 'vep')
             os.makedirs(vep_cache_path, exist_ok=True)

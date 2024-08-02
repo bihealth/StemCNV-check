@@ -15,35 +15,37 @@ rule filter_snp_vcf:
   log:
     err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
     #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
-  conda:
-    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-  script:
-    '../scripts/filter_snp_vcf.R'
+  # conda:
+  #   importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
+  # script:
+  #   '../scripts/filter_snp_vcf.R'
+#FIXME: wrong, this was the wrong fasta file
 # vcfpy changes the vcf too much, i.e.
 # - add new contigs to header
 # - merges variants at same position into multi-allelic
-  # conda:
-  #   importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
-  # script:
-  #   '../scripts/filter_snp_vcf.py'
+  conda:
+    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
+  script:
+    '../scripts/filter_snp_vcf.py'
     
 
 rule annotate_snp_vcf:
     input:
       vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf"),
-      genomefasta =  config['static_data']['genome_fasta_file']
+      genomefasta = get_genome_fasta
     output: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz")
     threads: get_tool_resource('annotate_snp_vcf', 'threads')
     resources:
+        threads=get_tool_resource('annotate_snp_vcf', 'threads'),
         runtime=get_tool_resource('annotate_snp_vcf', 'runtime'),
         mem_mb=get_tool_resource('annotate_snp_vcf', 'memory'),
         partition=get_tool_resource('annotate_snp_vcf', 'partition')
     log:
         err=os.path.join(LOGPATH, "annotate_snp_vcf", "{sample_id}", "{filter}.error.log"),
-        #out=os.path.join(LOGPATH, "annotate_snp_vcf", "{sample_id}", "{filter}.out.log")
+        out=os.path.join(LOGPATH, "annotate_snp_vcf", "{sample_id}", "{filter}.out.log")
     params:
-        genomeversion = 'GRCh38' if config['genome_build'] == 'hg38' else 'GRCh37',
-        vep_cache_path = config['static_data']['VEP_cache_path'],
+        genomeversion = 'GRCh38' if config['genome_version'] in ('hg38', 'GRCh38') else 'GRCh37',
+        vep_cache_path = config['use_vep_cache']
     conda:
       importlib.resources.files(STEM_CNV_CHECK).joinpath("envs", "vep-annotation.yaml")
     shell:
@@ -54,38 +56,27 @@ rule annotate_snp_vcf:
         '--compress_output bgzip '
         '--vcf '
         '--force_overwrite '
+        '--no_stats '
+        '--warning_file {log.err} '
+        '--skipped_variants_file {log.out} '
         '--assembly {params.genomeversion} '
-
+        '--forks {resources.threads} '
         '--cache '
-        #'--cache_version 112 '
         '--dir_cache {params.vep_cache_path} '
-        #> possibly useful to figure out protein coverage
-        '--total_length '
-        #'--numbers' # would add EXON,INTRON fields
+        ## Annotation options
+        '--total_length ' 
         # Gene & protein annotation
         '--gencode_basic ' #> limit to gencode transcripts
         '--symbol ' #> add gene symbol
         '--terms SO ' # how to write/format/annotate the consequence
         '--hgvs ' #> add HGVS nomenclature (protrein changes)
-        # maybe: '--no_esacpe' applies to HGVS
         '--pick ' #> pick the most severe consequence (& gene) per variant
-        
-        #> can check for existing annotations from ClinVar, COSMIC etc
-        '--gene_phenotype '
         # will query databases for existing annotation at the same position
+        # includes existing annotations from ClinVar, COSMIC etc
         '--check_existing --no_check_alleles '
-        '--af ' # af only maybe useful?
-        ##> probably overkill (enhancers/promotors etc 
-        #'--regulatory'
-        # Select content of CSQ, reduced need to drop stuff after
-        # The first 3 are only for tetsing / confirmation
-        # Probably remove: Feature,Feature_type
-        # Removed: Amino_acids,Codons
-        # How-to-type?: cDNA_position,CDS_position,Protein_position
-        '--fields "Uploaded_variation,Location,Allele,Gene,SYMBOL,STRAND,Feature,Feature_type,Consequence,cDNA_position,CDS_position,Protein_position,Extra,HGVSc,HGVSp,GENE_PHENO,Existing_variation,CLIN_SIG,SOMATIC,PHENO,AF" '
-        # # Extra scores for proten changes (from SNPs)
-        # #> probably not needed for array, unless some probes are on 'unknown' positions
-        # '--polyphen b'
-        # '--sift b'
-        # # plugins: CADD, revel, AlphaMisssense
-        ' 2> {log.err}'
+        '--af ' #  global allele frequency (AF) from 1000 Genomes Phase 3 data 
+        '--pubmed '
+        # Select content of CSQ:
+        '--fields "Gene,SYMBOL,STRAND,Consequence,cDNA_position,CDS_position,Protein_position,HGVSc,HGVSp,Existing_variation,CLIN_SIG,SOMATIC,PHENO,AF,PUBMED" '
+
+        ' >> {log.out} 2>> {log.err}'

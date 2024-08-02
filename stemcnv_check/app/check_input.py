@@ -121,11 +121,12 @@ def check_config(config_file, sample_table_file, required_only=False):
             raise FileNotFoundError(f"static_data file '{req}' does not exist." + infostr)
 
     # Folders: log, data, raw-input
-    for req in ('data_path', 'log_path', 'raw_data_folder'):
+    # and other settings
+    for req in ('data_path', 'log_path', 'raw_data_folder', 'genome_version', 'array_name'):
         try:
             if not config[req]:
                 raise ConfigValueError(f"Required config entry is missing: {req}")
-            if not os.path.isdir(config[req]):
+            if req not in ('genome_version', 'array_name') and not os.path.isdir(config[req]):
                 warn_str = f"Entry for required setting '{req}' is not an existing folder ({config[req]})! Creating it now."
                 logging.warning(warn_str)
                 os.makedirs(config[req], exist_ok=False)
