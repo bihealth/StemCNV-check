@@ -5,29 +5,29 @@ from stemcnv_check import STEM_CNV_CHECK
 
 
 rule filter_snp_vcf:
-  input: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf")
-  output: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf")
-  threads: get_tool_resource('filter_snp_vcf', 'threads')
-  resources:
-    runtime=get_tool_resource('filter_snp_vcf', 'runtime'),
-    mem_mb=get_tool_resource('filter_snp_vcf', 'memory'),
-    partition=get_tool_resource('filter_snp_vcf', 'partition')
-  log:
-    err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
-    #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
-  # conda:
-  #   importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-  # script:
-  #   '../scripts/filter_snp_vcf.R'
+    input: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf")
+    output: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf")
+    threads: get_tool_resource('filter_snp_vcf', 'threads')
+    resources:
+        runtime=get_tool_resource('filter_snp_vcf', 'runtime'),
+        mem_mb=get_tool_resource('filter_snp_vcf', 'memory'),
+        partition=get_tool_resource('filter_snp_vcf', 'partition')
+    log:
+        err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
+        #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
+    # conda:
+    #     importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
+    # script:
+    #     '../scripts/filter_snp_vcf.R'
 #FIXME: wrong, this was the wrong fasta file
 # vcfpy changes the vcf too much, i.e.
 # - add new contigs to header
 # - merges variants at same position into multi-allelic
-  conda:
-    importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
-  script:
-    '../scripts/filter_snp_vcf.py'
-    
+    conda:
+        importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","python-vcf.yaml")
+    script:
+        '../scripts/filter_snp_vcf.py'
+        
 
 rule annotate_snp_vcf:
     input:
@@ -60,7 +60,7 @@ rule annotate_snp_vcf:
         '--warning_file {log.err} '
         '--skipped_variants_file {log.out} '
         '--assembly {params.genomeversion} '
-        '--forks {resources.threads} '
+        '--fork {resources.threads} '
         '--cache '
         '--dir_cache {params.vep_cache_path} '
         ## Annotation options
@@ -69,7 +69,7 @@ rule annotate_snp_vcf:
         '--gencode_basic ' #> limit to gencode transcripts
         '--symbol ' #> add gene symbol
         '--terms SO ' # how to write/format/annotate the consequence
-        '--hgvs ' #> add HGVS nomenclature (protrein changes)
+        '--hgvs ' #> add HGVS nomenclature (protein changes)
         '--pick ' #> pick the most severe consequence (& gene) per variant
         # will query databases for existing annotation at the same position
         # includes existing annotations from ClinVar, COSMIC etc

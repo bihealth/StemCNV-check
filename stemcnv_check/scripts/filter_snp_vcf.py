@@ -81,7 +81,6 @@ def filter_snp_vcf(filterset, input='/dev/stdin', output='/dev/stdout'):
                     gc_scores = (c.data.get('IGC', 0) for c in record.calls)
                     if any(score < filterset['GC'][1] for score in gc_scores):
                         record.add_filter(filterset['GC'][0])
-        
                 # Assume records are sorted by position
                 # If same position, wait (recored is saved in record_set)
                 if (record.POS, record.CHROM) == prev_pos:
@@ -92,6 +91,8 @@ def filter_snp_vcf(filterset, input='/dev/stdin', output='/dev/stdout'):
                         apply_uniq_pos_filter(record_set)
                     logger.debug(f"Writing for {record_set[0].CHROM}:{record_set[0].POS} with {len(record_set)} records")
                     for rec in record_set:
+                        if not rec.FILTER:
+                            rec.add_filter('PASS')
                         writer.write_record(rec)
                     record_set = []
                 # Add current record to set (same pos or just emptied)

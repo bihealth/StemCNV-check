@@ -82,6 +82,17 @@ settings:
   PennCNV:
     # Specific filter setting for PennCNV, '__default__' uses `default-filter-set
     filter-settings: '__default__'
+    enable_LOH_calls: True
+    # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
+    merge.distance: 500
+    # Prefiltering of calls is done (after merging of nearby calls) as follows:
+    # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+    filter.minprobes: 5
+    filter.minlength: 1000
+    filter.mindensity.Mb: 10 #snps per Mb
+    
+    
+    
 
   CBS:
     # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8

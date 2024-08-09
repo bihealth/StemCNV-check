@@ -60,29 +60,29 @@ read_raw <- function(filename) {
                )
 }
 
-## PennCNV
-read_PennCNV <- function(filename) {
-	read.table(filename, sep='', header = F, fill=T,
-						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')) %>%
-		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
-		dplyr::rename(start = start_pos, end = end_pos, sample_id = input, n_snp_probes = numsnp) %>%
-		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
-			   across(c(4,10), ~as.numeric(.)),
-			   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-			   length = str_remove_all(length, ',') %>% as.integer(),
-			   snp.density = n_snp_probes / length * 1e6,
-			   copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
-			   hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
-			   CNV_type = ifelse(copynumber < 2, 'loss', NA),
-			   CNV_type = ifelse(copynumber == 2, 'LOH', CNV_type),
-			   CNV_type = ifelse(copynumber > 2, 'gain', CNV_type),
-			   CNV_type = as.character(CNV_type),
-			   CNV_caller = 'PennCNV',
-			   ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
-			   # basename can't handly empty input ...
-			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
-		)
-}
+# ## PennCNV
+# read_PennCNV <- function(filename) {
+# 	read.table(filename, sep='', header = F, fill=T,
+# 						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')) %>%
+# 		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
+# 		dplyr::rename(start = start_pos, end = end_pos, sample_id = input, n_snp_probes = numsnp) %>%
+# 		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
+# 			   across(c(4,10), ~as.numeric(.)),
+# 			   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
+# 			   length = str_remove_all(length, ',') %>% as.integer(),
+# 			   snp.density = n_snp_probes / length * 1e6,
+# 			   copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
+# 			   hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
+# 			   CNV_type = ifelse(copynumber < 2, 'loss', NA),
+# 			   CNV_type = ifelse(copynumber == 2, 'LOH', CNV_type),
+# 			   CNV_type = ifelse(copynumber > 2, 'gain', CNV_type),
+# 			   CNV_type = as.character(CNV_type),
+# 			   CNV_caller = 'PennCNV',
+# 			   ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
+# 			   # basename can't handly empty input ...
+# 			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
+# 		)
+# }
 
 ## CBS
 read_CBS <- function(filename) {
