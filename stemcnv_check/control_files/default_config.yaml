@@ -59,6 +59,7 @@ settings:
     # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
     # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes.
     #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
+    # Finally probes in one of the pseudo-autosomal regions are also always filtered
     # We recommend to use these filter settings:
     extended:
         GenTrainScore: 0.7
@@ -90,12 +91,9 @@ settings:
     filter.minprobes: 5
     filter.minlength: 1000
     filter.mindensity.Mb: 10 #snps per Mb
-    
-    
-    
 
   CBS:
-    # Filters to use on SNP probes: basic|highGT|highGC|full [=highGT+GC]; high := >0.8
+    # Specific filter setting for CBS, '__default__' uses `default-filter-set
     filter-settings: '__default__'
     # SD.undo split value for CBS
     SDundo: 1
@@ -145,6 +143,7 @@ settings:
       min.snp.density: 10 #snps per Mb
       # SNP probe count (total and unique positions) is re-calculated for all CNV calls (per tool and after merging) with a singular filter-set
       filter-settings: '__default__'
+      
       ## Calls from multiple tools are combined and combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
       # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
@@ -240,6 +239,10 @@ settings:
     include_states: ['gain', 'loss', 'LOH']
     # Use this to create distinct vcf files, for i.e. different CNV types. Added to filename before `.vcf`
     name_addition: ''
+
+  vcf_output:
+    # Which chromosome style to use in the vcf file ("1" vs "chr1")  
+    chrom_style: 'UCSC' # "__keep__", UCSC, or NCBI / Ensembl
 
   # Only probes from these chromosomes will be used, chromosomes will be reported in this format
   # Note: the pseudo-autosomal region is often coded as (chr)XY on Illumina arrays, and will be ignored by default
@@ -382,7 +385,7 @@ tools:
     memory: 10000 # "10000MB"
     runtime: "4h"
   VEP:
-    threads: 2  
+    threads: 4
     memory: 10000 # "8000MB"
     runtime: "4h"
   knitr:

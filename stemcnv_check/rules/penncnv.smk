@@ -5,7 +5,9 @@ def get_penncnv_input_vcf(wildcards):
     return os.path.join(
         DATAPATH, 
         wildcards.sample_id, 
-        wildcards.sample_id+".annotated-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf.gz"
+        wildcards.sample_id+".processed-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf"
+        # VEP still has issues; skip for now
+        # wildcards.sample_id+".annotated-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf.gz"
     )
 
 
@@ -34,9 +36,10 @@ rule prep_PennCNV_input:
         importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","vembrane.yaml")
     params:
         filter = get_tool_filter_settings('PennCNV')
+    #TODO: need to remove pseudo-autosomal regions form X & Y
     shell:
         'vembrane filter \'"PASS" in FILTER\' {input.vcf} 2> {log}|'
-        'vembrane table --header \'Name, Chr, Position, Log R Ratio, B Allele Freq\''
+        'vembrane table --header \'Name, Chr, Position, B Allele Freq, Log R Ratio\''
         ' --long \'ID, CHROM, POS, FORMAT["BAF"][SAMPLE], FORMAT["LRR"][SAMPLE]\' > {output.tsv} 2>> {log}'
 
 
@@ -79,7 +82,8 @@ rule run_PennCNV:
     shell:
         '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence '
         '-hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} '
-        '{params.sexfile}  {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
+        # {params.sexfile} 
+        '{params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
 
 
 def get_penncnv_output(wildcards, files = 'tsv'):

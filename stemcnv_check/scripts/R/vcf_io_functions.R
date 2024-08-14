@@ -76,13 +76,14 @@ get_fix_section <- function(tb){
         as.matrix()
 }
 
-vcfR_to_tibble <- function(vcf){
+vcfR_to_tibble <- function(vcf, info_fields = NULL, format_fields = NULL){
     #Note: this will fail if format fields are not properly annotated in header
-    listobj <- vcfR2tidy(vcf, alleles = FALSE, gt_column_prepend = '', single_frame = TRUE)
+    listobj <- vcfR2tidy(vcf, alleles = FALSE, gt_column_prepend = '', single_frame = TRUE,
+                         info_fields = info_fields, format_fields = format_fields)
     listobj$dat %>% dplyr::rename(sample_id = Indiv)       
 }
 
-get_gt_section <- function(tb, snp_vcf){
+get_gt_section <- function(tb, snp_vcf_gr){
     # Return a matrix/df with the following columns:
     # FORMAT, sample1, ...
     
@@ -94,9 +95,7 @@ get_gt_section <- function(tb, snp_vcf){
     # FORMAT keys: GT, CN, TOOL (str desc), LRR (median)
     # Future: BAF (no. of clusters?)
     
-    median_lrr <- vcfR_to_tibble(snp_vcf) %>%
-        as_granges(seqnames = CHROM, start = POS, width = 1) %>%
-        plyranges::filter(FILTER == 'PASS') %>%
+    median_lrr <- snp_vcf_gr %>%
         plyranges::select(LRR) %>%
         join_overlap_inner(as_granges(tb)) %>%
         as_tibble() %>%

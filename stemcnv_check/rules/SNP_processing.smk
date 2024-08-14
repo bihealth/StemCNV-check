@@ -34,12 +34,12 @@ rule annotate_snp_vcf:
       vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-SNP-data.{filter}-filter.vcf"),
       genomefasta = get_genome_fasta
     output: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz")
-    threads: get_tool_resource('annotate_snp_vcf', 'threads')
+    threads: get_tool_resource('VEP', 'threads')
     resources:
-        threads=get_tool_resource('annotate_snp_vcf', 'threads'),
-        runtime=get_tool_resource('annotate_snp_vcf', 'runtime'),
-        mem_mb=get_tool_resource('annotate_snp_vcf', 'memory'),
-        partition=get_tool_resource('annotate_snp_vcf', 'partition')
+        threads=get_tool_resource('VEP', 'threads'),
+        runtime=get_tool_resource('VEP', 'runtime'),
+        mem_mb=get_tool_resource('VEP', 'memory'),
+        partition=get_tool_resource('VEP', 'partition')
     log:
         err=os.path.join(LOGPATH, "annotate_snp_vcf", "{sample_id}", "{filter}.error.log"),
         out=os.path.join(LOGPATH, "annotate_snp_vcf", "{sample_id}", "{filter}.out.log")
@@ -51,9 +51,11 @@ rule annotate_snp_vcf:
     shell:
         'vep --verbose ' 
         '--fasta {input.genomefasta} ' # only needed for HGVS
+        # TODO: maye omitting this helps w/ pipe issues?
         '--input_file {input.vcf} '
         '--output_file {output} '
         '--compress_output bgzip '
+        '--format vcf ' #might help with pipe auto-detection issues
         '--vcf '
         '--force_overwrite '
         '--no_stats '

@@ -27,6 +27,8 @@ def get_filter_settings(filtersetname, config):
             desc += f', but keep one per position with {nonuniq}'
         filterset['nonuniq'] = ('NON-UNIQ', nonuniq, desc)
 
+    filterset['pseudoauto'] = ('PSEUDO-AUTOSOMAL', None, 'Remove records in pseudoautosomal regions')
+
     return filterset
 
 
@@ -52,6 +54,27 @@ def apply_uniq_pos_filter(record_set):
             continue
         rec.add_filter(filterset['nonuniq'][0])
 
+PSEUDOAUTO_REGIONS = {
+    "hg38": {
+        'X': [(10001, 2781479), (155701383, 156030895)],
+        'Y': [(10001, 2781479), (56887903, 57217415)],
+    },
+    "hg19": {
+        'X': [(60001, 2699520), (88484850, 92327352), (154931044, 155260560)],
+        'Y': [(10001, 2649520), (59034050, 59363566)],
+    }
+}
+
+#TODO: this probably only needs to be applied to male samples
+def apply_pseudo_autosomal_filter(record):
+    if record.CHROM[-1] in ('X', 'Y'):
+        for start, end in PSEUDOAUTO_REGIONS[GENOME_VERSION][record.CHROM[-1]]:
+            if start <= record.POS <= end:
+                record.add_filter(filterset['pseudoauto'][0])
+                break
+
+
+
 #TODO: fail on multi-sample vcf or [current] filter if ANY samples is below thresholds IGC ?
 def filter_snp_vcf(filterset, input='/dev/stdin', output='/dev/stdout'):
 
@@ -65,13 +88,15 @@ def filter_snp_vcf(filterset, input='/dev/stdin', output='/dev/stdout'):
                     ('Description', filtercond[2])
                 ])
             )
+        #TODO: fix contig order in header
 
         with open(output, 'w') as output_stream:
             writer = vcfpy.Writer.from_stream(output_stream, reader.header)
-    
             prev_pos = (None, None)
             record_set = []
             for record in reader:
+                # always apply pseudo-autosomal filter
+                apply_pseudo_autosomal_filter(record)
                 # Apply GT &n (I)GC filters
                 # import pdb; pdb.set_trace()
                 if 'GT' in filterset:
@@ -108,6 +133,7 @@ def filter_snp_vcf(filterset, input='/dev/stdin', output='/dev/stdout'):
 
 
 filterset = get_filter_settings(snakemake.wildcards['filter'], snakemake.config)
+GENOME_VERSION = 'hg38' if snakemake.config['genome_version'] in ('hg38', 'GRCh38') else 'hg19'
 
 for name, vals in filterset.items():
     logger.info(f"Adding Filter for {name} as '{vals[0]}'")

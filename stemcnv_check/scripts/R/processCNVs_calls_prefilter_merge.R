@@ -1,4 +1,4 @@
-merge_calls <- function(df.or.GR, merge.distance, snp.vcf) {
+merge_calls <- function(df.or.GR, merge.distance, snp_vcf_gr) {
     message('Merging nearby raw calls')
     if (is.data.frame(df.or.GR)) {
         df.or.GR <- df.or.GR %>%
@@ -40,27 +40,22 @@ merge_calls <- function(df.or.GR, merge.distance, snp.vcf) {
 			) %>%
 		stretch(-1*merge.distance) %>%
 		mutate(ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_')) %>%
-        add_snp_probe_counts(snp.vcf)
+        add_snp_probe_counts(snp_vcf_gr)
 }
 
 # n_nsp & uniq_snp annotation
-add_snp_probe_counts <- function(gr, snp.vcf) {
+add_snp_probe_counts <- function(gr, snp_vcf_gr) {
     message('adding number of SNP probes to calls')
-
-    # VCF POS should be 1-based,
-    # Granges are also 1-based
-    # AND are (fully) open [= start & end are included]
-    snp_probes_gr <- vcfR2tidy(snp.vcf, info_only = T) %>%
-        .$fix %>%
-        as_granges(seqnames = CHROM, start = POS, width = 1) %>%
-        plyranges::filter(FILTER == 'PASS') %>%
-        # reduce_ranges without grouping will also merge probes NEXT to each other 
-        group_by(start)
     
     # Note: with default filter settings, these two WILL be the same
-	gr$n_probes <- count_overlaps(gr, snp_probes_gr)
-    
-	gr$n_uniq_probes <- count_overlaps(gr, reduce_ranges(snp_probes_gr))
+	gr$n_probes <- count_overlaps(gr, snp_vcf_gr)
+	gr$n_uniq_probes <- count_overlaps(
+        gr,
+        # reduce_ranges without grouping will also merge probes NEXT to each other 
+        snp_vcf_gr %>%
+            group_by(start) %>% 
+            reduce_ranges()
+    )
     gr$probe_density_Mb <- gr$n_uniq_probes / width(gr) * 1e6
 
 	gr
