@@ -7,35 +7,58 @@ library(vcfR)
 source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
 
 #  Functions to test:
+# - parse_snp_vcf
 # - vcfR_to_tibble
 # - get_fix_section
 # - get_gt_section
 # - parse_cnv_vcf
 # Note: static_cnv_vcf_header doesn't really need a test
 
-snp_vcf <- read.vcfR(test_path('../data/minimal_probes.vcf'))
+snp_vcfr <- read.vcfR(test_path('../data/minimal_probes.vcf'), verbose = F) 
 
-test_that("vcfR_to_tibble", {    
-    expected_tb <- tibble(
-        CHROM = 'chr1',
-        POS = c(100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
-        ID = c(NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
-        REF = NA_character_, # or "."
-        ALT = NA_character_, # or "."
-        QUAL = NA_real_, # or "."
-        FILTER = c(rep('PASS', 4), 'LOWQUAL', rep('PASS', 10)),
-        GenTrain_Score = c(rep(0.8, 4), 0.2, rep(0.8, 7), 0.9, 0.8, NA),
-        CSQ = c('gene_id|gene_name', NA, NA, NA, NA, NA, NA, NA, NA, 'ABC|abc', NA, NA, NA, NA, NA),
-        sample_id = 'test_sample',
-        GT = NA_character_, # or "."
-        LRR = c(1, 1.1, 0.7, 1, 1, 0.9, 1.3, 1.2, 1.3, 0.85, 0.82, 0.8, 1.15, 0.87, 0.88),
-        BAF = c(1, 0, 0.3, 0.7, 1, 1, 1, 1, 0, 0.33, 1, 1, 0.67, 1, 0.67)        
-    )
-    
-    vcfR_to_tibble(snp_vcf) %>%
+expected_tb <- tibble(
+    CHROM = 'chr1',
+    POS = c(100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
+    ID = c(NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
+    REF = NA_character_, # or "."
+    ALT = NA_character_, # or "."
+    QUAL = NA_real_, # or "."
+    FILTER = c(rep('PASS', 4), 'LOWQUAL', rep('PASS', 10)),
+    GenTrain_Score = c(rep(0.8, 4), 0.2, rep(0.8, 7), 0.9, 0.8, NA),
+    CSQ = c('gene_id|gene_name', NA, NA, NA, NA, NA, NA, NA, NA, 'ABC|abc', NA, NA, NA, NA, NA),
+    sample_id = 'test_sample',
+    GT = NA_character_, # or "."
+    LRR = c(1, 1.1, 0.7, 1, 1, 0.9, 1.3, 1.2, 1.3, 0.85, 0.82, 0.8, 1.15, 0.87, 0.88),
+    BAF = c(1, 0, 0.3, 0.7, 1, 1, 1, 1, 0, 0.33, 1, 1, 0.67, 1, 0.67)        
+)
+
+test_that("vcfR_to_tibble", {
+    vcfR_to_tibble(snp_vcfr) %>%
         filter(POS < 4000) %>% 
         expect_equal(expected_tb)
 })
+
+test_that('parse_snp_vcf', {
+
+    expected <- expected_tb %>%
+        dplyr::rename(seqnames = CHROM, start = POS) %>%
+        mutate(width = 1) %>%
+        as_granges()
+    
+    parse_snp_vcf(snp_vcfr, apply_filter = FALSE, info_fields = NULL, format_fields = NULL) %>%
+        filter(start < 4000) %>% 
+        expect_equal(expected)    
+    
+    expected <- expected %>%
+        select(-GenTrain_Score, -CSQ, -GT) %>%
+        filter(FILTER == 'PASS')
+    
+    parse_snp_vcf(test_path('../data/minimal_probes.vcf')) %>%
+        filter(start < 4000) %>% 
+        expect_equal(expected)
+
+})
+
 
 # test_that('static_cnv_vcf_header', {
 #     tool_config <- list(
@@ -111,6 +134,8 @@ test_that('get_gt_section', {
             sep = ":"
         )
     ) %>% as.matrix()
+    
+    snp_vcf <- parse_snp_vcf(snp_vcfr)
     
     get_gt_section(cnv_tb, snp_vcf) %>%
         expect_equal(expected_gt)

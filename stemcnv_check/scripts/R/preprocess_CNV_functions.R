@@ -47,6 +47,22 @@ merge_calls <- function(df.or.GR, merge.distance, snp_vcf_gr) {
 add_snp_probe_counts <- function(gr, snp_vcf_gr) {
     message('adding number of SNP probes to calls')
     
+    # Return early if input is empty
+    if (length(gr) == 0) {
+        return(
+            gr %>%
+                mutate(
+                    n_probes = integer(),
+                    n_uniq_probes = integer(),
+                    probe_density_Mb = double(),
+                )
+        )
+    }
+    
+    if (seqlevelsStyle(gr) %>% head(1) != seqlevelsStyle(snp_vcf_gr) %>% head(1)) {
+        stop('seqlevelsStyle of input (CNV) GRanges and SNP ref do not match!')
+    }
+    
     # Note: with default filter settings, these two WILL be the same
 	gr$n_probes <- count_overlaps(gr, snp_vcf_gr)
 	gr$n_uniq_probes <- count_overlaps(
@@ -98,3 +114,20 @@ add_call_prefilters <- function(gr, tool_config) {
 }
 
 
+fix_CHROM_format <- function(gr, target_style) {
+    seqlevelsStyle(gr) <- target_style
+    return(sortSeqlevels(gr))
+}
+
+apply_preprocessing <- function(cnv_gr, snp_vcf_gr, tool_config) {
+        
+    cnv_gr %>%
+        # Properly sort by updated seqnames
+        sort() %>%
+        # Combined nearby calls & update SNP counts
+        merge_calls(tool_config$merge.distance, snp_vcf_gr) %>%
+        # Add FILTER column
+        add_call_prefilters(tool_config) %>%
+        sort()
+    
+}

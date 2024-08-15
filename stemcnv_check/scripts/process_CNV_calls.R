@@ -39,7 +39,7 @@ get_script_dir <- function() {
 	}
 }
 source(file.path(get_script_dir(), 'R/R_io_functions.R'))
-source(file.path(get_script_dir(), 'R/processCNVs_calls_prefilter_merge.R'))
+source(file.path(get_script_dir(), 'R/preprocess_CNV_functions.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_combine_CNV_callers.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_annotate_reference_overlap.R'))
 source(file.path(get_script_dir(), 'R/processCNVs_annotate_impact_lists.R'))

@@ -95,10 +95,16 @@ settings:
   CBS:
     # Specific filter setting for CBS, '__default__' uses `default-filter-set
     filter-settings: '__default__'
-    # SD.undo split value for CBS
-    SDundo: 1
-    # Minimum size of segments
-    min.width: 5
+    # undo.SD split value for CBS
+    undo.SD.val: 1
+    # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
+    merge.distance: 500
+    # Prefiltering of calls is done (after merging of nearby calls) as follows:
+    # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+    filter.minprobes: 5
+    filter.minlength: 1000
+    filter.mindensity.Mb: 10 #snps per Mb
+        
     # LRR thresholds for identifying CBS segments as gain/loss on autosomes
     LRR.loss: -0.25      #CN1
     LRR.loss.large: -1.1 #CN0

@@ -1,102 +1,150 @@
-#! /usr/bin/Rscript
-# Run LRR segmentation with CBS/DNACopy
-suppressMessages(library(argparse))
+# Redirect all output to snakemake logging
+log <- file(snakemake@log[['err']], 'wt')
+sink(log, append = T)
+sink(log, append = T, type = 'message')
 
-parser <- ArgumentParser(description="Run LRR segmentation with CBS/DNACopy")
+library(tidyverse)
+library(DNAcopy)
+library(plyranges)
+library(vcfR)
+library(GenomeInfoDb)
 
-parser$add_argument('inputfile', type = 'character', help='Path to input file')
-parser$add_argument('outputfile', type = 'character', help='Path to output file')
-parser$add_argument('configfile', type = 'character', help='Path to config file')
-parser$add_argument('sampletable', type = 'character', help='Path to sampletable')
+snakemake@source('R/R_io_functions.R')
+snakemake@source('R/vcf_io_functions.R')
+snakemake@source('R/preprocess_CNV_functions.R')
 
-parser$add_argument('-s', '--sd-undo', type = 'double', default = 1,
-					help="Value for split SD undo")
 
-args <- parser$parse_args()
+CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
+   
+    # CBS code
+    cna.basic <- CNA(tb$LRR, tb$seqnames, tb$start, data.type = 'logratio', sampleid = sample_id)
+    cna.basic.smoothed <- smooth.CNA(cna.basic) #Note: can we also apply GC-wave correction here?
+    cna.basic.smoothed.segmented <- segment(
+        cna.basic.smoothed, 
+        # "minimum number of markers for a changed segment"
+        # -> does not actually remove segments <X probes, capped at 2-5
+        min.width = 5, 
+        undo.splits = 'sdundo', 
+        undo.SD = CBS_config$undo.SD.val
+    )
 
-suppressMessages(library(tidyverse))
-suppressMessages(library(DNAcopy))
-suppressMessages(library(yaml))
+    # Need sex chroms in matching style to set proper CNs
+    sex_chroms <- genomeStyles('Homo_sapiens') %>%
+        filter(sex) %>%
+        pull(as.character(tb$seqnames) %>% seqlevelsStyle() %>% head(1))
+    
+    # Re-formatting
+    tb <- segments.summary(cna.basic.smoothed.segmented) %>%
+  		dplyr::rename(seqnames = chrom, start = loc.start, end = loc.end,
+                      n_snp_probes = num.mark, sample_id = ID) %>%
+        mutate(
+            seqnames = str_remove(seqnames, '^(chr|ch)'),
+            sample_id = sample_id,
+            width = end - start + 1,
+            # Chr = paste0('chr', Chr),
+            # Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
+            # snp.density = n_snp_probes / length * 1e6,
+            CN = case_when(
+                #Male is default CN=1 on X & Y, also unqiue cutoffs
+                sex == 'm' & seqnames %in% sex_chroms & seg.median < CBS_config$LRR.male.XorY.loss       ~ 0,
+                sex == 'm' & seqnames %in% sex_chroms & seg.median > CBS_config$LRR.male.XorY.gain.large ~ 3,
+                sex == 'm' & seqnames %in% sex_chroms & seg.median > CBS_config$LRR.male.XorY.gain       ~ 2,
+                sex == 'm' & seqnames %in% sex_chroms                                                    ~ 1,
+                # Unique cutoffs for female X (behaves different from autosome)
+                sex == 'f' & seqnames == sex_chroms[1] & seg.median < CBS_config$LRR.female.XX.loss       ~ 0,
+                sex == 'f' & seqnames == sex_chroms[1] & seg.median < CBS_config$LRR.female.X.loss        ~ 1,
+                sex == 'f' & seqnames == sex_chroms[1] & seg.median > CBS_config$LRR.female.X.gain.large  ~ 4,
+                sex == 'f' & seqnames == sex_chroms[1] & seg.median > CBS_config$LRR.female.X.gain        ~ 3,
+                sex == 'f' & seqnames == sex_chroms[1]                                                    ~ 2,
+                # Default cutoffs
+                seg.median < CBS_config$LRR.loss.large                                                    ~ 0,
+                seg.median < CBS_config$LRR.loss                                                          ~ 1,
+                seg.median > CBS_config$LRR.gain.large                                                    ~ 4,
+                seg.median > CBS_config$LRR.gain                                                          ~ 3,
+                TRUE ~ 2,
+                .default = 2
+            ),
+            CNV_type = case_when(# Male is default CN=1 on X & Y
+                #TODO: technically DUP should ONLY be used for CN=3 (or 2 on male XY)
+                sex == 'm' & seqnames %in% sex_chroms & CN == 2 ~ 'DUP',
+                sex == 'm' & seqnames %in% sex_chroms & CN == 1 ~ NA,
+                CN > 2                                          ~ 'DUP',
+                CN < 2                                          ~ 'DEL',
+                .default = NA
+            ),
+            CNV_caller = 'CBS',
+            ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
+        ) %>%
+        filter(!is.na(CNV_type) & !is.na(seqnames)) %>%
+        select(seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id)
 
-inputfile <- args$inputfile
-outputfile <- args$outputfile
-config <- read_yaml(args$configfile)
-sd.undo.val <- args$sd_undo
-min.width <- config$settings$CBS$min.width
-
-sampleID <- basename(inputfile) %>% str_remove('\\.filtered-data-.*\\.tsv$')
-
-sampletable <- read_tsv(args$sampletable, col_types = 'cccccc', comment = '#')
-sex <- sampletable[sampletable$Sample_ID == sampleID, ]$Sex %>%
-	tolower() %>% substr(1, 1)
-
-# More fine grained loss/gain thresholds, based on Samules Nx settings
-LRR.loss <- config$settings$CBS$LRR.loss
-LRR.loss.large <- config$settings$CBS$LRR.loss.large
-LRR.gain <- config$settings$CBS$LRR.gain
-LRR.gain.large <- config$settings$CBS$LRR.gain.large
-# plus specifics for sex chromosomes
-LRR.male.XorY.loss <- config$settings$CBS$LRR.male.XorY.loss
-LRR.male.XorY.gain <- config$settings$CBS$LRR.male.XorY.gain
-LRR.male.XorY.gain.large <- config$settings$CBS$LRR.male.XorY.gain.large
-LRR.female.X.loss <- config$settings$CBS$LRR.female.X.loss
-LRR.female.XX.loss <- config$settings$CBS$LRR.female.XX.loss
-LRR.female.X.gain <- config$settings$CBS$LRR.female.X.gain
-LRR.female.X.gain.large <- config$settings$CBS$LRR.female.X.gain.large
-
-tb <- read_tsv(inputfile, show_col_types = FALSE) %>% 
-  dplyr::select(-Index) %>%
-  rename_with(~ str_remove(., '.*\\.'))
-
-cna.basic <- CNA(tb$`Log R Ratio`, tb$Chr, tb$Position, data.type = 'logratio', sampleid = sampleID)
-cna.basic.smoothed <- smooth.CNA(cna.basic)
-
-cna.basic.smoothed.segmented <- segment(cna.basic.smoothed, min.width = min.width, undo.splits = 'sdundo', undo.SD = sd.undo.val)
-
-tb <- segments.summary(cna.basic.smoothed.segmented) %>%
-  		dplyr::rename(Chr = chrom, start = loc.start, end = loc.end,
-									n_snp_probes = num.mark, sample_id = ID) %>%
-	mutate(
-		sample_id = sampleID,
-		length = end - start,
-		Chr = paste0('chr', Chr),
-		Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-		snp.density = n_snp_probes / length * 1e6,
-		copynumber = case_when(
-			#Male is default CN=1 on X & Y, also unqiue cutoffs
-			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median < LRR.male.XorY.loss       ~ 0,
-			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median > LRR.male.XorY.gain.large ~ 3,
-			sex == 'm' & Chr %in% c('chrX', 'chrY') & seg.median > LRR.male.XorY.gain       ~ 2,
-			sex == 'm' & Chr %in% c('chrX', 'chrY')                                         ~ 1,
-			# Unique cutoffs for female X (behaves different from autosome)
-			sex == 'f' & Chr == 'chrX' & seg.median < LRR.female.XX.loss                    ~ 0,
-			sex == 'f' & Chr == 'chrX' & seg.median < LRR.female.X.loss                     ~ 1,
-			sex == 'f' & Chr == 'chrX' & seg.median > LRR.female.X.gain.large               ~ 4,
-			sex == 'f' & Chr == 'chrX' & seg.median > LRR.female.X.gain                     ~ 3,
-			sex == 'f' & Chr == 'chrX'                                                      ~ 2,
-			# Default cutoffs
-			seg.median < LRR.loss.large                                                     ~ 0,
-			seg.median < LRR.loss                                                           ~ 1,
-			seg.median > LRR.gain.large                                                     ~ 4,
-			seg.median > LRR.gain                                                           ~ 3,
-			TRUE ~ 2,
-			.default = 2
-		),
-		CNV_type = case_when(# Male is default CN=1 on X & Y
-			sex == 'm' & Chr %in% c('chrX', 'chrY') & copynumber == 2     ~ 'gain',
-			sex == 'm' & Chr %in% c('chrX', 'chrY') & copynumber == 1     ~ NA,
-			copynumber > 2                                                ~ 'gain',
-			copynumber < 2                                                ~ 'loss ',
-			.default = NA
-		),
-		CNV_caller = 'CBS',
-		ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
-		caller_confidence = NA,
-	) %>%
-	filter(!is.na(CNV_type) & !is.na(Chr))
-
-if (sex == 'f') {
-	tb <- filter(tb, Chr != 'chrY')
+    if (sex == 'f') {
+        tb <- filter(tb, seqnames != sex_chroms[2])
+    }
+    
+    return(tb)
+    
 }
 
-write_tsv(tb, outputfile)
+
+get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
+    # Get settings
+    sample_sex <- get_sample_info(sample_id, "sex", config$sample_table)
+    tool_config <- config$settings$CBS
+    # Get SNP data
+    snp_vcf <- read.vcfR(input_vcf, verbose = F) 
+    snp_vcf_meta <- snp_vcf@meta
+    snp_vcf_gr <- parse_snp_vcf(snp_vcf)
+    # Run CBS
+    cnv_gr <- CBS_LRR_segmentation(as_tibble(snp_vcf_gr), tool_config, sample_sex, sample_id) %>%
+        as_granges()
+    
+    #make sure that snp_vcf & cnv_vcf use the same (& intended) chrom style
+    target_chrom_style <- config$settings$vcf_output$chrom_style
+    if (target_chrom_style == '__keep__') { target_style <- seqlevelsStyle(snp_vcf_gr) %>% head(1) 
+    } else { target_style <- target_chrom_style }
+    cnv_gr <- fix_CHROM_format(cnv_gr, target_style)
+    snp_vcf_gr <- fix_CHROM_format(snp_vcf_gr, target_style)
+    
+    # preprocess (merge, filter, SNP counts)
+    cnvs <- apply_preprocessing(cnv_gr, snp_vcf_gr, tool_config) %>%
+        as_tibble()
+    # Generate VCF
+    filtersettings <- tool_config$`filter-settings`
+    if (filtersettings == '__default__') {
+        filtersettings <- config$settings$`default-filter-settings`
+    }
+    header <- c(
+        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_chrom_style),
+        static_cnv_vcf_header(tool_config),
+        paste(
+            '##CBS=R-DNAcopy LRR segmentation: CNA/smooth.CNA/segment',
+            str_glue('undo.SD={tool_config$undo.SD.val} min.width=5'),
+            str_glue('CN_LRR_thresholds_autosomes: CN0={tool_config$LRR.loss.large} CN1={tool_config$LRR.loss}'),
+            str_glue('CN3={tool_config$LRR.gain} CN4={tool_config$LRR.gain.large}'),
+            str_glue('CN_LRR_thresholds_female_X: CN0={tool_config$LRR.female.XX.loss} CN1={tool_config$LRR.female.X.loss}'),
+            str_glue('CN3={tool_config$LRR.female.X.gain} CN4={tool_config$LRR.female.X.fain.large}'), 
+            str_glue('CN_LRR_thresholds_male_XY: CN0={tool_config$LRR.male.XorY.loss}'),
+            str_glue('CN2={tool_config$LRR.male.XorY.gain} CN3={tool_config$LRR.male.XorY.gain.large}'),
+            str_glue('StemCNV-check_array_probe_filtering="{filtersettings}"')
+        )
+    )
+    
+    cnv_vcf <- new(
+        "vcfR",
+        meta = header,
+        fix = get_fix_section(cnvs),
+        gt = get_gt_section(cnvs, snp_vcf_gr)
+    )
+    
+    write.vcf(cnv_vcf, out_vcf)
+    
+}
+
+
+get_CBS_CNV_vcf(
+    snakemake@input[['vcf']],
+    snakemake@output[['vcf']],
+    snakemake@config,
+    snakemake@wildcards[['sample_id']]
+)

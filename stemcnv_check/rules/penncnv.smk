@@ -1,25 +1,15 @@
 import os
 
-
-def get_penncnv_input_vcf(wildcards):
-    return os.path.join(
-        DATAPATH, 
-        wildcards.sample_id, 
-        wildcards.sample_id+".processed-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf"
-        # VEP still has issues; skip for now
-        # wildcards.sample_id+".annotated-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf.gz"
-    )
-
-
 rule prep_PennCNV_sexfile:
-    input: get_penncnv_input_vcf
+    input: cnv_vcf_input_function('PennCNV')
     output: temp(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.sexfile.txt"))
     log: os.path.join(LOGPATH,"PennCNV","{sample_id}","sexfile.log")
     params: 
-        sex_info = lambda wildcards: get_ref_id(wildcards, True)
+        sex_info = lambda wildcards: get_ref_id(wildcards, True),
+        sample_docker_path = lambda wildcards: fix_container_path(os.path.join(DATAPATH, wildcards.sample_id, f"{wildcards.sample_id}.penncnv.input.tsv"),'data'),
     shell:
         #TODO check if clause
-        'echo -e "{DATAPATH}/{wildcards.sample_id}/{wildcards.sample_id}.penncnv.input.tsv\t{params.sex_info[2]}" > {output}; '
+        'echo -e "{params.sample_docker_path}\t{params.sex_info[2]}" > {output}; '
         # This can add reference sex, which is however not needed at the moment
         # 'if [[ "{sex_info[1]}" != "" ]]; then echo -e "{DATAPATH}/{sex_info[1]}/{sex_info[1]}.penncnv.input.tsv}\t{sex_info[3]}" >> {output}; fi'
 
@@ -27,7 +17,7 @@ rule prep_PennCNV_sexfile:
 # - extract tsv SNP file from vcf
 rule prep_PennCNV_input:
     input:
-        vcf=get_penncnv_input_vcf
+        vcf=cnv_vcf_input_function('PennCNV')
     output:
         tsv=temp(os.path.join(DATAPATH,"{sample_id}","{sample_id}.penncnv.input.tsv"))
     log: 
@@ -41,7 +31,9 @@ rule prep_PennCNV_input:
         'vembrane filter \'"PASS" in FILTER\' {input.vcf} 2> {log}|'
         'vembrane table --header \'Name, Chr, Position, B Allele Freq, Log R Ratio\''
         ' --long \'ID, CHROM, POS, FORMAT["BAF"][SAMPLE], FORMAT["LRR"][SAMPLE]\' > {output.tsv} 2>> {log}'
-
+# # Alternative:
+#     wrapper:
+#         "v3.14.1/bio/vembrane/table"
 
 # - run auto, x & Y calling
 rule run_PennCNV:
@@ -82,8 +74,7 @@ rule run_PennCNV:
     shell:
         '/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence '
         '-hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} '
-        # {params.sexfile} 
-        '{params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
+        '{params.sexfile} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}'
 
 
 def get_penncnv_output(wildcards, files = 'tsv'):
@@ -104,10 +95,11 @@ def get_penncnv_output(wildcards, files = 'tsv'):
     else:
         raise ValueError("Invalid file type requested: {}".format(files))
 
+
 # - combine calls and write out as vcf
 rule combined_PennCNV_output:
     input:
-        vcf=get_penncnv_input_vcf,
+        vcf=cnv_vcf_input_function('PennCNV'),
         tsvs=get_penncnv_output,
         #logs=get_penncnv_output(wildcards, 'log')
     output:

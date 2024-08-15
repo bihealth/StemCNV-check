@@ -1,6 +1,7 @@
 #General
 `%!in%` <- Negate(`%in%`)
 
+#TODO: deprecate this
 get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 	# Use given config if possible
 	if(!is.null(use.config)) {
@@ -23,7 +24,13 @@ get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
 	}
 }
 
+read_sampletable <- function(filename) {
+    read_tsv(filename, col_types = 'cccccc', comment = '#')
+}
+
+
 get_sample_info <- function(sample_id, value, sampletable){
+    if(is.character(sampletable)) sampletable <- read_sampletable(sampletable)
 
 	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
 	if (value == 'ref_id') return(ref_id)
@@ -49,17 +56,16 @@ get_sample_info <- function(sample_id, value, sampletable){
 
 # File input functions
 
-## SNP data
-read_raw <- function(filename) {
-    read_tsv(filename, show_col_types = FALSE) %>%
-                rename_with(~ str_remove(., '.*\\.')) %>%
-        dplyr::select(-any_of(c('Index', 'Address', '', 'Theta')),
-                                    -contains('Frac'), -contains('X'), -contains('Y')) %>%
-        mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
-               Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
-               )
-}
-
+# ## SNP data
+# read_raw <- function(filename) {
+#     read_tsv(filename, show_col_types = FALSE) %>%
+#                 rename_with(~ str_remove(., '.*\\.')) %>%
+#         dplyr::select(-any_of(c('Index', 'Address', '', 'Theta')),
+#                                     -contains('Frac'), -contains('X'), -contains('Y')) %>%
+#         mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
+#                Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
+#                )
+# }
 # ## PennCNV
 # read_PennCNV <- function(filename) {
 # 	read.table(filename, sep='', header = F, fill=T,
@@ -83,11 +89,11 @@ read_raw <- function(filename) {
 # 			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
 # 		)
 # }
-
-## CBS
-read_CBS <- function(filename) {
-	read_tsv(filename, show_col_types = F)
-}
+# 
+# ## CBS
+# read_CBS <- function(filename) {
+# 	read_tsv(filename, show_col_types = F)
+# }
 
 
 ## preprocessed

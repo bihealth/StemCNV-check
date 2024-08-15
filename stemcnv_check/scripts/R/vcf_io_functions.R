@@ -1,6 +1,33 @@
+# VCF reading
+vcfR_to_tibble <- function(vcf, info_fields = NULL, format_fields = NULL){
+    #Note: this will fail if format fields are not properly annotated in header
+    listobj <- vcfR2tidy(vcf, alleles = FALSE, gt_column_prepend = '', single_frame = TRUE,
+                         info_fields = info_fields, format_fields = format_fields)
+    listobj$dat %>% dplyr::rename(sample_id = Indiv)       
+}
 
-# CNV vcf header fictures
+parse_snp_vcf <- function(vcf, 
+                         info_fields = FALSE, 
+                         format_fields = c("LRR", "BAF"), 
+                         apply_filter = TRUE) {
+    if (typeof(vcf) == 'character') {
+        vcf <- read.vcfR(vcf, verbose = F)
+    }
+    # VCF POS should be 1-based,
+    # Granges are also 1-based
+    # AND are (fully) open [= start & end are included]
+    vcf <- vcf %>%
+        vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
+        as_granges(seqnames = CHROM, start = POS, width = 1)
+    if (apply_filter) {
+        vcf <- vcf %>% filter(FILTER == 'PASS')
+    }
+    return(vcf)
+}
 
+# parse_cnv_vcf
+
+# CNV vcf writing
 static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER= TRUE) { 
     filter.minsize <- toolconfig$filter.minsize
     filter.minprobes <- toolconfig$filter.minprobes
@@ -19,7 +46,7 @@ static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Segment genotype">',
         '##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy-number (estimated)">',
         '##FORMAT=<ID=TOOL,Number=1,Type=String,Description="Details for copy number calling tools">',
-        '##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Segment me(di)an Log R Ratio">'
+        '##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Segment median Log R Ratio">'
         # #TODO: not sure how to summarize this, maybe some simple clustering and # of clusters?
         # '##FORMAT=<ID=BAF,Number=1,Typeq=Foat,Description="Segment me(di)an B Allele Frequency">',
     )
@@ -35,6 +62,39 @@ static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER
     if (FORMAT) { out <- c(out, format) }
     if (FILTER) { out <- c(out, filter) }
     return(out)
+    
+}
+
+fix_header_lines <- function(header_lines, regex = NULL, contig_format = NULL) {
+    
+    if (!is.null(regex)) {
+        header_lines <- header_lines %>% str_subset(regex)
+    }
+    
+    if (!is.null(contig_format)) {
+        header_tb <- tibble(line = header_lines) %>%
+            mutate(
+                is_contig = str_detect(line, '^##contig'),
+                orig_order = row_number(),
+                chrom_name = ifelse(is_contig, str_extract(line, '(?<=ID=)[^,]+'), NA_character_),
+                fixed_chrom = NA_character_
+            )
+        # mapSeqlevels won't work proplerly if it is handed any NA values
+        header_tb[header_tb$is_contig,]$fixed_chrom <- header_tb[header_tb$is_contig,]$chrom_name %>% 
+            mapSeqlevels(contig_format)
+        header_lines <- header_tb %>%
+            filter(!is_contig | !is.na(fixed_chrom)) %>%
+            mutate(
+                fixed_chrom = factor(fixed_chrom, levels = genomeStyles('Homo_sapiens')[[contig_format]]),
+                new_order = ifelse(is_contig, min(orig_order[is_contig]) - 1 + as.integer(fixed_chrom), orig_order),
+                line = str_replace(line, '(?<=ID=)[^,]+', as.character(fixed_chrom))
+            ) %>%
+            arrange(new_order) %>%
+            pull(line)
+    }
+    
+    return(header_lines)
+    
     
 }
 
@@ -74,13 +134,6 @@ get_fix_section <- function(tb){
         ) %>%
         select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO) %>%
         as.matrix()
-}
-
-vcfR_to_tibble <- function(vcf, info_fields = NULL, format_fields = NULL){
-    #Note: this will fail if format fields are not properly annotated in header
-    listobj <- vcfR2tidy(vcf, alleles = FALSE, gt_column_prepend = '', single_frame = TRUE,
-                         info_fields = info_fields, format_fields = format_fields)
-    listobj$dat %>% dplyr::rename(sample_id = Indiv)       
 }
 
 get_gt_section <- function(tb, snp_vcf_gr){
@@ -135,32 +188,7 @@ get_gt_section <- function(tb, snp_vcf_gr){
 }
 
 
-
-# INFO field descriptors
-# FILTER (> move preprocessing here ?)
-# FORMAT field descriptors
-# >> most of this can be copied from previous vcf scripts
-
-
-# VCF pre-processing
-# merging -> re-do SNP counts; (maybe?) keep number of merged calls
-# filtering -> soft filter only
-
-# Actual vcf generation
-
-# 2. fill header
-# 3. fill fix
-# 4. fill gt (check structure?)
-
-
-# [ CNV vcf annotation with vep ]
-# -> not handled in R
-
-
-# CNV vcf reading
-# wrapper to extract tidy tb
-
-# Open question:
+# Open question for writing combined CNV vcf:
 # - how/which format to write back after CNV_processing
 # - yes/no keep 'non-overlapped' calls
 #    >> also ask Harald & Vale what they think here?
