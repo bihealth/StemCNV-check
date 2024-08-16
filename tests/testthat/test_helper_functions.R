@@ -3,14 +3,10 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 
 #  Functions to test:
-# - [ ] get_chromosome_set
 # - [ ] get_sample_info
-# - [ ] read_raw     #! replace with read_SNP_vcf at some point
-# - [ ] read_PennCNV #! replace with read_CNV_vcf at some point
-# - [ ] read_CBS     #! replace with read_CNV_vcf at some point
 # - [ ] load_preprocessed_cnvs #! consider replacing this with read_CNV_vcf (+ annotation support)
 # - [ ] get_static_path #! hard to test; should only do things if insside the Rmd environment
 # - [x] load_gtf_data

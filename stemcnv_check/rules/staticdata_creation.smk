@@ -163,17 +163,17 @@ write_bed(density, '{output.density}')
 EOF
 """
 
-# rule gencode_v45_gtf_download:
-#     output: config['genome_gtf_file']
-#     # Source gtf GRCh38:
-#     params:
-#         ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
-#         release_path = "gencode.v45.basic.annotation.gtf.gz" if GENOME == "hg38" else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
-#     shell:
-#         """
-#         wget {params.ftp_base}/{params.release_path} -O {output}.gz 2> /dev/null
-#         gunzip {output}.gz
-#         """
+rule gencode_v45_gtf_download:
+    output: config['genome_gtf_file']
+    # Source gtf GRCh38:
+    params:
+        ftp_base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/",
+        release_path = "gencode.v45.basic.annotation.gtf.gz" if GENOME == "hg38" else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
+    shell:
+        """
+        wget {params.ftp_base}/{params.release_path} -O {output} 2> /dev/null
+        # gunzip {output}.gz
+        """
 
 # #FIXME: the gencode fa.gz files are gzip not bgzip compressed
 # rule gencode_v45_genomeFasta_download:

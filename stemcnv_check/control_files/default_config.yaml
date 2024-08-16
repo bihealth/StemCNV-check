@@ -10,7 +10,7 @@ static_data:
     # fasta file with the genome sequence
     genome_fasta_file: 'static-data/{genome}.genome.fa.gz'                               #REQUIRED, Auto-generatable
     # gtf file with gene annotations
-    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf'                              #REQUIRED, Auto-generatable
+    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
     # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
     penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
     # PennCNV GC model file, containing GC content values, calculated by PennCNV
@@ -137,17 +137,8 @@ settings:
 
   CNV_processing:
     call_processing:
-      ## CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
-      # either before or after filtering (based on merge.before.filter)
-      merge.distance: 500
-      merge.before.filter: TRUE
-      ## Prefiltering of calls is done as follows:
-      # [snps] >= min.snp & [length] >= min.lenght & [density, snps/Mb] >= min.snp.density
-      min.snp: 5
-      min.length: 1000
-      # This is only applied to the Call region itself
-      min.snp.density: 10 #snps per Mb
-      # SNP probe count (total and unique positions) is re-calculated for all CNV calls (per tool and after merging) with a singular filter-set
+      # SNP probe counts may change with merging of calls from different tools
+      # therefore a single filter-settings needs to be used as reference here
       filter-settings: '__default__'
       
       ## Calls from multiple tools are combined and combined if they match

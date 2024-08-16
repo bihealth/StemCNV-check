@@ -4,7 +4,7 @@ library(tidyverse)
 library(plyranges)
 
 
-source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_combine_CNV_callers.R'))
 
 # Example calls (toolA and toolB):
@@ -23,50 +23,49 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_combine_CNV_callers.
 
 toolA <- tibble(
   seqnames = rep('chr1', 13),
-  start = c(1000, 4000, 6000,  8000, 12000, 15e4, 18e4, 22.2e4, 27e4, 31e4, 36e4, 50e4, 55e4) %>% as.integer(),
-  end   = c(2000, 5500, 7500, 10000, 14000, 17e4, 20e4, 23e4, 27.8e4, 35e4, 40e4, 54e4, 58e4) %>% as.integer(),
-  CNV_type = c(rep('gain', 3), rep('loss', 10)),
+  start = c(1000, 4000, 6000,  8000, 120000, 15e5, 18e5, 22.2e4, 27e4, 31e4, 36e4, 50e4, 55e4) %>% as.integer(),
+  end   = c(2000, 5500, 7500, 10000, 140000, 17e5, 20e5, 23e4, 27.8e4, 35e4, 40e4, 54e4, 58e4) %>% as.integer(),
+  CNV_type = c(rep('DUP', 3), rep('DEL', 10)),
   sample_id = 'test_sample',
   CNV_caller = 'toolA',
-  n_premerged_calls = 2,
-  n_snp_probes = 10,
-  copynumber = c(rep('3', 3), rep('1', 10)) %>% as.character(),
-  caller_confidence = 1 ,
+  n_probes = 10,
+  CN = c(rep(3, 3), rep(1, 10)),
   ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
 )
 
 toolB <- tibble(
   seqnames = rep('chr1', 10),
-  start = c(2000, 4000, 6000,  9700, 12000, 15e4, 21e4, 33e4, 52e4, 57e4) %>% as.integer(),
-  end   = c(3000, 5500, 7500, 10000, 14000, 20e4, 30e4, 36e4, 56e4, 60e4) %>% as.integer(),
-  CNV_type = c(rep('gain', 2), rep('loss', 8)),
+  start = c(2000, 4000, 6000,  9700, 120000, 15e5, 21e4, 33e4, 52e4, 57e4) %>% as.integer(),
+  end   = c(3000, 5500, 7500, 10000, 140000, 20e5, 30e4, 36e4, 56e4, 60e4) %>% as.integer(),
+  CNV_type = c(rep('DUP', 2), rep('DEL', 8)),
   sample_id = 'test_sample',
   CNV_caller = 'toolB',
-  n_premerged_calls = 1,
-  n_snp_probes = 5,
-  copynumber = c(rep('3', 2), '1', '1', '0', rep('1', 5)) %>% as.character(),
-  caller_confidence = 1 ,
+  n_probes = 5,
+  CN = c(rep(3, 2), 1, 1, 0, rep(1, 5)),
   ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
 )
 
 
 combined_tools <- bind_ranges(
   #combined calls
+  # sortebd by: CNV_type (DEL before DUP), start
   tibble(   
     seqnames = 'chr1',
-    start = c(4000, 12000, 15e4) %>% as.integer(),
-    end   = c(5500, 14000, 20e4) %>% as.integer(),
+    start = c(120000, 15e5, 4000) %>% as.integer(),
+    end   = c(140000, 20e5, 5500) %>% as.integer(),
     sample_id = 'test_sample',
-    CNV_type = c('gain', 'loss', 'loss'),
+    CNV_type = c('DEL', 'DEL', 'DUP'),
     ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-    CNV_caller = list(c('toolA','toolB'), c('toolA','toolB'), c('toolA', 'toolA','toolB')),
-    n_premerged_calls = list(c(2,1), c(2,1), c(2,2,1)),
-    n_snp_probes = list(c(10,5), c(10,5), c(10,10,5)),
-    copynumber = list(c('3','3'), c('1','0'), c('1','1','1')),
-    caller_confidence = list(c(1,1), c(1,1), c(1,1,1)),
+    CNV_caller = list(c('toolA','toolB'), c('toolA', 'toolA','toolB'), c('toolA','toolB')),
+    CN = c(0.5, 1, 3),
     overlap_merged_call = NA_real_,
-    caller_merging_coverage = c('toolA-100,toolB-100', 'toolA-100,toolB-100', 'toolA-80,toolB-100'),
-    caller_merging_state = 'combined'
+    caller_merging_coverage = c('toolA-100,toolB-100', 'toolA-80,toolB-100', 'toolA-100,toolB-100'),
+    caller_merging_state = 'combined',
+    # Recalculated based on vcf file; indiv call will keep whatever (fake) number they had before
+    n_probes = c(11, 6, 5),
+    n_uniq_probes = n_probes,
+    # this *should* be correct
+    probe_density_Mb = n_uniq_probes / (end - start + 1) * 1e6
   ) %>% as_granges(),
   # single calls
   # sorted by type, then caller, then start
@@ -86,66 +85,79 @@ combined_tools <- bind_ranges(
   ) %>%
     arrange(CNV_type, CNV_caller, start) %>%
     mutate(
-      # gain-A-4500, gain-B-4500, loss-A-12000, loss-A-15000, loss-A-18000, loss-B-12000, loss-B-15000
-      overlap_merged_call = 100*c(1, 1, 1, (20001)/(50001), (20001)/(50001), 1, 1) %>% as.double(),
+      #  loss-A-12000, loss-A-15000, loss-A-18000, loss-B-12000, loss-B-15000, gain-A-4500, gain-B-4500,
+      overlap_merged_call = 100*c(1, (200001)/(500001), (200001)/(500001), 1, 1, 1, 1) %>% as.double(),
       caller_merging_coverage = NA_character_,
       caller_merging_state = 'pre-overlap') %>%
     ensure_list_cols()
 )
 
+snp_vcf <- parse_snp_vcf(test_path('../data/minimal_probes.vcf'))
+
 test_that("combine 2 CNV callers", {
-  min.greatest.region.overlap <- 50
-  min.median.tool.coverage    <- 60
+    
+    processing_config <- list(
+        tool.overlap.greatest.call.min.perc = 50,
+        tool.overlap.median.cov.perc = 60
+    )
   
-  list(
-    'toolA' = as_granges(toolA),
-    'toolB' = as_granges(toolB)
-  ) %>%
-    bind_ranges() %>%
-    combine_CNV_callers(min.greatest.region.overlap, min.median.tool.coverage) %>%
-    expect_equal(combined_tools)        
+    list(
+        'toolA' = as_granges(toolA),
+        'toolB' = as_granges(toolB)
+    ) %>%
+        bind_ranges() %>%
+        combine_CNV_callers(processing_config, snp_vcf) %>%
+        expect_equal(combined_tools)        
 } )
 
 # add test with empty callset for one tool
 test_that("No calls from 1 CNV caller", {
-  min.greatest.region.overlap <- 50
-  min.median.tool.coverage    <- 60
+    processing_config <- list(
+        tool.overlap.greatest.call.min.perc = 50,
+        tool.overlap.median.cov.perc = 60
+    )
   
-  list(
-    'toolA' = as_granges(toolA),
-    'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
-  ) %>%
-    bind_ranges() %>%
-    combine_CNV_callers(min.greatest.region.overlap, min.median.tool.coverage) %>%
-    expect_equal(
-      as_granges(toolA) %>%
-        arrange(CNV_type, CNV_caller, start) %>%
-        mutate(overlap_merged_call = NA_real_,
-               caller_merging_coverage = NA_character_,
-               caller_merging_state = 'no-overlap') %>%
-        ensure_list_cols()
-    )        
-} )
+    list(
+        'toolA' = as_granges(toolA),
+        'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
+    ) %>%
+        bind_ranges() %>%
+        combine_CNV_callers(processing_config, snp_vcf) %>%
+        expect_equal(
+            as_granges(toolA) %>%
+                mutate(
+                    overlap_merged_call = NA_real_,
+                    caller_merging_coverage = NA_character_,
+                    caller_merging_state = 'no-overlap'
+                ) %>%
+                ensure_list_cols()
+        )        
+})
 
 # add test with completely empty callset
 test_that("No calls at all", {
-  min.greatest.region.overlap <- 50
-  min.median.tool.coverage    <- 60
+    processing_config <- list(
+        tool.overlap.greatest.call.min.perc = 50,
+        tool.overlap.median.cov.perc = 60
+    )
   
-  empty_res <- list(
-    'toolA' = as_granges(toolA) %>% filter(sample_id == 'non_existent_sample'),
-    'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
-  ) %>%
-    bind_ranges() %>%
-    combine_CNV_callers(min.greatest.region.overlap, min.median.tool.coverage) 
-  empty_gr <- as_granges(toolA) %>%
-      arrange(CNV_type, CNV_caller, start) %>%
-      mutate(overlap_merged_call = NA_real_,
-             caller_merging_coverage = NA_character_,
-             caller_merging_state = 'no-overlap') %>%
-      ensure_list_cols() %>% 
-      filter(sample_id == 'non_existent_sample')
+    empty_res <- list(
+        'toolA' = as_granges(toolA) %>% filter(sample_id == 'non_existent_sample'),
+        'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
+    ) %>%
+        bind_ranges() %>%
+        combine_CNV_callers(processing_config, snp_vcf) 
+    
+    empty_gr <- as_granges(toolA) %>%
+        arrange(CNV_type, CNV_caller, start) %>%
+        mutate(
+            overlap_merged_call = NA_real_,
+            caller_merging_coverage = NA_character_,
+            caller_merging_state = 'no-overlap'
+        ) %>%
+        ensure_list_cols() %>% 
+        filter(sample_id == 'non_existent_sample')
   
-  #Somehow the *direct* empty Granges objects do not compare equal ??
-  expect_equal(as_tibble(empty_res) %>% as_granges(), as_tibble(empty_gr) %>% as_granges())
+    #Somehow the *direct* empty Granges objects do not compare equal ??
+    expect_equal(as_tibble(empty_res) %>% as_granges(), as_tibble(empty_gr) %>% as_granges())
 } )

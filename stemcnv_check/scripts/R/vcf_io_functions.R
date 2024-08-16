@@ -26,6 +26,32 @@ parse_snp_vcf <- function(vcf,
 }
 
 # parse_cnv_vcf
+parse_cnv_vcf <- function(vcf, 
+                         info_fields = NULL, 
+                         format_fields = NULL, 
+                         apply_filter = TRUE) {
+    if (typeof(vcf) == 'character') {
+        vcf <- read.vcfR(vcf, verbose = F)
+    }
+    # VCF POS should be 1-based,
+    # Granges are also 1-based
+    # AND are (fully) open [= start & end are included]
+    vcf <- vcf %>%
+        vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
+        mutate(
+            CNV_type = str_remove(ALT, '<') %>% str_remove('>'),
+            CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+')
+        ) %>%
+        rename_with(~str_to_lower(.), contains('PROBE')) %>%
+        # Dropping the "n_initial_calls" tool info here
+        select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
+        as_granges(seqnames = CHROM, start = POS + 1, end = END, width = SVLEN)
+    if (apply_filter) {
+        vcf <- vcf %>% filter(FILTER == 'PASS')
+    }
+    return(vcf)
+}
+
 
 # CNV vcf writing
 static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER= TRUE) { 

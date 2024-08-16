@@ -91,7 +91,7 @@ def cnv_vcf_input_function(tool):
     return lambda wildcards: os.path.join(
         DATAPATH, 
         wildcards.sample_id, 
-        wildcards.sample_id+".processed-SNP-data."+get_tool_filter_settings(tool)+"-filter.vcf"
+        f"{wildcards.sample_id}.processed-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf"
         # VEP still has issues; skip for now
-        # wildcards.sample_id+".annotated-SNP-data."+get_tool_filter_settings('PennCNV')+"-filter.vcf.gz"
+        # f"{wildcards.sample_id}.annotated-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf.gz"
     )

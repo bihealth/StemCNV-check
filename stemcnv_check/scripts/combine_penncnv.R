@@ -8,7 +8,7 @@ library(plyranges)
 library(vcfR)
 library(GenomeInfoDb)
 
-snakemake@source('R/R_io_functions.R')
+snakemake@source('R/helper_functions.R')
 snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/preprocess_CNV_functions.R')
 

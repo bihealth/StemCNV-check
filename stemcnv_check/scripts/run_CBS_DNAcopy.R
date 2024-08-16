@@ -9,7 +9,7 @@ library(plyranges)
 library(vcfR)
 library(GenomeInfoDb)
 
-snakemake@source('R/R_io_functions.R')
+snakemake@source('R/helper_functions.R')
 snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/preprocess_CNV_functions.R')
 
@@ -36,7 +36,7 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
     # Re-formatting
     tb <- segments.summary(cna.basic.smoothed.segmented) %>%
   		dplyr::rename(seqnames = chrom, start = loc.start, end = loc.end,
-                      n_snp_probes = num.mark, sample_id = ID) %>%
+                      n_probes = num.mark, sample_id = ID) %>%
         mutate(
             seqnames = str_remove(seqnames, '^(chr|ch)'),
             sample_id = sample_id,

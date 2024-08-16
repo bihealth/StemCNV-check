@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_impact_lists.R'))
 
 
@@ -144,7 +144,7 @@ sample_cnvs <- tibble(
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
   CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
   n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
-  n_snp_probes = list(c(10,5), 5, c(10,5), c(10,10,5),5,5,5),
+  n_probes = list(c(10,5), 5, c(10,5), c(10,10,5),5,5,5),
   copynumber = list(c('3','3'), '3', c('3','4'), c('1','1','1'), '1', '1', '0'),
   caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
   overlap_merged_call = NA_real_,

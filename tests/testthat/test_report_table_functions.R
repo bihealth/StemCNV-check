@@ -2,7 +2,7 @@ library(tidyverse)
 library(plyranges)
 library(testthat)
 
-source(test_path("../../stemcnv_check/scripts/R/R_io_functions.R"))
+source(test_path("../../stemcnv_check/scripts/R/helper_functions.R"))
 source(test_path("../../stemcnv_check/scripts/R/R_table_functions.R"))
 
 # Functions to test:

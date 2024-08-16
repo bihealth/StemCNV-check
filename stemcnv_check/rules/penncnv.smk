@@ -103,7 +103,7 @@ rule combined_PennCNV_output:
         tsvs=get_penncnv_output,
         #logs=get_penncnv_output(wildcards, 'log')
     output:
-        vcf=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.vcf.gz"),
+        vcf=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.PennCNV.vcf.gz"),
         # TODO: how to best handle this? > separate rule ?!
         # stats=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.stats.tsv")
     log:

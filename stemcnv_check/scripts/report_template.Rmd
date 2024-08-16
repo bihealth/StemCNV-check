@@ -71,7 +71,7 @@ get_script_dir <- function() {
 	return ('StemCNV-check/scripts')
   }
 }
-source(file.path(get_script_dir(), 'R/R_io_functions.R'))
+source(file.path(get_script_dir(), 'R/helper_functions.R'))
 source(file.path(get_script_dir(), 'R/R_table_functions.R'))
 source(file.path(get_script_dir(), 'R/R_plotting_functions.R'))
 
@@ -655,7 +655,6 @@ cat(str_glue('This section includes all regions of interest defined for {sample_
 regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
 
-use_chr_str <- all(str_detect(cnv_calls$Chr, 'chr'))
 roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
 # Using all here would swallow problems; the NA check should only be needed for empty entries
@@ -671,14 +670,15 @@ if (any(!is.na(regions)) & length(regions)>0) {
             Size = End - Start,
             region_name = str_extract(regions, '^[^|]+\\|') %>% str_remove('\\|'),
             Call_Label = 'ROI'
-            ) %>%
-      mutate(Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
-             i = row_number(),
-             region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
-             `Check-Score` = 0,
-             ID = region_name,
-             ) %>%
-      bind_rows(expected_final_tb)
+        ) %>%
+        mutate(#Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
+                   Chr = mapSeqlevels(Chr, seqlevelsStyle(cnv_calls$Chr)),
+                   i = row_number(),
+                   region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
+                   `Check-Score` = 0,
+                   ID = region_name,
+        ) %>%
+        bind_rows(get_expected_final_tb(seqlevelsStyle(cnv_calls$Chr)))
 
   # Rmd doesn"t auto-print output inside {}
   print(CNV_table_output(fake_call_tb, 'regions_of_interest', high_impact_tb, highlight_tb, caption = 'Regions of Interest'))

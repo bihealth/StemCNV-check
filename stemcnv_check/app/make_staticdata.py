@@ -59,9 +59,12 @@ def create_missing_staticdata(args):
         'vep_fasta_path': os.path.join(vep_cache_path, 'fasta'),
     }
 
-    static_files = {#'genome_fasta_file', 'genome_gtf_file', 
-                    'penncnv_pfb_file', 'penncnv_GCmodel_file',
-                    'genomeInfo_file', 'array_density_file', 'array_gaps_file'}
+    static_files = {
+        #'genome_fasta_file', 
+        'genome_gtf_file',
+        'penncnv_pfb_file', 'penncnv_GCmodel_file',
+        'genomeInfo_file', 'array_density_file', 'array_gaps_file'
+    }
     # Update static_snake_config with existing and target file paths
     existing_files = {file for file in static_files
                       if file in config['static_data'] and os.path.isfile(config['static_data'][file])}

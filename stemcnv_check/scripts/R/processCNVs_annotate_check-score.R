@@ -8,12 +8,13 @@ finalise_gr_to_tb <- function(gr, gr_genes) {
 
 	tb <- as_tibble(gr) %>%
 		rowwise() %>%
-		mutate(across(any_of(list_cols), ~ list(.))) %>%
-		bind_rows(expected_final_tb) %>%
-		rowwise() %>%
-		mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
+		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
+		bind_rows(get_expected_final_tb(seqlevelsStyle(gr))) %>%
+        # # Just using width now
+        # rowwise() %>%
+		# mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
 		ungroup %>%
-		dplyr::select(one_of(colnames(expected_final_tb)))
+		dplyr::select(one_of(colnames(get_expected_final_tb())))
 
 	return(tb)
 }
@@ -25,9 +26,11 @@ annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_sco
 	  rowwise() %>%
 	  mutate(
 		  `Check-Score` =
-			ifelse(CNV_type %in% c('gain', 'loss'),
-				   1/3 * log(length) * log(length) - 15,
-				   0.275 * log(length) * log(length) - 15
+			ifelse(
+                #Note: adapt this if CNV is used for CN >= 4
+                CNV_type %in% c('DUP', 'DEL'),
+				1/3 * log(width) * log(width) - 15,
+				0.275 * log(width) * log(width) - 15
 			) +
 			# Base score for hitting HI / HL / ROI
 			(check_scores$highimpact_base * !is.na(high_impact_hits) ) +
@@ -70,18 +73,18 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 		rowwise() %>%
 		mutate(
 			size_category = case_when(
-				length >= size_categories$extreme.loh & CNV_type %!in% c('gain', 'loss') ~ 'extreme',
-				length >= size_categories$extreme.cnv & CNV_type %in% c('gain', 'loss') ~ 'extreme',
-				length >= size_categories$very.large.loh & CNV_type %!in% c('gain', 'loss') ~ 'very_large',
-				length >= size_categories$very.large.cnv & CNV_type %in% c('gain', 'loss') ~ 'very_large',
-				length >= size_categories$large.loh & CNV_type %!in% c('gain', 'loss') ~ 'large',
-				length >= size_categories$large.cnv & CNV_type %in% c('gain', 'loss') ~ 'large',
-				length >= size_categories$medium.loh & CNV_type %!in% c('gain', 'loss') ~ 'medium',
-				length >= size_categories$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
+				width >= size_categories$extreme.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'extreme',
+				width >= size_categories$extreme.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'extreme',
+				width >= size_categories$very.large.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'very_large',
+				width >= size_categories$very.large.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'very_large',
+				width >= size_categories$large.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'large',
+				width >= size_categories$large.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'large',
+				width >= size_categories$medium.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'medium',
+				width >= size_categories$medium.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'medium',
 				TRUE ~ 'small'
 		  	),
 			Precision_Estimate =
-			  ifelse(CNV_type %in% c('gain', 'loss'),
+			  ifelse(CNV_type %in% c('DUP', 'DEL'),
 				precision_estimates[[
 					ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
 					size_category]] +

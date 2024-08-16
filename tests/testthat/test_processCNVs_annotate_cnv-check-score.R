@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score.R'))
 
 # Functions:
@@ -29,17 +29,17 @@ config <- list(
 
 base_tb <- tibble(
     seqnames = 'chr1',
-    start = c(4000, 10000, 28000000, 28060000, 40000, 5000000, 3000),
-    end   = c(5500, 14000, 28055000, 28065000, 50000, 7000000, 60000),
+    start = c(4000, 10000, 28000000, 28060000, 40000, 5000000, 3000) %>% as.integer(),
+    end   = c(5500, 14000, 28055000, 28065000, 50000, 7000000, 60000) %>% as.integer(),
     sample_id = 'test_sample',
-    CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'LOH', 'LOH'),
+    CNV_type = c('DUP', 'DUP', 'DUP', 'DEL', 'DEL', 'CNV:LOH', 'CNV:LOH'),
     ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
     CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
     #n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
-    n_snp_probes = list(c(10,5), 100, c(100,50), c(100,100,50),100,50,50),
-    n_uniq_probe_positions = c(15, 100, 150, 100, 100, 50, 50),
-    copynumber = list(c('3','3'), '3', c('3','4'), c('1','1','1'), '1', '2', '2'),
-    caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
+    n_probes = c(15, 100, 150, 100, 100, 50, 50),
+    n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
+    CN = c(3, 3, 4, 1, 1, 2, 2),
+    #caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
     #overlap_merged_call = NA_real_,
     caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
     caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
@@ -56,17 +56,18 @@ base_tb <- tibble(
 
 expected_gr_to_tb <- base_tb %>%
   mutate(
-    seqnames = factor(seqnames, levels = get_chromosome_set()),
-    length = c( 1501, 4001, 55001, 5001, 10001, 2000001, 57001),
+    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']]),
+    width = c( 1501, 4001, 55001, 5001, 10001, 2000001, 57001) %>% as.integer(),
     n_premerged_calls = list(NULL),
     overlap_merged_call = NA_real_,
-    n_genes = c(1, 1, 1, 1, 1, 0, 3),
+    probe_density_Mb = NA_real_,
+    n_genes = c(1, 1, 1, 1, 1, 0, 3)  %>% as.integer(),
     overlapping_genes = c('dummyA', 'DDX11L1', "dummyC", "dummyC", 'dummyB', NA, 'dummyA,DDX11L1,dummyB'),
     `Check-Score` = NA_real_,
     Precision_Estimate = NA_real_
   ) %>%
   # any_of vs one_of here, since we DON'T want to test yet 
-  select(any_of(colnames(expected_final_tb)))
+  select(any_of(colnames(get_expected_final_tb())))
 
 test_that("test gr_to_final_tb", {
     # Test scenarios:
@@ -77,13 +78,17 @@ test_that("test gr_to_final_tb", {
     gr_genes <- load_gtf_data(config)
     expect_equal(finalise_gr_to_tb(as_granges(base_tb), gr_genes), expected_gr_to_tb)
     # extra tests:
-    # - column should be list but is not
-    expect_equal(finalise_gr_to_tb(base_tb %>%
-                                     mutate(copynumber = c(3,3,3,1,1,2,2)) %>%
-                                     as_granges(), 
-                                   gr_genes), 
-                 expected_gr_to_tb %>%
-                   mutate(copynumber = c(3,3,3,1,1,2,2) %>% as.list())
+    # - input column is not list and will be converted
+    # Note: this should not really happend, and is also a rare case now
+    expect_equal(
+        finalise_gr_to_tb(
+            base_tb %>%
+                mutate(CNV_caller = c("3","3","3","1","1","2","2")) %>%
+                as_granges(), 
+            gr_genes
+        ), 
+        expected_gr_to_tb %>%
+            mutate(CNV_caller = c("3","3","3","1","1","2","2") %>% as.list())
     )
 })
 

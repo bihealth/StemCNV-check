@@ -185,43 +185,38 @@ rule run_CBS:
 
 
 
-def get_preprocess_input(wildcards):
-    sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
-    tools = config['settings']['CNV.calling.tools']
-    files = []
-    files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-auto.tsv"),
-              os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chrx.tsv")] if 'PennCNV' in tools else []
-    files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.penncnv-chry.tsv")] if 'PennCNV' in tools and sex == 'm' else []
-    files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.CBS.tsv")] if 'CBS' in tools else []
+def get_processed_ref_data(wildcards):
+    sample_id, ref_id = get_ref_id(wildcards)
+    return os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv") if ref_id else []
 
-    filter = get_tool_filter_settings(f"settings:CNV_processing:call_processing")
-    files += [os.path.join(DATAPATH, f"{sample_id}", f"{sample_id}.filtered-data-{filter}.tsv")]
-
-    files += [os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")] if ref_id else []
-
-    return files
 
 rule run_process_CNV_calls:
     input:
-        get_preprocess_input
+        cnv_calls = expand(
+            os.path.join(DATAPATH, "{{sample_id}}", "{{sample_id}}.CNV_calls.{caller}.vcf.gz"),
+            caller = config['settings']['CNV.calling.tools']
+        ),
+        ref_data = get_processed_ref_data,
+        snp_vcf = cnv_vcf_input_function('settings:CNV_processing:call_processing')
     output:
-        os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv")
+        tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
+        # vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz")
     threads: get_tool_resource('CNV.process', 'threads')
     resources:
         runtime=get_tool_resource('CNV.process', 'runtime'),
         mem_mb=get_tool_resource('CNV.process', 'memory'),
         partition=get_tool_resource('CNV.process', 'partition')
     params:
-        penncnv = '-p' if 'PennCNV' in config['settings']['CNV.calling.tools'] else '',
-        cbs = '-c' if 'CBS' in config['settings']['CNV.calling.tools'] else '',
         settings=config['settings']['CNV_processing']
     log:
         err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
-        out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")
+        # out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")
     conda:
         importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-    shell:
-        "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
+    script:
+        '../scripts/process_CNV_calls.R'
+    # shell:
+    #     "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
 
 
 # rule run_make_cnv_vcf:

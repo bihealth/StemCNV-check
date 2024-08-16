@@ -1,27 +1,12 @@
-# n_nsp & uniq_snp annotation
-get_accurate_snp_probe_count <- function(gr, unfiltered.snps.file) {
-	message('(re)calculating number of SNP probes per call')
 
-	snp_probes_gr <- read_raw(unfiltered.snps.file) %>%
-		as_granges(seqnames = Chr, start = Position, width = 1)
-
-	n_snp <- count_overlaps(gr, snp_probes_gr)
-	n_snp_uniq <- count_overlaps(gr, reduce_ranges(snp_probes_gr))
-
-	gr$n_snp_probes <- n_snp
-	gr$n_uniq_probe_positions <- n_snp_uniq
-
-	gr
-
-}
-
-annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) {
+annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel, target_chrom_style = 'UCSC') {
 	message('Annotation calls with gaps')
 
 	gap_areas <- read_bed(gapfile) %>%
 		select(-name, -score) %>%
-		mutate(gap_size = width) %>%
-		filter(seqnames %in% get_chromosome_set())
+        fix_CHROM_format(target_chrom_style) %>%
+		mutate(gap_size = width) #%>%
+		#filter(seqnames %in% get_chromosome_set())
 	
 	# Sanity check: Are any CNV breakpoints in gap?
 	# This should never happen since CNVs & gaps are derived from probes
@@ -48,19 +33,20 @@ annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.r
 		mutate(probe_coverage_gap =  ifelse(is.na(percent_gap_coverage),
 										 FALSE,
 										 percent_gap_coverage > min.perc.gap_area &
-												(gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probe_positions))
+												(gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probes))
 		)
 
 	return(gr)
 }
 
-annotate_high_density <- function(gr, density_file, density.quantile.cutoff) {
+annotate_high_density <- function(gr, density_file, density.quantile.cutoff, target_chrom_style = 'UCSC') {
 	message('Annotation calls for high probe density')
 
 	array_density <- read_bed(density_file) %>%
 		select(-name) %>%
+        fix_CHROM_format(target_chrom_style) %>%
 		mutate(density = score) %>%
-		filter(seqnames %in% get_chromosome_set()) %>%
+		# filter(seqnames %in% get_chromosome_set()) %>%
 		filter(density > 0)
 
 	density_value_cutoff <- quantile(array_density$density, density.quantile.cutoff)

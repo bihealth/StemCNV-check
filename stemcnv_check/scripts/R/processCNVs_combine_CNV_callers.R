@@ -1,4 +1,11 @@
-combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median.tool.coverage = 60) {
+
+load_cnv_callers <- function(input_vcf_files) {
+    lapply(input_vcf_files, parse_cnv_vcf) %>%
+        bind_ranges()
+}
+
+
+combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
 	message('Combining calls from multiple callers')
 
 	ov_test <- gr %>%
@@ -41,13 +48,14 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 		# - require that the combined regions coverage from tools has a median of at least 60% (avg for only 2 tools)
 		gr.changed <- ov %>%
 			filter(caller_merging_state == 'combined' &
-					   max.ov >= min.greatest.region.overlap &
-					   tool.cov.ov.median >= min.median.tool.coverage
+					   max.ov >= processing_config$tool.overlap.greatest.call.min.perc &
+					   tool.cov.ov.median >= processing_config$tool.overlap.median.cov.perc
 			) %>%
-			select(-start, -end, -width,-ID) %>%
+			select(-start, -end, -width, -ID) %>%
 			rename_with(~str_remove(., '^group\\.')) %>%
-			summarise(across(any_of(list_cols), ~list(.)),
-					  overlap_merged_call = NA,
+			summarise(across(any_of(get_list_cols()), ~list(.)),
+                      CN = median(CN),
+					  overlap_merged_call = NA_real_,
 					  caller_merging_coverage = map2(CNV_caller, list(tool.cov.sum),
 													\(CNV_caller, csum) tibble(t = CNV_caller, csum = csum) %>% unique() %>%
 																	mutate(desc = paste0(t,'-', round(csum, 2))) %>%
@@ -56,12 +64,13 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 					  caller_merging_state = 'combined'
 			) %>%
 			as_granges() %>%
-			ensure_list_cols()
+			ensure_list_cols() %>%
+            add_snp_probe_counts(snp_vcf)
 
 		gr.unchanged <- ov %>%
 			filter(caller_merging_state == 'no-overlap' |
-					   max.ov < min.greatest.region.overlap |
-					   tool.cov.ov.median < min.median.tool.coverage
+					   max.ov < processing_config$tool.overlap.greatest.call.min.perc |
+					   tool.cov.ov.median < processing_config$tool.overlap.median.cov.perc
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%
@@ -73,8 +82,8 @@ combine_CNV_callers <- function(gr, min.greatest.region.overlap = 50, min.median
 
 		gr.pre.overlap <-ov %>%
 			filter(caller_merging_state == 'combined' &
-					   max.ov >= min.greatest.region.overlap &
-					   tool.cov.ov.median >= min.median.tool.coverage
+					   max.ov >= processing_config$tool.overlap.greatest.call.min.perc &
+					   tool.cov.ov.median >= processing_config$tool.overlap.median.cov.perc
 			) %>%
 			ungroup() %>%
 			select(-starts_with('group.'), -max.ov, -tool.cov.sum, -tool.cov.ov.median) %>%

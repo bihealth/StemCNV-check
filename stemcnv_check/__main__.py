@@ -59,7 +59,7 @@ def setup_argparse():
                               help="Filename for generated bed file with probe gaps. Default: %(default)s")
     group_static.add_argument('--genomeinfo-file', default='static-data/UCSC_{genome}_chromosome-info.tsv',
                                help="Filename for generated chromosome info file. Default: %(default)s")
-    group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf',
+    group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf.gz',
                                help="Filename for generated chromosome info file. Default: %(default)s")
     group_static.add_argument('--genome-fasta-file', default='static-data/{genome}.genome.fa.gz',
                                help="Filename for generated chromosome info file. Default: %(default)s")

@@ -1,28 +1,7 @@
 #General
+suppressMessages(require(GenomeInfoDb))
+suppressMessages(require(tidyverse))
 `%!in%` <- Negate(`%in%`)
-
-#TODO: deprecate this
-get_chromosome_set <- function(use.config = NULL, get_prefix = F) {
-	# Use given config if possible
-	if(!is.null(use.config)) {
-		use_chromosomes <- use.config$settings$chromosomes
-	# Else check outer scope for config object, note: some dangers to testing
-	} else if(exists('config')) {
-		use_chromosomes <- config$settings$chromosomes
-	} else {
-		message('Setting Chromosomes to default wihtout using config!')
-		use_chromosomes <- paste0('chr', c(1:22, 'X', 'Y'))
-	}
-
-	if (get_prefix) {
-		chr_prefix <- ifelse(all(str_detect(use_chromosomes, '^chr')),
-		                      'chr', '')
-		return(chr_prefix)
-
-	} else {
-		return(use_chromosomes)
-	}
-}
 
 read_sampletable <- function(filename) {
     read_tsv(filename, col_types = 'cccccc', comment = '#')
@@ -51,50 +30,6 @@ get_sample_info <- function(sample_id, value, sampletable){
 	if (value == 'sex.ref') return(sex.ref)
 	else stop(paste('Unsupported sample info value:', value))
 }
-
-
-
-# File input functions
-
-# ## SNP data
-# read_raw <- function(filename) {
-#     read_tsv(filename, show_col_types = FALSE) %>%
-#                 rename_with(~ str_remove(., '.*\\.')) %>%
-#         dplyr::select(-any_of(c('Index', 'Address', '', 'Theta')),
-#                                     -contains('Frac'), -contains('X'), -contains('Y')) %>%
-#         mutate(sample_id = basename(filename) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'),
-#                Chr = ifelse(!str_detect(Chr, 'chr'), paste0('chr', Chr), Chr),
-#                )
-# }
-# ## PennCNV
-# read_PennCNV <- function(filename) {
-# 	read.table(filename, sep='', header = F, fill=T,
-# 						 col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')) %>%
-# 		separate(Position, c('Chr', 'start_pos', 'end_pos'), convert=T) %>%
-# 		dplyr::rename(start = start_pos, end = end_pos, sample_id = input, n_snp_probes = numsnp) %>%
-# 		mutate(across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
-# 			   across(c(4,10), ~as.numeric(.)),
-# 			   Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-# 			   length = str_remove_all(length, ',') %>% as.integer(),
-# 			   snp.density = n_snp_probes / length * 1e6,
-# 			   copynumber = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),
-# 			   hmm.state = str_remove(hmm.state, ',cn=[0-9]'),
-# 			   CNV_type = ifelse(copynumber < 2, 'loss', NA),
-# 			   CNV_type = ifelse(copynumber == 2, 'LOH', CNV_type),
-# 			   CNV_type = ifelse(copynumber > 2, 'gain', CNV_type),
-# 			   CNV_type = as.character(CNV_type),
-# 			   CNV_caller = 'PennCNV',
-# 			   ID = paste(CNV_caller, CNV_type, Chr, start, end, sep='_'),
-# 			   # basename can't handly empty input ...
-# 			   sample_id = str_remove(sample_id, '.*/') %>% str_remove('\\.filtered-data-.*\\.tsv$'),
-# 		)
-# }
-# 
-# ## CBS
-# read_CBS <- function(filename) {
-# 	read_tsv(filename, show_col_types = F)
-# }
-
 
 ## preprocessed
 
@@ -148,45 +83,50 @@ load_genomeInfo <- function(config) {
 # Output
 
 ## Default table structure for CNVs
-expected_final_tb <- tibble(
-	sample_id = character(),
-	#Note: due to refatcoring this is can be executed WITHOUT a config object in scope
-	seqnames = factor(c(), levels = get_chromosome_set()),
-	start = integer(),
-	end = integer(),
-	#Maybe make this a list_col ? granges can calculate width anyway
-	length = integer(),
-	CNV_type = character(),
-	ID = character(),
-	`Check-Score` = double(),
-	reference_overlap = logical(),
-	CNV_caller = list(),
-	n_premerged_calls = list(),
-	n_snp_probes = list(),
-	n_uniq_probe_positions = integer(),
-	copynumber = list(),
-	Precision_Estimate = double(),
-	caller_confidence = list(),
-	caller_merging_state = character(),
-	overlap_merged_call = integer(),
-	caller_merging_coverage = character(),
-	reference_caller = list(),
-	reference_coverage = list(),
-	high_impact_hits = character(),
-	highlight_hits = character(),
-	ROI_hits = character(),
-	percent_gap_coverage = numeric(),
-	probe_coverage_gap = logical(),
-	high_probe_density = logical(),
-	n_genes = integer(),
-	overlapping_genes = character()
-	)
-list_cols <- colnames(expected_final_tb)[sapply(expected_final_tb, function(x) is(x, 'list'))]
+get_expected_final_tb <- function(chrom_style='UCSC') {
+
+    tibble(
+        sample_id = character(),
+        seqnames = factor(c(), levels = genomeStyles('Homo_sapiens')[[chrom_style]]),
+        start = integer(),
+        end = integer(),
+        width = integer(),
+        CNV_type = character(),
+        ID = character(),
+        `Check-Score` = double(),
+        reference_overlap = logical(),
+        CNV_caller = list(),
+        # n_premerged_calls = list(),
+        n_probes = integer(),
+        n_uniq_probes = integer(),
+        probe_density_Mb = double(),
+        CN = integer(),
+        Precision_Estimate = double(),
+        caller_merging_state = character(),
+        overlap_merged_call = double(),
+        caller_merging_coverage = character(),
+        reference_caller = list(),
+        reference_coverage = list(),
+        high_impact_hits = character(),
+        highlight_hits = character(),
+        ROI_hits = character(),
+        percent_gap_coverage = numeric(),
+        probe_coverage_gap = logical(),
+        high_probe_density = logical(),
+        n_genes = integer(),
+        overlapping_genes = character()
+    )
+}
+
+get_list_cols <- function() {
+    colnames(get_expected_final_tb())[sapply(get_expected_final_tb(), function(x) is(x, 'list'))]
+}
+
 
 ensure_list_cols <- function(tb.or.gr){
 	as_tibble(tb.or.gr) %>%
 		rowwise() %>%
-		mutate(across(any_of(list_cols), ~ list(.))) %>%
+		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
 		as_granges()
 }
 

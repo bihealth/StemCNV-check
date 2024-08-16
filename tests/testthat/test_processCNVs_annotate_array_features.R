@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/R_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_array_features.R'))
 
 # Functions:
@@ -20,8 +20,8 @@ sample_cnvs <- tibble(
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
   CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
   n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
-  n_snp_probes = list(c(10,5), 100, c(100,50), c(100,100,50),100,50,50),
-  n_uniq_probe_positions = c(15, 100, 150, 100, 100, 50, 50),
+  n_probes = list(c(10,5), 100, c(100,50), c(100,100,50),100,50,50),
+  n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
   copynumber = list(c('3','3'), '3', c('3','4'), c('1','1','1'), '1', '1', '0'),
   caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
   overlap_merged_call = NA_real_,
@@ -39,7 +39,7 @@ sample_cnvs <- tibble(
 # - multiple gaps in one CNV  -> above th, true
 # - CNV has single gap,    but below min.perc.gap_area
 # - CNV has multiple gaps, but below min.perc.gap_area
-# - CNV has gaps, but ! (gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probe_positions)
+# - CNV has gaps, but ! (gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probes)
 
 # - gap overlaps CNV border -> error
 # - gap fully conatins CNV  -> error

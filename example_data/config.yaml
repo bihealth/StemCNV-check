@@ -3,7 +3,7 @@ static_data:
     egt_cluster_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.egt'
     csv_manifest_file: ''
     genome_fasta_file: static-data/hg19.genome.fa.gz
-    genome_gtf_file: static-data/gencode.hg19.v45.gtf
+    genome_gtf_file: static-data/gencode.hg19.v45.gtf.gz
     penncnv_GCmodel_file: static-data/PennCNV-GCmodel_hg19ExampleArray.gcmodel
     penncnv_pfb_file: static-data/PennCNV-PFB_hg19ExampleArray.pfb
     array_density_file: static-data/density_hg19ExampleArray.bed

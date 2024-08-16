@@ -74,11 +74,8 @@ processed.calls <- file.path(data_path, sample_id,
 		## Need to reduce listcols to a single value for vcf
 		# Use highest tool_confidence  of single call
 		caller_confidence = suppressWarnings(caller_confidence %>% str_split(';') %>% unlist() %>% as.numeric() %>% max()),
-		#Note:
-		# Max is not actually correct, but using sum here will be less accurate, this is not solvalble with the currently avalable information
-		# Accurate number would need to be derived parallel to merging, requires loading the SNP subsets & doing a set merge on them
-		n_snp_probes = n_snp_probes %>% str_split(';') %>% unlist() %>% as.integer() %>% max(),
-		CNV_caller = CNV_caller %>% str_split(';') %>% unlist() %>% unique() %>% sort %>% paste(collapse='&'),
+		# redo n_probes & n_uniq_probes later
+        CNV_caller = CNV_caller %>% str_split(';') %>% unlist() %>% unique() %>% sort %>% paste(collapse='&'),
 		# No good way to decied if multiple copynumbers are predicted
 		# Only difference here will by 3/4/... or 0/1
 		# -> should maybe take the PennCNV one (instead of majority / 3 or 0)?
