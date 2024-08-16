@@ -1,3 +1,7 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
+
+
 merge_calls <- function(df.or.GR, merge.distance, snp_vcf_gr) {
     message('Merging nearby raw calls')
     if (is.data.frame(df.or.GR)) {
@@ -111,12 +115,6 @@ add_call_prefilters <- function(gr, tool_config) {
         select(-f_size, -f_probes, -f_density) %>%
         ungroup() %>%
         as_granges()
-}
-
-
-fix_CHROM_format <- function(gr, target_style) {
-    seqlevelsStyle(gr) <- target_style
-    return(sortSeqlevels(gr))
 }
 
 apply_preprocessing <- function(cnv_gr, snp_vcf_gr, tool_config) {

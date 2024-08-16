@@ -1,3 +1,6 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
+
 tb_to_gr_by_position <- function(tb, colname = 'position') {
 
 	if(nrow(tb) == 0){

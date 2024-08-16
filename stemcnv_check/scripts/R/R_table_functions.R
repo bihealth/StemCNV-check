@@ -153,7 +153,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
            CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
            Precision_Estimate, probe_coverage_gap, high_probe_density,
            # invis: 18++
-           copynumber, n_probes, n_uniq_probes, n_premerged_calls, caller_confidence,
+           CN, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
            caller_merging_coverage,
            percent_gap_coverage )
 

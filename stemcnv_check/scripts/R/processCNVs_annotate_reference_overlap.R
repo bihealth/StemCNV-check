@@ -1,3 +1,6 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
+
 annotate_reference_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.with.ref = 0.8) {
 	message('Annotation calls with reference overlap')
 	#If pair_overlaps is an empty set/df the min/max functions will give a warning, while later Granges functions would crash

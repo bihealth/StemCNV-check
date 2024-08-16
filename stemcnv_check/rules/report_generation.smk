@@ -3,15 +3,18 @@ def get_report_sample_input(wildcards):
     sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
     report_settings = config['reports'][wildcards.report]
 
-    sample_files = expand(
-        [os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
-         os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
-         os.path.join(LOGPATH, "PennCNV", "{ids}","{chrs}.error.log"),
-         os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),
-         os.path.join(DATAPATH, "{ids}", "{ids}.filtered-data-{filter}.tsv")],
-         ids = (sample_id, ref_id) if ref_id else (sample_id,),
-         chrs = ['auto', 'chrx'] + (['chry'] if sex == 'm' else []),
-         filter = get_tool_filter_settings(f"report:{wildcards.report}:call.data.and.plots"),
+    sample_files = expand([
+            os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
+            os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
+            os.path.join(LOGPATH, "PennCNV", "{ids}","{chrs}.error.log"),
+            #TODO: replace with annotated VCF
+            os.path.join(DATAPATH, "{ids}", "{ids}.processed-SNP-data.{filter}-filter.vcf")
+            # os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),
+            # os.path.join(DATAPATH, "{ids}", "{ids}.filtered-data-{filter}.tsv")
+        ],
+        ids = (sample_id, ref_id) if ref_id else (sample_id,),
+        chrs = ['auto', 'chrx'] + (['chry'] if sex == 'm' else []),
+        filter = get_tool_filter_settings(f"report:{wildcards.report}:call.data.and.plots"),
     )
 
     incl_sections = config_extract(('include_sections', ), report_settings, config['reports']['__default__'])
@@ -20,13 +23,12 @@ def get_report_sample_input(wildcards):
     if do_snp_clustering:
         extra_sample_def = config_extract(('SNP_comparison', 'extra_samples'), report_settings, config['reports']['__default__'])
         ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-        if not config_extract(('SNP_comparison', 'ignore_filter'), report_settings, config['reports']['__default__']):
-            sample_files += expand(
-                [os.path.join(DATAPATH,"{ids}","{ids}.filtered-data-{filter}.tsv")],
-                ids=ids, filter = get_tool_filter_settings(f"report:{wildcards.report}:SNP_comparison")
-            )
-        else:
-            sample_files += expand([os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv")], ids = ids)
+        # VCF has both filtered & unfiltered SNPs now
+        # if not config_extract(('SNP_comparison', 'ignore_filter'), report_settings, config['reports']['__default__']):
+        sample_files += expand(
+            [os.path.join(DATAPATH, "{ids}", "{ids}.processed-SNP-data.{filter}-filter.vcf")],
+            ids=ids, filter = get_tool_filter_settings(f"report:{wildcards.report}:SNP_comparison")
+        )
 
     if wildcards.ext == 'pdf':
         sample_files += [os.path.join(LOGPATH, "report", "_latex_installation_check")]

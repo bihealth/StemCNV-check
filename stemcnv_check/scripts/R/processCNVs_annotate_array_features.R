@@ -1,3 +1,5 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
 
 annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel, target_chrom_style = 'UCSC') {
 	message('Annotation calls with gaps')

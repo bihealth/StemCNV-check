@@ -1,3 +1,5 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
 
 load_cnv_callers <- function(input_vcf_files) {
     lapply(input_vcf_files, parse_cnv_vcf) %>%

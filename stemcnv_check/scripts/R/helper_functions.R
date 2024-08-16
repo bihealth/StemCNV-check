@@ -1,7 +1,13 @@
 #General
 suppressMessages(require(GenomeInfoDb))
 suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
 `%!in%` <- Negate(`%in%`)
+
+fix_CHROM_format <- function(gr, target_style) {
+    seqlevelsStyle(gr) <- target_style
+    return(sortSeqlevels(gr))
+}
 
 read_sampletable <- function(filename) {
     read_tsv(filename, col_types = 'cccccc', comment = '#')
@@ -36,7 +42,7 @@ get_sample_info <- function(sample_id, value, sampletable){
 load_preprocessed_cnvs <- function(fname){
 	read_tsv(fname) %>%
 		rowwise() %>%
-		mutate(across(any_of(list_cols), ~ str_split(., ';')))
+		mutate(across(any_of(get_list_cols()), ~ str_split(., ';')))
 }
 
 ## GTF data

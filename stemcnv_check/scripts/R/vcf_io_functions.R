@@ -1,3 +1,7 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
+suppressMessages(require(vcfR))
+
 # VCF reading
 vcfR_to_tibble <- function(vcf, info_fields = NULL, format_fields = NULL){
     #Note: this will fail if format fields are not properly annotated in header
@@ -18,6 +22,7 @@ parse_snp_vcf <- function(vcf,
     # AND are (fully) open [= start & end are included]
     vcf <- vcf %>%
         vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
+        mutate(sample_id = str_remove(sample_id, '\\.gencall')) %>%
         as_granges(seqnames = CHROM, start = POS, width = 1)
     if (apply_filter) {
         vcf <- vcf %>% filter(FILTER == 'PASS')
@@ -39,7 +44,10 @@ parse_cnv_vcf <- function(vcf,
     vcf <- vcf %>%
         vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
         mutate(
-            CNV_type = str_remove(ALT, '<') %>% str_remove('>'),
+            CNV_type = str_remove(ALT, '<') %>% str_remove('>') %>%
+                str_replace('DUP', 'gain') %>%
+                str_replace('DEL', 'loss') %>%
+                str_replace('CNV:LOH', 'LOH'),
             CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+')
         ) %>%
         rename_with(~str_to_lower(.), contains('PROBE')) %>%

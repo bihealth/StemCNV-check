@@ -1,3 +1,6 @@
+suppressMessages(require(tidyverse))
+suppressMessages(require(plyranges))
+
 # Sanitize output & add gene overlap annotation
 finalise_gr_to_tb <- function(gr, gr_genes) {
 
@@ -28,7 +31,7 @@ annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_sco
 		  `Check-Score` =
 			ifelse(
                 #Note: adapt this if CNV is used for CN >= 4
-                CNV_type %in% c('DUP', 'DEL'),
+                CNV_type %in% c('gain', 'loss'),
 				1/3 * log(width) * log(width) - 15,
 				0.275 * log(width) * log(width) - 15
 			) +
@@ -73,18 +76,18 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 		rowwise() %>%
 		mutate(
 			size_category = case_when(
-				width >= size_categories$extreme.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'extreme',
-				width >= size_categories$extreme.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'extreme',
-				width >= size_categories$very.large.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'very_large',
-				width >= size_categories$very.large.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'very_large',
-				width >= size_categories$large.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'large',
-				width >= size_categories$large.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'large',
-				width >= size_categories$medium.loh & CNV_type %!in% c('DUP', 'DEL') ~ 'medium',
-				width >= size_categories$medium.cnv & CNV_type %in% c('DUP', 'DEL') ~ 'medium',
+				width >= size_categories$extreme.loh & CNV_type %!in% c('gain', 'loss') ~ 'extreme',
+				width >= size_categories$extreme.cnv & CNV_type %in% c('gain', 'loss') ~ 'extreme',
+				width >= size_categories$very.large.loh & CNV_type %!in% c('gain', 'loss') ~ 'very_large',
+				width >= size_categories$very.large.cnv & CNV_type %in% c('gain', 'loss') ~ 'very_large',
+				width >= size_categories$large.loh & CNV_type %!in% c('gain', 'loss') ~ 'large',
+				width >= size_categories$large.cnv & CNV_type %in% c('gain', 'loss') ~ 'large',
+				width >= size_categories$medium.loh & CNV_type %!in% c('gain', 'loss') ~ 'medium',
+				width >= size_categories$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
 				TRUE ~ 'small'
 		  	),
 			Precision_Estimate =
-			  ifelse(CNV_type %in% c('DUP', 'DEL'),
+			  ifelse(CNV_type %in% c('gain', 'loss'),
 				precision_estimates[[
 					ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
 					size_category]] +

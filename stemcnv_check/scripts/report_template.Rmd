@@ -74,6 +74,7 @@ get_script_dir <- function() {
 source(file.path(get_script_dir(), 'R/helper_functions.R'))
 source(file.path(get_script_dir(), 'R/R_table_functions.R'))
 source(file.path(get_script_dir(), 'R/R_plotting_functions.R'))
+source(file.path(get_script_dir(), 'R/vcf_io_functions.R'))
 
 config_parse <- function(args, report_name) {
   subconfig <- config$reports[[report_name]]
@@ -292,23 +293,37 @@ plot.probe.filter.setting <- ifelse(report.setting('call.data.and.plots', 'filte
                                config$settings$`default-filter-set`,
                                report.setting('call.data.and.plots', 'filter-settings'))
 
-raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
-  lapply(read_raw) %>%
-  bind_rows() %>%
-  merge(lapply(file.path(datapath, use_ids, paste0(use_ids, '.filtered-data-', plot.probe.filter.setting, '.tsv')), read_raw) %>%
-            lapply(function(x) mutate(x, filter.passed = TRUE) %>% dplyr::select(sample_id, Name, Chr, Position, filter.passed)) %>%
-            bind_rows(),
-        by = c('sample_id', 'Name', 'Chr', 'Position'), all.x = T
-  ) %>%
-  mutate(filter.passed = ifelse(is.na(filter.passed), F, filter.passed))
+#TODO: replace with annotated VCF
+raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.processed-SNP-data.', plot.probe.filter.setting, '-filter.vcf')) %>%
+    lapply(parse_snp_vcf, apply_filter = FALSE) %>%
+    #TODO this might not work accordingly to tb
+    bind_ranges() %>%
+    #FIXME / future: adapt this
+    fix_CHROM_format('UCSC') %>%
+    as_tibble() %>%
+    #FIXME / future: adapt this
+    dplyr::rename(Chr = seqnames, Position = start, Name = ID,
+                  `B Allele Freq` = BAF, `Log R Ratio` = LRR) %>%
+    mutate(filter.passed = FILTER == 'PASS') %>%
+    dplyr::select(sample_id, Name, Chr, Position, filter.passed, `Log R Ratio`, `B Allele Freq`) 
+    
+  #   file.path(datapath, use_ids, paste0(use_ids, '.processed-data.tsv')) %>%
+  # lapply(read_raw) %>%
+  # bind_rows() %>%
+  # merge(lapply(file.path(datapath, use_ids, paste0(use_ids, '.filtered-data-', plot.probe.filter.setting, '.tsv')), read_raw) %>%
+  #           lapply(function(x) mutate(x, filter.passed = TRUE) %>% dplyr::select(sample_id, Name, Chr, Position, filter.passed)) %>%
+  #           bind_rows(),
+  #       by = c('sample_id', 'Name', 'Chr', 'Position'), all.x = T
+  # ) %>%
+  # mutate(filter.passed = ifelse(is.na(filter.passed), F, filter.passed))
 
 ## RAW Genotype info
-read_snps <- function(fname) {
-    read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
-        rename_with(~ str_remove(., '^.*\\.gencall\\.'), c(3)) %>%
-        mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
-               sample_id = basename(fname) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'))
-}
+# read_snps <- function(fname) {
+#     read_tsv(fname, col_select = c(1, 2, 11), show_col_types = FALSE) %>%
+#         rename_with(~ str_remove(., '^.*\\.gencall\\.'), c(3)) %>%
+#         mutate(GType = ifelse(GType == 'NC', NA, str_count(GType, 'A')),
+#                sample_id = basename(fname) %>% str_remove('\\.(processed|filtered)-data.*\\.tsv$'))
+# }
 
 snp.ids <- unique(c(use_ids, SNP.extra.ids))
 cluster.probe.filter.setting <- ifelse(report.setting('SNP_comparison', 'filter-settings') == '__default__',
@@ -320,16 +335,23 @@ if (length(snp.ids) < 2) {
 }
 
 ignore.filter <- report.setting('SNP_comparison', 'ignore_filter')
-snp_file_pattern <- ifelse(ignore.filter,
-                           '.processed-data.tsv',
-                           paste0('.filtered-data-', cluster.probe.filter.setting, '.tsv'))
+
 # This is always needed (to get snp_dist_to_ref)
-SNP.genotype.distances <- file.path(datapath, snp.ids, paste0(snp.ids, snp_file_pattern)) %>%
-  lapply(read_snps) %>%
-    bind_rows() %>%
-    pivot_wider(names_from = sample_id, values_from = GType, values_fill = NA) %>%
+#TODO: replace with annotated VCF
+SNP.genotype.distances <- file.path(datapath, snp.ids, 
+                                    paste0(snp.ids, '.processed-SNP-data.', cluster.probe.filter.setting, '-filter.vcf')) %>%
+    lapply(
+        parse_snp_vcf,
+        format_fields = c('GT'),
+        apply_filter = !ignore.filter
+        ) %>%
+    bind_ranges() %>%
+    as_tibble() %>%
+    mutate(NumericGT = ifelse(GT == './.', NA, str_count(GT, '1'))) %>%
+    select(-end, -width, -strand, -REF, -ALT, -QUAL, -FILTER, -GT) %>%
+    pivot_wider(names_from = sample_id, values_from = NumericGT, values_fill = NA) %>%
     filter(if_all(everything(), ~!is.na(.))) %>%
-    dplyr::select(-Index, -Name) %>%
+    dplyr::select(-seqnames, -start, -ID) %>%
     t() %>%
     dist(method = 'manhattan')
 
@@ -597,7 +619,7 @@ cat('\n\n')
 
 cnv_calls <- cnv_calls %>%
   ungroup() %>%
-  dplyr::rename(Chr = seqnames, Size = length, Start = start, End = end) %>%
+  dplyr::rename(Chr = seqnames, Size = width, Start = start, End = end) %>%
   mutate(CNV_type = factor(CNV_type),
          reference_overlap = factor(reference_overlap),
   ) %>%

@@ -44,7 +44,7 @@ ref_cnvs <- tibble(
   CNV_caller = list(c('toolA','toolB'), 'faketool', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB'),
   # n_premerged_calls = list(c(2,1), 5, c(2,1), c(2,2,1),1,1),
   n_probes = c(15, 20, 15, 25, 5, 5),
-  copynumber = c(3, 4, 3, 1, 1, 1),
+  CN = c(3, 4, 3, 1, 1, 1),
   # caller_confidence = list(c(1,1), 5, c(1,1), c(1,1,1), 1,1),
   overlap_merged_call = NA_real_,
   caller_merging_coverage = c('toolA-100,toolB-100', 'faketool', 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA),
