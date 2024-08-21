@@ -2,7 +2,7 @@ name: stemcnv-check-python-vcf
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   - python = 3.12
   - pip:

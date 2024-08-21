@@ -2,6 +2,6 @@ name: stemcnv-check-gtc2vcf
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   - bcftools-gtc2vcf-plugin = 1.16

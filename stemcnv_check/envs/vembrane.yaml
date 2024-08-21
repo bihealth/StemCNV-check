@@ -2,6 +2,6 @@ name: stemcnv-check-vembrane
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   - vembrane >= 1.0.6

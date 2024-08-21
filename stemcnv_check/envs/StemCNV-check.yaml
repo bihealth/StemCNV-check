@@ -2,7 +2,7 @@ name: stemcnv-check
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   ## General ##
   - python >=3.11

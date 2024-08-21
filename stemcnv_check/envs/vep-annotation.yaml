@@ -2,7 +2,7 @@ name: stemcnv-check-vep
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   - bcftools
   - ensembl-vep = 112

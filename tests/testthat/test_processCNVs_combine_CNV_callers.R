@@ -57,7 +57,7 @@ combined_tools <- bind_ranges(
         end   = c(140000, 20e5, 5500) %>% as.integer(),
         sample_id = 'test_sample',
         CNV_type = c('DEL', 'DEL', 'DUP'),
-        ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
+        ID = paste('StemCNV-check', CNV_type, seqnames, start, end, sep='_'),
         caller_merging_coverage = c('toolA-100;toolB-100', 'toolA-80;toolB-100', 'toolA-100;toolB-100'),
         caller_merging_state = 'combined',
         n_initial_calls = c(2, 3, 2),

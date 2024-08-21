@@ -2,7 +2,7 @@ name: stemcnv-check-general-R
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   # Base
   - r-base >=4.3 #might need higher to be compatible with latest bioconductor
