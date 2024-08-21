@@ -3,7 +3,7 @@ import textwrap
 import stemcnv_check.helpers as helpers
 import importlib.resources
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.exceptions import ConfigValueError
+from stemcnv_check.exceptions import ConfigValueError, SampleConstraintError
 from unittest.mock import patch, MagicMock
 from collections import OrderedDict
 
@@ -14,6 +14,16 @@ def sample_table_minimal():
         Chip_Name\tChip_Pos\tSample_ID\tSex\tReference_Sample
         123456789000\tR01C01\tCellline-A-MB\tFemale\t
         123456789001\tR01C01\tCellline-A-WB\tFemale\tCellline-A-MB
+        """
+    )
+
+@pytest.fixture
+def sample_table_missing():
+    return textwrap.dedent(
+        """\
+        Chip_Name\tSample_ID\tSex\tReference_Sample
+        123456789000\tCellline-A-MB\tFemale\t
+        123456789001\tCellline-A-WB\tFemale\tCellline-A-MB
         """
     )
 
@@ -31,36 +41,56 @@ def sample_table_extra_cols():
         """)
 
 
-def test_read_sample_table(sample_table_minimal, sample_table_extra_cols, fs):
+def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_table_extra_cols, fs):
     expected = [["Cellline-A-MB", "123456789000", "R01C01", "Female", ""],
                 ["Cellline-A-WB", "123456789001", "R01C01", "Female", "Cellline-A-MB"]]
-    
-    fs.create_file('sample_table_minimal.txt', contents=sample_table_minimal)
-    fs.create_file('sample_table_extra_cols.txt', contents=sample_table_extra_cols)
 
-    assert expected == helpers.read_sample_table("sample_table_minimal.txt")
+    fs.create_file('sample_table_minimal.tsv', contents=sample_table_minimal)
+    fs.create_file('sample_table_missing.tsv', contents=sample_table_missing)
+    fs.create_file('sample_table_extra_cols.tsv', contents=sample_table_extra_cols)
 
+    # test minimal sample table
+    assert expected == helpers.read_sample_table("sample_table_minimal.tsv")
 
+    # test minimal with dict output
     cols = ['Sample_ID', 'Chip_Name', 'Chip_Pos', 'Sex', 'Reference_Sample']
     expected_dict = [OrderedDict((k, v) for k, v in zip(cols, data_row)) for data_row in expected]
-    assert expected_dict == helpers.read_sample_table("sample_table_minimal.txt", with_opt=True)
+    assert expected_dict == helpers.read_sample_table("sample_table_minimal.tsv", with_opt=True)
 
+    # test failer with missing columns
+    with pytest.raises(SampleConstraintError):
+        helpers.read_sample_table("sample_table_missing.tsv")
+
+    # test extended example without dict output
     expected += [["Cellline-B-MB", "123456789000", "R01C02", "Male", ""],
                  ["Cellline-B-1-cl1", "123456789001", "R01C02", "Male", "Cellline-B-MB"]]
+    assert expected == helpers.read_sample_table("sample_table_extra_cols.tsv")
 
-    assert expected == helpers.read_sample_table("sample_table_extra_cols.txt")
-
+    # test extended example without dict output
     extra_expected = [
         ["Cellline-A MasterBank", "123,456", "ExampleCellines", "Example1|chr1:100000-200000"],
         ["Cellline-A WorkingBank", "Cellline-B-MB", "ExampleCellines", "Example1|chr1:100000-200000;chr11:60000-70000"],
         ["Cellline-B MasterBank", "0", "ExampleCellines", "Example1|chr1:100000-200000;chr11:60000-70000"],
         ["Cellline-B-1 clone1", "", "ExampleCellines", ""]
     ]
-
-    cols += ["Sample_Name", "Test_col", "Sample_Group", "Regions_of_Interest"]
-    expected_dict = [OrderedDict((k, v) for k, v in zip(cols, data_row+extra_row))
+    cols_extra = cols + ["Sample_Name", "Test_col", "Sample_Group", "Regions_of_Interest"]
+    expected_dict = [OrderedDict((k, v) for k, v in zip(cols_extra, data_row+extra_row))
                      for data_row, extra_row in zip(expected, extra_expected)]
-    assert expected_dict == helpers.read_sample_table("sample_table_extra_cols.txt", with_opt=True)
+    assert expected_dict == helpers.read_sample_table("sample_table_extra_cols.tsv", with_opt=True)
+
+    # Test the included example file
+    fs.add_real_file(
+        importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
+        read_only=True
+    )
+    cols_extra = cols + ["Sample_Name", "Sample_Group", "Regions_of_Interest"]
+    expected_dict = [OrderedDict((k, v) for k, v in zip(cols_extra, data_row+[extra_row[0]]+extra_row[2:]))
+                     for data_row, extra_row in zip(expected, extra_expected)]
+    assert expected_dict == helpers.read_sample_table(
+        importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
+        with_opt=True
+    )
+
 
 
 @patch('stemcnv_check.helpers.importlib.resources.files')

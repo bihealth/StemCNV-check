@@ -7,11 +7,12 @@ library(vcfR)
 source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
 
 #  Functions to test:
-# - parse_snp_vcf
-# - vcfR_to_tibble
-# - get_fix_section
-# - get_gt_section
-# - parse_cnv_vcf
+# - [x] vcfR_to_tibble
+# - [x] parse_snp_vcf
+# - [x] parse_cnv_vcf
+# - [ ] fix_header_lines
+# - [x] get_fix_section
+# - [x] get_gt_section
 # Note: static_cnv_vcf_header doesn't really need a test
 
 snp_vcfr <- read.vcfR(test_path('../data/minimal_probes.vcf'), verbose = F) 
@@ -60,39 +61,55 @@ test_that('parse_snp_vcf', {
 })
 
 
-# test_that('static_cnv_vcf_header', {
-#     tool_config <- list(
-#         filter.minsize = 1000,
-#         filter.minprobes = 5,
-#         filter.mindensity = 10
-#     )
-# })
-
-#TODO: add additional tb with fully processed/annotated CNV calls
-# > should probablt move those fixtures to testthat.R
 cnv_tb <- tibble(
-  seqnames  = rep('chr1', 9),
+  seqnames  = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrX', 'chrX'),
   start = c(100, 1000, 3000, 6000, 1.0e8, 7400,  9000, 12e4, 1e6) %>% as.integer(),
   end   = c(200, 1600, 5400, 7000, 1.1e8, 8400, 10000, 15e4, 3e6+400)-1 %>% as.integer(),
   width = c(100, 600, 2400, 1000, 1e7, 1000, 1000, 3e4, 2e6+400),
   sample_id = 'test_sample',
   CNV_caller = 'Test',
-  CNV_type = c(rep('DUP', 5), rep('DEL', 4)),
+  CNV_type = c(rep('DUP', 5), 'CNV:LOH', rep('DEL', 2), 'DUP'),
   n_initial_calls = c(1, 1, 2, 1, 1, 1, 2, 3, 2),
-  initial_call_details = c(NA, NA, '3000_3999_CN3,4400_5399_CN3', NA, NA, 
-                           NA, '9000_9399_CN1,9600_9999_CN1', '120000_129999_CN1,130000_139999_CN0,140000_149999_CN1',
-                            '1000000_1999999_CN1,2000400_3000399_CN1'),
-  CN = c(rep(3, 5), rep(1, 4)),  
+  initial_call_details = c(NA, NA, '3000_3999_CN3|4400_5399_CN3', NA, NA, 
+                           NA, '9000_9399_CN2|9600_9999_CN2', '120000_129999_CN1,130000_139999_CN0|140000_149999_CN1',
+                            '1000000_1999999_CN1|2000400_3000399_CN1'),
+  CN = c(3, 4, 3, 3, 3, 2, 0, 1, 3),  
   ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
   n_probes =      c(5, 3, 11, 5, 20, 5, 10, 15, 20),
   n_uniq_probes = c(5, 3, 10, 5, 20, 5, 10, 15, 20),
   probe_density_Mb = n_uniq_probes / width * 1e6,
-  FILTER = c('Size', 'Size;n_probes', 'PASS', 'PASS', 'Density', 'PASS', 'PASS', 'PASS', 'Density')
+  FILTER = c('Size', 'Size;n_probes', 'PASS', 'PASS', 'Density', 'PASS', 'PASS', 'PASS', 'Density'),
+  LRR = c(1, 1.3, 0.89, 2, 1.385, 0, -0.88, -1.31, -0.895) 
+  #BAF clusters:
+  #4, 2, 4, 3, 4, 2, 2, 2, 2  
 )
+
+#Add additional info for fully processed/annotated CNV calls
+cnv_tb_annotated <- cnv_tb %>%
+    mutate(
+        # FILTER = c(), # could be adapted to proper values, but doesn't matter for this test
+        `Check-Score` = 20 + runif(9, 5, 30),
+        Precision_Estimate = c(sample(c(0.1, 0.4, 0.6, 0.8), 7, T), NA, NA),
+        # reference_caller
+        reference_coverage = c(rep(NA, 4), runif(5, 0, 1)),
+        high_impact_hits = c(NA, NA, NA, NA, NA, 'gene1,gene2', NA, NA, NA),
+        highlight_hits = c(NA, NA, 'gene3', NA, NA, NA, NA, NA, NA),
+        ROI_hits = c(NA, NA, NA, NA, NA, NA, NA, NA, 'ROI1'),
+        percent_gap_coverage = c(0, 0, 0, runif(6, 0, 1)),
+        # not actually used in the function
+        # high_probe_density = c(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE),
+        overlapping_genes = c('abc,er123,xyz', NA, 'gene3', NA, NA, 'gene1,gene2', NA, NA, 'gene5')
+    )
+
+cnv_tb_annotated_out <- cnv_tb_annotated %>%
+    mutate(
+        across(where(is.numeric), ~ round(., 3) %>% as.character()),
+        across(where(is.character), ~ ifelse(is.na(.), '.', .) %>% str_replace_all(',', '|'))
+    )
 
 test_that('get_fix_section', {
     expected_fix <- tibble(
-        CHROM = 'chr1',
+        CHROM = cnv_tb$seqnames,
         POS = cnv_tb$start - 1,
         ID = cnv_tb$ID,
         REF = '.',
@@ -104,40 +121,74 @@ test_that('get_fix_section', {
             str_glue('END={cnv_tb$end};SVLEN={cnv_tb$width};'),
             'SVCLAIM=D;',
             str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
-            str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 2)}')            
+            str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)}')            
         ),
-    ) %>%
-        as.matrix()
+    )
     
     get_fix_section(cnv_tb) %>%
-        expect_equal(expected_fix)
-
+        expect_equal(as.matrix(expected_fix))
+    
+    # test advanced 
+    expected_fix <- expected_fix %>%
+        mutate(
+            INFO = paste0(
+                str_glue('END={cnv_tb$end};SVLEN={cnv_tb$width};'),
+                'SVCLAIM=D;',
+                str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
+                str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)};'),
+                str_glue('Check-Score={cnv_tb_annotated_out$`Check-Score`};'),
+                str_glue('Precision={cnv_tb_annotated_out$Precision_Estimate};'),
+                str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
+                str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),
+                str_glue('ROI={cnv_tb_annotated_out$ROI_hits};'),
+                str_glue('Gap_percent={cnv_tb_annotated_out$percent_gap_coverage};'),
+                str_glue('Genes={cnv_tb_annotated_out$overlapping_genes}')
+            )
+        )
+    
+    expect_equal(get_fix_section(cnv_tb_annotated), as.matrix(expected_fix))
 })
 
-#TODO: test different CNs (LOH, 0, >=4,, X&Y on male)
+
 test_that('get_gt_section', {
-    # FORMAT keys: GT, CN, TOOL (str desc), LRR (median)
+    # FORMAT keys: GT, CN, TOOL (str desc), LRR
     expected_gt <- tibble(
         FORMAT = 'GT:CN:TOOL:LRR',
         test_sample = paste(
-            '0/1',
+            c('0/1', './.', '0/1', '0/1', '0/1', './.', '1/1', '0/1', '0/1'),
             cnv_tb$CN,
             paste0(
                 "caller=Test;",
                 "n_initial_calls=", cnv_tb$n_initial_calls, ";",
                 "initial_call_details=", ifelse(is.na(cnv_tb$initial_call_details), '.', cnv_tb$initial_call_details)
             ),
-            #expcted LRR medians from minimal_porbes vcf
-            c(1, 1.3, 0.89, 2, 1.385, 0, -0.88, -1.31, -0.895),
-            #BAF clusters:
-            #4, 2, 4, 3, 4, 2, 2, 2, 2
+            cnv_tb$LRR,
             sep = ":"
         )
     ) %>% as.matrix()
     
-    snp_vcf <- parse_snp_vcf(snp_vcfr)
-    
-    get_gt_section(cnv_tb, snp_vcf) %>%
-        expect_equal(expected_gt)
+    get_gt_section(cnv_tb, 'f') %>%
+        expect_equal(expected_gt )
 
+    # Test with changes for male X & Y
+    expected_gt_m <- expected_gt
+    expected_gt_m[17] <- "1/1:0:caller=Test;n_initial_calls=3;initial_call_details=120000_129999_CN1,130000_139999_CN0|140000_149999_CN1:-1.31"
+    expected_gt_m[18] <- "./.:3:caller=Test;n_initial_calls=2;initial_call_details=1000000_1999999_CN1|2000400_3000399_CN1:-0.895"
+    cnv_tb %>%
+        mutate(
+            seqnames = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrY', 'chrX'),
+            CN = c(3, 4, 3, 3, 3, 2, 0, 0, 3)
+        ) %>%
+        get_gt_section('m') %>%
+        expect_equal(expected_gt_m)
+    
+    # test with processed annotation
+    expected_gt[1:9] <- 'GT:CN:TOOL:LRR:REFCOV'
+    expected_gt[10:18] <- paste(
+        expected_gt[10:18],
+        cnv_tb_annotated_out$reference_coverage,
+        sep = ':'
+    )
+    get_gt_section(cnv_tb_annotated, 'f') %>%
+        expect_equal(expected_gt )
 })

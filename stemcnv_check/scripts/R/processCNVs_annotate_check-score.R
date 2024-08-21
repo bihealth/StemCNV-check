@@ -2,26 +2,27 @@ suppressMessages(require(tidyverse))
 suppressMessages(require(plyranges))
 
 # Sanitize output & add gene overlap annotation
-finalise_gr_to_tb <- function(gr, gr_genes) {
+annotate_gene_overlaps <- function(gr, gr_genes) {
 
 	gr$n_genes <- count_overlaps(gr, gr_genes)
 	gr$overlapping_genes <- NA_character_
 	ov_genes <- group_by_overlaps(gr, gr_genes) %>% reduce_ranges(genes = paste(gene_name, collapse = ','))
 	gr[ov_genes$query,]$overlapping_genes <- ov_genes$genes
 
-	tb <- as_tibble(gr) %>%
+	return(gr)
+}
+
+finalise_tb <- function(tb.or.gr, chrom_style) {
+	tb <- as_tibble(tb.or.gr) %>%
 		rowwise() %>%
 		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
-		bind_rows(get_expected_final_tb(seqlevelsStyle(gr))) %>%
+		bind_rows(get_expected_final_tb(chrom_style)) %>%
         # # Just using width now
         # rowwise() %>%
 		# mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
 		ungroup %>%
 		dplyr::select(one_of(colnames(get_expected_final_tb())))
-
-	return(tb)
 }
-
 
 annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_scores) {
 

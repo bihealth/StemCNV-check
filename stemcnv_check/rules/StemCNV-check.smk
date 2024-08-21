@@ -88,14 +88,12 @@ def get_target_files(target = TARGET):
                                if rep != '__default__']) #+ \
                      # expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
                      #                sample_id = all_samples)
-    # # cnv-vcf
-    # if TARGET == 'cnv-vcf':
-    #     return expand(get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode']), sample_id = all_samples)
-
     # Target Processed-calls
     if target == 'combined-cnv-calls':
-        return expand(
-            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
+        return expand([
+                os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
+                os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
+            ],
             sample_id = all_samples
         )
     # Target PennCNV
@@ -129,34 +127,7 @@ rule all:
         if removetempconfig:
             os.remove(CONFIGFILE)
 
-# 
-# rule run_gtc2vcf_tsv:
-#     input:
-#         bpm=config['static_data']['bpm_manifest_file'],
-#         egt=config['static_data']['egt_cluster_file'],
-#         genome=config['static_data']['genome_fasta_file'],
-#         gtc = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
-#     output:
-#         tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.processed-data.tsv"),
-#     threads: get_tool_resource('gtc2vcf', 'threads')
-#     resources:
-#         runtime=get_tool_resource('gtc2vcf', 'runtime'),
-#         mem_mb=get_tool_resource('gtc2vcf', 'memory'),
-#         partition=get_tool_resource('gtc2vcf', 'partition')
-#     params:
-#         options = get_tool_resource('gtc2vcf', 'cmd-line-params'),
-#         csv='--csv "{}"'.format(config['static_data']['csv_manifest_file']) if config['static_data']['csv_manifest_file'] else '',
-#     log:
-#         err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.error.log"),
-#         out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "tsv.out.log")
-#     conda:
-#         importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","gtc2vcf.yaml")
-#     shell:
-#         'bcftools plugin gtc2vcf {params.options} --no-version -O t --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" -o {output.tsv} {input.gtc} > {log.out} 2> {log.err}'
-# 
 
-
-#TODO: how many rule files for this?
 
 rule run_CBS:
     input:
@@ -200,7 +171,7 @@ rule run_process_CNV_calls:
         snp_vcf = cnv_vcf_input_function('settings:CNV_processing:call_processing')
     output:
         tsv = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
-        # vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz")
+        vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz")
     threads: get_tool_resource('CNV.process', 'threads')
     resources:
         runtime=get_tool_resource('CNV.process', 'runtime'),
@@ -217,26 +188,3 @@ rule run_process_CNV_calls:
         '../scripts/process_CNV_calls.R'
     # shell:
     #     "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
-
-
-# rule run_make_cnv_vcf:
-#     input:
-#         os.path.join(DATAPATH,"{sample_id}","{sample_id}.combined-cnv-calls.tsv"),
-#         os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf"),
-#     output:
-#         get_cnv_vcf_output(config['settings']['make_cnv_vcf']['mode'])
-#     threads: get_tool_resource('make_cnv_vcf', 'threads')
-#     resources:
-#         runtime=get_tool_resource('make_cnv_vcf', 'runtime'),
-#         mem_mb=get_tool_resource('make_cnv_vcf','memory'),
-#         partition=get_tool_resource('make_cnv_vcf', 'partition')
-#     params:
-#         include_states=' '.join(config['settings']['make_cnv_vcf']['include_states']),
-#         mode = config['settings']['make_cnv_vcf']['mode']
-#     log:
-#         err=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","error.log"),
-#         out=os.path.join(LOGPATH,"make_cnv_vcf","{sample_id}","out.log")
-#     conda:
-#         importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-#     shell:
-#         "Rscript {SNAKEDIR}/scripts/make_cnv_vcf.R {DATAPATH} {wildcards.sample_id} {CONFIGFILE} -m {params.mode} -i {params.include_states} > {log.out} 2> {log.err}"

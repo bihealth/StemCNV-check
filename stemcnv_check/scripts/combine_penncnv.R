@@ -38,9 +38,7 @@ read_PennCNV <- function(filename, sample_id, sample_sex) {
         return(tb)
     }
     
-    sex_chroms <- genomeStyles('Homo_sapiens') %>%
-        filter(sex) %>%
-        pull(as.character(tb$seqnames) %>% seqlevelsStyle() %>% head(1))
+    sex_chroms <- get_sex_chroms(tb)
 
     tb %>% 
         mutate(
@@ -78,14 +76,13 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         as_granges()
     
     #make sure that snp_vcf & cnv_vcf use the same (& intended) chrom style
-    target_chrom_style <- config$settings$vcf_output$chrom_style
-    if (target_chrom_style == '__keep__') { target_style <- seqlevelsStyle(snp_vcf_gr) %>% head(1) 
-    } else { target_style <- target_chrom_style }
+    target_style <- get_target_chrom_style(config, snp_vcf_gr)
     all_calls <- fix_CHROM_format(all_calls, target_style)
     snp_vcf_gr <- fix_CHROM_format(snp_vcf_gr, target_style)
     
     # preprocess (merge, filter, SNP counts)
     all_calls <- apply_preprocessing(all_calls, snp_vcf_gr, tool_config) %>%
+        get_median_LRR(snp_vcf_gr) %>%
         as_tibble()       
     
     filtersettings <- tool_config$`filter-settings`
@@ -94,7 +91,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
     }    
     enable_LOH_calls <- tool_config$enable_LOH_calls
     header <- c(
-        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_chrom_style),
+        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
         static_cnv_vcf_header(tool_config),
         #Add a line describing tool specific details
         '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
@@ -110,7 +107,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         "vcfR",
         meta = header,
         fix = get_fix_section(all_calls),
-        gt = get_gt_section(all_calls, snp_vcf_gr)
+        gt = get_gt_section(all_calls, sample_sex)
     )
     
     write.vcf(cnv_vcf, out_vcf)

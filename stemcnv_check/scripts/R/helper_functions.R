@@ -9,6 +9,18 @@ fix_CHROM_format <- function(gr, target_style) {
     return(sortSeqlevels(gr))
 }
 
+get_sex_chroms <- function(tb.or.gr) {
+    if ("GRanges" %in% class(tb.or.gr)) {
+        chroms <- tb.or.gr
+    } else {
+        chroms <- as.character(tb.or.gr$seqnames)
+    }
+    
+    genomeStyles('Homo_sapiens') %>%
+        filter(sex) %>%
+        pull(chroms %>% seqlevelsStyle() %>% head(1))
+}
+
 read_sampletable <- function(filename) {
     read_tsv(filename, col_types = 'cccccc', comment = '#')
 }
@@ -35,6 +47,14 @@ get_sample_info <- function(sample_id, value, sampletable){
 	}
 	if (value == 'sex.ref') return(sex.ref)
 	else stop(paste('Unsupported sample info value:', value))
+}
+
+get_target_chrom_style <- function(config, snp_vcf_gr) {
+    target_style <- config$settings$vcf_output$chrom_style
+    if (target_style == '__keep__') {
+        target_style <- seqlevelsStyle(snp_vcf_gr) %>% head(1) 
+    }
+    return(target_style)
 }
 
 ## preprocessed
@@ -100,23 +120,24 @@ get_expected_final_tb <- function(chrom_style='UCSC') {
         CNV_type = character(),
         ID = character(),
         `Check-Score` = double(),
-        reference_overlap = logical(),
+        reference_overlap = logical(), # not needed for vcf output
         CNV_caller = list(),
         # n_premerged_calls = list(),
         n_probes = integer(),
         n_uniq_probes = integer(),
         probe_density_Mb = double(),
         CN = integer(),
+        LRR = double(),
         Precision_Estimate = double(),
         caller_merging_state = character(),
         overlap_merged_call = double(),
         caller_merging_coverage = character(),
-        reference_caller = list(),
-        reference_coverage = list(),
+        reference_caller = character(), # deprecate this
+        reference_coverage = double(),
         high_impact_hits = character(),
         highlight_hits = character(),
         ROI_hits = character(),
-        percent_gap_coverage = numeric(),
+        percent_gap_coverage = double(),
         probe_coverage_gap = logical(),
         high_probe_density = logical(),
         n_genes = integer(),

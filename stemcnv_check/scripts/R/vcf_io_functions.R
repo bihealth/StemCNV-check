@@ -62,11 +62,8 @@ parse_cnv_vcf <- function(vcf,
 
 
 # CNV vcf writing
-static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER= TRUE) { 
-    filter.minsize <- toolconfig$filter.minsize
-    filter.minprobes <- toolconfig$filter.minprobes
-    filter.mindensity.Mb <- toolconfig$filter.mindensity
-    
+static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = TRUE, FORMAT = TRUE, FILTER = TRUE) {
+
     info <- c(
         '##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the longest variant described in this record">',
 	    '##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of structural variant">',
@@ -76,20 +73,52 @@ static_cnv_vcf_header <- function(toolconfig, INFO = TRUE, FORMAT = TRUE, FILTER
         '##INFO=<ID=N_UNIQ_PROBES,Number=1,Type=Integer,Description="Number of unique array probe positions in segment">',
         '##INFO=<ID=PROBE_DENS,Number=1,Type=Float,Description="Density of Probes in segment (Probes / 10Mb)">'
     )
+    if (extra_annotation) {
+    info <- c(
+        info, 
+        '##INFO=<ID=Check-Score,Number=1,Type=Float,Description="StemCNV Check-Score for CNV call">',     
+        '##INFO=<ID=Precision,Number=1,Type=Float,Description="Estimated precision for this call">',
+        '##INFO=<ID=HighImpact,Number=1,Type=String,Description="Overlapping high impact sites (StemCNV-check defined)">',
+        '##INFO=<ID=Highlight,Number=1,Type=String,Description="Overlapping highlight sites (COSMIC genes)">',
+        '##INFO=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
+        '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
+        '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes, sepearted by | character">'
+    )
+    }
+    
     format <- c(
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Segment genotype">',
         '##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy-number (estimated)">',
         '##FORMAT=<ID=TOOL,Number=1,Type=String,Description="Details for copy number calling tools">',
         '##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Segment median Log R Ratio">'
-        # #TODO: not sure how to summarize this, maybe some simple clustering and # of clusters?
+        #FIXME (future): add clustered BAF
         # '##FORMAT=<ID=BAF,Number=1,Typeq=Foat,Description="Segment me(di)an B Allele Frequency">',
     )
-    filter <- c(
-        '##FILTER=<ID=PASS,Description="All filters passed">',
-        str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
-        str_glue('##FILTER=<ID=n_probes,Description="CNV call from <{filter.minprobes} probes">'),
-        str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
+    if (extra_annotation) {
+    format <- c(format,
+        '##INFO=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call in reference sample">'
     )
+    }
+    # Filter is applied before extra annotation, so those calls are currently NOT in the VCF
+    if (extra_annotation) { 
+        density.perc.cutoff <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
+        gap.min.perc <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
+        filter <- c(
+            '##FILTER=<ID=PASS,Description="All filters passed">',
+            str_glue('##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than {density.perc.cutoff}% of the array">'),
+            str_glue('##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerbale gap (min. {gap.min.perc}%)">')
+        )
+    } else {
+        filter.minsize <- toolconfig$filter.minsize
+        filter.minprobes <- toolconfig$filter.minprobes
+        filter.mindensity.Mb <- toolconfig$filter.mindensity
+        filter <- c(
+            '##FILTER=<ID=PASS,Description="All filters passed">',
+            str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
+            str_glue('##FILTER=<ID=n_probes,Description="CNV call from <{filter.minprobes} probes">'),
+            str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
+        )
+    }
     
     out <- c()
     if (INFO) { out <- c(out, info) }
@@ -135,68 +164,90 @@ fix_header_lines <- function(header_lines, regex = NULL, contig_format = NULL) {
 # Additions to Consider:
 # Fuzzyness of CNV calls (based on closest probes?)
 # Include CIPOS, CILEN
-get_fix_section <- function(tb){
+get_fix_section <- function(tb) {
     # Return a matrix/df with the following columns:
     # CHROM POS ID REF ALT QUAL FILTER INFO
     
-    # expected cols in tb:
+    # expected minimal cols in tb:
     # seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id, 
     #  n_initial_calls, initial_IDs_with_CN, n_probes, n_uniq_probes, probe_density_Mb
     #  FILTER
     
+    base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
+    extra_info_str <- paste(
+        base_info_str,
+        'Check-Score={`Check-Score`};Precision={Precision_Estimate}',
+        'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI={ROI_hits}',
+        'Gap_percent={percent_gap_coverage};Genes={overlapping_genes}',
+        sep=';'
+    )
+    # Technically should check for all columns, but they come in a bundle
+    use_info_str <- ifelse('Check-Score' %in% colnames(tb), extra_info_str, base_info_str)
+    
     tb %>%
         mutate(
-            # round floats
-            probe_density_Mb = round(probe_density_Mb, 2),
+            # Need to use across + any_of to make this work if the columns aren't there
+            # replace , by | for separator in INFO cols
+            across(
+                any_of(c("high_impact_hits", "highlight_hits", "ROI_hits", "overlapping_genes")),
+                ~ str_replace_all(., ',', '|')
+            ),
+            # round numbers
+            across(where(is.numeric), ~ round(., 3)),
+            # convert NA or empty string to ".", all columns with possible NA to character
+            across(
+                any_of(c("Check-Score", "Precision_Estimate", "high_impact_hits", "highlight_hits",
+                         "ROI_hits", "percent_gap_coverage", "overlapping_genes")),
+                ~ ifelse(is.na(.) | . == "", '.', as.character(.))
+            ),
+                       
             # From VCF specs:
             # Note that for structural variant symbolic alleles, POS corresponds 
             # to the base immediately preceding the variant.
             POS = start - 1,
             REF = '.',
-            #TODO: CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
+            #FIXME (future): CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
             ALT = str_glue("<{CNV_type}>"),
             QUAL = '.',
             # END position of the longest variant described in this record. The END of each allele is defined as
             # <DEL>, <DUP>, <INV>, and <CNV> symbolic structural variant alleles:, POS + SVLEN.
             # in granges: width = end - start + 1; so this fits with corrected POS
-            INFO = str_glue(
-                'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
-            )
+            INFO = str_glue(use_info_str)
         ) %>%
-        dplyr::rename(
-            CHROM = seqnames,
-        ) %>%
+        dplyr::rename(CHROM = seqnames) %>%
         select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO) %>%
         as.matrix()
 }
 
-get_gt_section <- function(tb, snp_vcf_gr){
-    # Return a matrix/df with the following columns:
-    # FORMAT, sample1, ...
+get_gt_section <- function(tb, sample_sex){
+    # Return a matrix with the following columns:
+    # FORMAT, <sample>
     
-    # expected cols in tb:
+    # min. expected cols in tb:
     # seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id, 
     #  n_initial_calls, initial_call_details, n_probes, n_uniq_probes, probe_density_Mb
-    #  FILTER
+    #  FILTER, LRR
     
-    # FORMAT keys: GT, CN, TOOL (str desc), LRR (median)
+    # FORMAT keys: GT, CN, TOOL (str desc), LRR (median), [opt: REFCOV]
     # Future: BAF (no. of clusters?)
     
-    median_lrr <- snp_vcf_gr %>%
-        plyranges::select(LRR) %>%
-        join_overlap_inner(as_granges(tb)) %>%
-        as_tibble() %>%
-        group_by(ID) %>%
-        # round to 3 decimals
-        summarise(LRR = median(LRR) %>% round(3))
-    
+    sex_chroms <- get_sex_chroms(tb)
+    use_cols <- c('GT', 'CN', 'TOOL', 'LRR')
+    if ('reference_coverage' %in% colnames(tb)) {
+        use_cols <- c(use_cols, 'REFCOV')
+    }
+
     tb %>%
-        select(sample_id, ID, CN, CNV_caller, n_initial_calls, initial_call_details) %>%
+        rename_with(~str_replace(., 'reference_coverage', 'REFCOV')) %>%
         mutate(
-            FORMAT = 'GT:CN:TOOL:LRR',
-            CN = as.character(CN),
-            #TODO: X&Y on male will be different!
+            across(any_of('REFCOV'), ~ ifelse(is.na(.), '.', round(., 3) %>% as.character())),
+            FORMAT = paste(use_cols, collapse = ':'),
             GT = case_when(
+                # Male sex chroms have lower CN baseline
+                # Male CN=1 will never be present (not a CNV, no LOh is called)
+                sample_sex == 'm' & seqnames %in% sex_chroms & CN == 2 ~ '0/1',
+                sample_sex == 'm' & seqnames %in% sex_chroms & CN > 2  ~ './.',
+                # All other chromosomes
                 # LOH
                 CN == 2 ~ './.',
                 # hom loss
@@ -206,16 +257,16 @@ get_gt_section <- function(tb, snp_vcf_gr){
                 # multi copy gain
                 CN > 3 ~ './.',
             ),
-            # initial_call_details
+            CN = as.character(CN),
+            # initial_call_details; this will already carry further extra annotation if existing
             initial_call_details = ifelse(is.na(initial_call_details), '.', initial_call_details),
             TOOL = str_glue("caller={CNV_caller};n_initial_calls={n_initial_calls};initial_call_details={initial_call_details}"),
         ) %>%
-        left_join(median_lrr, by = 'ID') %>%
-        # Future TODO: some way to get (PennCNV) GC correction for LRR?
-        # Future TODO: add solution for BAF
-        select(FORMAT, sample_id, GT, CN, TOOL, LRR) %>%
+        select(FORMAT, sample_id, all_of(use_cols)) %>%
         group_by(FORMAT, sample_id) %>%
-        reframe(value = paste(GT, CN, TOOL, LRR, sep = ':')) %>%
+        # paste columns together
+        # possibly should use all_of(use_cols) here?
+        unite("value", use_cols, sep = ':', remove = TRUE) %>%
         pivot_wider(names_from = sample_id, values_from = value, values_fn = list) %>%
         unnest(cols = unique(tb$sample_id)) %>%
         as.matrix()

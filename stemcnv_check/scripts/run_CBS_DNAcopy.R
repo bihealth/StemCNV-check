@@ -29,9 +29,7 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
     )
 
     # Need sex chroms in matching style to set proper CNs
-    sex_chroms <- genomeStyles('Homo_sapiens') %>%
-        filter(sex) %>%
-        pull(as.character(tb$seqnames) %>% seqlevelsStyle() %>% head(1))
+    sex_chroms <- get_sex_chroms(tb)
     
     # Re-formatting
     tb <- segments.summary(cna.basic.smoothed.segmented) %>%
@@ -100,14 +98,13 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         as_granges()
     
     #make sure that snp_vcf & cnv_vcf use the same (& intended) chrom style
-    target_chrom_style <- config$settings$vcf_output$chrom_style
-    if (target_chrom_style == '__keep__') { target_style <- seqlevelsStyle(snp_vcf_gr) %>% head(1) 
-    } else { target_style <- target_chrom_style }
+    target_style <- get_target_chrom_style(config, snp_vcf_gr)
     cnv_gr <- fix_CHROM_format(cnv_gr, target_style)
     snp_vcf_gr <- fix_CHROM_format(snp_vcf_gr, target_style)
     
     # preprocess (merge, filter, SNP counts)
     cnvs <- apply_preprocessing(cnv_gr, snp_vcf_gr, tool_config) %>%
+        get_median_LRR(snp_vcf_gr) %>%
         as_tibble()
     # Generate VCF
     filtersettings <- tool_config$`filter-settings`
@@ -115,7 +112,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         filtersettings <- config$settings$`default-filter-settings`
     }
     header <- c(
-        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_chrom_style),
+        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
         static_cnv_vcf_header(tool_config),
         paste(
             '##CBS=R-DNAcopy LRR segmentation: CNA/smooth.CNA/segment',
@@ -134,7 +131,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         "vcfR",
         meta = header,
         fix = get_fix_section(cnvs),
-        gt = get_gt_section(cnvs, snp_vcf_gr)
+        gt = get_gt_section(cnvs, sample_sex)
     )
     
     write.vcf(cnv_vcf, out_vcf)

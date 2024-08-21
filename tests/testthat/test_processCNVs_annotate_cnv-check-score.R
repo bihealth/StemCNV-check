@@ -44,8 +44,8 @@ base_tb <- tibble(
     caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
     caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
     reference_overlap = c(T, T, F, F, F, F, T),
-    reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60) %>% as.list(),
-    reference_caller = list(c('toolA','toolB'), 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
+    reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
+    reference_caller = c('toolA;toolB', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
     high_impact_hits = c(NA, NA, 'dummyC', NA, '1p36,chr1:40000-50000', NA, NA),
     highlight_hits = c(NA, 'DDX11L1', NA, NA, NA, NA, 'DDX11L1,dummyB'),
     ROI_hits = c('fake-ROI', NA, NA, 'dummyC', NA, NA, NA),    
@@ -54,40 +54,52 @@ base_tb <- tibble(
     high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE)
 )
 
-expected_gr_to_tb <- base_tb %>%
+expected_gene_tb <- base_tb %>%
   mutate(
-    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']]),
     width = c( 1501, 4001, 55001, 5001, 10001, 2000001, 57001) %>% as.integer(),
-    # n_premerged_calls = list(NULL),
-    overlap_merged_call = NA_real_,
-    probe_density_Mb = NA_real_,
     n_genes = c(1, 1, 1, 1, 1, 0, 3)  %>% as.integer(),
     overlapping_genes = c('dummyA', 'DDX11L1', "dummyC", "dummyC", 'dummyB', NA, 'dummyA,DDX11L1,dummyB'),
+  )
+
+expected_final_tb <- expected_gene_tb %>%
+  mutate(
+    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']]),
+    overlap_merged_call = NA_real_,
+    probe_density_Mb = NA_real_,
+    LRR = NA_real_,
     `Check-Score` = NA_real_,
     Precision_Estimate = NA_real_
   ) %>%
   # any_of vs one_of here, since we DON'T want to test yet 
   select(any_of(colnames(get_expected_final_tb())))
 
+test_that("annotate_gene_overlap", {
+    # Test scenarios:
+    # - CNV has no gene overlap
+    # - CNV has (partial) gene overlap
+    # - CNV has multiple genes overlapping    
+    gr_genes <- load_gtf_data(config)
+    
+    annotate_gene_overlaps(as_granges(base_tb), gr_genes) %>%
+        expect_equal(as_granges(expected_gene_tb))
+    
+})
+
 test_that("test gr_to_final_tb", {
     # Test scenarios:
     # - missing columns (list & normal)
-    # - CNV has no gene overlap
-    # - CNV has (partial) gene overlap
-    # - CNV has multiple genes overlapping
-    gr_genes <- load_gtf_data(config)
-    expect_equal(finalise_gr_to_tb(as_granges(base_tb), gr_genes), expected_gr_to_tb)
+    expect_equal(finalise_tb(as_granges(expected_gene_tb), 'UCSC'), expected_final_tb)
     # extra tests:
     # - input column is not list and will be converted
-    # Note: this should not really happend, and is also a rare case now
+    # Note: this should not really happen, also list cols are slowly being deprecated
     expect_equal(
-        finalise_gr_to_tb(
-            base_tb %>%
+        finalise_tb(
+            expected_gene_tb %>%
                 mutate(CNV_caller = c("3","3","3","1","1","2","2")) %>%
-                as_granges(), 
-            gr_genes
+                as_granges(),
+            'UCSC'
         ), 
-        expected_gr_to_tb %>%
+        expected_final_tb %>%
             mutate(CNV_caller = c("3","3","3","1","1","2","2") %>% as.list())
     )
 })
@@ -134,7 +146,7 @@ test_that("Annotate CNV check scores", {
     comment = NA
   ) %>% as_granges()
   
-  expected_tb <- expected_gr_to_tb %>%
+  expected_tb <- expected_final_tb %>%
     mutate(
       # Test scenarios:
       `Check-Score` = c(
@@ -154,12 +166,12 @@ test_that("Annotate CNV check scores", {
         LOH_size_score(57001) + 5 + 0.4
       )
     )
-  expect_equal(annotate_cnv.check.score(expected_gr_to_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
+  expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
   # Extra test:
   # - HL base score not 0
   config$settings$CNV_processing$Check_score_values$highlight_base <- 2.7
   expected_tb[c(2,7), 'Check-Score'] <- expected_tb[c(2,7), 'Check-Score'] + 2.7
-  expect_equal(annotate_cnv.check.score(expected_gr_to_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
+  expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
 })
 
 

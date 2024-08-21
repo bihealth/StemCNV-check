@@ -32,6 +32,10 @@ params:
   background-color:#ffa500;
   box-sizing: border-box;
 }
+.nav-pills {
+  # visibility: hidden;
+  display: none;
+}
 [role=tab] {
   height: 40px;
   width: 250px;
@@ -642,7 +646,7 @@ reference_calls.table <- cnv_calls %>%
 ```
 
 ```{r denovo_calls.header, eval = include.section('denovo_calls.table') | include.section('denovo_calls.plots'), results='asis'}
-cat('## de-novo CNV calls {.tabset}\n\n')
+cat('## de-novo CNV calls {.tabset .tabset-pills}\n\n')
 cat('This section describes all de-novo CNV calls, meaning calls without a match in the reference sample.\n\n')
 ```
 
@@ -656,7 +660,7 @@ make_CNV_plot_section(denovo_calls.table, 'denovo')
 cat('\n\n')
 ```
 ```{r reference_gt_calls.header, eval = !is.na(ref_id) & (include.section('reference_gt_calls.table') | include.section('reference_gt_calls.plots')), results='asis'}
-cat('## Reference genotype CNV calls {.tabset}\n\n')
+cat('## Reference genotype CNV calls {.tabset .tabset-pills}\n\n')
 cat('This section describes all CNV calls that match the reference sample.\n\n')
 ```
 

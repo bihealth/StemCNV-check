@@ -12,7 +12,8 @@ format_column_names <- function(n) {
     str_to_title() %>%
     str_replace('Cnv', 'CNV') %>%
     str_replace('Loh', 'LOH') %>%
-    str_replace('Snp', 'SNP') %>%
+    str_replace('Snp', 'SNP') %>% 
+    str_replace('Lrr', 'LRR') %>%
     str_replace('Roi', 'ROI') %>%
     str_replace('Id', 'ID')
 }
@@ -146,6 +147,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
            high_impact_hits = map2_chr(high_impact_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
            highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
     ) %>%
+    dplyr::rename(copynumber = CN) %>%  
     select(sample_id, ID, i, #invis 0-2
            Plot, Call_Label, `Check-Score`,
            CNV_type, Chr, Size,
@@ -153,9 +155,9 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
            CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
            Precision_Estimate, probe_coverage_gap, high_probe_density,
            # invis: 18++
-           CN, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
+           copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
            caller_merging_coverage,
-           percent_gap_coverage )
+           percent_gap_coverage ) 
 
   if (params$out_format == 'html') {
 
@@ -163,7 +165,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             'Sample_ID from the input "sample_table"',
             'Internal ID for the CNV call',
             'Number of the CNV call, sorted by descending Check-Score',
-            'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch to the active plot below, without hightlighting the correct tab. For other CNVs it will open the plot in a new browser tab.',
+            'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch the active plot below. For other CNVs it will open the plot in a new browser tab.',
             'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
             'Check-Score of the CNV call, calculated based on size, overlap high impact or highlight list, or other genes',
             'Type of CNV call (gain, loss, LOH)',
@@ -180,10 +182,11 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. See config min.perc.gap_area and gap_area.uniq_probes.rel for details',
             'Call has higher probe density than {density.quantile.cutoff} percent of the the array',
             '(Estimated) copy number of the CNV call',
+            'Median Log R Ratio of the CNV call',
             'Number of SNP probes (post filtering) in the CNV call area',
             'Number of unique probe positions (post filtering) in the CNV call area',
-            'Number of calls from the caller before merging, comma separated for mutliple callers',
-            'Call confidence of the caller where available, comma separated for multiple callers',
+            # 'Number of calls from the caller before merging, comma separated for mutliple callers',
+            # 'Call confidence of the caller where available, comma separated for multiple callers',
             'For calls with multiple CNV callers: percentage overlap of each caller with the combined call area',
             'Percentage of the CNV call area with a gap probe coverage'
     )
@@ -212,8 +215,8 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
               "};"
             )
           ) %>%
-      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '..') %>%
-      formatRound(c('Check-Score'), digits = 2, mark= '..')
+      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
+      formatRound(c('Check-Score', 'Percent Gap Coverage'), digits = 2)
     return(dt)
   } else {
     tb <- tb %>% select(CNV_type, `Check-Score`,

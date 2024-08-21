@@ -35,7 +35,7 @@ merge_calls <- function(df.or.GR, merge.distance, snp_vcf_gr) {
             # Collect initial start, end & CN
 			initial_call_details = ifelse(
                 plyranges::n() > 1,
-                paste(short_ID, collapse = ','),
+                paste(short_ID, collapse = ';'),
                 NA_character_
             ),
 			CN = median(CN),
@@ -128,4 +128,21 @@ apply_preprocessing <- function(cnv_gr, snp_vcf_gr, tool_config) {
         add_call_prefilters(tool_config) %>%
         sort()
     
+}
+
+# Future TODO: some way to get (PennCNV) GC correction for LRR?
+# Future TODO: add solution for BAF
+get_median_LRR <- function(gr, snp_vcf_gr) {
+    
+    median_lrr <- snp_vcf_gr %>%
+        plyranges::select(LRR) %>%
+        join_overlap_inner(gr) %>%        
+        as_tibble() %>%
+        group_by(ID) %>%
+        summarise(LRR = median(LRR) %>% round(3))
+    
+    # If calls overlap (i.e. not meeting merging criteria) using plyranges here would be problematic
+    as_tibble(gr) %>%
+        full_join(median_lrr, by = 'ID') %>%
+        as_granges()
 }

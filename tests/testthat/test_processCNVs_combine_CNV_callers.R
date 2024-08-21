@@ -5,6 +5,8 @@ library(plyranges)
 
 
 source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/preprocess_CNV_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_combine_CNV_callers.R'))
 
 # Example calls (toolA and toolB):
@@ -22,74 +24,87 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_combine_CNV_callers.
 # 2+2 - 4 calls, both regions >60% median cov, but no single call >50% cov
 
 toolA <- tibble(
-  seqnames = rep('chr1', 13),
-  start = c(1000, 4000, 6000,  8000, 120000, 15e5, 18e5, 22.2e4, 27e4, 31e4, 36e4, 50e4, 55e4) %>% as.integer(),
-  end   = c(2000, 5500, 7500, 10000, 140000, 17e5, 20e5, 23e4, 27.8e4, 35e4, 40e4, 54e4, 58e4) %>% as.integer(),
-  CNV_type = c(rep('DUP', 3), rep('DEL', 10)),
-  sample_id = 'test_sample',
-  CNV_caller = 'toolA',
-  n_probes = 10,
-  CN = c(rep(3, 3), rep(1, 10)),
-  ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
+    seqnames = rep('chr1', 13),
+    start = c(1000, 4000, 6000,  8000, 120000, 15e5, 18e5, 22.2e4, 27e4, 31e4, 36e4, 50e4, 55e4) %>% as.integer(),
+    end   = c(2000, 5500, 7500, 10000, 140000, 17e5, 20e5, 23e4, 27.8e4, 35e4, 40e4, 54e4, 58e4) %>% as.integer(),
+    CNV_type = c(rep('DUP', 3), rep('DEL', 10)),
+    sample_id = 'test_sample',
+    CNV_caller = 'toolA',
+    n_probes = 10,
+    CN = c(rep(3, 3), rep(1, 10)),
+    ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
 )
 
 toolB <- tibble(
-  seqnames = rep('chr1', 10),
-  start = c(2000, 4000, 6000,  9700, 120000, 15e5, 21e4, 33e4, 52e4, 57e4) %>% as.integer(),
-  end   = c(3000, 5500, 7500, 10000, 140000, 20e5, 30e4, 36e4, 56e4, 60e4) %>% as.integer(),
-  CNV_type = c(rep('DUP', 2), rep('DEL', 8)),
-  sample_id = 'test_sample',
-  CNV_caller = 'toolB',
-  n_probes = 5,
-  CN = c(rep(3, 2), 1, 1, 0, rep(1, 5)),
-  ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
+    seqnames = rep('chr1', 10),
+    start = c(2000, 4000, 6000,  9700, 120000, 15e5, 21e4, 33e4, 52e4, 57e4) %>% as.integer(),
+    end   = c(3000, 5500, 7500, 10000, 140000, 20e5, 30e4, 36e4, 56e4, 60e4) %>% as.integer(),
+    CNV_type = c(rep('DUP', 2), rep('DEL', 8)),
+    sample_id = 'test_sample',
+    CNV_caller = 'toolB',
+    n_probes = 5,
+    CN = c(rep(3, 2), 1, 1, 0, rep(1, 5)),
+    ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
 )
 
 
 combined_tools <- bind_ranges(
-  #combined calls
-  # sortebd by: CNV_type (DEL before DUP), start
-  tibble(   
-    seqnames = 'chr1',
-    start = c(120000, 15e5, 4000) %>% as.integer(),
-    end   = c(140000, 20e5, 5500) %>% as.integer(),
-    sample_id = 'test_sample',
-    CNV_type = c('DEL', 'DEL', 'DUP'),
-    ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-    CNV_caller = list(c('toolA','toolB'), c('toolA', 'toolA','toolB'), c('toolA','toolB')),
-    CN = c(0.5, 1, 3),
-    overlap_merged_call = NA_real_,
-    caller_merging_coverage = c('toolA-100,toolB-100', 'toolA-80,toolB-100', 'toolA-100,toolB-100'),
-    caller_merging_state = 'combined',
-    # Recalculated based on vcf file; indiv call will keep whatever (fake) number they had before
-    n_probes = c(11, 6, 5),
-    n_uniq_probes = n_probes,
-    # this *should* be correct
-    probe_density_Mb = n_uniq_probes / (end - start + 1) * 1e6
-  ) %>% as_granges(),
-  # single calls
-  # sorted by type, then caller, then start
-  bind_rows(
-    toolA[c(1,3,4,8:13),],
-    toolB[c(1,3,4,7:10),]
-  ) %>%
-    arrange(CNV_type, CNV_caller, start) %>%
-    mutate(overlap_merged_call = NA_real_,
-           caller_merging_coverage = NA_character_,
-           caller_merging_state = 'no-overlap') %>%
-    ensure_list_cols(),
-  # pre.ov calls
-  bind_rows(
-    toolA[c(2,5,6,7),],
-    toolB[c(2,5,6),]
-  ) %>%
-    arrange(CNV_type, CNV_caller, start) %>%
-    mutate(
-      #  loss-A-12000, loss-A-15000, loss-A-18000, loss-B-12000, loss-B-15000, gain-A-4500, gain-B-4500,
-      overlap_merged_call = 100*c(1, (200001)/(500001), (200001)/(500001), 1, 1, 1, 1) %>% as.double(),
-      caller_merging_coverage = NA_character_,
-      caller_merging_state = 'pre-overlap') %>%
-    ensure_list_cols()
+    #combined calls
+    # sortebd by: CNV_type (DEL before DUP), start
+    tibble(     
+        seqnames = 'chr1',
+        start = c(120000, 15e5, 4000) %>% as.integer(),
+        end   = c(140000, 20e5, 5500) %>% as.integer(),
+        sample_id = 'test_sample',
+        CNV_type = c('DEL', 'DEL', 'DUP'),
+        ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
+        caller_merging_coverage = c('toolA-100;toolB-100', 'toolA-80;toolB-100', 'toolA-100;toolB-100'),
+        caller_merging_state = 'combined',
+        n_initial_calls = c(2, 3, 2),
+        initial_call_details = c(
+            "toolA_120000-140000_CN1_cov100;toolB_120000-140000_CN0_cov100",
+            "toolA_1500000-1700000_CN1_cov40;toolA_1800000-2000000_CN1_cov40;toolB_1500000-2000000_CN1_cov100",
+            "toolA_4000-5500_CN3_cov100;toolB_4000-5500_CN3_cov100"
+        ),       
+        CNV_caller = list(c('toolA','toolB'), c('toolA', 'toolA','toolB'), c('toolA','toolB')),
+        CN = c(0.5, 1, 3),
+        overlap_merged_call = NA_real_,
+        # Recalculated based on vcf file; indiv call will keep whatever (fake) number they had before
+        n_probes = c(11, 6, 5),
+        n_uniq_probes = n_probes,
+        # this *should* be correct
+        probe_density_Mb = n_uniq_probes / (end - start + 1) * 1e6
+    ) %>% as_granges(),
+    # single calls
+    # sorted by type, then caller, then start
+    bind_rows(
+        toolA[c(1,3,4,8:13),],
+        toolB[c(1,3,4,7:10),]
+    ) %>%
+        arrange(CNV_type, CNV_caller, start) %>%
+        mutate(
+                overlap_merged_call = NA_real_,
+                caller_merging_coverage = NA_character_,
+                caller_merging_state = 'no-overlap',
+                n_initial_calls = 1,
+                initial_call_details = NA_character_,
+        ) %>%
+        ensure_list_cols(),
+    # pre.ov calls                            
+    bind_rows(
+        toolA[c(2,5,6,7),],
+        toolB[c(2,5,6),]
+    ) %>%
+        arrange(CNV_type, CNV_caller, start) %>%
+        mutate(
+            # loss-A-12000, loss-A-15000, loss-A-18000, loss-B-12000, loss-B-15000, gain-A-4500, gain-B-4500,
+            overlap_merged_call = 100*c(1, (200001)/(500001), (200001)/(500001), 1, 1, 1, 1) %>% as.double(),
+            caller_merging_coverage = NA_character_,
+            caller_merging_state = 'pre-overlap',
+            n_initial_calls = NA_integer_,
+            initial_call_details = NA_character_,
+        ) %>%
+        ensure_list_cols()
 )
 
 snp_vcf <- parse_snp_vcf(test_path('../data/minimal_probes.vcf'))

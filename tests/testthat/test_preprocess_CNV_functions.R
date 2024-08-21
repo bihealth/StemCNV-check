@@ -50,9 +50,9 @@ merged_tb <- tibble(
   CNV_caller = 'Test',
   CNV_type = c(rep('DUP', 5), rep('DEL', 4)),
   n_initial_calls = c(1, 1, 2, 1, 1, 1, 2, 3, 2),
-  initial_call_details = c(NA, NA, '3000_3999_CN3,4400_5399_CN3', NA, NA, 
-                           NA, '9000_9399_CN1,9600_9999_CN1', '120000_129999_CN1,130000_139999_CN0,140000_149999_CN1',
-                            '1000000_1999999_CN1,2000400_3000399_CN1'),
+  initial_call_details = c(NA, NA, '3000_3999_CN3;4400_5399_CN3', NA, NA, 
+                           NA, '9000_9399_CN1;9600_9999_CN1', '120000_129999_CN1;130000_139999_CN0;140000_149999_CN1',
+                            '1000000_1999999_CN1;2000400_3000399_CN1'),
   CN = c(rep(3, 5), rep(1, 4)),  
   ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_'),
   n_probes =      c(5, 3, 11, 5, 20, 5, 10, 15, 20),
@@ -69,6 +69,8 @@ merged_filtered_tb$FILTER <- c('Size', 'Size;n_probes', 'PASS', 'PASS',
 # - add_snp_probe_counts (only gr, + snp_vcf)
 # - merge_calls (accepts tb or gr), runs add_snp_probe_counts
 # - add_call_prefilters (only gr)
+# - apply_preprocessing (tb or gr, + snp_vcf), runs merge_calls, add_call_prefilters
+# - get_median_LRR (only gr, + snp_vcf)
 
 # minimal_probes.vcf test file:
 # - expected number of probes in calls
@@ -138,7 +140,7 @@ test_that("test empty calls", {
     
 } )
 
-# fix_CHROM_format
+# Test fix_CHROM_format (from helper functions) with these example tbs
 test_that('fix_CHROM_format', {
     levels <- c(1:5,7,20,22,'X','Y','MT') %>% as.character()
     tb <- cnv_tb_raw %>%
@@ -212,3 +214,20 @@ test_that("apply_preprocessing", {
         expect_equal(expected)
     
 })
+
+test_that('get_median_LRR', {
+    
+    expected_LRR <- merged_tb %>%
+        mutate(LRR = c(1, 1.3, 0.89, 2, 1.385, 0, -0.88, -1.31, -0.895))
+    
+    merged_tb %>%
+        as_granges() %>%
+        get_median_LRR(snp.vcf) %>%
+        expect_equal(as_granges(expected_LRR))
+    
+})
+
+# test BAF cluster determination
+# Need to add cases where this should fail
+#BAF clusters:
+#4, 2, 4, 3, 4, 2, 2, 2, 2  

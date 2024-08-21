@@ -151,8 +151,8 @@ sample_cnvs <- tibble(
   caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
   caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
   reference_overlap = c(T, T, F, F, F, F, T),
-  reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60) %>% as.list(),
-  reference_caller = list(c('toolA','toolB'), 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA')
+  reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
+  reference_caller = c('toolA;toolB', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA')
 ) %>% as_granges()
 
 
