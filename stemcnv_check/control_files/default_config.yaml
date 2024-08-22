@@ -8,8 +8,6 @@ static_data:
     # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
     csv_manifest_file: '' #Optional (leave empty if not used)
     # fasta file with the genome sequence
-    genome_fasta_file: 'static-data/{genome}.genome.fa.gz'                               #REQUIRED, Auto-generatable
-    # gtf file with gene annotations
     genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
     # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
     penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable

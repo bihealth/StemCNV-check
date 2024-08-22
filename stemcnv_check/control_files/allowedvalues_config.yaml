@@ -10,7 +10,6 @@ static_data:
     bpm_manifest_file: str
     csv_manifest_file: str
     egt_cluster_file: str
-    genome_fasta_file: str
     genome_gtf_file: str
     penncnv_pfb_file: str
     penncnv_GCmodel_file: str

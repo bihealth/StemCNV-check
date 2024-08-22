@@ -111,7 +111,7 @@ def check_config(config_file, sample_table_file, required_only=False):
         if req == 'csv_manifest_file':
             continue
         if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'genomeInfo_file', 'array_density_file', 'array_gaps_file',
-                   'array_gaps_file', 'genome_fasta_file', 'genome_gtf_file'):
+                   'array_gaps_file', 'genome_gtf_file'):
             infostr = "\nYou can create it by running `StemCNV-check make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
         else:
             infostr = ""
