@@ -118,6 +118,53 @@ def test_make_singularity_args(mock_resource_files, fs):
     expected += ",relative/genome.fasta:/outside/static/genome.fasta"
     assert expected == helpers.make_apptainer_args(config)
 
+@pytest.fixture
+def user_config():
+    return textwrap.dedent(
+        """\
+        data_path: /path/to/data
+        cat:
+            key: value
+            nested:
+                key: value2
+        """
+    )
+
+@pytest.fixture
+def default_config():
+    return textwrap.dedent(
+        """\
+        data_path: /path/to/data
+        cat:
+            key: othervalue
+            nested:
+                key: value2
+                key2: val3
+        """
+    )
+
+
+def test_load_config(user_config, default_config, fs):
+
+    fs.create_file('config.yaml', contents=user_config)
+    fs.create_file(
+        importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
+        contents=default_config
+    )
+
+    config_dict = {
+        'data_path': '/path/to/data',
+        'cat': {'key': 'value',
+                'nested': {'key': 'value2'}}}
+    config_from_defaults = {
+        'data_path': '/path/to/data',
+        'cat': {'key': 'value',
+                'nested': {'key': 'value2',
+                           'key2': 'val3'}}}
+
+    assert config_dict == helpers.load_config('config.yaml', False)
+    assert config_from_defaults == helpers.load_config('config.yaml', True)
+
 
 def test_config_extract(caplog):
     config_dict   = {'data_path': '/path/to/data',
@@ -139,28 +186,6 @@ def test_config_extract(caplog):
     assert helpers.config_extract(('cat', 'nested', 'key3'), config_dict, default_config) is None
     assert caplog.records[-1].levelname == 'WARNING'
     assert '"cat : nested : key3" is not a valid config entry or has been deprecated' == caplog.records[-1].message
-
-
-def test_make_PennCNV_sexfile(sample_table_minimal, fs):
-
-    actual_def_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
-    fs.add_real_file(actual_def_config, read_only=True)
-
-    fs.create_file(file_path='sample_table.tsv', contents=sample_table_minimal)
-    fs.create_file(file_path='dummy_config.yaml', contents='data_path: data')
-    fs.create_dir('dirpath')
-
-    args = MagicMock(directory='dirpath',
-                     config='dummy_config.yaml',
-                     sample_table='sample_table.tsv')
-
-    helpers.make_PennCNV_sexfile(args)
-
-    expected_lines = ["dirpath/data/Cellline-A-MB/Cellline-A-MB.filtered-data.extended.tsv\tf\n",
-                      "dirpath/data/Cellline-A-WB/Cellline-A-WB.filtered-data.extended.tsv\tf\n"]
-
-    with open('dirpath/penncnv-sexfile.txt') as f:
-        assert expected_lines == f.readlines()
 
 
 def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):

@@ -8,7 +8,7 @@ from snakemake.api import SnakemakeApi
 from snakemake.settings.types import ResourceSettings, ConfigSettings, DeploymentSettings, DAGSettings, OutputSettings, DeploymentMethod
 from .check_input import check_config
 from .. import STEM_CNV_CHECK
-from ..helpers import config_extract, make_apptainer_args, read_sample_table, get_cache_dir, get_vep_cache_path
+from ..helpers import config_extract, make_apptainer_args, read_sample_table, get_cache_dir, get_vep_cache_path, load_config
 from loguru import logger as logging
 
 import importlib.resources
@@ -25,35 +25,28 @@ def create_missing_staticdata(args):
     # bpm & egt files are needed
     check_config(args.config, args.sample_table, required_only=True)
 
-    # typ = 'safe' prevents round-trip writeout
-    yaml = ruamel_yaml.YAML()
-    with open(args.config) as f:
-        config = yaml.load(f)
+    config = load_config(args.config)
 
-    config_def_file = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
-    with config_def_file.open() as f:
-        default_config = yaml.load(f)
-
-    cache_path = get_cache_dir(args)
+    cache_path = get_cache_dir(args, config)
     use_cache = cache_path is not None
 
     vep_cache_path = get_vep_cache_path(
-        config_extract(('settings', 'VEP_annotation', 'VEP_cache_path'), config, default_config),
+        config['settings']['VEP_annotation']['VEP_cache_path'],
         cache_path
     )
-    get_vep_cache = (config_extract(('settings', 'VEP_annotation', 'mode'), config, default_config) == 'offline-cache' and 
-                     config_extract(('settings', 'VEP_annotation', 'enabled'), config, default_config))
+    get_vep_cache = (config['settings']['VEP_annotation']['mode'] == 'offline-cache' and 
+                     config['settings']['VEP_annotation']['enabled'])
 
-    array_name = config_extract(('array_name', ), config, default_config)
-    genome_build = config_extract(('genome_version', ), config, default_config)
+    array_name = config['array_name']
+    genome_build = config['genome_version']
     genome_build = 'hg38' if genome_build in ('hg38', 'GRCh38') else 'hg19'
     vep_genome = 'GRCh38' if genome_build == 'hg38' else 'GRCh37'
     static_snake_config = {
         'TMPDIR': '',
         'genome': genome_build,
         'vcf_input_file': '',
-        'density_windows': config_extract(('settings', 'array_attribute_summary', 'density.windows',), config, default_config),
-        'min_gap_size': config_extract(('settings', 'array_attribute_summary', 'min.gap.size',), config, default_config),
+        'density_windows': config['settings']['array_attribute_summary']['density.windows'],
+        'min_gap_size': config['settings']['array_attribute_summary']['min.gap.size'],
         'vep_cache_path': vep_cache_path,
         'vep_cache': os.path.join(vep_cache_path, f'.{vep_genome}.done'),
         'vep_fasta_path': os.path.join(vep_cache_path, 'fasta'),
@@ -78,7 +71,7 @@ def create_missing_staticdata(args):
     if get_vep_cache and not os.path.isfile(os.path.join(vep_cache_path, f'.{vep_genome}.done')):
         missing_files.add('vep_cache')
 
-    genome_fasta = config_extract(('global_settings', f'{genome_build}_genome_fasta'), config, default_config)
+    genome_fasta = config['global_settings'][f'{genome_build}_genome_fasta']
     if genome_fasta == '__use-vep__':
         genome_fasta = os.path.join(vep_cache_path, 'fasta',
                                     'homo_sapiens', f'112_{vep_genome}',
@@ -137,8 +130,8 @@ def create_missing_staticdata(args):
 
     # Check if vcf file is present, generate one if none are
     sample_data = read_sample_table(args.sample_table)
-    datapath = config_extract(('data_path',), config, default_config)
-    filter_settings = config_extract(('settings', 'default-filter-set'), config, default_config)
+    datapath = config['data_path']
+    filter_settings = config['settings']['default-filter-set']
     vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.processed-SNP-data.{filter_settings}-filter.vcf") for
                  sample_id, _, _, _, _ in sample_data]
     vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
@@ -227,12 +220,14 @@ def create_missing_staticdata(args):
 
     if args.edit_config_inplace and update_str:
         logging.info('Missing static files generated. Updating config file with new static data entries:\n' + update_str)
+        user_config = load_config(args.config, False)
         for file in missing_files:
             if file == 'vep_cache':
                 continue
-            config['static_data'][file] = static_snake_config[file]
+            user_config['static_data'][file] = static_snake_config[file]
+        yaml = ruamel_yaml.YAML()
         with open(args.config, 'w') as f:
-            yaml.dump(config, f)
+            yaml.dump(user_config, f)
     elif update_str:
         logging.info("Missing static files generated, please update the following lines in the static-data section of your config file (written to stdout):")
         sys.stdout.write(update_str + '\n')

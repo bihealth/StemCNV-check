@@ -57,9 +57,7 @@ rule annotate_snp_vcf:
         ),
         vep_cache_path=config["use_vep_cache"],
     conda:
-        importlib.resources.files(STEM_CNV_CHECK).joinpath(
-            "envs", "vep-annotation.yaml"
-        )
+        "../envs/vep-annotation.yaml"
     shell:
         "vep --verbose "
         "--fasta {input.genomefasta} "

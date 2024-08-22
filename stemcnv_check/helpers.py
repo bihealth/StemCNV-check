@@ -3,7 +3,8 @@
 import importlib.resources
 import os
 import ruamel.yaml as ruamel_yaml
-import pathlib
+from pathlib import Path
+from pydantic.v1.utils import deep_update
 from . import STEM_CNV_CHECK
 from .exceptions import SampleConstraintError, ConfigValueError
 from collections import OrderedDict
@@ -48,7 +49,6 @@ def read_sample_table(filename, with_opt=False):
     return samples
 
 
-
 def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
     """Collect all outside filepaths that need to be bound inside container"""
 
@@ -71,46 +71,6 @@ def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
         bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
 
     return "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
-
-
-# This is done outside snakemake so that the file can be updated without this triggering reruns
-# (which it would independently of mtime if created by a rule)
-def make_PennCNV_sexfile(args):
-    """Make the `sexfile` that PennCNV requires from the sampletable & config. Needs to be updated for each run,
-    but would trigger snakemake reruns if done as a snakemake rule"""
-    #Description of needed format:
-    # A 2-column file containing filename and sex (male/female) for sex chromosome calling with -chrx argument. The first
-    # tab-delimited column should be the input signal file name, while the second tab-delimited column should be male or female.
-    # Alternatively, abbreviations including m (male), f (female), 1 (male) or 2 (female) are also fine.
-    yaml = ruamel_yaml.YAML(typ='safe')
-    with open(args.config) as f:
-        config = yaml.load(f)
-    with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
-        default_config = yaml.load(f)
-
-    if args.directory:
-        basepath = args.directory
-    else:
-        basepath = '.'
-    datapath = config['data_path']
-    outfilename = "penncnv-sexfile.txt"
-    if basepath:
-        outfilename = os.path.join(basepath, outfilename)
-
-    filter = config_extract(['settings', 'PennCNV', 'filter-settings'], config, default_config)
-    if filter == '__default__':
-        filter = config_extract(['settings', 'default-filter-set'], config, default_config)
-
-    sample_data = read_sample_table(args.sample_table)
-
-    with open(outfilename, 'w') as f:
-        for sample_id, _, _, sex, _ in sample_data:
-            inputfile = os.path.join(datapath, f"{sample_id}", f"{sample_id}.filtered-data.{filter}.tsv")
-            if basepath:
-                inputfile = os.path.join(basepath, inputfile)
-            # Ensure its consistently 'm'/'f'
-            sex = sex.lower()[0]
-            f.write(f"{inputfile}\t{sex}\n")
 
 
 def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):
@@ -158,7 +118,21 @@ def config_extract(entry_kws, config, def_config):
     return subconfig
 
 
-def get_cache_dir(args):
+def load_config(configfile, defaults=True):
+    yaml = ruamel_yaml.YAML(typ='safe')
+    with open(configfile) as f:
+        config = yaml.load(f)
+
+    if defaults:
+        config_def_file = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
+        with config_def_file.open() as f:
+            default_config = yaml.load(f)
+        return deep_update(default_config, config)
+    else:
+        return config
+
+
+def get_cache_dir(args, config):
     """Check if given path can be used for caching, get default (in install dir or home) otherwise, create the path"""
     def check_path_usable(path):
         if path.is_dir() and os.access(path, os.W_OK):
@@ -172,28 +146,29 @@ def get_cache_dir(args):
             except PermissionError:
                 logging.debug(f"Could not create cache in {path}")
                 return None
-    if not args.no_cache and args.cache_path:
+    if args.no_cache:
+        logging.info("No cache directory will be used, conda and docker images will be stored in snakemake project directory")
+        return None
+    elif args.cache_path:
         # Check if user supplied path is usable
-        cache_path = check_path_usable(pathlib.Path(args.cache_path))
+        cache_path = check_path_usable(Path(args.cache_path))
         if cache_path:
             return cache_path
         else:
             logging.warning(f"Could not use cache directory '{args.cache_path}'")
-    elif not args.no_cache:
+    else:
         auto_paths = [
+            ('config-defined', Path(config['global_settings']['cache_dir']).expanduser()),
             #('install-dir', importlib.resources.files(STEM_CNV_CHECK).joinpath('.stemcnv-check-cache')),
-            ('home', pathlib.Path('~/.stemcnv-check-cache').expanduser())
+            ('home', Path('~/.cache/stemcnv-check').expanduser())
         ]
         for name, path in auto_paths:
             cache_path = check_path_usable(path)
             if cache_path:
                 return cache_path
-    else:
-        logging.info("No cache directory will be used, conda and docker images will be stored in snakemake project directory")
-        return None
 
     # Nothing worked, return None & don't use specific cache
-    logging.info("Cache directory is not writable! Conda and docker images will be stored in snakemake project directory")
+    logging.info("Cache directory is not usable! Conda and docker images will be stored in snakemake project directory")
     return None
 
 
@@ -212,5 +187,5 @@ def get_vep_cache_path(config_entry, cache_path):
             return vep_cache_path
 
     # Fall back to VEP default
-    vep_cache_path = pathlib.Path('~/.vep').expanduser()
+    vep_cache_path = Path('~/.vep').expanduser()
     return str(vep_cache_path)

@@ -259,18 +259,25 @@ EOF
         """
 
 
+
+def get_vep_fasta_path():
+    filename = (
+        "Homo_sapiens.{genome}.dna.toplevel.fa.gz"
+        if GENOME == 'hg38' 
+        else 
+       'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz'
+    )
+    return os.path.join(config["vep_fasta_path"],
+        "homo_sapiens",
+        "112_{genome}",
+        filename
+    )
+
 rule download_vep_fasta:
     output:
-        os.path.join(
-            config["vep_fasta_path"],
-            "homo_sapiens",
-            "112_{genome}",
-            "Homo_sapiens.{genome}.dna.toplevel.fa.gz",
-        ),
+        get_vep_fasta_path()
     conda:
-        importlib.resources.files(STEM_CNV_CHECK).joinpath(
-            "envs", "vep-annotation.yaml"
-        )
+        "../envs/vep-annotation.yaml"
     params:
         fasta_path=config["vep_fasta_path"],
     shell:
@@ -284,9 +291,7 @@ rule download_vep_cache:
             os.path.join(config["vep_cache_path"], "homo_sapiens", "112_{genome}")
         ),
     conda:
-        importlib.resources.files(STEM_CNV_CHECK).joinpath(
-            "envs", "vep-annotation.yaml"
-        )
+        "../envs/vep-annotation.yaml"
     params:
         cache_path=config["vep_cache_path"],
     shell:

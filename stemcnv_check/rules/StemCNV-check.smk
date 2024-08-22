@@ -9,7 +9,6 @@ import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import (
     read_sample_table,
-    config_extract,
     collect_SNP_cluster_ids,
 )
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError

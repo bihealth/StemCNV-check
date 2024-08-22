@@ -30,7 +30,11 @@ dependencies = [
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake ~=8.16.0",
     # Nicer logging
-    "loguru ~=0.7.2"
+    "loguru ~=0.7.2",
+    # native excel & tsv support
+    # "pandas ~=2.2",
+    # Config validation
+    "pydantic ~=2.8"   
 ]
 
 [project.urls]

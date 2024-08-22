@@ -1,3 +1,6 @@
+import os
+from stemcnv_check.helpers import config_extract
+
 def get_report_sample_input(wildcards):
     sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
     report_settings = config["reports"][wildcards.report]
