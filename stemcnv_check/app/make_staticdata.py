@@ -180,7 +180,7 @@ def create_missing_staticdata(args):
                         ),
                     )
                     .dag(
-                        DAGSettings(targets=[use_vcf],
+                        DAGSettings(targets={use_vcf},
                                     force_incomplete=True)
                     )
                     .execute_workflow()
