@@ -6,8 +6,6 @@ rule prep_PennCNV_sexfile:
         cnv_vcf_input_function("PennCNV"),
     output:
         temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.sexfile.txt")),
-    log:
-        os.path.join(LOGPATH, "PennCNV", "{sample_id}", "sexfile.log"),
     params:
         sex_info=lambda wildcards: get_ref_id(wildcards, True),
         sample_docker_path=lambda wildcards: fix_container_path(
@@ -19,7 +17,6 @@ rule prep_PennCNV_sexfile:
             "data",
         ),
     shell:
-        #TODO check if clause
         'echo -e "{params.sample_docker_path}\t{params.sex_info[2]}" > {output}; '
         # This can add reference sex, which is however not needed at the moment
         # 'if [[ "{sex_info[1]}" != "" ]]; then echo -e "{DATAPATH}/{sex_info[1]}/{sex_info[1]}.penncnv.input.tsv}\t{sex_info[3]}" >> {output}; fi'
@@ -37,13 +34,10 @@ rule prep_PennCNV_input:
         "../envs/vembrane.yaml"
     params:
         filter=get_tool_filter_settings("PennCNV"),
-    # TODO: need to remove pseudo-autosomal regions form X & Y
     shell:
         "vembrane filter '\"PASS\" in FILTER' {input.vcf} 2> {log}|"
         "vembrane table --header 'Name, Chr, Position, B Allele Freq, Log R Ratio'"
         ' --long \'ID, CHROM, POS, FORMAT["BAF"][SAMPLE], FORMAT["LRR"][SAMPLE]\' > {output.tsv} 2>> {log}'
-
-
 # # Alternative:
 #     wrapper:
 #         "v3.14.1/bio/vembrane/table"
@@ -73,9 +67,9 @@ rule run_PennCNV:
         do_loh=lambda wildcards: (
             ""
             if (
-                wildcards.chr != "auto"
-                and get_ref_id(wildcards, True)[2] == "m"
-                and config["settings"]["PennCNV"]["enable_LOH_calls"]
+                (wildcards.chr != "auto"
+                and get_ref_id(wildcards, True)[2] == "m")
+                or not config["settings"]["PennCNV"]["enable_LOH_calls"]
             )
             else "-loh"
         ),
@@ -84,7 +78,7 @@ rule run_PennCNV:
             os.path.join(
                 DATAPATH,
                 wildcards.sample_id,
-                wildcards.sample_id + ".penncnv-" + wildcards.chr + ".tsv",
+                f"{wildcards.sample_id}.penncnv-{wildcards.chr}.tsv",
             ),
             "data",
         ),
@@ -92,7 +86,7 @@ rule run_PennCNV:
             os.path.join(
                 DATAPATH,
                 wildcards.sample_id,
-                wildcards.sample_id + ".penncnv.input.tsv",
+                f"{wildcards.sample_id}.penncnv.input.tsv",
             ),
             "data",
         ),
@@ -106,7 +100,7 @@ rule run_PennCNV:
                     os.path.join(
                         DATAPATH,
                         wildcards.sample_id,
-                        wildcards.sample_id + ".penncnv.sexfile.txt",
+                        f"{wildcards.sample_id}.penncnv.sexfile.txt",
                     ),
                     "data",
                 )
@@ -117,13 +111,13 @@ rule run_PennCNV:
         ),
         logerr=lambda wildcards: fix_container_path(
             os.path.join(
-                LOGPATH, "PennCNV", wildcards.sample_id, wildcards.chr + ".error.log"
+                LOGPATH, "PennCNV", wildcards.sample_id, f"{wildcards.chr}.error.log"
             ),
             "logs",
         ),
         logout=lambda wildcards: fix_container_path(
             os.path.join(
-                LOGPATH, "PennCNV", wildcards.sample_id, wildcards.chr + ".out.log"
+                LOGPATH, "PennCNV", wildcards.sample_id, f"{wildcards.chr}.out.log"
             ),
             "logs",
         ),

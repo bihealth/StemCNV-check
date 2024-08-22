@@ -20,10 +20,6 @@ rule filter_snp_vcf:
     log:
         err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
         #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
-    # conda:
-    #     importlib.resources.files(STEM_CNV_CHECK).joinpath("envs","general-R.yaml")
-    # script:
-    #     '../scripts/filter_snp_vcf.R'
     conda:
         "../envs/python-vcf.yaml"
     script:

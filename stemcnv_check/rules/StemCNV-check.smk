@@ -3,6 +3,7 @@
 import importlib.resources
 import os
 from pathlib import Path
+from loguru import logger as logging
 import tempfile
 import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
@@ -80,38 +81,17 @@ include: "report_generation.smk"
 # Rule function,s move to common? ========================================================================
 
 
-def get_cnv_vcf_output(mode):
-    addition = config["settings"]["make_cnv_vcf"]["name_addition"]
-    if mode == "combined-calls":
-        return os.path.join(
-            DATAPATH, "{sample_id}", f"{{sample_id}}.combined-cnv-calls{addition}.vcf"
-        )
-    elif mode == "split-tools":
-        return [
-            os.path.join(
-                DATAPATH, "{sample_id}", f"{{sample_id}}.{tool}-cnv-calls{addition}.vcf"
-            )
-            for tool in config["settings"]["CNV.calling.tools"]
-        ]
-    else:
-        raise ConfigValueError(
-            'Value not allowed for settings$make.cnv.vcf$mode: "{}"'.format(
-                config["settings"]["make_cnv_vcf"]["mode"]
-            )
-        )
-
-
 def get_target_files(target=TARGET):
     # Target options: ('report', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
     all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
 
     # complete
     if target == "complete":
-        return get_target_files("report") + get_target_files("combined-cnv-calls")
+        out = get_target_files("report") + get_target_files("combined-cnv-calls")
 
     # Report
-    if target == "report":
-        return expand(
+    elif target == "report":
+        out = expand(
             os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report_filetype}"),
             sample_id=all_samples,
             report_filetype=[
@@ -123,8 +103,8 @@ def get_target_files(target=TARGET):
         # expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
         #                sample_id = all_samples)
     # Target Processed-calls
-    if target == "combined-cnv-calls":
-        return expand(
+    elif target == "combined-cnv-calls":
+        out = expand(
             [
                 os.path.join(
                     DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"
@@ -136,23 +116,23 @@ def get_target_files(target=TARGET):
             sample_id=all_samples,
         )
     # Target PennCNV
-    if target == "PennCNV":
-        return expand(
+    elif target == "PennCNV":
+        out = expand(
             os.path.join(
                 DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.penncnv.vcf.gz"
             ),
             sample_id=all_samples,
         )
     # Target CBS
-    if target == "CBS":
-        return expand(
+    elif target == "CBS":
+        out = expand(
             os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.CBS.vcf.gz"),
             sample_id=all_samples,
         )
     # Target SNP-data
-    if target == "SNP-data":
+    elif target == "SNP-data":
         # TODO: update this
-        return expand(
+        out = expand(
             os.path.join(
                 DATAPATH,
                 "{sample_id}",
@@ -162,6 +142,11 @@ def get_target_files(target=TARGET):
             sample_id=all_samples,
             filter=config["settings"]["default-filter-set"],
         )
+        
+    else:
+        raise ValueError('Invalid target value: "{}"'.format(target))
+
+    return out
 
 
 # Rules ========================================================================
@@ -240,7 +225,3 @@ rule run_process_CNV_calls:
         "../envs/general-R.yaml"
     script:
         "../scripts/process_CNV_calls.R"
-
-
-# shell:
-#     "Rscript {SNAKEDIR}/scripts/process_CNV_calls.R {params.penncnv} {params.cbs} {DATAPATH} {wildcards.sample_id} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"

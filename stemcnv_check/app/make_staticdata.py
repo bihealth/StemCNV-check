@@ -108,7 +108,7 @@ def create_missing_staticdata(args):
                         nodes=args.jobs,
                     ),
                     config_settings=ConfigSettings(
-                        config=dict(static_snake_config, **{'TMPDIR': tmpdir, 'vep_fasta_path': vep_fasta_path})
+                        config=dict(static_snake_config, **{'TMPDIR': tmpdir})
                     ),
                     deployment_settings=DeploymentSettings(
                         deployment_method=DeploymentMethod.parse_choices_set({'conda', 'apptainer'}),
@@ -139,7 +139,7 @@ def create_missing_staticdata(args):
     sample_data = read_sample_table(args.sample_table)
     datapath = config_extract(('data_path',), config, default_config)
     filter_settings = config_extract(('settings', 'default-filter-set'), config, default_config)
-    vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.annotated-SNP-data.{filter_settings}-filter.vcf.gz") for
+    vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.processed-SNP-data.{filter_settings}-filter.vcf") for
                  sample_id, _, _, _, _ in sample_data]
     vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 
@@ -161,13 +161,13 @@ def create_missing_staticdata(args):
                         config_settings=ConfigSettings(
                             configfiles=[
                                 importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
-                                Path(args.config)
+                                Path(args.config),
                             ],
                             config={
                                 'sample_table': args.sample_table,
                                 'basedir': args.directory,
-                                'configfile': args.config,
-                                'target': 'SNP-probe-data',
+                                # 'configfile': args.config,
+                                # 'target': 'SNP-probe-data',
                                 'use_vep_cache': vep_cache_path,
                                 'global_settings': {f'{genome_build}_genome_fasta': genome_fasta}
                             }

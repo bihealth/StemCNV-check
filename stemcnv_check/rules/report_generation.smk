@@ -11,8 +11,6 @@ def get_report_sample_input(wildcards):
             os.path.join(
                 DATAPATH, "{ids}", "{ids}.processed-SNP-data.{filter}-filter.vcf"
             ),
-            # os.path.join(DATAPATH, "{ids}", "{ids}.processed-data.tsv"),
-            # os.path.join(DATAPATH, "{ids}", "{ids}.filtered-data-{filter}.tsv")
         ],
         ids=(sample_id, ref_id) if ref_id else (sample_id,),
         chrs=["auto", "chrx"] + (["chry"] if sex == "m" else []),

@@ -67,27 +67,29 @@ Install git lfs and pull test data:
 - `git lfs fetch`
 - `git lfs checkout`
 
-Run the test data:
-- `cd test_data`
-- `../stemcnv-check make-staticdata` 
-- `../stemcnv-check`
+Run the example data:
+- `cd example_data`
+- `stemcnv-check make-staticdata` 
+- `stemcnv-check`
 
 ## Output
 
 StemCNV-check will produce the following output files for each sample, when run with default settings:
-- `data_path/{sample}/{sample}.unprocessed.vcf`; `data_path/{sample}/{sample}.processed-data.tsv`  
-  The unfiltered SNP data of the array in vcf and tabular format (vcf contains more information)
+- `data_path/{sample}/{sample}.processed-SNP-data.{filter}-filter.vcf` or 
+  `data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz`  
+  The filtered, processed 9and annotated) SNP data of the array in vcf format
 - `data_path/{sample}/{sample}.stats.txt`  
   The CNV calls for the sample GenCall stat
-- `data_path/{sample}/{sample}.filtered-data-{filter}.tsv`  
-  Filtered SNP data in tabular format, the default filter is 'extended' (see default config), other filters can be defined
-- `data_path/{sample}/{sample}.CBS.tsv`  
-  The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm
-- `data_path/{sample}/{sample}.penncnv-{auto|chrx|chry}.tsv`  
-  The CNV calls for the sample from the PennCNV caller (Note: the chry file will only be created for samples annotated as male)
-- `data_path/{sample}/{sample}.combined-cnv-calls.{tsv|vcf}`  
-  The CNV calls processed, combined and annotated by StemCNV-check in tabular and vcf format. Annotation includes comparison against reference sample, call scoring and gene annotation.
-- `data_path/{sample}/{sample}.user-report.html`; ...  
-  Html reports containing summary statistics, QC statistics, lists CNV calls sorted by annotation score, plots of most/all CNVs and sample comparison. The default 'user-report' only contains plots for critical and reportable calls, a full report can easily be enabled in the config.yaml. The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
-- `data_path/{sample}/{sample}.summary-check.tsv`  
-  A tabular export of the summary table contained in the report
+- `data_path/{sample}/{sample}.CNV_calls.CBS.vcf.gz`  
+  The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm in vcf format
+- `data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz`  
+  The CNV calls for the sample from the PennCNV caller, in vcf format
+- `data_path/{sample}/{sample}.combined-cnv-calls.{tsv|vcf.gz}`  
+  The CNV calls processed, combined and annotated by StemCNV-check in tabular and vcf format. 
+  Annotation includes comparison against reference sample, call scoring and gene annotation.
+- `data_path/{sample}/{sample}.StemCNV-check-report.html`; ...  
+  Html report containing summary statistics, QC statistics, lists of CNV calls sorted by annotation score, 
+  plots of most/all CNVs and sample comparison. The default 'StemCNV-check-report' only contains plots for the top20 
+  calls or calls above a user defined Check-Score threshold. A full report can easily be enabled in the config.yaml. 
+  The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
+
