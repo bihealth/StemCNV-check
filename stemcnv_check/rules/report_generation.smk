@@ -1,5 +1,5 @@
 import os
-from stemcnv_check.helpers import config_extract
+from stemcnv_check.helpers import config_extract, collect_SNP_cluster_ids
 
 def get_report_sample_input(wildcards):
     sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
@@ -61,6 +61,10 @@ def get_report_sample_input(wildcards):
 rule check_latex_installation:
     output:
         os.path.join(LOGPATH, "report", "_latex_installation_check"),
+    resources:
+        runtime=get_tool_resource("default", "runtime"),
+        mem_mb=get_tool_resource("default", "memory"),
+        partition=get_tool_resource("default", "partition"),
     conda:
         "../envs/general-R.yaml"
     shell:

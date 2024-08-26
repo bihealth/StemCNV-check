@@ -1,7 +1,7 @@
 import importlib.resources
 import os
 from pathlib import Path
-from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check import STEM_CNV_CHECK, VEP_version
 from stemcnv_check.helpers import config_extract
 from stemcnv_check.exceptions import SampleConstraintError
 
@@ -94,10 +94,20 @@ def get_genome_fasta(wildcards):
     # #FIXME: future
     # chip = get_sample_info(wildcards.sample_id)['array_name']
     # genome = config['array_definitions'][chip]['genome_version']
+    
     if config["genome_version"] in ("hg38", "GRCh38"):
-        return config["global_settings"]["hg38_genome_fasta"]
+        out = config["global_settings"]["hg38_genome_fasta"]
     else:
-        return config["global_settings"]["hg19_genome_fasta"]
+        out = config["global_settings"]["hg19_genome_fasta"]
+        
+    if out == '__use-vep__':
+        vep_cache_path = config['use_vep_cache']
+        if config["genome_version"] in ("hg38", "GRCh38"):
+            return os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh38', 'Homo_sapiens.GRCh38.dna.toplevel.fa.gz')
+        else:
+            return os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh37', 'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz')
+    else:
+        return out
 
 
 def cnv_vcf_input_function(tool):

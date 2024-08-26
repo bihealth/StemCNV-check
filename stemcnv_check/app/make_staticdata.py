@@ -7,7 +7,7 @@ from pathlib import Path
 from snakemake.api import SnakemakeApi
 from snakemake.settings.types import ResourceSettings, ConfigSettings, DeploymentSettings, DAGSettings, OutputSettings, DeploymentMethod
 from .check_input import check_config
-from .. import STEM_CNV_CHECK
+from .. import STEM_CNV_CHECK, VEP_version
 from ..helpers import config_extract, make_apptainer_args, read_sample_table, get_cache_dir, get_vep_cache_path, load_config
 from loguru import logger as logging
 
@@ -74,7 +74,7 @@ def create_missing_staticdata(args):
     genome_fasta = config['global_settings'][f'{genome_build}_genome_fasta']
     if genome_fasta == '__use-vep__':
         genome_fasta = os.path.join(vep_cache_path, 'fasta',
-                                    'homo_sapiens', f'112_{vep_genome}',
+                                    'homo_sapiens', f'{VEP_version}_{vep_genome}',
                                     'Homo_sapiens.GRCh38.dna.toplevel.fa.gz' if vep_genome == 'GRCh38' else 
                                     'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz'
                                     )
@@ -162,7 +162,7 @@ def create_missing_staticdata(args):
                                 # 'configfile': args.config,
                                 # 'target': 'SNP-probe-data',
                                 'use_vep_cache': vep_cache_path,
-                                'global_settings': {f'{genome_build}_genome_fasta': genome_fasta}
+                                # 'global_settings': {f'{genome_build}_genome_fasta': genome_fasta}
                             }
                         ),
                         deployment_settings=DeploymentSettings(

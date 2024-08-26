@@ -7,10 +7,7 @@ from loguru import logger as logging
 import tempfile
 import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import (
-    read_sample_table,
-    collect_SNP_cluster_ids,
-)
+from stemcnv_check.helpers import read_sample_table
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
@@ -62,7 +59,6 @@ wildcard_constraints:
 
 # Never submit these to cluster
 localrules:
-    relink_gencall,
     all,
 
 
@@ -170,9 +166,9 @@ rule run_CBS:
         mem_mb=get_tool_resource("CBS", "memory"),
         partition=get_tool_resource("CBS", "partition"),
     params:
-        # SDundo = config['settings']['CBS']['SDundo'],
-        # filter=get_tool_filter_settings('CBS'),
+        # Ensure rerun on changes to settings or sample meta data
         settings=config["settings"]["CBS"],
+        sex_info=lambda wildcards: get_ref_id(wildcards,True),
     log:
         err=os.path.join(LOGPATH, "CBS", "{sample_id}", "error.log"),
         out=os.path.join(LOGPATH, "CBS", "{sample_id}", "out.log"),

@@ -1,5 +1,9 @@
 import os
 
+# Never submit these to cluster
+localrules:
+    prep_PennCNV_sexfile,
+
 
 rule prep_PennCNV_sexfile:
     input:
@@ -30,6 +34,10 @@ rule prep_PennCNV_input:
         tsv=temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.input.tsv")),
     log:
         os.path.join(LOGPATH, "PennCNV", "{sample_id}", "input.log"),
+    resources:
+        runtime=get_tool_resource("PennCNV", "runtime"),
+        mem_mb=get_tool_resource("PennCNV", "memory"),
+        partition=get_tool_resource("PennCNV", "partition"),
     conda:
         "../envs/vembrane.yaml"
     params:
@@ -168,6 +176,10 @@ rule combined_PennCNV_output:
         # stats=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.stats.tsv")
     log:
         err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "combine.error.log"),
+    resources:
+        runtime=get_tool_resource("PennCNV", "runtime"),
+        mem_mb=get_tool_resource("PennCNV", "memory"),
+        partition=get_tool_resource("PennCNV", "partition"),
     conda:
         "../envs/general-R.yaml"
     script:

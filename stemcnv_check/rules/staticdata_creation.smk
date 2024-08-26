@@ -3,7 +3,7 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check import STEM_CNV_CHECK, VEP_version
 
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]
@@ -269,7 +269,7 @@ def get_vep_fasta_path():
     )
     return os.path.join(config["vep_fasta_path"],
         "homo_sapiens",
-        "112_{genome}",
+        f"{VEP_version}_{{genome}}",
         filename
     )
 
@@ -288,7 +288,7 @@ rule download_vep_cache:
     output:
         done=os.path.join(config["vep_cache_path"], ".{genome}.done"),
         folder=directory(
-            os.path.join(config["vep_cache_path"], "homo_sapiens", "112_{genome}")
+            os.path.join(config["vep_cache_path"], "homo_sapiens", f"{VEP_version}_{{genome}}")
         ),
     conda:
         "../envs/vep-annotation.yaml"

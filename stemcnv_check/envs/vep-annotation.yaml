@@ -5,4 +5,5 @@ channels:
   - nodefaults
 dependencies:
   - bcftools
+  # This needs to match VEP_version in the base __init__.py
   - ensembl-vep = 112

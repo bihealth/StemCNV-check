@@ -1,5 +1,8 @@
 import os
 
+localrules:
+    relink_gencall,
+
 rule run_gencall:
     input:
         bpm=config["static_data"]["bpm_manifest_file"],

@@ -172,8 +172,9 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
 
     # Check for Error on entry outside specifications:
     del testconfig['unknown_entry']
+    testconfig['settings'] = dict()
     # - wrong type
-    testconfig['settings'] = {'chromosomes': '1-22'}
+    testconfig['settings']['VEP_annotation'] = {'enabled': 'True'}
     # - wrong number type (float vs int)
     testconfig['settings']['array_attribute_summary'] = {'density.windows': 1.5}
     # - value not matching regex
@@ -184,8 +185,8 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['ERROR'] * 3
     assert [rec.message for rec in logrecords] == [
-        "The config entry '1-22' for 'settings:chromosomes' is invalid. " +
-        "Value(s) need to be in a list, and matching this regex: (chr)?[0-9XY]+.",
+        "The config entry 'True' for 'settings:VEP_annotation:enabled' is invalid. " +
+        "Value(s) need to be booleans (True/False).",
         "The config entry '1.5' for 'settings:array_attribute_summary:density.windows' is invalid. " +
         "Value(s) need to be integers (whole numbers).",
         "The config entry '('PennCNV', 'GATK')' for 'settings:CNV.calling.tools' is invalid. " +

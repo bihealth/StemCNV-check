@@ -36,14 +36,6 @@ def run_stemcnv_check_workflow(args):
 
     # Define / overwrite place-holder values for VEP downloaded data
     vep_cache_path = get_vep_cache_path(config['settings']['VEP_annotation']['VEP_cache_path'], cache_path)
-    hg19_fasta = config['global_settings']['hg19_genome_fasta'].replace(
-        '__use-vep__',
-        os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', '112_GRCh37', 'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz')
-    )
-    hg38_fasta = config['global_settings']['hg38_genome_fasta'].replace(
-        '__use-vep__',
-        os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', '112_GRCh38', 'Homo_sapiens.GRCh38.dna.toplevel.fa.gz')
-    )
 
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
@@ -54,7 +46,6 @@ def run_stemcnv_check_workflow(args):
         f'configfile={args.config}',
         f'target={args.target}',
         f'use_vep_cache={vep_cache_path}',
-        f"global_settings='{{hg19_genome_fasta: {hg19_fasta}, hg38_genome_fasta: {hg38_fasta}}}'"
     ]
     #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:

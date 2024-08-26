@@ -3,3 +3,4 @@
 from stemcnv_check.version import __version__
 
 STEM_CNV_CHECK = 'stemcnv_check'
+VEP_version = 112

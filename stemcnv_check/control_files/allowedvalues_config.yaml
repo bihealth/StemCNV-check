@@ -7,22 +7,27 @@
 # - filterset, filtersetdefault, sections, sectionsall & insamplehseet are special functions
 # - everything else is treated as regex (needs to match the *full* value)
 static_data:
-    bpm_manifest_file: str
-    csv_manifest_file: str
-    egt_cluster_file: str
-    genome_gtf_file: str
-    penncnv_pfb_file: str
-    penncnv_GCmodel_file: str
-    array_density_file: str
-    array_gaps_file: str
-    genomeInfo_file: str
+    bpm_manifest_file: str    # Path|file
+    csv_manifest_file: str    # Path|file
+    egt_cluster_file: str     # Path|file
+    genome_gtf_file: str      # Path|file
+    penncnv_pfb_file: str     # Path|file
+    penncnv_GCmodel_file: str # Path|file
+    array_density_file: str   # Path|file
+    array_gaps_file: str      # Path|file
+    genomeInfo_file: str      # Path|file
 
 genome_version: str_(hg38|GRCh38|hg19|GRCh37)
 array_name: str
 
-raw_data_folder: str
-data_path: str
-log_path: str
+raw_data_folder: str # Path|dir
+data_path: str # Path|dir|no-exist-ok
+log_path: str # Path|dir|no-exist-ok
+
+global_settings:
+    cache_dir: str # Path|dir|no-exist-ok
+    hg19_genome_fasta: str # Path|__-use-vep__
+    hg38_genome_fasta: str # Path|__-use-vep__
 
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS)
@@ -31,8 +36,6 @@ settings:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
         Position.duplicates: str_(keep|remove|highest-GenCall|highest-GenTrain)
-
-  chromosomes: list__str__(chr)?[0-9XY]+
 
   default-filter-set: filtersetnodefault
 
