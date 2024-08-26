@@ -105,6 +105,7 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                 overlap_merged_call = NA_real_,
 				caller_merging_coverage = NA_character_,
 			    caller_merging_state = 'no-overlap',
+                # From here on this is relative to stemcnv-check tool, not orig. tool
                 initial_call_details = NA_character_,
                 n_initial_calls = 1
             ) %>%
@@ -122,6 +123,7 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
 			mutate(
                 caller_merging_coverage = NA_character_,
 				caller_merging_state = 'pre-overlap',
+                # From here on this is relative to stemcnv-check tool, not orig. tool
                 initial_call_details = NA_character_,
                 n_initial_calls = NA_integer_,
             ) %>%
@@ -137,7 +139,11 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
 			mutate(
 				overlap_merged_call = NA_real_,
 				caller_merging_coverage = NA_character_,
-				caller_merging_state = 'no-overlap'
+				caller_merging_state = 'no-overlap',
+                # From here on this is relative to stemcnv-check tool, not orig. tool
+                initial_call_details = NA_character_,
+                n_initial_calls = 1
+                
 			) %>%
 			ensure_list_cols()
 

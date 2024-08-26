@@ -48,10 +48,12 @@ parse_cnv_vcf <- function(vcf,
                 str_replace('DUP', 'gain') %>%
                 str_replace('DEL', 'loss') %>%
                 str_replace('CNV:LOH', 'LOH'),
-            CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+')
+            CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+'),
+            n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
+            initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
         ) %>%
         rename_with(~str_to_lower(.), contains('PROBE')) %>%
-        # Dropping the "n_initial_calls" tool info here
+        dplyr::rename(probe_density_Mb = probe_dens) %>%
         select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
         as_granges(seqnames = CHROM, start = POS + 1, end = END, width = SVLEN)
     if (apply_filter) {
@@ -170,7 +172,7 @@ get_fix_section <- function(tb) {
     
     # expected minimal cols in tb:
     # seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id, 
-    #  n_initial_calls, initial_IDs_with_CN, n_probes, n_uniq_probes, probe_density_Mb
+    #  n_initial_calls, initial_call_details, n_probes, n_uniq_probes, probe_density_Mb
     #  FILTER
     
     base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'

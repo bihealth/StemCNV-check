@@ -143,7 +143,9 @@ test_that("No calls from 1 CNV caller", {
                 mutate(
                     overlap_merged_call = NA_real_,
                     caller_merging_coverage = NA_character_,
-                    caller_merging_state = 'no-overlap'
+                    caller_merging_state = 'no-overlap',
+                    initial_call_details = NA_character_,
+                    n_initial_calls = 1
                 ) %>%
                 ensure_list_cols()
         )        
@@ -168,7 +170,9 @@ test_that("No calls at all", {
         mutate(
             overlap_merged_call = NA_real_,
             caller_merging_coverage = NA_character_,
-            caller_merging_state = 'no-overlap'
+            caller_merging_state = 'no-overlap',
+            initial_call_details = NA_character_,
+            n_initial_calls = 1
         ) %>%
         ensure_list_cols() %>% 
         filter(sample_id == 'non_existent_sample')
