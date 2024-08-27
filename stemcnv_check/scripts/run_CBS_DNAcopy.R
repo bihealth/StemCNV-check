@@ -33,8 +33,7 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
     
     # Re-formatting
     tb <- segments.summary(cna.basic.smoothed.segmented) %>%
-  		dplyr::rename(seqnames = chrom, start = loc.start, end = loc.end,
-                      n_probes = num.mark, sample_id = ID) %>%
+  		dplyr::rename(seqnames = chrom, start = loc.start, end = loc.end, n_probes = num.mark) %>%
         mutate(
             seqnames = str_remove(seqnames, '^(chr|ch)'),
             sample_id = sample_id,
