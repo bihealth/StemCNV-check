@@ -12,7 +12,7 @@ def get_report_sample_input(wildcards):
             os.path.join(LOGPATH, "PennCNV", "{ids}", "{chrs}.error.log"),
             # TODO: replace with annotated VCF
             os.path.join(
-                DATAPATH, "{ids}", "{ids}.processed-SNP-data.{filter}-filter.vcf"
+                DATAPATH, "{ids}", "{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
             ),
         ],
         ids=(sample_id, ref_id) if ref_id else (sample_id,),
@@ -43,7 +43,7 @@ def get_report_sample_input(wildcards):
         sample_files += expand(
             [
                 os.path.join(
-                    DATAPATH, "{ids}", "{ids}.processed-SNP-data.{filter}-filter.vcf"
+                    DATAPATH, "{ids}", "{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
                 )
             ],
             ids=ids,

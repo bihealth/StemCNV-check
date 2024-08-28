@@ -78,7 +78,7 @@ def check_sample_table(sample_table_file, config_file):
     sample_data_full = read_sample_table(sample_table_file, with_opt=True)
 
     # Check optional 'Regions of Interest' column
-    # TODO: this can now accept gene bands and gene names!
+    # FIXME (future): this can now accept gene bands and gene names!
     if 'Regions_of_Intertest' in sample_data_full[0].keys():
         for data_dict in sample_data_full:
             regions = data_dict['Regions_of_Intertest'].split(';')

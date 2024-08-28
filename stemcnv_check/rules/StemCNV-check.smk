@@ -28,9 +28,10 @@ else:
     removetempconfig = True
 
 
+config["snakedir"] = SNAKEDIR
+# config["genome_version"] = config["genome_version"][-2:]
 
 yaml = ruamel_yaml.YAML(typ="safe")
-config["snakedir"] = SNAKEDIR
 with open(CONFIGFILE, "w") as yamlout:
     yaml.dump(config, yamlout)
 
@@ -131,7 +132,7 @@ def get_target_files(target=TARGET):
             os.path.join(
                 DATAPATH,
                 "{sample_id}",
-                "{sample_id}.processed-SNP-data.{filter}-filter.vcf",
+                "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz",
             ),
             # os.path.join(DATAPATH, "{sample_id}", "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz"),
             sample_id=all_samples,

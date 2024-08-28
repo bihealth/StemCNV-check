@@ -5,7 +5,7 @@ import os
 import ruamel.yaml as ruamel_yaml
 from pathlib import Path
 from pydantic.v1.utils import deep_update
-from . import STEM_CNV_CHECK
+from . import STEM_CNV_CHECK, mehari_db_version
 from .exceptions import SampleConstraintError, ConfigValueError
 from collections import OrderedDict
 from loguru import logger as logging
@@ -172,20 +172,19 @@ def get_cache_dir(args, config):
     return None
 
 
-def get_vep_cache_path(config_entry, cache_path):
+def get_mehari_db_file(config_entry, cache_path, genome_version):
     # If given use specific path
-    if config_entry not in ('__cache-dir__', '__default__'):
+    if config_entry != '__cache-default__':
         return config_entry
-
+    # If cache should be used but is missing, throw error
+    elif not cache_path:
+        raise ConfigValueError('No StemCNV-check cache defined, but mehari-db path is set to use cache path.')
     # Use same location as cache for conda & docker from workflow
-    if config_entry == '__cache-dir__':
-        if not cache_path:
-            logging.info('No StemCNV-check cache defined, falling back to default VEP cache path: ~/.vep')
-        else:
-            vep_cache_path = os.path.join(cache_path, 'vep')
-            os.makedirs(vep_cache_path, exist_ok=True)
-            return vep_cache_path
+    else:
+        genome_version = 'GRCh38' if genome_version in ("hg38", "GRCh38") else 'GRCh37'
+        return os.path.join(
+            cache_path,
+            'mehari-db',
+            f"mehari-data-txs-{genome_version}-ensembl-{mehari_db_version}.bin.zst"
+        )
 
-    # Fall back to VEP default
-    vep_cache_path = Path('~/.vep').expanduser()
-    return str(vep_cache_path)

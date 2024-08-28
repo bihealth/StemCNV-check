@@ -62,7 +62,7 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
                 .default = 2
             ),
             CNV_type = case_when(# Male is default CN=1 on X & Y
-                #TODO: technically DUP should ONLY be used for CN=3 (or 2 on male XY)
+                #FIXME (future): technically DUP should ONLY be used for CN=3 (or 2 on male XY)
                 sex == 'm' & seqnames %in% sex_chroms & CN == 2 ~ 'DUP',
                 sex == 'm' & seqnames %in% sex_chroms & CN == 1 ~ NA,
                 CN > 2                                          ~ 'DUP',

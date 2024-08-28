@@ -51,7 +51,7 @@ get_sample_info <- function(sample_id, value, sampletable){
 
 get_target_chrom_style <- function(config, snp_vcf_gr) {
     target_style <- config$settings$vcf_output$chrom_style
-    if (target_style == '__keep__') {
+    if (target_style == 'keep-original') {
         target_style <- seqlevelsStyle(snp_vcf_gr) %>% head(1) 
     }
     return(target_style)

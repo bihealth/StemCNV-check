@@ -26,6 +26,7 @@ log_path: str # Path|dir|no-exist-ok
 
 global_settings:
     cache_dir: str # Path|dir|no-exist-ok
+    mehari_transcript_db: str # Path|dir | __cache-default__
     hg19_genome_fasta: str # Path|__-use-vep__
     hg38_genome_fasta: str # Path|__-use-vep__
 
@@ -36,16 +37,25 @@ settings:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
         Position.duplicates: str_(keep|remove|highest-GenCall|highest-GenTrain)
+        pseudoautosomal: str_(keep|remove|remove-male)
 
   default-filter-set: filtersetnodefault
 
   PennCNV:
     filter-settings: filterset
+    enable_LOH_calls: bool
+    merge.distance: int_ge0
+    filter.minprobes: int_ge0
+    filter.minlength: int_ge0
+    filter.mindensity.Mb: float_ge0
 
   CBS:
     filter-settings: filterset
-    SDundo: int
-    min.width: int
+    undo.SD.val: int
+    merge.distance: int_ge0
+    filter.minprobes: int_ge0
+    filter.minlength: int_ge0
+    filter.mindensity.Mb: float_ge0
     LRR.loss: float
     LRR.loss.large: float
     LRR.gain: float
@@ -61,19 +71,13 @@ settings:
   array_attribute_summary:
     density.windows: int_ge0
     min.gap.size: str_([0-9+]|auto-array)
-
-  VEP_annotation:
-    enabled: bool
-    mode: str_(offline-cache|database)
-    VEP_cache_path: str # '__default__', '__cache-dir__' or path
-    
+  
+  vcf_output:
+    # Which chromosome style to use in the vcf file ("1" vs "chr1")  
+    chrom_style: str_(UCSC|keep-original|NCBI|Ensembl)
+   
   CNV_processing:
     call_processing:
-      min.snp: int
-      min.length: int
-      min.snp.density: float #snps per Mb #TODO: might also want __default__ for this?
-      merge.distance: int_ge0
-      merge.before.filter: bool
       filter-settings: filterset
       tool.overlap.greatest.call.min.perc: float_le100_ge0
       tool.overlap.median.cov.perc: float_le100_ge0
@@ -131,11 +135,6 @@ settings:
         Call_has_Gap: float
         HighSNPDensity: float
 
-  make_cnv_vcf:
-    filter-settings: filterset
-    mode: str_(combined-calls|split-tools)
-    include_states: list__str__(LOH|gain|loss)
-    name_addition: str
 
 allowed_sections:
      - sample.information

@@ -78,7 +78,6 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                 n_initial_calls = dplyr::n(),
                 # Collect initial start, end, CN, callers & coverages
                 initial_call_details = paste(
-                    #TODO: double check that the correct values end up with the correct calls
                     str_glue("{CNV_caller}_{start}-{end}_CN{CN}_cov{round(overlap_merged_call, 2)}"), 
                     collapse = ';'
                 ),

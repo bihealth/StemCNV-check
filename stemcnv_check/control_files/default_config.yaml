@@ -6,7 +6,7 @@ static_data:
     # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
     egt_cluster_file: ''  #REQUIRED
     # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
-    csv_manifest_file: '' #Optional (leave empty if not used)
+    csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most Indel probes unusable
     # fasta file with the genome sequence
     genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
     # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
@@ -24,6 +24,8 @@ global_settings:
     # By default all conda environments and apptainer images are stored to a common cache
     # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
     cache_dir: '~/.cache/stemcnv-check'
+    # Path to the mehari trsncript database file, either '__cache-default__' or a path for bin.zst database file
+    mehari_transcript_db: '__cache-default__' 
     # fasta files can be compressed, but *only* with bgzip!
     # The default will let VEP download appropriate files,
     # but you can also specify a path if you already have files on the system
@@ -52,28 +54,37 @@ settings:
   probe-filter-sets:
     # Each section here defines a set of SNP probe filters
     # each set can be applied to individual or all steps of the pipeline, but using only one set is recommended
-    # SNP probes are first filtered by GenTrain & GenCall scores (minimal value) and then for all other criteria
+    # SNP probes filters are applied as (soft) filters to the SNP vcf file.
     # - GenTrainScore: Illumina score on clustering on probe intensities, usually stable between samples (& partially chips)
     # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
-    # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes.
+    # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes. Multiple data 
+    #                        points at the same position are problematic for CNV calling due to signal/noise issues.
     #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
-    # Finally probes in one of the pseudo-autosomal regions are also always filtered
+    # - pseudoautosomal: probes in the pseudo-autosomal regions of X and Y chromosomes, these are always (pseudo) diploid
+    #                    which can cause issues on haploid male samples. They can also be generally more problematic.
+    # Additionally SNPs on the Y chromosome are always (soft)filtered for female samples and SNPs without properly 
+    # defined REF & ALT alleles are hard-filtered (=removed from the vcf). The latter mainly occurs if the manifest 
+    # csv is omitted, which causes Indel-probes to be improperly defined.
+    #
     # We recommend to use these filter settings:
     extended:
         GenTrainScore: 0.7
         GenCallScore:  0.7 # Anything above this should be a stable genotype call
         Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
+        pseudoautosomal: remove-male # keep|remove|remove-male
     ## Other filter settings we have tested:
     ## This is closest to other Illumina defaults, but susceptible to noise
     # basic:
     #     GenTrainScore: 0
     #     GenCallScore:  0.2 # Illumina recommended minimum
     #     Position.duplicates: keep # keep|remove|highest-GenCall|highest-GenTrain
+    #     pseudoautosomal: keep
     # This filter results in somewhat higher precision, but lower recall
     # full:
     #     GenTrainScore: 0.8
     #     GenCallScore:  0.8
     #     Position.duplicates: remove # keep|remove|highest-GenCall|highest-GenTrain
+    #     pseudoautosomal: remove
 
   # Default filter set to use for all tools
   default-filter-set: extended
@@ -121,17 +132,6 @@ settings:
   array_attribute_summary:
     density.windows: 100000     #window size for probe density calculation (0.5Mb)
     min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
-   
-  # Settings for annotation SNPs CNVs with ensembl vep
-  VEP_annotation:
-    mode: 'offline-cache' # 'database' or 'offline-cache'
-    enabled: True
-    # Path to download the VEP cache to
-    # Can be:
-    #   1) a specific path
-    #   2) '__cache-dir__' to use the same location that the --cache-path points to (falls back to 3)
-    #   3) '__default__' to use the default VEP cache path ($Home/.vep)
-    VEP_cache_path: '__cache-dir__'
 
   CNV_processing:
     call_processing:
@@ -226,24 +226,10 @@ settings:
         Call_has_Gap:   -0.1
         HighSNPDensity: -0.1
 
-  make_cnv_vcf:
-    filter-settings: '__default__'
-    # mode can be 'combined-calls' (one vcf with combined calls) or 'split-tools' (once vcf per tool, with non-combined calls)
-    mode: combined-calls
-    # Which CNV types to be included in vcf
-    include_states: ['gain', 'loss', 'LOH']
-    # Use this to create distinct vcf files, for i.e. different CNV types. Added to filename before `.vcf`
-    name_addition: ''
-
   vcf_output:
     # Which chromosome style to use in the vcf file ("1" vs "chr1")  
-    chrom_style: 'UCSC' # "__keep__", UCSC, or NCBI / Ensembl
+    chrom_style: 'UCSC' # "keep-original", UCSC, or NCBI / Ensembl
 
-  # Only probes from these chromosomes will be used, chromosomes will be reported in this format
-  # Note: the pseudo-autosomal region is often coded as (chr)XY on Illumina arrays, and will be ignored by default
-  chromosomes: ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12",
-                "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
-               # chrMT could probably be added for hg38, but settings are not optimised for it
 
 ##!minimal
 reports:

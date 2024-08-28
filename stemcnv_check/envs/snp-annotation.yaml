@@ -6,4 +6,6 @@ channels:
 dependencies:
   - bcftools
   # This needs to match VEP_version in the base __init__.py
-  - ensembl-vep = 112
+  - ensembl-vep =112
+  # This needs to be compatible with the mehari-db version in the base __init__.py
+  - mehari >=0.28.0,<0.29

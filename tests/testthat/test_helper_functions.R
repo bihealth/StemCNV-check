@@ -94,7 +94,7 @@ test_that('get_target_chrom_style', {
     config <- list(
         settings = list(
             vcf_output = list(
-                chrom_style = '__keep__'
+                chrom_style = 'keep-original'
             )
         )
     )

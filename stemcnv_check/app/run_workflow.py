@@ -5,7 +5,7 @@ import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main
 from loguru import logger as logging
 from .. import STEM_CNV_CHECK
-from ..helpers import load_config, make_apptainer_args, get_cache_dir, get_vep_cache_path
+from ..helpers import load_config, make_apptainer_args, get_cache_dir
 
 def run_stemcnv_check_workflow(args):
 
@@ -34,18 +34,17 @@ def run_stemcnv_check_workflow(args):
     # --cleanup-containers
     # --conda-cleanup-envs
 
-    # Define / overwrite place-holder values for VEP downloaded data
-    vep_cache_path = get_vep_cache_path(config['settings']['VEP_annotation']['VEP_cache_path'], cache_path)
 
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
         args.config,
-        '--config', f'sample_table={args.sample_table}',
+        '--config',
+        f'sample_table={args.sample_table}',
         f'basedir={basedir}',
         f'configfile={args.config}',
         f'target={args.target}',
-        f'use_vep_cache={vep_cache_path}',
+        f'cache_path={cache_path}',
     ]
     #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:

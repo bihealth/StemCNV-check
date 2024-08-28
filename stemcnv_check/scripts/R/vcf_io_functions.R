@@ -267,8 +267,7 @@ get_gt_section <- function(tb, sample_sex){
         select(FORMAT, sample_id, all_of(use_cols)) %>%
         group_by(FORMAT, sample_id) %>%
         # paste columns together
-        # possibly should use all_of(use_cols) here?
-        unite("value", use_cols, sep = ':', remove = TRUE) %>%
+        unite("value", all_of(use_cols), sep = ':', remove = TRUE) %>%
         pivot_wider(names_from = sample_id, values_from = value, values_fn = list) %>%
         unnest(cols = unique(tb$sample_id)) %>%
         as.matrix()

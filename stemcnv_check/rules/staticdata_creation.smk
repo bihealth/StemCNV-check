@@ -3,7 +3,7 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from stemcnv_check import STEM_CNV_CHECK, VEP_version
+from stemcnv_check import STEM_CNV_CHECK, VEP_version, mehari_db_version
 
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]
@@ -260,14 +260,14 @@ EOF
 
 
 
-def get_vep_fasta_path():
+def get_fasta_path():
     filename = (
         "Homo_sapiens.{genome}.dna.toplevel.fa.gz"
         if GENOME == 'hg38' 
         else 
        'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz'
     )
-    return os.path.join(config["vep_fasta_path"],
+    return os.path.join(config["fasta_path"],
         "homo_sapiens",
         f"{VEP_version}_{{genome}}",
         filename
@@ -275,26 +275,20 @@ def get_vep_fasta_path():
 
 rule download_vep_fasta:
     output:
-        get_vep_fasta_path()
+        get_fasta_path()
     conda:
-        "../envs/vep-annotation.yaml"
+        "../envs/snp-annotation.yaml"
     params:
-        fasta_path=config["vep_fasta_path"],
+        fasta_path=config["fasta_path"],
     shell:
         "vep_install -a f -s homo_sapiens -y {wildcards.genome} -c {params.fasta_path}"
 
 
-rule download_vep_cache:
+rule download_mehari_ensembl_db:
     output:
-        done=os.path.join(config["vep_cache_path"], ".{genome}.done"),
-        folder=directory(
-            os.path.join(config["vep_cache_path"], "homo_sapiens", f"{VEP_version}_{{genome}}")
-        ),
-    conda:
-        "../envs/vep-annotation.yaml"
-    params:
-        cache_path=config["vep_cache_path"],
+        os.path.join(config["mehari_db_path"], "mehari-data-txs-{genome}-ensembl-{txs_version}.bin.zst"),
+    wildcard_constraints: 
+        genome = 'GRCh37|GRCh38',
+        txs_verion = '[0-9]\\.[0-9]\\.[0-9]'
     shell:
-        # -r {params.cache_path}/plugins; check if needed or if it follows -c
-        # -a f > automatically get ensembl genome fasta; can replace fasta & gtf
-        "vep_install -a cp -g DosageSensitivity -s homo_sapiens -y {wildcards.genome} -c {params.cache_path} --CONVERT && touch {output.done}"
+        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.txs_version}/$(basename {output}) -o {output}"

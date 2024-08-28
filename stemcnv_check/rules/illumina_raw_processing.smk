@@ -71,7 +71,7 @@ rule relink_gencall:
         'ln -s "{params.gtc_link_path}" "{output}"'
 
 
-# TODO: input functions to get correct fasta (& later correct manifest files)
+# FIXME (future): input functions to get correct fasta (& later correct manifest files)
 rule run_gtc2vcf_vcf:
     input:
         bpm=config["static_data"]["bpm_manifest_file"],
@@ -79,7 +79,7 @@ rule run_gtc2vcf_vcf:
         genome=get_genome_fasta,
         gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
     output:
-        vcf=pipe(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf")),
+        vcf=pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
         metatxt=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
     threads: get_tool_resource("gtc2vcf", "threads")
     resources:
@@ -94,9 +94,15 @@ rule run_gtc2vcf_vcf:
             else ""
         ),
     log:
-        err=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.error.log"),
-        #out=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "vcf.out.log"),
+        vcf=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "bcftools.gtc2vcf.log"),
+        sort=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "bcftools.sort.log"),
+        norm=os.path.join(LOGPATH, "gtc2vcf", "{sample_id}", "bcftools.norm.log"),
     conda:
         "../envs/gtc2vcf.yaml"
     shell:
-        'bcftools plugin gtc2vcf {params.options} -O v --bpm "{input.bpm}" {params.csv} --egt "{input.egt}" --fasta-ref "{input.genome}" --extra {output.metatxt} {input.gtc} 2> {log.err} | bcftools sort -o {output.vcf} 2>> {log.err}'
+        'bcftools plugin gtc2vcf {params.options} -O v '
+        '--bpm "{input.bpm}" {params.csv} --egt "{input.egt}" '
+        '--fasta-ref "{input.genome}" --extra {output.metatxt} '
+        '{input.gtc} 2> {log.vcf} | '
+        'bcftools sort 2> {log.sort} | '
+        'bcftools norm -m- --multi-overlaps . -o {output.vcf} 2> {log.norm}'

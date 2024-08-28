@@ -101,11 +101,11 @@ def get_genome_fasta(wildcards):
         out = config["global_settings"]["hg19_genome_fasta"]
         
     if out == '__use-vep__':
-        vep_cache_path = config['use_vep_cache']
+        cache_path = config['cache_path']
         if config["genome_version"] in ("hg38", "GRCh38"):
-            return os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh38', 'Homo_sapiens.GRCh38.dna.toplevel.fa.gz')
+            return os.path.join(cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh38', 'Homo_sapiens.GRCh38.dna.toplevel.fa.gz')
         else:
-            return os.path.join(vep_cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh37', 'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz')
+            return os.path.join(cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_GRCh37', 'Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz')
     else:
         return out
 
@@ -114,7 +114,6 @@ def cnv_vcf_input_function(tool):
     return lambda wildcards: os.path.join(
         DATAPATH,
         wildcards.sample_id,
-        f"{wildcards.sample_id}.processed-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf",
-        # VEP still has issues; skip for now
-        # f"{wildcards.sample_id}.annotated-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf.gz"
+        # f"{wildcards.sample_id}.processed-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf",
+        f"{wildcards.sample_id}.annotated-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf.gz"
     )

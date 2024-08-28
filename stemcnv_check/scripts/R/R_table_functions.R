@@ -39,7 +39,7 @@ summary_table <- function(Combined.metrics, Combined.colors, sample_headers) {
             "Total Calls CNV" = 'The total number of CNV (gain/loss) calls.',
             "Total Calls LOH" = 'The total number of LOH calls.'
     )
-    #TODO: add actual tresholds into the help text
+    #FIXME (future): add actual tresholds into the help text
     if (!str_detect(not_enabled_label, 'reportable')) {
       summary_row_help <- c(summary_row_help,
              "Reportable Calls CNV" = 'The number of CNV calls with a Check-Score above the reportable threshold.',
@@ -177,7 +177,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             'High impact hotspots overlapping with this CNV call',
             'Highlight hotspots overlapping with this CNV call',
             'Regions of interest overlapping with this CNV call',
-            #TODO: add a doi for precision benchmark once available
+            #FIXME (future): add a doi for precision benchmark once available
             'Precision estimate of the CNV call, based on internal benchmarking',
             'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. See config min.perc.gap_area and gap_area.uniq_probes.rel for details',
             'Call has higher probe density than {density.quantile.cutoff} percent of the the array',

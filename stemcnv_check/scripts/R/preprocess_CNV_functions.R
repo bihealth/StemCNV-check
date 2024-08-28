@@ -130,8 +130,8 @@ apply_preprocessing <- function(cnv_gr, snp_vcf_gr, tool_config) {
     
 }
 
-# Future TODO: some way to get (PennCNV) GC correction for LRR?
-# Future TODO: add solution for BAF
+# FIXME (future): some way to get (PennCNV) GC correction for LRR?
+# FIXME (future): add solution for BAF
 get_median_LRR <- function(gr, snp_vcf_gr) {
     
     median_lrr <- snp_vcf_gr %>%

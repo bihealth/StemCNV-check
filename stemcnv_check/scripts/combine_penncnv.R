@@ -51,7 +51,7 @@ read_PennCNV <- function(filename, sample_id, sample_sex) {
                 # autosomes & female X
                 CN < 2                                                 ~ 'DEL',
                 CN == 2                                                ~ 'CNV:LOH',
-                #TODO: technically DUP should ONLY be used for CN=3 (or 2 on male XY)
+                #FIXME (future): technically DUP should ONLY be used for CN=3 (or 2 on male XY)
                 CN > 2                                                 ~ 'DUP',
             ),
             ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_')

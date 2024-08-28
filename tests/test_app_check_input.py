@@ -27,14 +27,12 @@ def full_config_block(minimal_config_block):
     block = minimal_config_block
     block['static_data'].update({
         'csv_manifest_file': 'static/manifest.csv',
-        'genome_fasta_file': 'static/genome.fa',
         'genome_gtf_file': 'static/gencode.v45.gtf',
         'penncnv_pfb_file': 'static/chip.pfb',
         'penncnv_GCmodel_file': 'static/chip.gcmodel',
         'array_density_file': 'static/density.bed',
         'array_gaps_file': 'static/gaps.bed',
         'genomeInfo_file': 'static/genome_info.tsv',
-        'vep_cache_dir': '__cache-dir__',
     })
     return block
 
@@ -174,7 +172,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     del testconfig['unknown_entry']
     testconfig['settings'] = dict()
     # - wrong type
-    testconfig['settings']['VEP_annotation'] = {'enabled': 'True'}
+    testconfig['settings']['PennCNV'] = {'enable_LOH_calls': 'True'}
     # - wrong number type (float vs int)
     testconfig['settings']['array_attribute_summary'] = {'density.windows': 1.5}
     # - value not matching regex
@@ -185,7 +183,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['ERROR'] * 3
     assert [rec.message for rec in logrecords] == [
-        "The config entry 'True' for 'settings:VEP_annotation:enabled' is invalid. " +
+        "The config entry 'True' for 'settings:PennCNV:enable_LOH_calls' is invalid. " +
         "Value(s) need to be booleans (True/False).",
         "The config entry '1.5' for 'settings:array_attribute_summary:density.windows' is invalid. " +
         "Value(s) need to be integers (whole numbers).",
@@ -199,7 +197,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     # - check that all the smaller functions (len, ge, le, ...) work as expected
 
 
-def test_default_config(full_config_block, fs):
+def test_default_config(full_config_block, caplog, fs):
     """Check that the actual default cnfig passes the check_config function"""
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
@@ -210,5 +208,12 @@ def test_default_config(full_config_block, fs):
 
     prepare_fakefs_config(default_config, full_config_block, fs)
 
-    fs.listdir('static')
+    #Ensure that only expected warnings on missing folders are raised
     check_config('config.yaml', sample_table)
+    logrecords = caplog.records
+    assert len(logrecords) == 3
+    assert [rec.message for rec in logrecords] == [
+        "Entry for required setting 'data_path' is not an existing folder (data)! Creating it now.",
+        "Entry for required setting 'log_path' is not an existing folder (logs)! Creating it now.",
+        "Entry for required setting 'raw_data_folder' is not an existing folder (rawdata)! Creating it now."
+    ]

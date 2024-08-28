@@ -172,7 +172,7 @@ rule combined_PennCNV_output:
         vcf=os.path.join(
             DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.PennCNV.vcf.gz"
         ),
-        # TODO: how to best handle this? > separate rule ?!
+        # FIXME (future): ideally handle this in separate
         # stats=os.path.join(DATAPATH,"{sample_id}","{sample_id}.CNV_calls.penncnv.stats.tsv")
     log:
         err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "combine.error.log"),

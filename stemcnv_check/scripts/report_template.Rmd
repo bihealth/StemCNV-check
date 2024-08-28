@@ -297,10 +297,8 @@ plot.probe.filter.setting <- ifelse(report.setting('call.data.and.plots', 'filte
                                config$settings$`default-filter-set`,
                                report.setting('call.data.and.plots', 'filter-settings'))
 
-#TODO: replace with annotated VCF
-raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.processed-SNP-data.', plot.probe.filter.setting, '-filter.vcf')) %>%
+raw_LRR_BAF <- file.path(datapath, use_ids, paste0(use_ids, '.annotated-SNP-data.', plot.probe.filter.setting, '-filter.vcf.gz')) %>%
     lapply(parse_snp_vcf, apply_filter = FALSE) %>%
-    #TODO this might not work accordingly to tb
     bind_ranges() %>%
     #FIXME / future: adapt this
     fix_CHROM_format('UCSC') %>%
@@ -341,9 +339,8 @@ if (length(snp.ids) < 2) {
 ignore.filter <- report.setting('SNP_comparison', 'ignore_filter')
 
 # This is always needed (to get snp_dist_to_ref)
-#TODO: replace with annotated VCF
 SNP.genotype.distances <- file.path(datapath, snp.ids, 
-                                    paste0(snp.ids, '.processed-SNP-data.', cluster.probe.filter.setting, '-filter.vcf')) %>%
+                                    paste0(snp.ids, '.annotated-SNP-data.', cluster.probe.filter.setting, '-filter.vcf.gz')) %>%
     lapply(
         parse_snp_vcf,
         format_fields = c('GT'),
