@@ -28,7 +28,8 @@ def run_stemcnv_check_workflow(args):
         # snakemake.main can not deal with Path objects
         cache_path = str(cache_path)
         argv += [
-            "--conda-prefix", cache_path
+            "--conda-prefix", cache_path,
+            "--apptainer-prefix", cache_path
         ]
     # Some disc space could be cleared by using these options:
     # --cleanup-containers

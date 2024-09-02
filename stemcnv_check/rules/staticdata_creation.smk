@@ -291,4 +291,4 @@ rule download_mehari_ensembl_db:
         genome = 'GRCh37|GRCh38',
         txs_verion = '[0-9]\\.[0-9]\\.[0-9]'
     shell:
-        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.txs_version}/$(basename {output}) -o {output}"
+        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.txs_version}/$(basename {output}) -O {output}"
