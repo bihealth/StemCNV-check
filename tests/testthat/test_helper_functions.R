@@ -10,7 +10,7 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 # - [x] get_sample_info
 # - [x] fix_CHROM_format
 # - [x] get_sex_chroms
-# - [ ] get_target_chrom_style
+# - [x] get_target_chrom_style
 # - [ ] load_preprocessed_cnvs  #! consider replacing this with read_CNV_vcf (+ annotation support)
 # - [ ] get_static_path         #! hard to test; should only do things if inside the Rmd environment; deprecate?
 # - [x] load_gtf_data

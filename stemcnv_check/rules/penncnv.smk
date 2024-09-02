@@ -43,7 +43,7 @@ rule prep_PennCNV_input:
     params:
         filter=get_tool_filter_settings("PennCNV"),
     shell:
-        "vembrane filter '\"PASS\" in FILTER' {input.vcf} 2> {log}|"
+        "vembrane filter '\"PASS\" in FILTER' {input.vcf} 2> {log} | "
         "vembrane table --header 'Name, Chr, Position, B Allele Freq, Log R Ratio'"
         ' --long \'ID, CHROM, POS, FORMAT["BAF"][SAMPLE], FORMAT["LRR"][SAMPLE]\' > {output.tsv} 2>> {log}'
 # # Alternative:
