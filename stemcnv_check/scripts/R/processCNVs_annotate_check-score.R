@@ -29,7 +29,7 @@ annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_sco
 	tb %>%
 	  rowwise() %>%
 	  mutate(
-		  `Check-Score` =
+		  Check_Score =
 			ifelse(
                 #Note: adapt this if CNV is used for CN >= 4
                 CNV_type %in% c('gain', 'loss'),

@@ -62,9 +62,9 @@ combined_tools <- bind_ranges(
         caller_merging_state = 'combined',
         n_initial_calls = c(2, 3, 2),
         initial_call_details = c(
-            "toolA_120000-140000_CN1_cov100;toolB_120000-140000_CN0_cov100",
-            "toolA_1500000-1700000_CN1_cov40;toolA_1800000-2000000_CN1_cov40;toolB_1500000-2000000_CN1_cov100",
-            "toolA_4000-5500_CN3_cov100;toolB_4000-5500_CN3_cov100"
+            "toolA_120000-140000_CN1_cov100|toolB_120000-140000_CN0_cov100",
+            "toolA_1500000-1700000_CN1_cov40|toolA_1800000-2000000_CN1_cov40|toolB_1500000-2000000_CN1_cov100",
+            "toolA_4000-5500_CN3_cov100|toolB_4000-5500_CN3_cov100"
         ),       
         CNV_caller = list(c('toolA','toolB'), c('toolA', 'toolA','toolB'), c('toolA','toolB')),
         CN = c(0.5, 1, 3),

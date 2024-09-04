@@ -43,6 +43,47 @@ data_path: data     #REQUIRED
 # Output folder, where stemcnv-check will write log files
 log_path: logs      #REQUIRED
 
+
+evaluation_settings:
+  CNV_call_categorisation:
+    impact.score.critical:   NA
+    filters.exclude.critical: [] # high_probe_dens, probe_gap (Size, n_probes, density)
+    impact.score.reportable: NA 
+    filters.exclude.reportable: [] # high_probe_dens, probe_gap (Size, n_probes, density)
+  
+  SNP_clustering:
+    filter-settings: '__default__' # "__default__", Filterset name, or "none"
+    #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
+    # enries with __[column] will use all other samples with the same value in [column]
+    # entries with _[column] expect a column that contains additional (, separated) sample_ids
+    # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
+    extra_samples: ['__Chip_Name']
+  
+  # Each measure used for QC is categorised as 'OK', 'unusual', or 'warning'
+  # Additonally the last level can eb set to 'critical' instead of 'warning'  
+  # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
+  summary_stat_warning_levels:   
+    # List of threshold values between normal/abnormal and abnormal/problematic(critical)
+    # The first values gives the maximum allowed for 'OK', the second for 'warning'
+    call_rate: [0.995, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
+    # Consider? call_rate: [0.99, 0.97]
+    SNP_distance_to_reference: [2, 5]
+    loss_gain_log2ratio: [2, 4]
+    total_calls_CNV: [10, 50]
+    total_calls_LOH: [30, 75]
+    reportable_calls_CNV: [5, 10]
+    reportable_calls_LOH: [5, 10]
+    critical_calls_CNV: [1, 1]
+    critical_calls_LOH: [1, 1]
+    # These measures use 'critical' instead of 'warning'
+    last_level_critical:
+      - call_rate
+      - critical_calls_CNV
+      - critical_calls_LOH
+      - high_impact_calls
+      - computed_gender
+
+
 ##!medium
 settings:
   # Select tools to use
@@ -263,7 +304,7 @@ reports:
 
   #These are the default settings from which all reports inherit
   __default__:
-    # Check-Score cutoffs for labelling calls as 'Critical' or 'Reportable'
+    # Check_Score cutoffs for labelling calls as 'Critical' or 'Reportable'
     impact.score.critical:   NA
     impact.score.reportable: NA
 

@@ -51,8 +51,10 @@ parse_cnv_vcf <- function(vcf,
             CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+'),
             n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
             initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
+            across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
         ) %>%
         rename_with(~str_to_lower(.), contains('PROBE')) %>%
+        rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
         dplyr::rename(probe_density_Mb = probe_dens) %>%
         select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
         as_granges(seqnames = CHROM, start = POS + 1, end = END, width = SVLEN)
@@ -78,7 +80,7 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
     if (extra_annotation) {
     info <- c(
         info, 
-        '##INFO=<ID=Check-Score,Number=1,Type=Float,Description="StemCNV Check-Score for CNV call">',     
+        '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
         '##INFO=<ID=Precision,Number=1,Type=Float,Description="Estimated precision for this call">',
         '##INFO=<ID=HighImpact,Number=1,Type=String,Description="Overlapping high impact sites (StemCNV-check defined)">',
         '##INFO=<ID=Highlight,Number=1,Type=String,Description="Overlapping highlight sites (COSMIC genes)">',
@@ -97,8 +99,13 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         # '##FORMAT=<ID=BAF,Number=1,Typeq=Foat,Description="Segment me(di)an B Allele Frequency">',
     )
     if (extra_annotation) {
-    format <- c(format,
-        '##INFO=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call in reference sample">'
+    min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref * 100 %>% round(1)
+    format <- c(
+        format,
+        paste0(
+            '##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call ',
+            str_glue(' in reference sample (min {min.ref.ov}% reciprocal overlap)">')
+        )
     )
     }
     # Filter is applied before extra annotation, so those calls are currently NOT in the VCF
@@ -178,13 +185,13 @@ get_fix_section <- function(tb) {
     base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
     extra_info_str <- paste(
         base_info_str,
-        'Check-Score={`Check-Score`};Precision={Precision_Estimate}',
+        'Check_Score={Check_Score};Precision={Precision_Estimate}',
         'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI={ROI_hits}',
         'Gap_percent={percent_gap_coverage};Genes={overlapping_genes}',
         sep=';'
     )
     # Technically should check for all columns, but they come in a bundle
-    use_info_str <- ifelse('Check-Score' %in% colnames(tb), extra_info_str, base_info_str)
+    use_info_str <- ifelse('Check_Score' %in% colnames(tb), extra_info_str, base_info_str)
     
     tb %>%
         mutate(
@@ -198,7 +205,7 @@ get_fix_section <- function(tb) {
             across(where(is.numeric), ~ round(., 3)),
             # convert NA or empty string to ".", all columns with possible NA to character
             across(
-                any_of(c("Check-Score", "Precision_Estimate", "high_impact_hits", "highlight_hits",
+                any_of(c("Check_Score", "Precision_Estimate", "high_impact_hits", "highlight_hits",
                          "ROI_hits", "percent_gap_coverage", "overlapping_genes")),
                 ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),

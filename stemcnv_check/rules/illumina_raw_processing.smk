@@ -79,8 +79,10 @@ rule run_gtc2vcf_vcf:
         genome=get_genome_fasta,
         gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
     output:
-        vcf=pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
-        metatxt=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
+        vcf = pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
+        #TODO: making this a temp file risks having to redo more things more often
+        #Maybe don't make it temp but move it to logs?
+        stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt")
     threads: get_tool_resource("gtc2vcf", "threads")
     resources:
         runtime=get_tool_resource("gtc2vcf", "runtime"),
@@ -102,7 +104,7 @@ rule run_gtc2vcf_vcf:
     shell:
         'bcftools plugin gtc2vcf {params.options} -O v '
         '--bpm "{input.bpm}" {params.csv} --egt "{input.egt}" '
-        '--fasta-ref "{input.genome}" --extra {output.metatxt} '
+        '--fasta-ref "{input.genome}" --extra {output.stats} '
         '{input.gtc} 2> {log.vcf} | '
         'bcftools sort 2> {log.sort} | '
         'bcftools norm -m- --multi-overlaps . -o {output.vcf} 2> {log.norm}'

@@ -88,7 +88,7 @@ cnv_tb <- tibble(
 cnv_tb_annotated <- cnv_tb %>%
     mutate(
         # FILTER = c(), # could be adapted to proper values, but doesn't matter for this test
-        `Check-Score` = 20 + runif(9, 5, 30),
+        Check_Score = 20 + runif(9, 5, 30),
         Precision_Estimate = c(sample(c(0.1, 0.4, 0.6, 0.8), 7, T), NA, NA),
         # reference_caller
         reference_coverage = c(rep(NA, 4), runif(5, 0, 1)),
@@ -136,7 +136,7 @@ test_that('get_fix_section', {
                 'SVCLAIM=D;',
                 str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
                 str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)};'),
-                str_glue('Check-Score={cnv_tb_annotated_out$`Check-Score`};'),
+                str_glue('Check_Score={cnv_tb_annotated_out$Check_Score};'),
                 str_glue('Precision={cnv_tb_annotated_out$Precision_Estimate};'),
                 str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
                 str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),

@@ -67,7 +67,7 @@ expected_final_tb <- expected_gene_tb %>%
     overlap_merged_call = NA_real_,
     probe_density_Mb = NA_real_,
     LRR = NA_real_,
-    `Check-Score` = NA_real_,
+    Check_Score = NA_real_,
     Precision_Estimate = NA_real_
   ) %>%
   # any_of vs one_of here, since we DON'T want to test yet 
@@ -149,7 +149,7 @@ test_that("Annotate CNV check scores", {
   expected_tb <- expected_final_tb %>%
     mutate(
       # Test scenarios:
-      `Check-Score` = c(
+      Check_Score = c(
         # ROI (base + 1 hit) + 1 other gene 
         CNV_size_score(1501) + 50 + 10 + 0.2, 
         # HL hit (base is 0)
@@ -170,7 +170,7 @@ test_that("Annotate CNV check scores", {
   # Extra test:
   # - HL base score not 0
   config$settings$CNV_processing$Check_score_values$highlight_base <- 2.7
-  expected_tb[c(2,7), 'Check-Score'] <- expected_tb[c(2,7), 'Check-Score'] + 2.7
+  expected_tb[c(2,7), 'Check_Score'] <- expected_tb[c(2,7), 'Check_Score'] + 2.7
   expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
 })
 

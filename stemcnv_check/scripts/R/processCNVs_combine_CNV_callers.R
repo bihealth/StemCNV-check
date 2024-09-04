@@ -77,9 +77,10 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                 # and remove the "caller_merging_state" column
                 n_initial_calls = dplyr::n(),
                 # Collect initial start, end, CN, callers & coverages
+                #FIXME: maybe this should be a list column?
                 initial_call_details = paste(
                     str_glue("{CNV_caller}_{start}-{end}_CN{CN}_cov{round(overlap_merged_call, 2)}"), 
-                    collapse = ';'
+                    collapse = '|'
                 ),
                 # Transform existing columns
                 across(any_of(get_list_cols()), ~list(.)),

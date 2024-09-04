@@ -1,6 +1,61 @@
 import os
 from stemcnv_check.helpers import config_extract, collect_SNP_cluster_ids
 
+def get_penncnv_log_input(wildcards):
+    sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
+    return expand(
+        os.path.join(DATAPATH, sample_id, "extra_files", "PennCNV.{chrs}.error.log"),
+        chrs=["auto", "chrx"] + (["chry"] if sex == "m" else []),
+    )
+
+def get_extra_snp_input_files(wildcards):
+    extra_sample_def = config['evaluation_settings']['SNP_clustering']['extra_samples']
+    sample_id, ref_id = get_ref_id(wildcards)
+
+    ids = set(collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full))
+    if ref_id:
+        ids.add(ref_id)
+        
+    return expand(
+        [
+            os.path.join(
+                DATAPATH,"{ids}","{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
+            )
+        ],
+        ids=ids,
+        filter=get_tool_filter_settings("evaluation_settings:SNP.clustering.filter")
+    )
+
+def get_ref_excel_input(wildcards):
+    sample_id, ref_id = get_ref_id(wildcards)
+    if ref_id:
+        return os.path.join(DATAPATH, ref_id, f"{ref_id}.summary-stats.xlsx")
+    else:
+        return None
+
+rule make_summary_table:
+    input:
+        gencall_stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt"),
+        snp_vcf = cnv_vcf_input_function("settings:CNV_processing:call_processing"),
+        cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
+        penncnv_logs = get_penncnv_log_input,
+        #TODO: possibly move this to a separate rule?
+        extra_snp_files = get_extra_snp_input_files,
+        summary_excel_ref = get_ref_excel_input,
+    output:
+        os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+    resources:
+        runtime=get_tool_resource("default", "runtime"),
+        mem_mb=get_tool_resource("default", "memory"),
+        partition=get_tool_resource("default", "partition"),
+    log:
+        err=os.path.join(LOGPATH, "report", "{sample_id}", "summary-stats.error.log"),
+    conda:
+        "../envs/general-R.yaml"
+    script:
+        "../scripts/summarise_stats.R"
+
+
 def get_report_sample_input(wildcards):
     sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
     report_settings = config["reports"][wildcards.report]
@@ -10,7 +65,6 @@ def get_report_sample_input(wildcards):
             os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
             os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
             os.path.join(LOGPATH, "PennCNV", "{ids}", "{chrs}.error.log"),
-            # TODO: replace with annotated VCF
             os.path.join(
                 DATAPATH, "{ids}", "{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
             ),

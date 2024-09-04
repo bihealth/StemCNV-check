@@ -26,8 +26,10 @@ read_sampletable <- function(filename) {
 }
 
 
-get_sample_info <- function(sample_id, value, sampletable){
-    if(is.character(sampletable)) sampletable <- read_sampletable(sampletable)
+get_sample_info <- function(sample_id, value, sampletable) {
+    if ('data.frame' %in% class(sampletable)) { sampletable <- sampletable }
+    else if ('character' %in% class(sampletable)) { sampletable <- read_sampletable(sampletable) }
+    else { stop('`sampletable` needs to be a table or file path') }
 
 	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
 	if (value == 'ref_id') return(ref_id)
@@ -119,7 +121,7 @@ get_expected_final_tb <- function(chrom_style='UCSC') {
         width = integer(),
         CNV_type = character(),
         ID = character(),
-        `Check-Score` = double(),
+        Check_Score = double(),
         reference_overlap = logical(), # not needed for vcf output
         CNV_caller = list(),
         # n_premerged_calls = list(),

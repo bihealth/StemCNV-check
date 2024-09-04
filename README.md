@@ -90,6 +90,6 @@ StemCNV-check will produce the following output files for each sample, when run 
 - `data_path/{sample}/{sample}.StemCNV-check-report.html`; ...  
   Html report containing summary statistics, QC statistics, lists of CNV calls sorted by annotation score, 
   plots of most/all CNVs and sample comparison. The default 'StemCNV-check-report' only contains plots for the top20 
-  calls or calls above a user defined Check-Score threshold. A full report can easily be enabled in the config.yaml. 
+  calls or calls above a user defined Check_Score threshold. A full report can easily be enabled in the config.yaml. 
   The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
 
