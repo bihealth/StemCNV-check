@@ -61,11 +61,11 @@ get_target_chrom_style <- function(config, snp_vcf_gr) {
 
 ## preprocessed
 
-load_preprocessed_cnvs <- function(fname){
-	read_tsv(fname) %>%
-		rowwise() %>%
-		mutate(across(any_of(get_list_cols()), ~ str_split(., ';')))
-}
+# load_preprocessed_cnvs <- function(fname){
+# 	read_tsv(fname) %>%
+# 		rowwise() %>%
+# 		mutate(across(any_of(get_list_cols()), ~ str_split(., ';')))
+# }
 
 ## GTF data
 get_static_path <- function(path, project_base=''){
@@ -110,72 +110,77 @@ load_genomeInfo <- function(config) {
 
 # Output
 
-## Default table structure for CNVs
-get_expected_final_tb <- function(chrom_style='UCSC') {
+# ## Default table structure for CNVs
+# get_expected_final_tb <- function(chrom_style='UCSC') {
+# 
+#     tibble(
+#         sample_id = character(),
+#         seqnames = factor(c(), levels = genomeStyles('Homo_sapiens')[[chrom_style]]),
+#         start = integer(),
+#         end = integer(),
+#         width = integer(),
+#         CNV_type = character(),
+#         ID = character(),
+#         Check_Score = double(),
+#         Call_Label = character(),
+#         reference_overlap = logical(), # not needed for vcf output
+#         CNV_caller = list(),
+#         # n_premerged_calls = list(),
+#         n_probes = integer(),
+#         n_uniq_probes = integer(),
+#         probe_density_Mb = double(),
+#         CN = integer(),
+#         LRR = double(),
+#         Precision_Estimate = double(),
+#         caller_merging_state = character(),
+#         overlap_merged_call = double(),
+#         caller_merging_coverage = character(),
+#         reference_caller = character(), # deprecate this
+#         reference_coverage = double(),
+#         high_impact_hits = character(),
+#         highlight_hits = character(),
+#         ROI_hits = character(),
+#         percent_gap_coverage = double(),
+#         probe_coverage_gap = logical(),
+#         high_probe_density = logical(),
+#         n_genes = integer(),
+#         overlapping_genes = character()
+#     )
+# }
+# 
+# 
+# get_list_cols <- function() {
+#     colnames(get_expected_final_tb())[sapply(get_expected_final_tb(), function(x) is(x, 'list'))]
+# }
+# 
+# 
+# ensure_list_cols <- function(tb.or.gr){
+# 	as_tibble(tb.or.gr) %>%
+# 		rowwise() %>%
+# 		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
+# 		as_granges()
+# }
 
-    tibble(
-        sample_id = character(),
-        seqnames = factor(c(), levels = genomeStyles('Homo_sapiens')[[chrom_style]]),
-        start = integer(),
-        end = integer(),
-        width = integer(),
-        CNV_type = character(),
-        ID = character(),
-        Check_Score = double(),
-        reference_overlap = logical(), # not needed for vcf output
-        CNV_caller = list(),
-        # n_premerged_calls = list(),
-        n_probes = integer(),
-        n_uniq_probes = integer(),
-        probe_density_Mb = double(),
-        CN = integer(),
-        LRR = double(),
-        Precision_Estimate = double(),
-        caller_merging_state = character(),
-        overlap_merged_call = double(),
-        caller_merging_coverage = character(),
-        reference_caller = character(), # deprecate this
-        reference_coverage = double(),
-        high_impact_hits = character(),
-        highlight_hits = character(),
-        ROI_hits = character(),
-        percent_gap_coverage = double(),
-        probe_coverage_gap = logical(),
-        high_probe_density = logical(),
-        n_genes = integer(),
-        overlapping_genes = character()
-    )
+
+unsplit_merged_CNV_callers <- function(cnv_gr) {
+    
+    unmerged_calls <- cnv_gr %>%
+        filter(CNV_caller != 'StemCNV-check')
+    
+    merged_calls <- cnv_gr %>%
+        filter(CNV_caller == 'StemCNV-check') %>%
+        as_tibble() %>%
+        separate_rows(initial_call_details, sep = '\\|') %>%
+        mutate(
+            CNV_caller = str_extract(initial_call_details, '^[^_]+'),
+            start = str_extract(initial_call_details, '(?<=_)[0-9]+(?=-)') %>% as.integer(),
+            end = str_extract(initial_call_details, '(?<=-)[0-9]+(?=_CN)') %>% as.integer(),
+            CN = str_extract(initial_call_details, '(?<=CN)[0-9]+(?=_cov)') %>% as.integer(),
+            # overlap_merged_call = str_extract(initial_call_details, '(?<=cov)[0-9]+\\.[0-9]+')
+        ) %>%
+        select(-width) %>%
+        as_granges()
+    
+    bind_ranges(merged_calls, unmerged_calls)
+
 }
-
-get_list_cols <- function() {
-    colnames(get_expected_final_tb())[sapply(get_expected_final_tb(), function(x) is(x, 'list'))]
-}
-
-
-ensure_list_cols <- function(tb.or.gr){
-	as_tibble(tb.or.gr) %>%
-		rowwise() %>%
-		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
-		as_granges()
-}
-
-# Other report functions
-
-get_SNP_clustering_IDs <- function(config_entry, sample_id, sampletable) {
-    # '__[column]' entry: take all sample_ids with the same value in '[column]'
-    same_value_cols <- str_subset(config_entry, '^__') %>% str_remove('^__')
-    ids <- sapply(same_value_cols, function(x) {
-        sample_value <- unlist(subset(sampletable, Sample_ID == sample_id)[, x], use.names = F)
-        sampletable %>% filter(!!sym(x) == sample_value) %>% pull(Sample_ID)
-    }) %>% unlist()
-    # '_[column]' entry: take all sample_ids from '[column]'
-    id_cols <- str_subset(config_entry, '^_[^_]') %>% str_remove('^_')
-    ids <- c(ids, sapply(id_cols, function(x) {
-        sampletable %>% filter(Sample_ID == sample_id) %>% pull(!!sym(x)) %>% str_split(',')
-    }) %>% unlist() )
-    # other entries: assume they are sample_ids & take the existing ones. No warning since this is discouraged
-    single.ids <- str_subset(config_entry, '^[^_]')
-    ids <- c(ids, single.ids[single.ids %in% sampletable$Sample_ID])
-	ids
-}
-

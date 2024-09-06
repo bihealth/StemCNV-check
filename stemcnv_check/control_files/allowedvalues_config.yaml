@@ -30,6 +30,29 @@ global_settings:
     hg19_genome_fasta: str # Path|__-use-vep__
     hg38_genome_fasta: str # Path|__-use-vep__
 
+evaluation_settings:
+  CNV_call_categorisation:
+    impact.score.critical: '[0-9.]+|NA'
+    filters.exclude.critical: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
+    impact.score.reportable: '[0-9.]+|NA' 
+    filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
+  
+  SNP_clustering:
+    filter-settings: filtersetplusnone # "__default__", Filterset name, or "none"
+    extra_samples: list__insamplesheet
+
+  summary_stat_warning_levels:   
+    last_level_critical: list__str
+    call_rate: list_len2__float__le1
+    loss_gain_log2ratio: list_len2__int
+    SNP_distance_to_reference: list_len2__int
+    total_calls_CNV: list_len2__int
+    total_calls_LOH: list_len2__int
+    reportable_calls_CNV: list_len2__int
+    reportable_calls_LOH: list_len2__int
+    critical_calls_CNV: list_len2__int
+    critical_calls_LOH: list_len2__int
+
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS)
   probe-filter-sets:
@@ -79,8 +102,11 @@ settings:
   CNV_processing:
     call_processing:
       filter-settings: filterset
+      filter.minprobes: int_ge0
+      filter.minlength: int_ge0
+      filter.mindensity.Mb: float_ge0
       tool.overlap.greatest.call.min.perc: float_le100_ge0
-      tool.overlap.median.cov.perc: float_le100_ge0
+      tool.overlap.min.cov.sum.perc: float_le100_ge0
       ## Reference comparison
       min.reciprocal.coverage.with.ref: float_le100_ge0
       ## CNV annotations

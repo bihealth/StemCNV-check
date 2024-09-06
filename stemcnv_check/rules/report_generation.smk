@@ -23,7 +23,7 @@ def get_extra_snp_input_files(wildcards):
             )
         ],
         ids=ids,
-        filter=get_tool_filter_settings("evaluation_settings:SNP.clustering.filter")
+        filter=get_tool_filter_settings("evaluation_settings:SNP_clustering:filter-settings")
     )
 
 def get_ref_excel_input(wildcards):
@@ -31,7 +31,7 @@ def get_ref_excel_input(wildcards):
     if ref_id:
         return os.path.join(DATAPATH, ref_id, f"{ref_id}.summary-stats.xlsx")
     else:
-        return None
+        return []
 
 rule make_summary_table:
     input:
@@ -43,11 +43,15 @@ rule make_summary_table:
         extra_snp_files = get_extra_snp_input_files,
         summary_excel_ref = get_ref_excel_input,
     output:
-        os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+        xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+    threads:
+        lambda wildcards: len(get_extra_snp_input_files(wildcards))
     resources:
-        runtime=get_tool_resource("default", "runtime"),
-        mem_mb=get_tool_resource("default", "memory"),
-        partition=get_tool_resource("default", "partition"),
+        runtime=get_tool_resource("summary_stats", "runtime"),
+        mem_mb=get_tool_resource("summary_stats", "memory"),
+        partition=get_tool_resource("summary_stats", "partition"),
+    params:
+        config = config['evaluation_settings'],
     log:
         err=os.path.join(LOGPATH, "report", "{sample_id}", "summary-stats.error.log"),
     conda:

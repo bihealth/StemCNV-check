@@ -7,9 +7,9 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score.R'))
 
 # Functions:
-# - finalize_gr_to_tb # Note: will be relaced once VEP is in place
 # - annotate_cnv.check.score
 # - annotate_precision.estimates
+# - annotate_Call.label
 
 config <- list(
   'static_data' = list(
@@ -34,18 +34,13 @@ base_tb <- tibble(
     sample_id = 'test_sample',
     CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'LOH', 'LOH'),
     ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-    CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
-    # n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
+    CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
     n_probes = c(15, 100, 150, 100, 100, 50, 50),
     n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
     CN = c(3, 3, 4, 1, 1, 2, 2),
-    # caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
-    # overlap_merged_call = NA_real_,
-    caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
-    caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
     reference_overlap = c(T, T, F, F, F, F, T),
     reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
-    reference_caller = c('toolA;toolB', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
+    reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
     high_impact_hits = c(NA, NA, 'dummyC', NA, '1p36,chr1:40000-50000', NA, NA),
     highlight_hits = c(NA, 'DDX11L1', NA, NA, NA, NA, 'DDX11L1,dummyB'),
     ROI_hits = c('fake-ROI', NA, NA, 'dummyC', NA, NA, NA),    
@@ -64,14 +59,11 @@ expected_gene_tb <- base_tb %>%
 expected_final_tb <- expected_gene_tb %>%
   mutate(
     seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']]),
-    overlap_merged_call = NA_real_,
     probe_density_Mb = NA_real_,
     LRR = NA_real_,
     Check_Score = NA_real_,
     Precision_Estimate = NA_real_
-  ) %>%
-  # any_of vs one_of here, since we DON'T want to test yet 
-  select(any_of(colnames(get_expected_final_tb())))
+  )
 
 test_that("annotate_gene_overlap", {
     # Test scenarios:
@@ -85,24 +77,24 @@ test_that("annotate_gene_overlap", {
     
 })
 
-test_that("test gr_to_final_tb", {
-    # Test scenarios:
-    # - missing columns (list & normal)
-    expect_equal(finalise_tb(as_granges(expected_gene_tb), 'UCSC'), expected_final_tb)
-    # extra tests:
-    # - input column is not list and will be converted
-    # Note: this should not really happen, also list cols are slowly being deprecated
-    expect_equal(
-        finalise_tb(
-            expected_gene_tb %>%
-                mutate(CNV_caller = c("3","3","3","1","1","2","2")) %>%
-                as_granges(),
-            'UCSC'
-        ), 
-        expected_final_tb %>%
-            mutate(CNV_caller = c("3","3","3","1","1","2","2") %>% as.list())
-    )
-})
+# test_that("test gr_to_final_tb", {
+#     # Test scenarios:
+#     # - missing columns (list & normal)
+#     expect_equal(finalise_tb(as_granges(expected_gene_tb), 'UCSC'), expected_final_tb)
+#     # extra tests:
+#     # - input column is not list and will be converted
+#     # Note: this should not really happen, also list cols are slowly being deprecated
+#     expect_equal(
+#         finalise_tb(
+#             expected_gene_tb %>%
+#                 mutate(CNV_caller = c("3","3","3","1","1","2","2")) %>%
+#                 as_granges(),
+#             'UCSC'
+#         ), 
+#         expected_final_tb %>%
+#             mutate(CNV_caller = c("3","3","3","1","1","2","2"))
+#     )
+# })
 
 
 test_that("Annotate CNV check scores", {
@@ -176,8 +168,23 @@ test_that("Annotate CNV check scores", {
 
 
 
-#C)
+# test_that("Annotate precision estimates", {
 # - CBS only
 # - PennCNV only
 # - CBS + PennCNV
 # - different sizes
+
+
+# test_that("Annotate call label", {
+#   # Test scenarios:
+#   # - gain
+#   # - loss
+#   # - LOH
+#   # - unknown
+#   # - multiple
+#   expected_tb <- expected_final_tb %>%
+#     mutate(
+#       Call_Label = c('Gain', 'Gain', 'Gain', 'Loss', 'Loss', 'LOH', 'LOH')
+#     )
+#   expect_equal(annotate_call.label(expected_final_tb), expected_tb)
+# })

@@ -12,17 +12,17 @@ annotate_gene_overlaps <- function(gr, gr_genes) {
 	return(gr)
 }
 
-finalise_tb <- function(tb.or.gr, chrom_style) {
-	tb <- as_tibble(tb.or.gr) %>%
-		rowwise() %>%
-		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
-		bind_rows(get_expected_final_tb(chrom_style)) %>%
-        # # Just using width now
-        # rowwise() %>%
-		# mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
-		ungroup %>%
-		dplyr::select(one_of(colnames(get_expected_final_tb())))
-}
+# finalise_tb <- function(tb.or.gr, chrom_style) {
+# 	tb <- as_tibble(tb.or.gr) %>%
+# 		rowwise() %>%
+# 		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
+# 		bind_rows(get_expected_final_tb(chrom_style)) %>%
+#         # # Just using width now
+#         # rowwise() %>%
+# 		# mutate(length = ifelse('lenght' %in% names(.), length, width)) %>%
+# 		ungroup %>%
+# 		dplyr::select(one_of(colnames(get_expected_final_tb())))
+# }
 
 annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_scores) {
 
@@ -90,7 +90,7 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 			Precision_Estimate =
 			  ifelse(CNV_type %in% c('gain', 'loss'),
 				precision_estimates[[
-					ifelse(caller_merging_state == 'combined', 'multiple_Callers', unlist(CNV_caller))]][[
+					ifelse(n_initial_calls > 1, 'multiple_Callers', CNV_caller)]][[
 					size_category]] +
 				  (precision_estimates$Call_has_Gap * (probe_coverage_gap)) +
 				  (precision_estimates$HighSNPDensity * (high_probe_density)),
@@ -99,4 +99,25 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 		) %>%
 		ungroup() %>%
 	  dplyr::select(-size_category)
+}
+
+annotate_call.label <- function(gr.or.tb, call_cat_config) {
+    
+    impact.score.critical <- call_cat_config$impact.score.critical
+    critical_excl_regex <- call_cat_config$filters.exclude.critical %>%
+        c('dummy') %>% paste(collapse = '|')
+    impact.score.reportable <- call_cat_config$impact.score.reportable
+    reportable_excl_regex <- call_cat_config$filters.exclude.reportable %>%
+        c('dummy') %>% paste(collapse = '|')
+    
+    gr.or.tb %>%
+        as_tibble() %>%
+        mutate(
+            Call_label = case_when(
+                !is.na(reference_coverage)     				                                        ~ 'Reference genotype',
+                Check_Score >= impact.score.critical & !str_detect(FILTER, critical_excl_regex)     ~ 'Critical',
+                Check_Score >= impact.score.reportable & !str_detect(FILTER, reportable_excl_regex) ~ 'Reportable',
+                TRUE                         				                                        ~ NA_character_
+            )
+        )
 }

@@ -7,6 +7,7 @@ dependencies:
   # Base
   - r-base >=4.3 #might need higher to be compatible with latest bioconductor
   - r-tidyverse
+  - r-furrr
   - r-argparse
   - r-yaml
   - r-sessioninfo
@@ -25,7 +26,7 @@ dependencies:
   ## Report ##
   - r-ggpubr
   - r-dendextend
-  - r-rideogram # N/A for r4.3
+  - r-rideogram # N/A for r4.3 ?
   - r-rcolorbrewer
   - r-DT
   - r-kableextra

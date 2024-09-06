@@ -62,7 +62,7 @@ merged_tb <- tibble(
 )
 
 merged_filtered_tb <- merged_tb 
-merged_filtered_tb$FILTER <- c('Size', 'Size;n_probes', 'PASS', 'PASS',
+merged_filtered_tb$FILTER <- c('Size', 'Size;min_probes', 'PASS', 'PASS',
                                'Density', 'PASS', 'PASS', 'PASS', 'Density')
 
 # Functions to test

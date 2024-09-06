@@ -73,8 +73,8 @@ def get_tool_filter_settings(tool):
         )
     elif tool.count(":") == 2 and tool.split(":")[1] == "CNV_processing":
         out = config["settings"]["CNV_processing"]["call_processing"]["filter-settings"]
-    elif tool == "evaluation_settings:SNP.clustering.filter":
-        out = config["evaluation_settings"]["SNP.clustering.filter"]
+    elif tool == "evaluation_settings:SNP_clustering:filter-settings":
+        out = config["evaluation_settings"]["SNP_clustering"]["filter-settings"]
         out = out if out != "none" else '__default__'
     else:
         out = config["settings"][tool]["filter-settings"]

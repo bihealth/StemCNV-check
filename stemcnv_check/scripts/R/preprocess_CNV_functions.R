@@ -105,7 +105,7 @@ add_call_prefilters <- function(gr, tool_config) {
         rowwise() %>%
         mutate(
             f_size = ifelse(width < min.length, 'Size', NA_character_),
-            f_probes = ifelse(n_probes < min.snp, 'n_probes', NA_character_),
+            f_probes = ifelse(n_probes < min.snp, 'min_probes', NA_character_),
             f_density = ifelse(probe_density_Mb < min.snp.density, 'Density', NA_character_),
             FILTER = ifelse(
                 is.na(f_size) & is.na(f_probes) & is.na(f_density),

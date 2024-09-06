@@ -34,7 +34,7 @@ parse_snp_vcf <- function(vcf,
 parse_cnv_vcf <- function(vcf, 
                          info_fields = NULL, 
                          format_fields = NULL, 
-                         apply_filter = TRUE) {
+                         apply_filter = FALSE) {
     if (typeof(vcf) == 'character') {
         vcf <- read.vcfR(vcf, verbose = F)
     }
@@ -124,7 +124,7 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         filter <- c(
             '##FILTER=<ID=PASS,Description="All filters passed">',
             str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
-            str_glue('##FILTER=<ID=n_probes,Description="CNV call from <{filter.minprobes} probes">'),
+            str_glue('##FILTER=<ID=min_probes,Description="CNV call from <{filter.minprobes} probes">'),
             str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
         )
     }
@@ -185,7 +185,7 @@ get_fix_section <- function(tb) {
     base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
     extra_info_str <- paste(
         base_info_str,
-        'Check_Score={Check_Score};Precision={Precision_Estimate}',
+        'Check_Score={Check_Score};Precision={Precision_Estimate};Call_label={Call_label}',
         'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI={ROI_hits}',
         'Gap_percent={percent_gap_coverage};Genes={overlapping_genes}',
         sep=';'
@@ -205,7 +205,8 @@ get_fix_section <- function(tb) {
             across(where(is.numeric), ~ round(., 3)),
             # convert NA or empty string to ".", all columns with possible NA to character
             across(
-                any_of(c("Check_Score", "Precision_Estimate", "high_impact_hits", "highlight_hits",
+                any_of(c("Check_Score", "Precision_Estimate", "Call_label",
+                         "high_impact_hits", "highlight_hits",
                          "ROI_hits", "percent_gap_coverage", "overlapping_genes")),
                 ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),

@@ -173,6 +173,7 @@ def check_config(config_file, sample_table_file, required_only=False):
         'ge': lambda x, v: parse_scientific(x) >= v,
         'filterset': lambda x, v: x in defined_filtersets or x == '__default__',
         'filtersetnodefault': lambda x, v: x in defined_filtersets,
+        'filtersetplusnone': lambda x, v: x in defined_filtersets  or x == '__default__' or x == 'none',
         'sections': lambda x, v: x in allowed_values['allowed_sections'],
         'sectionsall': lambda x, v: x == '__all__' or all(i in allowed_values['allowed_sections'] for i in x),
         'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
@@ -232,6 +233,7 @@ def check_config(config_file, sample_table_file, required_only=False):
         'ge': lambda v: f"values >={v}",
         'filterset': lambda v: "the defined filtersets ({}) or __default__".format(', '.join(defined_filtersets)),
         'filtersetnodefault': lambda v: "only the defined filtersets ({}) but not '__default__'".format(', '.join(defined_filtersets)),
+        'filtersetplusnone': lambda v: "the defined filtersets ({}), '__default__' or 'none'".format(', '.join(defined_filtersets)),
         'sections': lambda v: "the defined report sections: " + ', '.join(allowed_values['allowed_sections']),
         'sectionsall': lambda v: "either '__all__' or a list with of defined report sections: " + ', '.join(allowed_values['allowed_sections']),
         'insamplesheet': lambda v: "column names of the samplesheet: " + ', '.join(sample_data[0].keys())

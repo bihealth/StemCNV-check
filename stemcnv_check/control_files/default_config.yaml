@@ -47,9 +47,9 @@ log_path: logs      #REQUIRED
 evaluation_settings:
   CNV_call_categorisation:
     impact.score.critical:   NA
-    filters.exclude.critical: [] # high_probe_dens, probe_gap (Size, n_probes, density)
+    filters.exclude.critical: ['probe_gap'] # high_probe_dens, probe_gap (Size, min_probes, density)
     impact.score.reportable: NA 
-    filters.exclude.reportable: [] # high_probe_dens, probe_gap (Size, n_probes, density)
+    filters.exclude.reportable: [] # high_probe_dens, probe_gap (Size, min_probes, density)
   
   SNP_clustering:
     filter-settings: '__default__' # "__default__", Filterset name, or "none"
@@ -179,13 +179,18 @@ settings:
       # SNP probe counts may change with merging of calls from different tools
       # therefore a single filter-settings needs to be used as reference here
       filter-settings: '__default__'
+      # Prefiltering of calls is done (after merging of nearby calls) as follows:
+      # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+      filter.minprobes: 5
+      filter.minlength: 1000
+      filter.mindensity.Mb: 10 #snps per Mb
       
       ## Calls from multiple tools are combined and combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
       # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
       tool.overlap.greatest.call.min.perc: 50
       # This is minimum for the median of coverage percentages from all tool in any merged group
-      tool.overlap.median.cov.perc: 60
+      tool.overlap.min.cov.sum.perc: 60
       ## Reference comparison
       min.reciprocal.coverage.with.ref: 80
       ## Probe gap flagging of calls

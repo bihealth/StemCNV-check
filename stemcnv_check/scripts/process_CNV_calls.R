@@ -53,17 +53,20 @@ combined_tools_sample <- combine_CNV_callers(gr, processing_config, snp_vcf_gr)
 ## <- function() {
 if (length(snakemake@input$ref_data) > 0) {
     
-	combined_tools_ref <- load_preprocessed_cnvs(snakemake@input$ref_data) %>%
+	combined_tools_ref <- parse_cnv_vcf(snakemake@input$ref_data) %>%
 		# These cols will interefere
-		dplyr::select(-width, -reference_overlap, -reference_coverage, -reference_caller,
-									-n_genes, -overlapping_genes) %>%
-		filter(caller_merging_state != 'pre-overlap') %>%
-		as_granges()
+		select(-reference_coverage, -Genes)
+    
 	
 	cnvs <- annotate_reference_overlap(combined_tools_sample, combined_tools_ref,
                                        processing_config$min.reciprocal.coverage.with.ref)
 } else {
-	cnvs <- combined_tools_sample
+	cnvs <- combined_tools_sample %>%
+        mutate(
+            reference_overlap = FALSE,
+            reference_coverage = NA_real_,
+            reference_caller = NA_character_
+        )
 }
 ## }
 
@@ -116,12 +119,13 @@ cnvs <- cnvs %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
 	annotate_cnv.check.score(high_impact_gr, highlight_gr, check_scores) %>%
-	annotate_precision.estimates(size_categories, precision_estimates)
+	annotate_precision.estimates(size_categories, precision_estimates) %>%
+    annotate_call.label(config$evaluation_settings$CNV_call_categorisation)
 
-cnvs.tb <- finalise_tb(cnvs, target_chrom_style) %>%
-	rowwise() %>%
-	mutate(across(one_of(get_list_cols()), ~paste(., collapse=';')))
-write_tsv(cnvs.tb, snakemake@output$tsv)
+# cnvs.tb <- finalise_tb(cnvs, target_chrom_style) %>%
+# 	rowwise() %>%
+# 	mutate(across(one_of(get_list_cols()), ~paste(., collapse=';')))
+# write_tsv(cnvs.tb, snakemake@output$tsv)
 
 
 # Also directly write out a cnv vcf
@@ -140,7 +144,7 @@ combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vc
         paste(
             '##StemCNV-check process_CNV_calls',
             'tool.overlap.greatest.call.min.perc={processing_config$tool.overlap.greatest.call.min.perc}',
-            'tool.overlap.median.cov.perc={processing_config$tool.overlap.median.cov.perc}'
+            'tool.overlap.min.cov.sum.perc={processing_config$tool.overlap.min.cov.sum.perc}'
         )
     )
     
@@ -155,9 +159,7 @@ combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vc
     
 }
 
-#FIXME (future): keep the filtered original (small) calls in this vcf as well?
 cnvs %>%
-    filter(caller_merging_state != 'pre-overlap') %>%
     as_tibble() %>%
     rowwise() %>%
     mutate(

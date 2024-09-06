@@ -102,9 +102,9 @@ def get_target_files(target=TARGET):
     elif target == "combined-cnv-calls":
         out = expand(
             [
-                os.path.join(
-                    DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"
-                ),
+                # os.path.join(
+                #     DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"
+                # ),
                 os.path.join(
                     DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
                 ),
@@ -186,7 +186,7 @@ rule run_CBS:
 def get_processed_ref_data(wildcards):
     sample_id, ref_id = get_ref_id(wildcards)
     return (
-        os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.tsv")
+        os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.vcf.gz")
         if ref_id
         else []
     )
@@ -203,7 +203,7 @@ rule run_process_CNV_calls:
         ref_data=get_processed_ref_data,
         snp_vcf=cnv_vcf_input_function("settings:CNV_processing:call_processing"),
     output:
-        tsv=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
+        # tsv=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
         vcf=os.path.join(
             DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
         ),

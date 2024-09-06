@@ -142,17 +142,12 @@ sample_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'loss', 'loss'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
-  # n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
+  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
   n_probes = c(15, 5, 15, 25,5, 5, 5),
   CN = c(3, 3, 4, 1, 1, 1, 0),
-  # caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
-  overlap_merged_call = NA_real_,
-  caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
-  caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
   reference_overlap = c(T, T, F, F, F, F, T),
   reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
-  reference_caller = c('toolA;toolB', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA')
+  reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA')
 ) %>% as_granges()
 
 

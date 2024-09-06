@@ -78,7 +78,7 @@ cnv_tb <- tibble(
   n_probes =      c(5, 3, 11, 5, 20, 5, 10, 15, 20),
   n_uniq_probes = c(5, 3, 10, 5, 20, 5, 10, 15, 20),
   probe_density_Mb = n_uniq_probes / width * 1e6,
-  FILTER = c('Size', 'Size;n_probes', 'PASS', 'PASS', 'Density', 'PASS', 'PASS', 'PASS', 'Density'),
+  FILTER = c('Size', 'Size;min_probes', 'PASS', 'PASS', 'Density', 'PASS', 'PASS', 'PASS', 'Density'),
   LRR = c(1, 1.3, 0.89, 2, 1.385, 0, -0.88, -1.31, -0.895) 
   #BAF clusters:
   #4, 2, 4, 3, 4, 2, 2, 2, 2  
@@ -90,6 +90,7 @@ cnv_tb_annotated <- cnv_tb %>%
         # FILTER = c(), # could be adapted to proper values, but doesn't matter for this test
         Check_Score = 20 + runif(9, 5, 30),
         Precision_Estimate = c(sample(c(0.1, 0.4, 0.6, 0.8), 7, T), NA, NA),
+        Call_label = c('Critical', NA, 'Reportable', NA, NA, NA, NA, rep ('Reference genotype', 2)),
         # reference_caller
         reference_coverage = c(rep(NA, 4), runif(5, 0, 1)),
         high_impact_hits = c(NA, NA, NA, NA, NA, 'gene1,gene2', NA, NA, NA),
@@ -138,6 +139,7 @@ test_that('get_fix_section', {
                 str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)};'),
                 str_glue('Check_Score={cnv_tb_annotated_out$Check_Score};'),
                 str_glue('Precision={cnv_tb_annotated_out$Precision_Estimate};'),
+                str_glue('Call_label={cnv_tb_annotated_out$Call_label};'),
                 str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
                 str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),
                 str_glue('ROI={cnv_tb_annotated_out$ROI_hits};'),

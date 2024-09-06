@@ -195,14 +195,15 @@ def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
     all_ids = ['Cellline-A-MB', 'Cellline-A-WB', 'Cellline-B-MB', 'Cellline-B-1-cl1']
 
     # Test finding sample_ids based on machting entries in given column
-    assert all_ids == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_full)
-    assert all_ids[0:2] == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_full)
+    # The search sample ID itself is *never* included in the result
+    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_full)
+    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_full)
     with pytest.raises(ConfigValueError):
         helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__NonExisting'], sample_data_full)
     # Test finding sample_ids based on values in given column
-    assert ['123', '456'] == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_full)
-    assert [all_ids[2]] == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_full)
+    assert {'123', '456'} == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_full)
+    assert {all_ids[2]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_full)
     with pytest.raises(ConfigValueError):
         helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Testcol'], sample_data_full)
     # Test using sample_ids directly
-    assert [all_ids[2], 'Test'] == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Test'], sample_data_full)
+    assert {all_ids[2], 'Test'} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Test'], sample_data_full)

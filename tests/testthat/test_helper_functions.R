@@ -11,12 +11,10 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 # - [x] fix_CHROM_format
 # - [x] get_sex_chroms
 # - [x] get_target_chrom_style
-# - [ ] load_preprocessed_cnvs  #! consider replacing this with read_CNV_vcf (+ annotation support)
 # - [ ] get_static_path         #! hard to test; should only do things if inside the Rmd environment; deprecate?
 # - [x] load_gtf_data
 # - [x] load_genomeInfo
-# - [ ] ensure_list_cols
-# - [ ] get_SNP_clustering_IDs  #! this should be replaced by direct snakemake handover 
+# - [ ] unsplit_merged_CNV_callers
 
 # Note: primary checks are done in python, R just needs to work
 test_that("read_sampletable", {
