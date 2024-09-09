@@ -60,7 +60,6 @@ test_that('parse_snp_vcf', {
 
 })
 
-
 cnv_tb <- tibble(
   seqnames  = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrX', 'chrX'),
   start = c(100, 1000, 3000, 6000, 1.0e8, 7400,  9000, 12e4, 1e6) %>% as.integer(),
@@ -138,7 +137,7 @@ test_that('get_fix_section', {
                 str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
                 str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)};'),
                 str_glue('Check_Score={cnv_tb_annotated_out$Check_Score};'),
-                str_glue('Precision={cnv_tb_annotated_out$Precision_Estimate};'),
+                str_glue('Precision_Estimate={cnv_tb_annotated_out$Precision_Estimate};'),
                 str_glue('Call_label={cnv_tb_annotated_out$Call_label};'),
                 str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
                 str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),

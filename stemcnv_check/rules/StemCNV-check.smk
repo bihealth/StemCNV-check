@@ -83,7 +83,7 @@ def get_target_files(target=TARGET):
 
     # complete
     if target == "complete":
-        out = get_target_files("report") + get_target_files("combined-cnv-calls")
+        out = get_target_files("report") + get_target_files('summary-tables') + get_target_files("combined-cnv-calls")
 
     # Report
     elif target == "report":
@@ -95,28 +95,24 @@ def get_target_files(target=TARGET):
                 for rep in config["reports"].keys()
                 if rep != "__default__"
             ],
-        )  # + \
-        # expand(os.path.join(DATAPATH,"{sample_id}","{sample_id}.summary-check.tsv"),
-        #                sample_id = all_samples)
+        )
+    # Stat summary tables
+    elif target == "summary-tables":
+        out = expand(
+            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+            sample_id=all_samples,
+        )
+    
     # Target Processed-calls
     elif target == "combined-cnv-calls":
         out = expand(
-            [
-                # os.path.join(
-                #     DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"
-                # ),
-                os.path.join(
-                    DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
-                ),
-            ],
+            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
             sample_id=all_samples,
         )
     # Target PennCNV
     elif target == "PennCNV":
         out = expand(
-            os.path.join(
-                DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.penncnv.vcf.gz"
-            ),
+            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.PennCNV.vcf.gz"),
             sample_id=all_samples,
         )
     # Target CBS
@@ -127,14 +123,12 @@ def get_target_files(target=TARGET):
         )
     # Target SNP-data
     elif target == "SNP-data":
-        # TODO: update this
         out = expand(
             os.path.join(
                 DATAPATH,
                 "{sample_id}",
                 "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz",
             ),
-            # os.path.join(DATAPATH, "{sample_id}", "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz"),
             sample_id=all_samples,
             filter=config["settings"]["default-filter-set"],
         )
@@ -213,6 +207,7 @@ rule run_process_CNV_calls:
         mem_mb=get_tool_resource("CNV.process", "memory"),
         partition=get_tool_resource("CNV.process", "partition"),
     params:
+        eval_settings = config["evaluation_settings"],
         settings=config["settings"]["CNV_processing"],
     log:
         err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),

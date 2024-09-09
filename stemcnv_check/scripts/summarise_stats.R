@@ -54,13 +54,9 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
     sample_id <- unique(gencall_stats$sample_id)
     
     not_used_filter <- c(
-        ifelse(config$evaluation_settings$CNV_call_categorisation$impact.score.critical == 'NA', 'critical', 'dummy'),
-        ifelse(config$evaluation_settings$CNV_call_categorisation$impact.score.reportable == 'NA', 'reportable', 'dummy')
+        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.critical == 'NA', 'critical', 'dummy'),
+        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.reportable == 'NA', 'reportable', 'dummy')
     ) %>% unique %>% paste(collapse = '|')
-    
-    # if ('Call_Label' %!in% colnames(mcols(sample_CNV_data))) {
-    #     sample_CNV_data <- add_call_labels(sample_CNV_data, config$evaluation_settings$CNV_call_categorisation)
-    # }
 
     qc_measure_list <- list(
         gencall_stats %>%
@@ -115,6 +111,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
 get_call_stats <- function(gr.or.tb, name_addition = NA, filter_regex = NA) {
     
     tb <- gr.or.tb %>%
+        as_tibble() %>%
         group_by(sample_id) %>%
         mutate(
             loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
@@ -126,8 +123,8 @@ get_call_stats <- function(gr.or.tb, name_addition = NA, filter_regex = NA) {
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
         summarise(
             total_calls = dplyr::n(),
-            reportable_calls = sum(Call_Label == 'Reportable'),
-            critical_calls = sum(Call_Label == 'Critical')
+            reportable_calls = sum(Call_label == 'Reportable'),
+            critical_calls = sum(Call_label == 'Critical')
         ) %>%
         pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls')) 
 
@@ -256,7 +253,7 @@ collect_summary_stats <- function(
     if (!is.null(summary_excel_ref)) {
         summary_table_sample <- summary_table_sample %>%
             full_join(
-                read_excel(summary_excel_ref, sheet = 'sample_info') %>%
+                read_excel(summary_excel_ref, sheet = 'summary_stats') %>%
                     rename_with(~ str_replace(., 'sample', 'reference')) %>%
                     mutate(across(matches('critical|reportable'), ~ NA_character_)),
                 by = 'Description'
@@ -264,15 +261,15 @@ collect_summary_stats <- function(
     }
     
     not_used_filter <- c(
-        ifelse(config$evaluation_settings$CNV_call_categorisation$impact.score.critical == 'NA', 'critical', 'dummy'),
-        ifelse(config$evaluation_settings$CNV_call_categorisation$impact.score.reportable == 'NA', 'reportable', 'dummy')
+        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.critical == 'NA', 'critical', 'dummy'),
+        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.reportable == 'NA', 'reportable', 'dummy')
     ) %>% unique %>% paste(collapse = '|')
     
     tool_stats <- unsplit_merged_CNV_callers(sample_CNV_gr) %>%
         split(.$CNV_caller) %>%
         imap(function (gr, name) {
             tb1 <- gr %>%
-                annotate_call.labels(config$evaluation_settings$CNV_call_categorisation) %>%
+                annotate_call.label(config$evaluation_settings$CNV_call_categorisation) %>%
                 get_call_stats(
                     # name_addition = name,
                     filter_regex = not_used_filter

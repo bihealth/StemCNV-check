@@ -213,7 +213,7 @@ tr_tibble <- function(tb) {
 
 ## Rmd related functions
 
-CNV_ID_str <- function(Call_Label, CNV_type, Chr, Size, i,
+CNV_ID_str <- function(Call_label, CNV_type, Chr, Size, i,
                        region_name = NULL,
                        formatting = 'nice', ...) {
   #ROIs might have user defined names
@@ -363,10 +363,10 @@ cnv_calls <- lapply(file.path(datapath, use_ids, paste0(use_ids, '.combined-cnv-
                     load_preprocessed_cnvs) %>%
   bind_rows() %>%
   mutate(
-    Call_Label = case_when(
+    Call_label = case_when(
             reference_overlap            				              ~ 'Reference genotype',
-            Check_Score >= report.setting('impact.score.critical')   ~ 'Critical',
-            Check_Score >= report.setting('impact.score.reportable') ~ 'Reportable',
+            Check_Score >= report.setting('check_score.critical')   ~ 'Critical',
+            Check_Score >= report.setting('check_score.reportable') ~ 'Reportable',
             TRUE                         				              ~ ''
     )
   )
@@ -432,8 +432,8 @@ metrics <- list(
                  #highlight_calls, high_impact_calls,
                  class, .drop = F) %>%
         summarise(total_calls = n(),
-                  reportable_calls = sum(Call_Label == 'Reportable'),
-                  critical_calls = sum(Call_Label == 'Critical'),
+                  reportable_calls = sum(Call_label == 'Reportable'),
+                  critical_calls = sum(Call_label == 'Critical'),
                   ) %>%
         pivot_wider(names_from = class, values_from = matches('(total|reportable|critical)_calls'))
 )
@@ -477,8 +477,8 @@ metric.colors <- list(
         )
 
 not_enabled_label <- c('dummy',
-                       ifelse(report.setting('impact.score.critical') == 'NA', 'critical', 'dummy'),
-                       ifelse(report.setting('impact.score.reportable') == 'NA', 'reportable', 'dummy')
+                       ifelse(report.setting('check_score.critical') == 'NA', 'critical', 'dummy'),
+                       ifelse(report.setting('check_score.reportable') == 'NA', 'reportable', 'dummy')
   ) %>% unique %>% paste(collapse = '|')
 
 Combined.metrics <- purrr::reduce(metrics, full_join, by = 'sample_id') %>%
@@ -500,8 +500,8 @@ get_call_stats_tool <- function(use.tool) {
         ) %>%
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
         summarise(total_calls = n(),
-                  reportable_calls = sum(Call_Label == 'Reportable'),
-                  critical_calls = sum(Call_Label == 'Critical')
+                  reportable_calls = sum(Call_label == 'Reportable'),
+                  critical_calls = sum(Call_label == 'Critical')
         ) %>%
         pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls')) %>%
         dplyr::select(-matches(not_enabled_label)) %>%
@@ -629,14 +629,14 @@ cnv_calls <- cnv_calls %>%
 denovo_calls.table <- cnv_calls %>%
   filter(caller_merging_state != 'pre-overlap'  &
            sample_id == !!sample_id &
-           Call_Label != 'Reference genotype'
+           Call_label != 'Reference genotype'
   ) %>%
   mutate(i = row_number())
 
 reference_calls.table <- cnv_calls %>%
   filter(caller_merging_state != 'pre-overlap' &
            sample_id == !!sample_id &
-           Call_Label == 'Reference genotype'
+           Call_label == 'Reference genotype'
   ) %>%
   mutate(i = row_number())
 
@@ -692,7 +692,7 @@ if (any(!is.na(regions)) & length(regions)>0) {
             End = str_extract(regions, '(?<=-)[0-9]+$') %>% as.numeric(),
             Size = End - Start,
             region_name = str_extract(regions, '^[^|]+\\|') %>% str_remove('\\|'),
-            Call_Label = 'ROI'
+            Call_label = 'ROI'
         ) %>%
         mutate(#Chr = ifelse(use_chr_str,  paste0('chr', Chr), Chr),
                    Chr = mapSeqlevels(Chr, seqlevelsStyle(cnv_calls$Chr)),

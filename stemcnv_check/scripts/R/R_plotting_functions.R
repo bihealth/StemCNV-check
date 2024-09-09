@@ -208,8 +208,8 @@ make_LRR_BAF_plots <- function(call.row,
 
   calls <- calls %>%
     filter(!is.na(x_pos)) %>%
-    dplyr::select(Sample_Name, 1, 3:4, Call_Label, Check_Score, reference_overlap, CNV_type, CNV_caller) %>%
-    arrange(Sample_Name, Call_Label, Check_Score, Start) %>%
+    dplyr::select(Sample_Name, 1, 3:4, Call_label, Check_Score, reference_overlap, CNV_type, CNV_caller) %>%
+    arrange(Sample_Name, Call_label, Check_Score, Start) %>%
     rowwise() %>%
     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 

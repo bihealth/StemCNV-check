@@ -103,21 +103,27 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 
 annotate_call.label <- function(gr.or.tb, call_cat_config) {
     
-    impact.score.critical <- call_cat_config$impact.score.critical
-    critical_excl_regex <- call_cat_config$filters.exclude.critical %>%
-        c('dummy') %>% paste(collapse = '|')
-    impact.score.reportable <- call_cat_config$impact.score.reportable
-    reportable_excl_regex <- call_cat_config$filters.exclude.reportable %>%
-        c('dummy') %>% paste(collapse = '|')
+    check_score.critical <- call_cat_config$check_score.critical
+    critical_excl <- call_cat_config$filters.exclude.critical 
+    check_score.reportable <- call_cat_config$check_score.reportable
+    reportable_excl <- call_cat_config$filters.exclude.reportable 
     
     gr.or.tb %>%
         as_tibble() %>%
         mutate(
-            Call_label = case_when(
-                !is.na(reference_coverage)     				                                        ~ 'Reference genotype',
-                Check_Score >= impact.score.critical & !str_detect(FILTER, critical_excl_regex)     ~ 'Critical',
-                Check_Score >= impact.score.reportable & !str_detect(FILTER, reportable_excl_regex) ~ 'Reportable',
-                TRUE                         				                                        ~ NA_character_
+            Call_label = pmap_chr(
+                list(reference_coverage, Check_Score, FILTER),
+                \(ref_cov, check_score, FILTER) {
+                    filters <- str_split(FILTER, ';') %>% unlist()
+                    case_when(
+                        !is.na(ref_cov)                        ~ 'Reference genotype',
+                        check_score >= check_score.critical & 
+                            !any(filters %in% critical_excl)   ~ 'Critical',
+                        check_score >= check_score.reportable & 
+                            !any(filters %in% reportable_excl) ~ 'Reportable',
+                        TRUE                         		   ~ NA_character_
+                    )
+                }
             )
         )
 }

@@ -46,10 +46,10 @@ log_path: logs      #REQUIRED
 
 evaluation_settings:
   CNV_call_categorisation:
-    impact.score.critical:   NA
-    filters.exclude.critical: ['probe_gap'] # high_probe_dens, probe_gap (Size, min_probes, density)
-    impact.score.reportable: NA 
-    filters.exclude.reportable: [] # high_probe_dens, probe_gap (Size, min_probes, density)
+    check_score.critical: 55
+    filters.exclude.critical: ['probe_gap'] # high_probe_dens, probe_gap, (Size, min_probes, density)
+    check_score.reportable: NA 
+    filters.exclude.reportable: [] # high_probe_dens, probe_gap, (Size, min_probes, density)
   
   SNP_clustering:
     filter-settings: '__default__' # "__default__", Filterset name, or "none"
@@ -283,7 +283,7 @@ reports:
   # All reports inherit from the default settings, but can overwrite specific parts
   StemCNV-check-report:
     file_type: 'html'         #REQUIRED
-    impact.score.critical: NA #recommended: 55
+    check_score.critical: NA #recommended: 55
 
 ##!medium
 #   Any number of reports can be defined, the default is 'StemCNV-check-report'.
@@ -292,7 +292,7 @@ reports:
 #
 #  StemCNV-check-full-report:
 #    file_type: 'html'         #REQUIRED
-#    impact.score.critical: NA #recommended: 55
+#    check_score.critical: NA #recommended: 55
 #    call.data.and.plots:
 #      __default__:
 #        # How many plots to show at least, this strongly influences the filesize of the report
@@ -302,7 +302,7 @@ reports:
 #  # These reduced settings works reasonably well for pdf
 #  StemCNV-check-report-pdf:
 #    file_type: 'pdf'          #REQUIRED
-#    impact.score.critical: NA #recommended: 55
+#    check_score.critical: NA #recommended: 55
 #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
 #    call.data.and.plots:
 #      include.call.table: FALSE
@@ -310,8 +310,8 @@ reports:
   #These are the default settings from which all reports inherit
   __default__:
     # Check_Score cutoffs for labelling calls as 'Critical' or 'Reportable'
-    impact.score.critical:   NA
-    impact.score.reportable: NA
+    check_score.critical:   NA
+    check_score.reportable: NA
 
     # individual sections can be included (whitelist) or excluded (blacklist) from report.
     # Default is special '__all__' for include, but a list of specific sections can also be used

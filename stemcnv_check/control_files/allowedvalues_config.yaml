@@ -32,9 +32,9 @@ global_settings:
 
 evaluation_settings:
   CNV_call_categorisation:
-    impact.score.critical: '[0-9.]+|NA'
+    check_score.critical: '[0-9.]+|NA'
     filters.exclude.critical: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
-    impact.score.reportable: '[0-9.]+|NA' 
+    check_score.reportable: '[0-9.]+|NA' 
     filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
   
   SNP_clustering:
@@ -188,8 +188,8 @@ reports:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
-    impact.score.critical: '[0-9.]+|NA'
-    impact.score.reportable: '[0-9.]+|NA'
+    check_score.critical: '[0-9.]+|NA'
+    check_score.reportable: '[0-9.]+|NA'
     sample.info.extra.cols: list__insamplesheet
 
     call.data.and.plots:

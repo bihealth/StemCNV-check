@@ -38,6 +38,7 @@ base_tb <- tibble(
     n_probes = c(15, 100, 150, 100, 100, 50, 50),
     n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
     CN = c(3, 3, 4, 1, 1, 2, 2),
+    FILTER = c('Size', 'Probe_dens;probe_gap', 'probe_gap;high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_),
     reference_overlap = c(T, T, F, F, F, F, T),
     reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
     reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
@@ -58,11 +59,7 @@ expected_gene_tb <- base_tb %>%
 
 expected_final_tb <- expected_gene_tb %>%
   mutate(
-    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']]),
-    probe_density_Mb = NA_real_,
-    LRR = NA_real_,
-    Check_Score = NA_real_,
-    Precision_Estimate = NA_real_
+    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']])
   )
 
 test_that("annotate_gene_overlap", {
@@ -175,16 +172,34 @@ test_that("Annotate CNV check scores", {
 # - different sizes
 
 
-# test_that("Annotate call label", {
-#   # Test scenarios:
-#   # - gain
-#   # - loss
-#   # - LOH
-#   # - unknown
-#   # - multiple
-#   expected_tb <- expected_final_tb %>%
-#     mutate(
-#       Call_Label = c('Gain', 'Gain', 'Gain', 'Loss', 'Loss', 'LOH', 'LOH')
-#     )
-#   expect_equal(annotate_call.label(expected_final_tb), expected_tb)
-# })
+test_that("Annotate call label", {
+    # Test scenarios:
+    # - ref GT ( = ref coverage >= X% ?!) [1,2,7]
+    # - critical score [4]
+    # - reportable score [5]
+    # - critical score, but excl list (-> reportable)  [3]
+    # - reportable score, but excl list (-> NA)
+    # - NA [6]
+    call_cat_config <- list(
+        check_score.critical = 55,
+        filters.exclude.critical = c('probe_gap'),
+        check_score.reportable = 50,
+        filters.exclude.reportable = c('test-dummy')
+    )  
+    
+    input_tb <- expected_final_tb %>%
+        mutate(
+            Check_Score = c(63.03098, 12.93180, 59.71318, 69.18200, 53.47740, 42.88782, 23.37815)
+        ) %>%
+        bind_rows(
+           expected_final_tb[5,] %>% mutate(FILTER = 'test-dummy')
+        )
+    
+    expected_tb <- input_tb %>%
+        mutate(
+            Call_label = c('Reference genotype', 'Reference genotype', 'Reportable', 'Critical', 'Reportable', NA, 'Reference genotype', NA)
+        ) 
+        
+    
+    expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
+})

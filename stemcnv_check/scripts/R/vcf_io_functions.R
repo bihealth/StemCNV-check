@@ -52,6 +52,7 @@ parse_cnv_vcf <- function(vcf,
             n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
             initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
             across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
+            FILTER = ifelse(FILTER %in% c('', 'PASS'), NA_character_, FILTER),
         ) %>%
         rename_with(~str_to_lower(.), contains('PROBE')) %>%
         rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
@@ -59,7 +60,7 @@ parse_cnv_vcf <- function(vcf,
         select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
         as_granges(seqnames = CHROM, start = POS + 1, end = END, width = SVLEN)
     if (apply_filter) {
-        vcf <- vcf %>% filter(FILTER == 'PASS')
+        vcf <- vcf %>% filter(is.na(FILTER))
     }
     return(vcf)
 }
@@ -79,9 +80,10 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
     )
     if (extra_annotation) {
     info <- c(
-        info, 
+        info,
         '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
-        '##INFO=<ID=Precision,Number=1,Type=Float,Description="Estimated precision for this call">',
+        '##INFO=<ID=Precision_Estimate,Number=1,Type=Float,Description="Estimated precision for this call">',
+        '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on refrence overlap, Check-Score and Filters (Critical|Reportable|Reference genotype)">',
         '##INFO=<ID=HighImpact,Number=1,Type=String,Description="Overlapping high impact sites (StemCNV-check defined)">',
         '##INFO=<ID=Highlight,Number=1,Type=String,Description="Overlapping highlight sites (COSMIC genes)">',
         '##INFO=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
@@ -108,24 +110,22 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         )
     )
     }
-    # Filter is applied before extra annotation, so those calls are currently NOT in the VCF
-    if (extra_annotation) { 
+    filter.minsize <- toolconfig$filter.minsize
+    filter.minprobes <- toolconfig$filter.minprobes
+    filter.mindensity.Mb <- toolconfig$filter.mindensity
+    filter <- c(
+        '##FILTER=<ID=PASS,Description="All filters passed">',
+        str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
+        str_glue('##FILTER=<ID=min_probes,Description="CNV call from <{filter.minprobes} probes">'),
+        str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
+    )
+    if (extra_annotation) {
         density.perc.cutoff <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
         gap.min.perc <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
         filter <- c(
             '##FILTER=<ID=PASS,Description="All filters passed">',
             str_glue('##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than {density.perc.cutoff}% of the array">'),
             str_glue('##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerbale gap (min. {gap.min.perc}%)">')
-        )
-    } else {
-        filter.minsize <- toolconfig$filter.minsize
-        filter.minprobes <- toolconfig$filter.minprobes
-        filter.mindensity.Mb <- toolconfig$filter.mindensity
-        filter <- c(
-            '##FILTER=<ID=PASS,Description="All filters passed">',
-            str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
-            str_glue('##FILTER=<ID=min_probes,Description="CNV call from <{filter.minprobes} probes">'),
-            str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
         )
     }
     
@@ -185,7 +185,7 @@ get_fix_section <- function(tb) {
     base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
     extra_info_str <- paste(
         base_info_str,
-        'Check_Score={Check_Score};Precision={Precision_Estimate};Call_label={Call_label}',
+        'Check_Score={Check_Score};Precision_Estimate={Precision_Estimate};Call_label={Call_label}',
         'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI={ROI_hits}',
         'Gap_percent={percent_gap_coverage};Genes={overlapping_genes}',
         sep=';'

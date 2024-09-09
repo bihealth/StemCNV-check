@@ -134,7 +134,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
   tb <- tb %>%
     # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
     mutate(Plot = ifelse(
-             i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_Label %in% always_include,
+             i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_label %in% always_include,
              paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
              #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
                     '">Nr. ', i, '</a>'),
@@ -149,7 +149,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
     ) %>%
     dplyr::rename(copynumber = CN) %>%  
     select(sample_id, ID, i, #invis 0-2
-           Plot, Call_Label, Check_Score,
+           Plot, Call_label, Check_Score,
            CNV_type, Chr, Size,
            Start, End, #invis 9-10
            CNV_caller, high_impact_hits, highlight_hits, ROI_hits,

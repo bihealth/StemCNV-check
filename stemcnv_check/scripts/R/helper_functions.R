@@ -122,7 +122,7 @@ load_genomeInfo <- function(config) {
 #         CNV_type = character(),
 #         ID = character(),
 #         Check_Score = double(),
-#         Call_Label = character(),
+#         Call_label = character(),
 #         reference_overlap = logical(), # not needed for vcf output
 #         CNV_caller = list(),
 #         # n_premerged_calls = list(),

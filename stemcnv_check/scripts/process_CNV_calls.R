@@ -122,14 +122,18 @@ cnvs <- cnvs %>%
 	annotate_precision.estimates(size_categories, precision_estimates) %>%
     annotate_call.label(config$evaluation_settings$CNV_call_categorisation)
 
-# cnvs.tb <- finalise_tb(cnvs, target_chrom_style) %>%
-# 	rowwise() %>%
-# 	mutate(across(one_of(get_list_cols()), ~paste(., collapse=';')))
-# write_tsv(cnvs.tb, snakemake@output$tsv)
-
 
 # Also directly write out a cnv vcf
-combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vcf_meta, target_style) {
+combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config, vcf_meta, target_style) {
+    
+    tb <- cnv_tb %>%
+        as_tibble() %>%
+        rowwise() %>%
+        mutate(
+            CNV_type = ifelse(CNV_type == 'LOH', 'CNV:LOH', CNV_type),
+            CNV_caller = ifelse(length(CNV_caller) > 1, 'StemCNV-check', unlist(CNV_caller)),
+            FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
+        )
     
     filtersettings <- processing_config$`filter-settings`
     if (filtersettings == '__default__') {
@@ -160,18 +164,6 @@ combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vc
 }
 
 cnvs %>%
-    as_tibble() %>%
-    rowwise() %>%
-    mutate(
-        CNV_caller = ifelse(length(CNV_caller) > 1, 'StemCNV-check', unlist(CNV_caller)),
-        FILTER = case_when(
-           high_probe_density & probe_coverage_gap  ~ 'high_probe_dens;probe_gap', 
-           high_probe_density                       ~ 'high_probe_dens',
-           probe_coverage_gap                       ~ 'probe_gap',
-           TRUE                                     ~ 'PASS'
-        )
-        #across(one_of(get_list_cols()), ~paste(., collapse=';'))
-    ) %>%
     combined_calls_to_vcf(
         snakemake@output$vcf,
         get_sample_info(sample_id, 'sex', sampletable),

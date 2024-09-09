@@ -38,15 +38,10 @@ ref_cnvs <- tibble(
   CNV_caller = c('StemCNV-check', 'faketool', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB'),
   n_probes = c(15, 20, 15, 25, 5, 5),
   CN = c(3, 4, 3, 1, 1, 1),
-) %>% 
-  # bind_rows(get_expected_final_tb('UCSC')) %>%
-  # dplyr::select(-width, -reference_overlap, -reference_coverage, 
-  #               -reference_caller, -n_genes, -overlapping_genes) %>%
+) %>%
   as_granges()
 
-test_that("Annotate CNVs with ref", {
-  #Note: this test will fail if `sample_cnvs` is converted to a granges object first and then
-  # (changed back &) mutated, because somehow that makes the list columns appear as class 'AsIs'
+test_that("annotate_reference_overlap", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%
@@ -65,7 +60,7 @@ test_that("Annotate CNVs with ref", {
     expect_equal(expected_gr) 
 } )
 
-test_that("Annotate CNVs empty ref", {
+test_that("annotate_reference_overlap, empty ref", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%
@@ -86,7 +81,7 @@ test_that("Annotate CNVs empty ref", {
     expect_equal(expected_gr)        
 } )
 
-test_that("Annotate CNVs with empty input", {
+test_that("annotate_reference_overlap, empty input", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%

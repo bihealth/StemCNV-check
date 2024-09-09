@@ -19,4 +19,4 @@ log_path: logs
 reports:
   StemCNV-check-report:
     file_type: 'html'
-    impact.score.critical: 55
+    check_score.critical: 55

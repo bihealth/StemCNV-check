@@ -7,6 +7,20 @@ library(vcfR)
 source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R')) # for vcfR_to_tibble
 source(test_path('../../stemcnv_check/scripts/R/preprocess_CNV_functions.R'))
 
+# Functions to test
+# - add_snp_probe_counts (only gr, + snp_vcf)
+# - merge_calls (accepts tb or gr), runs add_snp_probe_counts
+# - add_call_prefilters (only gr)
+# - apply_preprocessing (tb or gr, + snp_vcf), runs merge_calls, add_call_prefilters
+# - get_median_LRR (only gr, + snp_vcf)
+
+# minimal_probes.vcf test file:
+# - expected number of probes in calls
+# - 1 call with FILTER set
+# - 1 pos with dupl. position
+# - 2 probes outside calls
+# - Future: add actual LRR values to test vcf writing?
+
 # Example calls:
 # - <1000bp,    will be filtered
 # - <5 probes, will be filtered
@@ -65,35 +79,20 @@ merged_filtered_tb <- merged_tb
 merged_filtered_tb$FILTER <- c('Size', 'Size;min_probes', 'PASS', 'PASS',
                                'Density', 'PASS', 'PASS', 'PASS', 'Density')
 
-# Functions to test
-# - add_snp_probe_counts (only gr, + snp_vcf)
-# - merge_calls (accepts tb or gr), runs add_snp_probe_counts
-# - add_call_prefilters (only gr)
-# - apply_preprocessing (tb or gr, + snp_vcf), runs merge_calls, add_call_prefilters
-# - get_median_LRR (only gr, + snp_vcf)
-
-# minimal_probes.vcf test file:
-# - expected number of probes in calls
-# - 1 call with FILTER set
-# - 1 pos with dupl. position
-# - 2 probes outside calls
-# - Future: add actual LRR values to test vcf writing?
-
-# Note: tests won't catch issues with mismatched CHROM names
-test_that("add snp probe counts", {
+test_that("add_snp_probe_counts", {
     as_granges(cnv_tb_raw) %>%
         add_snp_probe_counts(snp.vcf) %>%
         expect_equal(as_granges(cnv_tb_snps))    
 })
 
 
-test_that("merge & add snp counts calls", {
+test_that("merge_calls", {
     merge.distance <- 500
     merge_calls(cnv_tb_raw, merge.distance, snp.vcf) %>%
         expect_equal(as_granges(merged_tb))
 })
 
-test_that("merge then filter calls", {
+test_that("merge_calls & add_call_prefilters", {
     tool_config <- list(
         filter.minlength = 1000,
         filter.minprobes = 5,
@@ -105,10 +104,6 @@ test_that("merge then filter calls", {
         expect_equal(as_granges(merged_filtered_tb))  
 } )
 
-# Deprecated, (pre)filtering now always happens after merging
-#
-# test_that("filter raw calls", { } )
-# test_that("filter then merge calls", { } )
 
 test_that("test empty calls", {
     tool_config <- list(
@@ -202,7 +197,6 @@ test_that("apply_preprocessing", {
                 tool_config
             )
     )
-   
     
     snp.vcf <- fix_CHROM_format(snp.vcf, 'NCBI')
     as_granges(cnv_tb_raw) %>%
@@ -212,7 +206,6 @@ test_that("apply_preprocessing", {
                 tool_config
             ) %>% 
         expect_equal(expected)
-    
 })
 
 test_that('get_median_LRR', {
