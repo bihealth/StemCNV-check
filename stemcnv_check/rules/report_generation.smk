@@ -15,7 +15,7 @@ def get_extra_snp_input_files(wildcards):
     ids = set(collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full))
     if ref_id:
         ids.add(ref_id)
-        
+
     return expand(
         [
             os.path.join(
@@ -45,7 +45,7 @@ rule make_summary_table:
     output:
         xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
     threads:
-        lambda wildcards: len(get_extra_snp_input_files(wildcards))
+        get_tool_resource("summary_stats", "threads"),
     resources:
         runtime=get_tool_resource("summary_stats", "runtime"),
         mem_mb=get_tool_resource("summary_stats", "memory"),

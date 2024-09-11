@@ -399,7 +399,7 @@ tools:
   __default__:
     threads: 1
     memory: 2000 # "2000MB"
-    runtime: "2h"
+    runtime: "1h"
     cmd-line-params: ""
     partition: 'medium'
   GenCall:
@@ -409,18 +409,18 @@ tools:
     cmd-line-params: "--gender-estimate-call-rate-threshold -0.1"
   gtc2vcf:
     cmd-line-params: ""
-    memory: 10000 # "10000MB"
-    runtime: "4h"
-  VEP:
-    threads: 4
-    memory: 10000 # "8000MB"
-    runtime: "4h"
-  knitr:
-    memory: 30000 # "30000MB"
+    memory: 1000 # "2000MB"
     runtime: "1h"
   CNV.process:
     memory: 4000 # "4000MB"
     runtime: "30m"
   PennCNV:
-    memory: 4000 # "4000MB"
+    memory: 500 # "500MB"
     runtime: "30m"
+  stat_summary:
+    threads: 4
+    memory: 20000 # "2000MB"  
+    runtime: "1h"
+  knitr:
+    memory: 10000 # "10000MB"
+    runtime: "1h"
