@@ -1,7 +1,5 @@
-# Redirect all output to snakemake logging
-log <- file(snakemake@log[['err']], 'wt')
-sink(log, append = T)
-sink(log, append = T, type = 'message')
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(plyranges)
 library(GenomicRanges)
@@ -136,7 +134,7 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
         )
     
     filtersettings <- processing_config$`filter-settings`
-    if (filtersettings == '__default__') {
+    if (filtersettings == '_default_') {
         filtersettings <- config$settings$`default-filter-settings`
     }    
 
@@ -145,7 +143,7 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
         static_cnv_vcf_header(processing_config, extra_annotation = TRUE),
         '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
         #FIXME (future): maybe also keep the PennCNV & CBS lines? (doesn't seem to be 100% standard though)
-        paste(
+        str_glue(
             '##StemCNV-check process_CNV_calls',
             'tool.overlap.greatest.call.min.perc={processing_config$tool.overlap.greatest.call.min.perc}',
             'tool.overlap.min.cov.sum.perc={processing_config$tool.overlap.min.cov.sum.perc}'

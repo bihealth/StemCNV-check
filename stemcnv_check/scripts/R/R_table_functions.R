@@ -1,36 +1,67 @@
 
 vector_to_js <- function(v) {
-  if (is.null(names(v))) {
-    return(paste0("['", paste(v, collapse = "','"), "']"))
-  } else {
-    return(paste0('{', paste0(paste0("'", names(v), "': '", v, "'"), collapse = ', '), '}'))
-  }
+    if (is.null(names(v))) {
+        return(paste0("['", paste(v, collapse = "','"), "']"))
+    } else {
+        return(paste0('{', paste0(paste0("'", names(v), "': '", v, "'"), collapse = ', '), '}'))
+    }
 }
 
 format_column_names <- function(n) {
-  str_replace_all(n, '_', ' ') %>%
-    str_to_title() %>%
-    str_replace('Cnv', 'CNV') %>%
-    str_replace('Loh', 'LOH') %>%
-    str_replace('Snp', 'SNP') %>% 
-    str_replace('Lrr', 'LRR') %>%
-    str_replace('Roi', 'ROI') %>%
-    str_replace('Id', 'ID')
+    str_replace_all(n, '_', ' ') %>%
+        str_to_title() %>%
+        str_replace('Cnv', 'CNV') %>%
+        str_replace('Loh', 'LOH') %>%
+        str_replace('Snp', 'SNP') %>% 
+        str_replace('Lrr', 'LRR') %>%
+        str_replace('Roi', 'ROI') %>%
+        str_replace('Id', 'ID')
 }
 
-simple_table_output <- function(tb, caption=NULL) {
-  if (params$out_format == 'html') {
-    return(datatable(tb, caption = caption,
-                     options = list(dom = 't', pageLength = nrow(tb)), rownames = FALSE))
-  } else {
-    return(kable(tb, caption = caption))
-  }
+simple_table_output <- function(tb, out_format='html', caption=NULL) {
+    if (out_format == 'html') {
+        return(
+            datatable(
+                tb,
+                caption = caption,
+                options = list(dom = 't', pageLength = nrow(tb)),
+                rownames = FALSE
+            )
+        )
+    } else {
+        return(kable(tb, caption = caption))
+    }
 }
 
-summary_table <- function(Combined.metrics, Combined.colors, sample_headers) {
-  if (params$out_format == 'html') {
+summary_table <- function(summary_stat_table, sample_headers, config) {
+    
+    Combined.metrics <- summary_stat_table %>%
+        select(-ends_with('eval')) %>%
+        filter(Description != 'sample_id') %>%
+        mutate(Description = format_column_names(Description)) %>%
+        set_names(c(' ', sample_headers))
+    
+    green_color <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
+    Combined.colors <- summary_stat_table %>%
+        filter(Description != 'sample_id') %>%
+        select(ends_with('eval')) %>%
+        mutate(
+            across(
+                everything(),
+                ~ case_when(
+                    . == 'critical' ~ 'red',
+                    . == 'warning' ~ 'orange',
+                    . == 'unusual' ~ 'yellow',
+                    . == 'OK' ~ green_color,
+                    TRUE ~ 'white'
+                )
+            )
+        ) %>%
+        set_names(sample_headers)
+        
+    if (params$out_format == 'html') {
 
-    summary_row_help <- c(
+        summary_row_help <- c(
             "Call Rate" = 'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be determined.\\nLow values are strong indicator of sample quality issues that also impact make any further analysis including CNV calling.',
             "Computed Gender" = 'The Illumina computed gender (sex) based on X and Y chromosome probes.\\nMismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.',
             "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
@@ -38,44 +69,54 @@ summary_table <- function(Combined.metrics, Combined.colors, sample_headers) {
             "Loss Gain Log2ratio" = 'The log2 transformed ratio of loss and gain CNV calls.\\nDeviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
             "Total Calls CNV" = 'The total number of CNV (gain/loss) calls.',
             "Total Calls LOH" = 'The total number of LOH calls.'
-    )
-    #FIXME (future): add actual tresholds into the help text
-    if (!str_detect(not_enabled_label, 'reportable')) {
-      summary_row_help <- c(summary_row_help,
-             "Reportable Calls CNV" = 'The number of CNV calls with a Check_Score above the reportable threshold.',
-             "Reportable Calls LOH" = 'The number of LOH calls with a Check_Score above the reportable threshold.'
-      )
-    }
-    if (!str_detect(not_enabled_label, 'critical')) {
-      summary_row_help <- c(summary_row_help,
-             "Critical Calls CNV" = 'The number of CNV calls with a Check_Score above the critical threshold.',
-             "Critical Calls LOH" = 'The number of LOH calls with a Check_Score above the critical threshold.'
-      )
-    }
-    datatable(Combined.metrics,
-              options = list(
+        )
+        #FIXME (future): add actual tresholds into the help text
+        if ("Reportable Calls CNV" %in% Combined.metrics$` `) {
+            summary_row_help <- c(summary_row_help,
+                "Reportable Calls CNV" = 'The number of CNV calls with a Check_Score above the reportable threshold.',
+                "Reportable Calls LOH" = 'The number of LOH calls with a Check_Score above the reportable threshold.'
+            )
+        }
+        if ("Critical Calls CNV" %in% Combined.metrics$` `) {
+            summary_row_help <- c(summary_row_help,
+                "Critical Calls CNV" = 'The number of CNV calls with a Check_Score above the critical threshold.',
+                "Critical Calls LOH" = 'The number of LOH calls with a Check_Score above the critical threshold.'
+            )
+        }
+        datatable(Combined.metrics,
+            options = list(
                 dom = 't',
                 pageLength = nrow(Combined.metrics),
                 rowCallback = JS(
-                  "function(row, data, displayNum, displayIndex, dataIndex) {",
+                    "function(row, data, displayNum, displayIndex, dataIndex) {",
                     "let help_text = ", vector_to_js(summary_row_help), ";",
                     #"console.log('hover-test: ' + help_text[data[0]]);",
                     "$('td', row).attr('title', help_text[data[0]]);",
-                  "}")
-              ),
-              rownames = FALSE) %>%
-        formatStyle(2, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])), textAlign = 'center') %>%
+                    "}"
+                )
+            ),
+            rownames = FALSE
+        ) %>%
+        formatStyle(
+            2, 
+            backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])),
+            textAlign = 'center'
+        ) %>%
         # DT can take specification of non-existing columns - just need a workaround for the sample_header call
-        formatStyle(3, backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), textAlign = 'center')
-  } else {
-
-    tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
-      column_spec(2, background = unlist(Combined.colors[, sample_headers[[1]]]))
-    if (!is.na(ref_id)) {
-       tbout <- column_spec(tbout, 3, background = unlist(Combined.colors[, sample_headers[[2]]]))
+        formatStyle(
+            3,
+            backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), 
+            textAlign = 'center'
+        )
+    } else {
+    
+        tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
+            column_spec(2, background = unlist(Combined.colors[, sample_headers[[1]]]))
+        if (!is.na(ref_id)) {
+           tbout <- column_spec(tbout, 3, background = unlist(Combined.colors[, sample_headers[[2]]]))
+        }
+        tbout
     }
-    tbout
-  }
 
 
 }
@@ -144,23 +185,25 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
               # pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
              ),
            Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-           high_impact_hits = map2_chr(high_impact_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
-           highlight_hits = map2_chr(highlight_hits, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
+           HighImpact = map2_chr(HighImpact, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
+           Highlight = map2_chr(Highlight, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
     ) %>%
     dplyr::rename(copynumber = CN) %>%  
     select(sample_id, ID, i, #invis 0-2
            Plot, Call_label, Check_Score,
-           CNV_type, Chr, Size,
-           Start, End, #invis 9-10
-           CNV_caller, high_impact_hits, highlight_hits, ROI_hits,
+           CNV_type, chrom, Size,
+           start, end, #invis 9-10
+           CNV_caller, HighImpact, Highlight, ROI_hits,
            Precision_Estimate, probe_coverage_gap, high_probe_density,
            # invis: 18++
            copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
            caller_merging_coverage,
-           percent_gap_coverage ) 
+           Gap_percent
+    ) 
 
   if (params$out_format == 'html') {
-
+      
+    #TODO adjust plot hovertext to match settings  
     column_help_text <- c(
             'Sample_ID from the input "sample_table"',
             'Internal ID for the CNV call',
@@ -216,12 +259,12 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             )
           ) %>%
       formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
-      formatRound(c('Check_Score', 'Percent Gap Coverage'), digits = 2)
+      formatRound(c('Check Score', 'Gap Percent'), digits = 2)
     return(dt)
   } else {
     tb <- tb %>% select(CNV_type, Check_Score,
-                        Chr, Start, End, Size, CNV_caller,
-                        high_impact_hits, highlight_hits,
+                        chrom, start, end, Size, CNV_caller,
+                        HighImpact, Highlight,
                         Precision_Estimate, probe_coverage_gap, high_probe_density
     ) %>% rename_with(format_column_names)
     return(kable(tb, caption = caption))
@@ -259,7 +302,7 @@ gene_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, cap
               ),
     ) %>%
     arrange(high_impact, highlight, desc(direct_hit), start) %>%
-    select(gene_name, gene_id, seqnames, start, end, high_impact, highlight, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
+    select(gene_name, gene_id, seqnames, start, end, strand, high_impact, highlight, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
   if (params$out_format == 'html') {
     colors1 <- ifelse(tb$high_impact == 'hit', 'red' , 'white')
     colors2 <- ifelse(tb$highlight == 'hit', 'orange', 'white')
@@ -268,7 +311,7 @@ gene_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, cap
                                     extensions = c('Buttons'),
                                     buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
                                     columnDefs = list(list(
-                                      targets = 1:6, visible = FALSE
+                                      targets = 1:7, visible = FALSE
                                     ))
                      )) %>%
         formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'

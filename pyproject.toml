@@ -32,9 +32,10 @@ dependencies = [
     # Nicer logging
     "loguru ~=0.7.2",
     # native excel & tsv support
-    # "pandas ~=2.2",
-    # Config validation
-    "pydantic ~=2.8"   
+    "pandas ~=2.2",
+    # Config validation & comparison
+    "pydantic ~=2.8"  , 
+    "deepdiff ~=8.0"
 ]
 
 [project.urls]

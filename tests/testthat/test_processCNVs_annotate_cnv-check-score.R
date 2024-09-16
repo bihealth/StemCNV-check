@@ -45,7 +45,7 @@ base_tb <- tibble(
     high_impact_hits = c(NA, NA, 'dummyC', NA, '1p36,chr1:40000-50000', NA, NA),
     highlight_hits = c(NA, 'DDX11L1', NA, NA, NA, NA, 'DDX11L1,dummyB'),
     ROI_hits = c('fake-ROI', NA, NA, 'dummyC', NA, NA, NA),    
-    percent_gap_coverage = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
+    Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
     probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
     high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE)
 )
@@ -199,7 +199,19 @@ test_that("Annotate call label", {
         mutate(
             Call_label = c('Reference genotype', 'Reference genotype', 'Reportable', 'Critical', 'Reportable', NA, 'Reference genotype', NA)
         ) 
-        
+    expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
     
+    # No reportable defined, only 'downgraded' critical becomes reportable
+    call_cat_config <- list(
+        check_score.critical = 55,
+        filters.exclude.critical = c('probe_gap'),
+        check_score.reportable = NULL,
+        filters.exclude.reportable = c()
+    )  
+    
+    expected_tb <- input_tb %>%
+        mutate(
+            Call_label = c('Reference genotype', 'Reference genotype', 'Reportable', 'Critical', NA, NA, 'Reference genotype', NA)
+        ) 
     expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
 })

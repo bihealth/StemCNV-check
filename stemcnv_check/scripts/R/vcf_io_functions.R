@@ -38,12 +38,12 @@ parse_cnv_vcf <- function(vcf,
     if (typeof(vcf) == 'character') {
         vcf <- read.vcfR(vcf, verbose = F)
     }
-    # VCF POS should be 1-based,
-    # Granges are also 1-based
-    # AND are (fully) open [= start & end are included]
+    # VCF POS are 1-based, *but* for SV/CNV entries describe the base _before_ the variant
+    # Granges are also 1-based and are (fully) open [= start & end should be included]
     vcf <- vcf %>%
         vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
         mutate(
+            POS = POS + 1,
             CNV_type = str_remove(ALT, '<') %>% str_remove('>') %>%
                 str_replace('DUP', 'gain') %>%
                 str_replace('DEL', 'loss') %>%
@@ -58,7 +58,7 @@ parse_cnv_vcf <- function(vcf,
         rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
         dplyr::rename(probe_density_Mb = probe_dens) %>%
         select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
-        as_granges(seqnames = CHROM, start = POS + 1, end = END, width = SVLEN)
+        as_granges(seqnames = CHROM, start = POS, end = END, width = SVLEN)
     if (apply_filter) {
         vcf <- vcf %>% filter(is.na(FILTER))
     }
@@ -86,7 +86,7 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on refrence overlap, Check-Score and Filters (Critical|Reportable|Reference genotype)">',
         '##INFO=<ID=HighImpact,Number=1,Type=String,Description="Overlapping high impact sites (StemCNV-check defined)">',
         '##INFO=<ID=Highlight,Number=1,Type=String,Description="Overlapping highlight sites (COSMIC genes)">',
-        '##INFO=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
+        '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
         '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
         '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes, sepearted by | character">'
     )
@@ -186,8 +186,8 @@ get_fix_section <- function(tb) {
     extra_info_str <- paste(
         base_info_str,
         'Check_Score={Check_Score};Precision_Estimate={Precision_Estimate};Call_label={Call_label}',
-        'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI={ROI_hits}',
-        'Gap_percent={percent_gap_coverage};Genes={overlapping_genes}',
+        'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI_hits={ROI_hits}',
+        'Gap_percent={Gap_percent};Genes={overlapping_genes}',
         sep=';'
     )
     # Technically should check for all columns, but they come in a bundle
@@ -207,7 +207,7 @@ get_fix_section <- function(tb) {
             across(
                 any_of(c("Check_Score", "Precision_Estimate", "Call_label",
                          "high_impact_hits", "highlight_hits",
-                         "ROI_hits", "percent_gap_coverage", "overlapping_genes")),
+                         "ROI_hits", "Gap_percent", "overlapping_genes")),
                 ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),
                        
@@ -226,6 +226,7 @@ get_fix_section <- function(tb) {
         ) %>%
         dplyr::rename(CHROM = seqnames) %>%
         select(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO) %>%
+        arrange(CHROM, POS) %>%
         as.matrix()
 }
 
@@ -248,6 +249,7 @@ get_gt_section <- function(tb, sample_sex){
     }
 
     tb %>%
+        arrange(seqnames, start) %>%
         rename_with(~str_replace(., 'reference_coverage', 'REFCOV')) %>%
         mutate(
             across(any_of('REFCOV'), ~ ifelse(is.na(.), '.', round(., 3) %>% as.character())),

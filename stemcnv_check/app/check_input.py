@@ -139,7 +139,7 @@ def check_config(config_file, sample_table_file, required_only=False):
     # Other settings: reports/*/filetype
     if 'reports' in config:
         for rep in config['reports']:
-            if rep == '__default__':
+            if rep == '_default_':
                 continue
             try:
                 if not config['reports'][rep]['file_type']:
@@ -166,16 +166,17 @@ def check_config(config_file, sample_table_file, required_only=False):
         'list': lambda x, v: type(x) == list,
         'str': lambda x, v: type(x) == str,
         'int': lambda x, v: type(parse_scientific(x)) == int,
+        'noneorint': lambda x, v: x is None or type(parse_scientific(x)) == int,
         'float': lambda x, v: type(parse_scientific(x)) == float or type(parse_scientific(x)) == int,
         'bool': lambda x, v: type(x) == bool,
         'len': lambda x, v: len(x) == v,
         'le': lambda x, v: parse_scientific(x) <= v,
         'ge': lambda x, v: parse_scientific(x) >= v,
-        'filterset': lambda x, v: x in defined_filtersets or x == '__default__',
+        'filterset': lambda x, v: x in defined_filtersets or x == '_default_',
         'filtersetnodefault': lambda x, v: x in defined_filtersets,
-        'filtersetplusnone': lambda x, v: x in defined_filtersets  or x == '__default__' or x == 'none',
+        'filtersetplusnone': lambda x, v: x in defined_filtersets  or x == '_default_' or x == 'none',
         'sections': lambda x, v: x in allowed_values['allowed_sections'],
-        'sectionsall': lambda x, v: x == '__all__' or all(i in allowed_values['allowed_sections'] for i in x),
+        'sectionsall': lambda x, v: x == '__all__' or (len(x) > 1 and all(i in allowed_values['allowed_sections'] for i in x)),
         'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
     }
     check_functions.update(def_functions)
@@ -191,7 +192,7 @@ def check_config(config_file, sample_table_file, required_only=False):
 
     # Check all config entries
     errors = defaultdict(list)
-    allowed_plotsections = allowed_values['allowed_plotsections'] + ['__default__']
+    allowed_plotsections = allowed_values['allowed_plotsections'] + ['_default_']
     for flatkey, config_value in flatten(config).items():
         # Need to change the key for variable config sections
         flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
@@ -220,20 +221,20 @@ def check_config(config_file, sample_table_file, required_only=False):
                     config_value = tuple(config_value)
                 errors[(flatkey, config_value)].append((func_key, func_value))
 
-    #help_strings = defaultdict(lambda: lambda v: "only these entries: " + v[1:-1].replace('|', ', '))
     help_strings = defaultdict(lambda: lambda v: "matching this regex: " + v)
     help_strings.update({
         'list': lambda v: 'in a list',
         'str': lambda v: 'characters (add quotes for numbers or similar)',
         'int': lambda v: 'integers (whole numbers)',
+        'noneorint': lambda v: 'integers (whole numbers) or null for an emtpy value',
         'float': lambda v: 'numbers',
         'bool': lambda v: 'booleans (True/False)',
         'len': lambda v: f"exactly {v} entries",
         'le': lambda v: f"values <={v}",
         'ge': lambda v: f"values >={v}",
-        'filterset': lambda v: "the defined filtersets ({}) or __default__".format(', '.join(defined_filtersets)),
-        'filtersetnodefault': lambda v: "only the defined filtersets ({}) but not '__default__'".format(', '.join(defined_filtersets)),
-        'filtersetplusnone': lambda v: "the defined filtersets ({}), '__default__' or 'none'".format(', '.join(defined_filtersets)),
+        'filterset': lambda v: "the defined filtersets ({}) or _default_".format(', '.join(defined_filtersets)),
+        'filtersetnodefault': lambda v: "only the defined filtersets ({}) but not '_default_'".format(', '.join(defined_filtersets)),
+        'filtersetplusnone': lambda v: "the defined filtersets ({}), '_default_' or 'none'".format(', '.join(defined_filtersets)),
         'sections': lambda v: "the defined report sections: " + ', '.join(allowed_values['allowed_sections']),
         'sectionsall': lambda v: "either '__all__' or a list with of defined report sections: " + ', '.join(allowed_values['allowed_sections']),
         'insamplesheet': lambda v: "column names of the samplesheet: " + ', '.join(sample_data[0].keys())
@@ -243,5 +244,5 @@ def check_config(config_file, sample_table_file, required_only=False):
             warn_str = f"The config entry '{config_value}' for '{flatkey}' is invalid. Value(s) need to be "
             warn_str += ', and '.join([help_strings[func](val) for func, val in func_list]) + '.'
             logging.error(warn_str)
-        raise ConfigValueError('The config contains values that are not allowed')
+        raise ConfigValueError('The config contains values that are not allowed: ' + warn_str)
 

@@ -35,7 +35,7 @@ sample_cnvs <- tibble(
 # - multiple gaps in one CNV  -> above th, true
 # - CNV has single gap,    but below min.perc.gap_area
 # - CNV has multiple gaps, but below min.perc.gap_area
-# - CNV has gaps, but ! (gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probes)
+# - CNV has gaps, but ! (gap_slope * Gap_percent + gap_intercept) <= log2(n_uniq_probes)
 
 # - gap overlaps CNV border -> error
 # - gap fully conatins CNV  -> error
@@ -48,7 +48,7 @@ test_that("Annotate CNVs with gaps", {
   
   expexted_gr <- sample_cnvs %>%
     mutate(
-      percent_gap_coverage = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
+      Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
       probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
       FILTER = c('Size', 'Probe_dens;probe_gap', 'probe_gap', 'test-dummy', NA_character_, NA_character_, NA_character_)
     )

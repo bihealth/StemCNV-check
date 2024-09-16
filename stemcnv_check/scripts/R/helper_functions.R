@@ -68,16 +68,16 @@ get_target_chrom_style <- function(config, snp_vcf_gr) {
 # }
 
 ## GTF data
-get_static_path <- function(path, project_base=''){
+fix_rel_filepath <- function(path, config){
 	#Rmd might change cwd, so relative paths can break if not read/forwarded by snakemake
 	if(file.exists(path)) return(path)
-	else if (file.exists(file.path(project_base, path))) return(file.path(project_base, path))
+	else if (file.exists(file.path(config$basedir, path))) return(file.path(config$basedir, path))
 	else if (file.exists(normalizePath(path))) return(normalizePath(path))
 	else stop(paste('Could not find file path:', path))
 }
 
 load_gtf_data <- function(config) {
-	gtf_file <- get_static_path(config$static_data$genome_gtf_file, config$basedir)
+	gtf_file <- fix_rel_filepath(config$static_data$genome_gtf_file, config)
 	exclude_regexes <- config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
 	gene_type_whitelist <- config$settings$CNV_processing$gene_overlap$include_only_these_gene_types
@@ -99,7 +99,7 @@ load_gtf_data <- function(config) {
 load_genomeInfo <- function(config) {
 
 	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
-	gr_info <- read_tsv(get_static_path(config$static_data$genomeInfo_file, config$basedir),
+	gr_info <- read_tsv(fix_rel_filepath(config$static_data$genomeInfo_file, config),
 	                    show_col_types = FALSE) %>%
 		filter(!is.na(band_start)) %>%
 		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
@@ -140,7 +140,7 @@ load_genomeInfo <- function(config) {
 #         high_impact_hits = character(),
 #         highlight_hits = character(),
 #         ROI_hits = character(),
-#         percent_gap_coverage = double(),
+#         Gap_percent = double(),
 #         probe_coverage_gap = logical(),
 #         high_probe_density = logical(),
 #         n_genes = integer(),

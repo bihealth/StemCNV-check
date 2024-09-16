@@ -93,7 +93,7 @@ def get_target_files(target=TARGET):
             report_filetype=[
                 rep + "." + config["reports"][rep]["file_type"]
                 for rep in config["reports"].keys()
-                if rep != "__default__"
+                if rep != "_default_"
             ],
         )
     # Stat summary tables
@@ -173,19 +173,6 @@ rule run_CBS:
         "../scripts/run_CBS_DNAcopy.R"
 
 
-# shell:
-#     "Rscript {SNAKEDIR}/scripts/run_CBS_DNAcopy.R -s {params.SDundo} {input.tsv} {output.tsv} {CONFIGFILE} {SAMPLETABLE} > {log.out} 2> {log.err}"
-
-
-def get_processed_ref_data(wildcards):
-    sample_id, ref_id = get_ref_id(wildcards)
-    return (
-        os.path.join(DATAPATH, f"{ref_id}", f"{ref_id}.combined-cnv-calls.vcf.gz")
-        if ref_id
-        else []
-    )
-
-
 rule run_process_CNV_calls:
     input:
         cnv_calls=expand(
@@ -194,7 +181,7 @@ rule run_process_CNV_calls:
             ),
             caller=config["settings"]["CNV.calling.tools"],
         ),
-        ref_data=get_processed_ref_data,
+        ref_data=get_ref_input_function('combined-cnv-calls.vcf.gz'),
         snp_vcf=cnv_vcf_input_function("settings:CNV_processing:call_processing"),
     output:
         # tsv=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),

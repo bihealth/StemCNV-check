@@ -26,7 +26,7 @@ annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.r
 		reduce_ranges(gap_size_sum = sum(gap_size)) %>%
 		mutate(perc_gap = ifelse(is.na(gap_size_sum), 0, gap_size_sum  / width))
 	
-	gr$percent_gap_coverage <- gap_ovs$perc_gap
+	gr$Gap_percent <- gap_ovs$perc_gap
 
 	gap_slope <- gap_area.uniq_probes.rel[[1]]
 	gap_intercept <- gap_area.uniq_probes.rel[[2]]
@@ -34,10 +34,10 @@ annotate_gaps <- function(gr, gapfile, min.perc.gap_area, gap_area.uniq_probes.r
 	gr <- gr %>%
 		mutate(
             probe_coverage_gap = ifelse(
-                is.na(percent_gap_coverage),
+                is.na(Gap_percent),
                 FALSE,
-                percent_gap_coverage > min.perc.gap_area & 
-                    (gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probes)
+                Gap_percent > min.perc.gap_area & 
+                    (gap_slope * Gap_percent + gap_intercept) <= log2(n_uniq_probes)
             ),
             FILTER = map2_chr(FILTER, probe_coverage_gap, \(f, gaps) {
                 gaps[is.na(gaps)] <- FALSE

@@ -2,6 +2,7 @@ library(testthat)
 
 library(tidyverse)
 library(plyranges)
+library(GenomeInfoDb)
 library(vcfR)
 
 source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
@@ -61,7 +62,8 @@ test_that('parse_snp_vcf', {
 })
 
 cnv_tb <- tibble(
-  seqnames  = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrX', 'chrX'),
+  seqnames  = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrX', 'chrX') %>%
+    factor(levels = genomeStyles('Homo_sapiens')$UCSC),
   start = c(100, 1000, 3000, 6000, 1.0e8, 7400,  9000, 12e4, 1e6) %>% as.integer(),
   end   = c(200, 1600, 5400, 7000, 1.1e8, 8400, 10000, 15e4, 3e6+400)-1 %>% as.integer(),
   width = c(100, 600, 2400, 1000, 1e7, 1000, 1000, 3e4, 2e6+400),
@@ -95,7 +97,7 @@ cnv_tb_annotated <- cnv_tb %>%
         high_impact_hits = c(NA, NA, NA, NA, NA, 'gene1,gene2', NA, NA, NA),
         highlight_hits = c(NA, NA, 'gene3', NA, NA, NA, NA, NA, NA),
         ROI_hits = c(NA, NA, NA, NA, NA, NA, NA, NA, 'ROI1'),
-        percent_gap_coverage = c(0, 0, 0, runif(6, 0, 1)),
+        Gap_percent = c(0, 0, 0, runif(6, 0, 1)),
         # not actually used in the function
         # high_probe_density = c(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE),
         overlapping_genes = c('abc,er123,xyz', NA, 'gene3', NA, NA, 'gene1,gene2', NA, NA, 'gene5')
@@ -123,7 +125,7 @@ test_that('get_fix_section', {
             str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
             str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)}')            
         ),
-    )
+    ) %>% arrange(CHROM, POS)
     
     get_fix_section(cnv_tb) %>%
         expect_equal(as.matrix(expected_fix))
@@ -141,8 +143,8 @@ test_that('get_fix_section', {
                 str_glue('Call_label={cnv_tb_annotated_out$Call_label};'),
                 str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
                 str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),
-                str_glue('ROI={cnv_tb_annotated_out$ROI_hits};'),
-                str_glue('Gap_percent={cnv_tb_annotated_out$percent_gap_coverage};'),
+                str_glue('ROI_hits={cnv_tb_annotated_out$ROI_hits};'),
+                str_glue('Gap_percent={cnv_tb_annotated_out$Gap_percent};'),
                 str_glue('Genes={cnv_tb_annotated_out$overlapping_genes}')
             )
         )
@@ -173,12 +175,13 @@ test_that('get_gt_section', {
 
     # Test with changes for male X & Y
     expected_gt_m <- expected_gt
-    expected_gt_m[17] <- "1/1:0:caller=Test;n_initial_calls=3;initial_call_details=120000_129999_CN1,130000_139999_CN0|140000_149999_CN1:-1.31"
-    expected_gt_m[18] <- "./.:3:caller=Test;n_initial_calls=2;initial_call_details=1000000_1999999_CN1|2000400_3000399_CN1:-0.895"
+    expected_gt_m[17] <- "./.:3:caller=Test;n_initial_calls=3;initial_call_details=120000_129999_CN1,130000_139999_CN0|140000_149999_CN1:-1.31"
+    expected_gt_m[18] <- "1/1:0:caller=Test;n_initial_calls=2;initial_call_details=1000000_1999999_CN1|2000400_3000399_CN1:-0.895"
     cnv_tb %>%
         mutate(
-            seqnames = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrY', 'chrX'),
-            CN = c(3, 4, 3, 3, 3, 2, 0, 0, 3)
+            seqnames = c('chr1', 'chr1', 'chr1', 'chr3', 'chr5', 'chr17', 'chr18', 'chrX', 'chrY') %>%
+    factor(levels = genomeStyles('Homo_sapiens')$UCSC),
+            CN = c(3, 4, 3, 3, 3, 2, 0, 3, 0)
         ) %>%
         get_gt_section('m') %>%
         expect_equal(expected_gt_m)

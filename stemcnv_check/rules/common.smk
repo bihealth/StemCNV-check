@@ -69,16 +69,16 @@ def get_tool_filter_settings(tool):
         out = config_extract(
             (tool.split(":")[2], "filter-settings"),
             report_settings,
-            config["reports"]["__default__"],
+            config["reports"]["_default_"],
         )
     elif tool.count(":") == 2 and tool.split(":")[1] == "CNV_processing":
         out = config["settings"]["CNV_processing"]["call_processing"]["filter-settings"]
     elif tool == "evaluation_settings:SNP_clustering:filter-settings":
         out = config["evaluation_settings"]["SNP_clustering"]["filter-settings"]
-        out = out if out != "none" else '__default__'
+        out = out if out != "none" else '_default_'
     else:
         out = config["settings"][tool]["filter-settings"]
-    if out == "__default__":
+    if out == "_default_":
         out = config["settings"]["default-filter-set"]
     return out
 
@@ -87,7 +87,7 @@ def get_tool_resource(tool, resource):
     if not resource in ("threads", "memory", "runtime", "partition", "cmd-line-params"):
         raise KeyError(f"This resource can not be defined: {resource}")
     if not tool in config["tools"] or not resource in config["tools"][tool]:
-        return config["tools"]["__default__"][resource]
+        return config["tools"]["_default_"][resource]
     else:
         return config["tools"][tool][resource]
 
@@ -120,3 +120,17 @@ def cnv_vcf_input_function(tool):
         # f"{wildcards.sample_id}.processed-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf",
         f"{wildcards.sample_id}.annotated-SNP-data.{get_tool_filter_settings(tool)}-filter.vcf.gz"
     )
+
+def get_ref_input_function(input_file_type):
+    # Check if file_pattern is already a (input) function
+    if callable(input_file_type):
+        get_file_pattern = input_file_type
+    else:
+        get_file_pattern = lambda wildcards: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{file_pattern}")
+    def input_function(wildcards):
+        sample_id, ref_id = get_ref_id(wildcards)
+        if ref_id:
+            return get_file_pattern(wildcards)
+        else:
+            return []
+    return  input_function

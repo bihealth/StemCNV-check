@@ -32,13 +32,13 @@ global_settings:
 
 evaluation_settings:
   CNV_call_categorisation:
-    check_score.critical: '[0-9.]+|NA'
+    check_score.critical: noneorint
     filters.exclude.critical: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
-    check_score.reportable: '[0-9.]+|NA' 
+    check_score.reportable: noneorint
     filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
   
   SNP_clustering:
-    filter-settings: filtersetplusnone # "__default__", Filterset name, or "none"
+    filter-settings: filtersetplusnone # "_default_", Filterset name, or "none"
     extra_samples: list__insamplesheet
 
   summary_stat_warning_levels:   
@@ -188,13 +188,11 @@ reports:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
-    check_score.critical: '[0-9.]+|NA'
-    check_score.reportable: '[0-9.]+|NA'
     sample.info.extra.cols: list__insamplesheet
 
     call.data.and.plots:
-      filter-settings: filterset
       __plotsection:
+        exclude_filter: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
         min_number_plots: int_ge0
         always_include: list__str__(Critical|Reportable)
         include.plot: bool
@@ -203,24 +201,7 @@ reports:
         plot.flanking.region.relative: float_ge0
         plot.region.minsize: float_ge10000
 
-    SampleQCwarnings:
-      warning_level2_red: list__str
-      call_rate: list_len2__float__le1
-      loss_gain_log2ratio: list_len2__int
-      SNP_distance_to_reference: list_len2__int
-      total_calls_CNV: list_len2__int
-      total_calls_LOH: list_len2__int
-      reportable_calls_CNV: list_len2__int
-      reportable_calls_LOH: list_len2__int
-      critical_calls_CNV: list_len2__int
-      critical_calls_LOH: list_len2__int
-      # high_impact_calls: list_len2__int
-      # highlight_calls: list_len2__int
-      # overlapping_genes: []
     SNP_comparison:
-      filter-settings: filterset
-      ignore_filter: bool
-      extra_samples: list__insamplesheet
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet
 

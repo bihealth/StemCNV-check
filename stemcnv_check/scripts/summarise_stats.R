@@ -1,7 +1,5 @@
-# Redirect all output to snakemake logging
-log <- file(snakemake@log[['err']], 'wt')
-sink(log, append = T)
-sink(log, append = T, type = 'message')
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(tidyverse)
 library(furrr)
@@ -44,7 +42,7 @@ apply_greq_th <- function(datacol, measure, config){
     case_when(
         is.na(datacol)                 ~ NA_character_,
         datacol >= warning_levels[[2]] ~ get_last_level(measure, config),
-        datacol >= warning_levels[[1]] ~ 'warning',
+        datacol >= warning_levels[[1]] ~ 'unusual',
         TRUE                           ~ 'OK',
     )
 }
@@ -52,11 +50,6 @@ apply_greq_th <- function(datacol, measure, config){
 get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distance_to_reference, sample_CNV_data, config) {
     
     sample_id <- unique(gencall_stats$sample_id)
-    
-    not_used_filter <- c(
-        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.critical == 'NA', 'critical', 'dummy'),
-        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.reportable == 'NA', 'reportable', 'dummy')
-    ) %>% unique %>% paste(collapse = '|')
 
     qc_measure_list <- list(
         gencall_stats %>%
@@ -73,7 +66,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
             sample_id = sample_id,
             SNP_distance_to_reference = SNP_distance_to_reference
         ),
-        get_call_stats(sample_CNV_data, filter_regex = not_used_filter)
+        get_call_stats(sample_CNV_data)
     )
     
     callrate_warnings <- config$evaluation_settings$summary_stat_warning_levels$call_rate
@@ -83,7 +76,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
             qc_measure_list[[1]],
             call_rate = case_when(
                 call_rate < callrate_warnings[[2]]  ~ get_last_level('call_rate', config),
-                call_rate < callrate_warnings[[1]]  ~ 'warning',
+                call_rate < callrate_warnings[[1]]  ~ 'unusual',
                 TRUE ~ 'OK'
             ),
             computed_gender = ifelse(tolower(computed_gender) != sample_sex, get_last_level('computed_gender', config), 'OK')
@@ -108,7 +101,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
 
 }
 
-get_call_stats <- function(gr.or.tb, name_addition = NA, filter_regex = NA) {
+get_call_stats <- function(gr.or.tb, name_addition = NA) {
     
     tb <- gr.or.tb %>%
         as_tibble() %>%
@@ -123,15 +116,10 @@ get_call_stats <- function(gr.or.tb, name_addition = NA, filter_regex = NA) {
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
         summarise(
             total_calls = dplyr::n(),
-            reportable_calls = sum(Call_label == 'Reportable'),
-            critical_calls = sum(Call_label == 'Critical')
+            reportable_calls = sum(Call_label == 'Reportable', na.rm = TRUE),
+            critical_calls = sum(Call_label == 'Critical', na.rm = TRUE)
         ) %>%
-        pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls')) 
-
-    if (!is.na(filter_regex)) {
-        tb <- tb %>%
-            dplyr::select(-matches(filter_regex))
-    }
+        pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls'))
     
     if (!is.na(name_addition)) {
         tb <- tb %>%
@@ -181,7 +169,7 @@ parse_penncnv_logs <- function(penncnv_log_files) {
     }) %>%
         bind_rows() %>%
         pivot_wider(names_from = chr, values_from = value) %>%
-        dplyr::rename(` ` = Name)
+        dplyr::rename(Description = Name)
 }
 
 sample_GT_distances <- function(sample_SNP_gr, extra_snp_files, use_filter=TRUE) {
@@ -231,7 +219,6 @@ collect_summary_stats <- function(
         extra_snp_files, 
         use_filter = config$evaluation_settings$SNP_clustering$`filter-settings` != 'none'
     )
-    # SNP_GT_distances %>% as.matrix() %>% as.data.frame() %>% as.dist()
     
     sample_id <- unique(gencall_stats$sample_id)
     ref_id <- get_sample_info(sample_id, 'ref_id', config$sample_table)
@@ -259,21 +246,13 @@ collect_summary_stats <- function(
                 by = 'Description'
             )
     }
-    
-    not_used_filter <- c(
-        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.critical == 'NA', 'critical', 'dummy'),
-        ifelse(config$evaluation_settings$CNV_call_categorisation$check_score.reportable == 'NA', 'reportable', 'dummy')
-    ) %>% unique %>% paste(collapse = '|')
-    
+        
     tool_stats <- unsplit_merged_CNV_callers(sample_CNV_gr) %>%
         split(.$CNV_caller) %>%
         imap(function (gr, name) {
             tb1 <- gr %>%
                 annotate_call.label(config$evaluation_settings$CNV_call_categorisation) %>%
-                get_call_stats(
-                    # name_addition = name,
-                    filter_regex = not_used_filter
-                )
+                get_call_stats()
             tb2 <- tb1 %>%
                  mutate(across(2:(ncol(tb1)-1), ~apply_greq_th(., cur_column(), config)))
             

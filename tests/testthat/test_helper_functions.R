@@ -11,7 +11,7 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 # - [x] fix_CHROM_format
 # - [x] get_sex_chroms
 # - [x] get_target_chrom_style
-# - [ ] get_static_path         #! hard to test; should only do things if inside the Rmd environment; deprecate?
+# - [ ] fix_rel_filepath         #! hard to test; should only do things if inside the Rmd environment; deprecate?
 # - [x] load_gtf_data
 # - [x] load_genomeInfo
 # - [ ] unsplit_merged_CNV_callers

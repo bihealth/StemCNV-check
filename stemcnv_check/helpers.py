@@ -195,4 +195,3 @@ def get_mehari_db_file(config_entry, cache_path, genome_version):
             'mehari-db',
             f"mehari-data-txs-{genome_version}-ensembl-{mehari_db_version}.bin.zst"
         )
-

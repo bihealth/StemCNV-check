@@ -103,9 +103,9 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 
 annotate_call.label <- function(gr.or.tb, call_cat_config) {
     
-    check_score.critical <- call_cat_config$check_score.critical
+    check_score.critical <- ifelse(is.null(call_cat_config$check_score.critical), NA, call_cat_config$check_score.critical)
     critical_excl <- call_cat_config$filters.exclude.critical 
-    check_score.reportable <- call_cat_config$check_score.reportable
+    check_score.reportable <- ifelse(is.null(call_cat_config$check_score.reportable), NA, call_cat_config$check_score.reportable)
     reportable_excl <- call_cat_config$filters.exclude.reportable 
     
     gr.or.tb %>%
@@ -119,6 +119,8 @@ annotate_call.label <- function(gr.or.tb, call_cat_config) {
                         !is.na(ref_cov)                        ~ 'Reference genotype',
                         check_score >= check_score.critical & 
                             !any(filters %in% critical_excl)   ~ 'Critical',
+                        check_score >= check_score.critical & 
+                            any(filters %in% critical_excl)    ~ 'Reportable',
                         check_score >= check_score.reportable & 
                             !any(filters %in% reportable_excl) ~ 'Reportable',
                         TRUE                         		   ~ NA_character_
