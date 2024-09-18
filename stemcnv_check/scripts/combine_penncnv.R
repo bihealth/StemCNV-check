@@ -1,7 +1,5 @@
-# Redirect all output to snakemake logging
-log <- file(snakemake@log[['err']], 'wt')
-sink(log, append = T)
-sink(log, append = T, type = 'message')
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(tidyverse)
 library(plyranges)
@@ -14,12 +12,12 @@ snakemake@source('R/preprocess_CNV_functions.R')
 
 
 read_PennCNV <- function(filename, sample_id, sample_sex) {
-    tb <- read.table(filename, sep='', header = F, fill=T,
-                         col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')) %>%
+    tb <- read.table(
+        filename, sep='', header = F, fill=T,
+        col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')
+    ) %>%
         separate(Position, c('seqnames', 'start', 'end'), convert=T) %>%
         # Note: start/end from PennCNV is from vcf, so also 1-based; length is start&end inclusive like granges
-        # Note: this will go through granges before goint into vcf
-        # dplyr::rename(sample_id = input, n_snp_probes = numsnp) %>%
         mutate(
             across(c(4,5,8,9,10), ~ str_remove(., '.*=')),
             across(c(4,10), ~as.numeric(.)),
@@ -54,7 +52,7 @@ read_PennCNV <- function(filename, sample_id, sample_sex) {
                 #FIXME (future): technically DUP should ONLY be used for CN=3 (or 2 on male XY)
                 CN > 2                                                 ~ 'DUP',
             ),
-            ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_')
+            ID = paste(CNV_caller, str_remove(CNV_type, 'CNV:'), seqnames, start, end, sep='_')
         ) %>%
         select(seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id)
 }
@@ -86,7 +84,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         as_tibble()       
     
     filtersettings <- tool_config$`filter-settings`
-    if (filtersettings == '__default__') {
+    if (filtersettings == '_default_') {
         filtersettings <- config$settings$`default-filter-settings`
     }    
     enable_LOH_calls <- tool_config$enable_LOH_calls

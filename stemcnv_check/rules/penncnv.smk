@@ -60,7 +60,7 @@ rule run_PennCNV:
         gcmodel=config["static_data"]["penncnv_GCmodel_file"],
     output:
         tsv=temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv")),
-        err=os.path.join(LOGPATH, "PennCNV", "{sample_id}", "{chr}.error.log"),
+        extra=os.path.join(DATAPATH, "{sample_id}", "extra_files", "PennCNV.{chr}.error.log"),
     threads: get_tool_resource("PennCNV", "threads")
     resources:
         runtime=get_tool_resource("PennCNV", "runtime"),
@@ -87,6 +87,15 @@ rule run_PennCNV:
                 DATAPATH,
                 wildcards.sample_id,
                 f"{wildcards.sample_id}.penncnv-{wildcards.chr}.tsv",
+            ),
+            "data",
+        ),
+        extraout=lambda wildcards: fix_container_path(
+            os.path.join(
+                DATAPATH,
+                wildcards.sample_id,
+                "extra_files",
+                f"PennCNV.{wildcards.chr}.error.log",
             ),
             "data",
         ),
@@ -137,7 +146,8 @@ rule run_PennCNV:
     shell:
         "/home/user/PennCNV/detect_cnv.pl -test {params.do_loh} {params.chrom} -confidence "
         "-hmm {params.snakedir}/supplemental-files/hhall_loh.hmm -pfb {params.pfb} -gcmodel {params.gcmodel} "
-        "{params.sexfile} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr}"
+        "{params.sexfile} {params.tsvin} -out {params.tsvout} > {params.logout} 2> {params.logerr} && "
+        "cp {params.logerr} {params.extraout}"
 
 
 def get_penncnv_output(wildcards, files="tsv"):

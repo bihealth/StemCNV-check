@@ -1,71 +1,47 @@
-#! /usr/bin/Rscript
-# Wrapper to knit Rmd report
-suppressMessages(library(argparse))
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
-parser <- ArgumentParser(description="Wrapper to knit Rmd report")
+library(tidyverse)
+library(knitr)
 
-parser$add_argument('sample_id', type = 'character', help='Sample_ID to use')
-parser$add_argument('report_name', type = 'character', help='Which report (defined in config) to run')
-parser$add_argument('configfile', type = 'character', help='Path to config file')
-
-args <- parser$parse_args()
-
-suppressMessages(library(knitr))
-suppressMessages(library(tidyverse))
-suppressMessages(library(yaml))
-
-sample_id   <- args$sample_id
-report_name <- args$report_name
-configfile  <- args$configfile %>% normalizePath
-
-config <- read_yaml(configfile)
+config <- snakemake@config
+report_name <- snakemake@wildcards$report
 
 if (!report_name %in% names(config$reports)) {
-  stop(str_glue('Error: {report_name} ir not a defined report in the config: {configfile}'))
+    stop(str_glue('Error: {report_name} is not a defined report in the config'))
 }
-report_settings <- config$reports[[report_name]]
-filetype    <- report_settings$file_type
 
-basepath    <- config$basedir %>% normalizePath
-snakedir    <- config$snakedir %>% normalizePath
-sampletable <- config$sample_table %>% normalizePath
-datapath    <- config$data_path
+report.template  <- file.path(config$snakedir, "scripts", "report_template.Rmd") %>% normalizePath
+outfile     <- snakemake@output$report
+rmd_workdir <- dirname(outfile) %>% normalizePath
 
-report.template  <- file.path(snakedir, "scripts", "report_template.Rmd") %>% normalizePath
-outfile     <- str_glue("{sample_id}.{report_name}.{filetype}")
-
-version <- readLines(file.path(snakedir, 'version.py')) %>% str_trim() %>%
-  str_remove('.* = ') %>% str_remove_all("\'")
-
-if (fs::is_absolute_path(datapath)) {
-  workdir   <- file.path(datapath, sample_id) %>% normalizePath
-} else {
-  workdir   <- file.path(basepath, datapath, sample_id) %>% normalizePath
-}
-# clear previously generated images
-if (dir.exists(str_glue('{workdir}/{report_name}_images'))) {
-	system(str_glue('rm {workdir}/{report_name}_images/*'))
-}
+# # clear previously generated images
+# if (dir.exists(str_glue('{rmd_workdir}/{report_name}_images'))) {
+# 	system(str_glue('rm {rmd_workdir}/{report_name}_images/*'))
+# }
 
 # Run Rmd - all files should be stored in the final output folder (= workdir)
 # Note: the intermediates_dir/knit_root_dir settings only apply do (r)md, but *not* to latex for pdf generation (https://github.com/rstudio/rmarkdown/issues/1975)
 # In order to have latex output everything (incl error logs) in the 'output_dir' the input template would need to (temporarily) copied over
-setwd(workdir)
+# setwd(rmd_workdir)
 rmarkdown::render(
-  input = report.template,
-  output_dir = workdir,
-  intermediates_dir = workdir,
-  knit_root_dir = workdir,
-  output_format = paste0(filetype, '_document'),
-  output_file = outfile,
-  output_options = list(self_contained = TRUE),
-  params = list(base_path = basepath,
-                sample_id = sample_id,
-                sampletable = sampletable,
-                report_name = report_name,
-                out_format = filetype,
-                configfile = configfile,
-                workdir = workdir,
-                version = version
-                )
+    input = report.template,
+    output_dir = rmd_workdir,
+    intermediates_dir = rmd_workdir,
+    knit_root_dir = rmd_workdir,
+    output_format = paste0(snakemake@wildcards$ext, '_document'),
+    output_file = outfile,
+    output_options = list(self_contained = TRUE),
+    params = list(
+        sample_id =  snakemake@wildcards$sample_id,
+        inputs = snakemake@input,
+        config = config,
+        report_config = snakemake@params$report_config,
+        config_delta = snakemake@params$config_delta,
+        #report_name = report_name,
+        out_format = snakemake@wildcards$ext,
+        #workdir = rmd_workdir,
+        basedir = config$basedir,
+        version = snakemake@params$version
+    )
 )

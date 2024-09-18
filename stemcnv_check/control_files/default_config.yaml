@@ -1,36 +1,36 @@
 ##!minimal
 static_data:
-    # beadpool manifest file (.bpm) from Illumina, 
-    # needs to matching both the SNP array used and the desired genome version (usually A1 for hg19 and A2 for hg38)
-    bpm_manifest_file: '' #REQUIRED
-    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
-    egt_cluster_file: ''  #REQUIRED
-    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
-    csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most Indel probes unusable
-    # fasta file with the genome sequence
-    genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
-    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
-    penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
-    # PennCNV GC model file, containing GC content values, calculated by PennCNV
-    penncnv_GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
-    # bed file with windows of very high array density, calculated by stemcnv-check
-    array_density_file: static-data/density_{genome}_{snp-array-name}.bed                #REQUIRED, Auto-generatable
-    # bed file with windows of probes gaps on the array
-    array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
-    # tabular files with chromosome and gband details, derived form UCSC information
-    genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
+  # beadpool manifest file (.bpm) from Illumina, 
+  # needs to matching both the SNP array used and the desired genome version (usually A1 for hg19 and A2 for hg38)
+  bpm_manifest_file: '' #REQUIRED
+  # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
+  egt_cluster_file: ''  #REQUIRED
+  # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
+  csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most Indel probes unusable
+  # fasta file with the genome sequence
+  genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
+  # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
+  penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
+  # PennCNV GC model file, containing GC content values, calculated by PennCNV
+  penncnv_GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
+  # bed file with windows of very high array density, calculated by stemcnv-check
+  array_density_file: static-data/density_{genome}_{snp-array-name}.bed                #REQUIRED, Auto-generatable
+  # bed file with windows of probes gaps on the array
+  array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
+  # tabular files with chromosome and gband details, derived form UCSC information
+  genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
 
 global_settings:
-    # By default all conda environments and apptainer images are stored to a common cache
-    # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
-    cache_dir: '~/.cache/stemcnv-check'
-    # Path to the mehari trsncript database file, either '__cache-default__' or a path for bin.zst database file
-    mehari_transcript_db: '__cache-default__' 
-    # fasta files can be compressed, but *only* with bgzip!
-    # The default will let VEP download appropriate files,
-    # but you can also specify a path if you already have files on the system
-    hg19_genome_fasta: '__use-vep__'
-    hg38_genome_fasta: '__use-vep__'
+  # By default all conda environments and apptainer images are stored to a common cache
+  # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
+  cache_dir: '~/.cache/stemcnv-check'
+  # Path to the mehari trsncript database file, either '__cache-default__' or a path for bin.zst database file
+  mehari_transcript_db: '__cache-default__' 
+  # fasta files can be compressed, but *only* with bgzip!
+  # The default will let VEP download appropriate files,
+  # but you can also specify a path if you already have files on the system
+  hg19_genome_fasta: '__use-vep__'
+  hg38_genome_fasta: '__use-vep__'
 
 genome_version: hg38   #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
 array_name: ExampleArray  #REQUIRED
@@ -42,6 +42,47 @@ raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
 data_path: data     #REQUIRED
 # Output folder, where stemcnv-check will write log files
 log_path: logs      #REQUIRED
+
+
+evaluation_settings:
+  CNV_call_categorisation:
+    check_score.critical: 55
+    filters.exclude.critical: ['probe_gap'] # high_probe_dens, probe_gap, (Size, min_probes, density)
+    check_score.reportable: null 
+    filters.exclude.reportable: [] # high_probe_dens, probe_gap, (Size, min_probes, density)
+  
+  SNP_clustering:
+    filter-settings: '_default_' # "_default_", Filterset name, or "none"
+    #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
+    # enries with __[column] will use all other samples with the same value in [column]
+    # entries with _[column] expect a column that contains additional (, separated) sample_ids
+    # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
+    extra_samples: ['__Chip_Name']
+  
+  # Each measure used for QC is categorised as 'OK', 'unusual', or 'warning'
+  # Additonally the last level can eb set to 'critical' instead of 'warning'  
+  # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
+  summary_stat_warning_levels:   
+    # List of threshold values between normal/abnormal and abnormal/problematic(critical)
+    # The first values gives the maximum allowed for 'OK', the second for 'warning'
+    call_rate: [0.995, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
+    # Consider? call_rate: [0.99, 0.97]
+    SNP_distance_to_reference: [2, 5]
+    loss_gain_log2ratio: [2, 4]
+    total_calls_CNV: [10, 50]
+    total_calls_LOH: [30, 75]
+    reportable_calls_CNV: [5, 10]
+    reportable_calls_LOH: [5, 10]
+    critical_calls_CNV: [1, 1]
+    critical_calls_LOH: [1, 1]
+    # These measures use 'critical' instead of 'warning'
+    last_level_critical:
+      - call_rate
+      - critical_calls_CNV
+      - critical_calls_LOH
+      - high_impact_calls
+      - computed_gender
+
 
 ##!medium
 settings:
@@ -68,30 +109,30 @@ settings:
     #
     # We recommend to use these filter settings:
     extended:
-        GenTrainScore: 0.7
-        GenCallScore:  0.7 # Anything above this should be a stable genotype call
-        Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
-        pseudoautosomal: remove-male # keep|remove|remove-male
+      GenTrainScore: 0.7
+      GenCallScore:  0.7 # Anything above this should be a stable genotype call
+      Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
+      pseudoautosomal: remove-male # keep|remove|remove-male
     ## Other filter settings we have tested:
     ## This is closest to other Illumina defaults, but susceptible to noise
     # basic:
-    #     GenTrainScore: 0
-    #     GenCallScore:  0.2 # Illumina recommended minimum
-    #     Position.duplicates: keep # keep|remove|highest-GenCall|highest-GenTrain
-    #     pseudoautosomal: keep
+    #   GenTrainScore: 0
+    #   GenCallScore:  0.2 # Illumina recommended minimum
+    #   Position.duplicates: keep # keep|remove|highest-GenCall|highest-GenTrain
+    #   pseudoautosomal: keep
     # This filter results in somewhat higher precision, but lower recall
     # full:
-    #     GenTrainScore: 0.8
-    #     GenCallScore:  0.8
-    #     Position.duplicates: remove # keep|remove|highest-GenCall|highest-GenTrain
-    #     pseudoautosomal: remove
+    #   GenTrainScore: 0.8
+    #   GenCallScore:  0.8
+    #   Position.duplicates: remove # keep|remove|highest-GenCall|highest-GenTrain
+    #   pseudoautosomal: remove
 
   # Default filter set to use for all tools
   default-filter-set: extended
 
   PennCNV:
-    # Specific filter setting for PennCNV, '__default__' uses `default-filter-set
-    filter-settings: '__default__'
+    # Specific filter setting for PennCNV, '_default_' uses `default-filter-set
+    filter-settings: '_default_'
     enable_LOH_calls: True
     # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
     merge.distance: 500
@@ -102,8 +143,8 @@ settings:
     filter.mindensity.Mb: 10 #snps per Mb
 
   CBS:
-    # Specific filter setting for CBS, '__default__' uses `default-filter-set
-    filter-settings: '__default__'
+    # Specific filter setting for CBS, '_default_' uses `default-filter-set
+    filter-settings: '_default_'
     # undo.SD split value for CBS
     undo.SD.val: 1
     # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
@@ -137,14 +178,19 @@ settings:
     call_processing:
       # SNP probe counts may change with merging of calls from different tools
       # therefore a single filter-settings needs to be used as reference here
-      filter-settings: '__default__'
+      filter-settings: '_default_'
+      # Prefiltering of calls is done (after merging of nearby calls) as follows:
+      # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+      filter.minprobes: 5
+      filter.minlength: 1000
+      filter.mindensity.Mb: 10 #snps per Mb
       
       ## Calls from multiple tools are combined and combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
       # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
       tool.overlap.greatest.call.min.perc: 50
       # This is minimum for the median of coverage percentages from all tool in any merged group
-      tool.overlap.median.cov.perc: 60
+      tool.overlap.min.cov.sum.perc: 60
       ## Reference comparison
       min.reciprocal.coverage.with.ref: 80
       ## Probe gap flagging of calls
@@ -237,7 +283,6 @@ reports:
   # All reports inherit from the default settings, but can overwrite specific parts
   StemCNV-check-report:
     file_type: 'html'         #REQUIRED
-    impact.score.critical: NA #recommended: 55
 
 ##!medium
 #   Any number of reports can be defined, the default is 'StemCNV-check-report'.
@@ -246,9 +291,8 @@ reports:
 #
 #  StemCNV-check-full-report:
 #    file_type: 'html'         #REQUIRED
-#    impact.score.critical: NA #recommended: 55
 #    call.data.and.plots:
-#      __default__:
+#      _default_:
 #        # How many plots to show at least, this strongly influences the filesize of the report
 #        min_number_plots: 100
 #        include.gene.table.details: 'All'
@@ -256,16 +300,12 @@ reports:
 #  # These reduced settings works reasonably well for pdf
 #  StemCNV-check-report-pdf:
 #    file_type: 'pdf'          #REQUIRED
-#    impact.score.critical: NA #recommended: 55
 #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
 #    call.data.and.plots:
 #      include.call.table: FALSE
 
   #These are the default settings from which all reports inherit
-  __default__:
-    # Check-Score cutoffs for labelling calls as 'Critical' or 'Reportable'
-    impact.score.critical:   NA
-    impact.score.reportable: NA
+  _default_:
 
     # individual sections can be included (whitelist) or excluded (blacklist) from report.
     # Default is special '__all__' for include, but a list of specific sections can also be used
@@ -283,60 +323,41 @@ reports:
     #  - reference_gt_calls.table
     #  - reference_gt_calls.plots
     #  - regions.of.interest
-    #  - virtual.karyotype
     #  - SNP.dendrogram
+    #  - virtual.karyotype
 
     # List of columns from the sample_table that should be included in the "Sample Information section"
     sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
-
+      
     call.data.and.plots:
-      # Which filter to apply to probe data for plotting
-      filter-settings: '__default__'
-      #Specific settings for
-      __default__:
+      #Specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
+      _default_: &default_plot_settings
+        exclude_filter: 
+          - min_probes
+          - Size
+          - Density
+            # high_probe_dens, probe_gap, (Size, min_probes, density)  
         # How many plots to show at least
         min_number_plots: 20
         always_include: #[]
-            - 'Critical'
-            #- 'Reportable'
+          - 'Critical'
+          - 'Reportable'
         # Include plots, table of individual calls and table of genes
         include.plot: True
-        include.call.table: True
+        include.hotspot.table: True
         include.gene.table.details: 'Call' # Choice of: None|Call|All
         # Minimum relative size of (each) flanking region compared to call
         plot.flanking.region.relative: 2
         # Minimum size of total plot region
-        plot.region.minsize: 2e6
-
-    # Thresholds for SampleLevel QC color codes in the summary table
-    SampleQCwarnings:
-      # The first values gives the maximum for 'yellow', the second for 'orange' (or 'red')
-      # Using the same value twice skips 'yellow'
-      warning_level2_red:
-        - call_rate
-        - critical_calls_CNV
-        - critical_calls_LOH
-        - high_impact_calls
-      call_rate: [0.995, 0.99]  #red; Callrate fails if it is *below* these values
-      SNP_distance_to_reference: [2, 5]
-      loss_gain_log2ratio: [2, 4]
-      total_calls_CNV: [10, 50]
-      total_calls_LOH: [30, 75]
-      reportable_calls_CNV: [5, 10]
-      reportable_calls_LOH: [5, 10]
-      critical_calls_CNV: [1, 1] #red
-      critical_calls_LOH: [1, 1] #red
+        plot.region.minsize: 2000000
+      denovo:
+        <<: *default_plot_settings
+      reference_gt:
+        <<: *default_plot_settings
+      regions_of_interest:
+        <<: *default_plot_settings
 
     SNP_comparison:
-      # Which filter to apply to probe data for SNP comparison
-      filter-settings: '__default__'
-      # Should clustering use all genotype calls without the probe filters applied for CNV analysis
-      ignore_filter: FALSE
-      #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
-      # enries with __[column] will use all other samples with the same value in [column]
-      # entries with _[column] expect a column that contains additional (, separated) sample_ids
-      # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
-      extra_samples: ['__Chip_Name']
       # You can also use additional metadata columns from the sample table, i.e. "Sample_Group"
       dendrogram.color.by: 'Chip_Name'
       dendrogram.shape.by: 'Chip_Name'
@@ -350,31 +371,28 @@ wildcard_constraints:
 
 # These settings are used to define the resources snakemake allocates for each tool
 tools:
-  __default__:
+  _default_:
     threads: 1
     memory: 2000 # "2000MB"
-    runtime: "2h"
-    cmd-line-params: ""
+    runtime: "1h"
     partition: 'medium'
   GenCall:
     threads: 4
     memory: 8000 # "8000MB"
     runtime: "4h"
-    cmd-line-params: "--gender-estimate-call-rate-threshold -0.1"
   gtc2vcf:
-    cmd-line-params: ""
-    memory: 10000 # "10000MB"
-    runtime: "4h"
-  VEP:
-    threads: 4
-    memory: 10000 # "8000MB"
-    runtime: "4h"
-  knitr:
-    memory: 30000 # "30000MB"
+    memory: 1000 # "2000MB"
     runtime: "1h"
   CNV.process:
     memory: 4000 # "4000MB"
     runtime: "30m"
   PennCNV:
-    memory: 4000 # "4000MB"
+    memory: 500 # "500MB"
     runtime: "30m"
+  summary_stats:
+    threads: 4
+    memory: 20000 # "2000MB"  
+    runtime: "1h"
+  knitr:
+    memory: 10000 # "10000MB"
+    runtime: "1h"

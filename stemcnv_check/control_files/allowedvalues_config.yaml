@@ -30,6 +30,29 @@ global_settings:
     hg19_genome_fasta: str # Path|__-use-vep__
     hg38_genome_fasta: str # Path|__-use-vep__
 
+evaluation_settings:
+  CNV_call_categorisation:
+    check_score.critical: noneorint
+    filters.exclude.critical: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
+    check_score.reportable: noneorint
+    filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
+  
+  SNP_clustering:
+    filter-settings: filtersetplusnone # "_default_", Filterset name, or "none"
+    extra_samples: list__insamplesheet
+
+  summary_stat_warning_levels:   
+    last_level_critical: list__str
+    call_rate: list_len2__float__le1
+    loss_gain_log2ratio: list_len2__int
+    SNP_distance_to_reference: list_len2__int
+    total_calls_CNV: list_len2__int
+    total_calls_LOH: list_len2__int
+    reportable_calls_CNV: list_len2__int
+    reportable_calls_LOH: list_len2__int
+    critical_calls_CNV: list_len2__int
+    critical_calls_LOH: list_len2__int
+
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS)
   probe-filter-sets:
@@ -79,8 +102,11 @@ settings:
   CNV_processing:
     call_processing:
       filter-settings: filterset
+      filter.minprobes: int_ge0
+      filter.minlength: int_ge0
+      filter.mindensity.Mb: float_ge0
       tool.overlap.greatest.call.min.perc: float_le100_ge0
-      tool.overlap.median.cov.perc: float_le100_ge0
+      tool.overlap.min.cov.sum.perc: float_le100_ge0
       ## Reference comparison
       min.reciprocal.coverage.with.ref: float_le100_ge0
       ## CNV annotations
@@ -162,41 +188,23 @@ reports:
     file_type: str_(html|pdf)
     include_sections: sectionsall
     exclude_sections: list__sections
-    impact.score.critical: '[0-9.]+|NA'
-    impact.score.reportable: '[0-9.]+|NA'
     sample.info.extra.cols: list__insamplesheet
 
     call.data.and.plots:
-      filter-settings: filterset
       __plotsection:
+        exclude_filter: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
         min_number_plots: int_ge0
         always_include: list__str__(Critical|Reportable)
         include.plot: bool
-        include.call.table: bool
+        include.hotspot.table: bool
         include.gene.table.details: str_(All|Call|None)
         plot.flanking.region.relative: float_ge0
         plot.region.minsize: float_ge10000
 
-    SampleQCwarnings:
-      warning_level2_red: list__str
-      call_rate: list_len2__float__le1
-      loss_gain_log2ratio: list_len2__int
-      SNP_distance_to_reference: list_len2__int
-      total_calls_CNV: list_len2__int
-      total_calls_LOH: list_len2__int
-      reportable_calls_CNV: list_len2__int
-      reportable_calls_LOH: list_len2__int
-      critical_calls_CNV: list_len2__int
-      critical_calls_LOH: list_len2__int
-      # high_impact_calls: list_len2__int
-      # highlight_calls: list_len2__int
-      # overlapping_genes: []
     SNP_comparison:
-      filter-settings: filterset
-      ignore_filter: bool
-      extra_samples: list__insamplesheet
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet
+    ideogram.exclude_filter: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
 
 wildcard_constraints:
   sample_id: str
@@ -208,5 +216,4 @@ tools:
     threads: int
     memory: '[0-9]+M?'
     runtime: str
-    cmd-line-params: str
     partition: str

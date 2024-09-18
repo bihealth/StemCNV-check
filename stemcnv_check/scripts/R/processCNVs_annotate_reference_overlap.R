@@ -25,7 +25,7 @@ annotate_reference_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.wi
 
 	if (nrow(gr) > 0) {
 		gr <- gr %>%
-			group_by(granges.x.seqnames, granges.x.start, granges.x.end, caller_merging_state.x, CNV_caller.x, CNV_type.x) %>%
+			group_by(granges.x.seqnames, granges.x.start, granges.x.end, CNV_caller.x, CNV_type.x) %>%
 			summarise(
                 across(ends_with('.x'), ~ unique(.)),
 				reference_overlap = TRUE,

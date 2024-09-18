@@ -1,7 +1,5 @@
-# Redirect all output to snakemake logging
-log <- file(snakemake@log[['err']], 'wt')
-sink(log, append = T)
-sink(log, append = T, type = 'message')
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(tidyverse)
 library(DNAcopy)
@@ -107,7 +105,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         as_tibble()
     # Generate VCF
     filtersettings <- tool_config$`filter-settings`
-    if (filtersettings == '__default__') {
+    if (filtersettings == '_default_') {
         filtersettings <- config$settings$`default-filter-settings`
     }
     header <- c(

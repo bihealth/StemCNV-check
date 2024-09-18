@@ -18,18 +18,14 @@ sample_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'loss', 'loss'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB', 'toolB'),
-  # n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1,1),
+  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
   n_probes = c(15, 100, 150, 250, 100, 50, 50),
   n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
   CN = c(3, 3, 4, 1, 1, 1, 0),
-  # caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1,1),
-  overlap_merged_call = NA_real_,
-  caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA, NA),
-  caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap', 'no-overlap'),
+  FILTER = c('Size', 'Probe_dens', NA_character_, 'test-dummy', NA_character_, NA_character_, NA_character_),
   reference_overlap = c(T, T, F, F, F, F, T),
   reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60) %>% as.list(),
-  reference_caller = list(c('toolA','toolB'), 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
+  reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
   test_hits = c(NA, 'DDX11L1', 'dummyC', NA, '1p36,chr1:40000-50000', '1p36', '1p35.2')
 ) %>% as_granges()
 
@@ -39,7 +35,7 @@ sample_cnvs <- tibble(
 # - multiple gaps in one CNV  -> above th, true
 # - CNV has single gap,    but below min.perc.gap_area
 # - CNV has multiple gaps, but below min.perc.gap_area
-# - CNV has gaps, but ! (gap_slope * percent_gap_coverage + gap_intercept) <= log2(n_uniq_probes)
+# - CNV has gaps, but ! (gap_slope * Gap_percent + gap_intercept) <= log2(n_uniq_probes)
 
 # - gap overlaps CNV border -> error
 # - gap fully conatins CNV  -> error
@@ -52,8 +48,9 @@ test_that("Annotate CNVs with gaps", {
   
   expexted_gr <- sample_cnvs %>%
     mutate(
-      percent_gap_coverage = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
-      probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE)
+      Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
+      probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
+      FILTER = c('Size', 'Probe_dens;probe_gap', 'probe_gap', 'test-dummy', NA_character_, NA_character_, NA_character_)
     )
   
   annotate_gaps(sample_cnvs, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
@@ -79,7 +76,8 @@ test_that("Annotate CNVs with probe density flags", {
   
   expexted_gr <- sample_cnvs %>%
     mutate(
-      high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE)
+      high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE),
+      FILTER = c('Size', 'Probe_dens', 'high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_)
     )
   
   annotate_high_density(sample_cnvs, density_file, density.quantile.cutoff) %>%

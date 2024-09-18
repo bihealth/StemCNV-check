@@ -46,6 +46,7 @@ def run_stemcnv_check_workflow(args):
         f'configfile={args.config}',
         f'target={args.target}',
         f'cache_path={cache_path}',
+        f'verbose_level={args.verbose}',
     ]
     #FIXME: use a clearer local vs cluster submission
     if args.cluster_profile:

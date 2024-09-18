@@ -70,29 +70,34 @@ def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
                 raise FileNotFoundError(f"Static data file '{file}' does not exist.")
         bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
 
-    bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in bind_points)
+    bind_point_str = "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
     logging.debug("Binding points for apptainer: " + str(bind_point_str))
 
     return bind_point_str
 
 
 def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):
-    ids = []
+    ids = set()
     # '__[column]' entries: take all sample_ids with the same value in '[column]'
     col_val_match = [sampledef[2:] for sampledef in config_extra_samples if sampledef[:2] == '__']
     for col in col_val_match:
         if col not in sample_data_full[0].keys():
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
+        # FIXME (future): use pandas loc function
         match_val = [dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0]
-        ids += [dictline['Sample_ID'] for dictline in sample_data_full if dictline[col] == match_val]
+        ids.update(dictline['Sample_ID'] for dictline in sample_data_full if dictline[col] == match_val)
     # '_[column]' entry: take all sample_ids from '[column]'
     id_cols = [sampledef[1:] for sampledef in config_extra_samples if sampledef[0] == '_' and sampledef[:2] != '__']
     for col in id_cols:
         if col not in sample_data_full[0].keys():
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        ids += [dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0].split(',')
+        # FIXME (future): use pandas loc function
+        ids.update([dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0].split(','))
     # other entries: assume they are sample_ids & use them as is
-    ids += [sampledef for sampledef in config_extra_samples if sampledef[0] != '_']
+    ids.update([sampledef for sampledef in config_extra_samples if sampledef[0] != '_'])
+    # remove the original sample_id
+    if sample_id in ids:
+        ids.remove(sample_id)
 
     return ids
 
@@ -190,4 +195,3 @@ def get_mehari_db_file(config_entry, cache_path, genome_version):
             'mehari-db',
             f"mehari-data-txs-{genome_version}-ensembl-{mehari_db_version}.bin.zst"
         )
-

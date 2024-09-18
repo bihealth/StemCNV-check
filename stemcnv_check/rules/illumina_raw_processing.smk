@@ -16,7 +16,7 @@ rule run_gencall:
         mem_mb=get_tool_resource("GenCall", "memory"),
         partition=get_tool_resource("GenCall", "partition"),
     params:
-        options=get_tool_resource("GenCall", "cmd-line-params"),
+        options='--gender-estimate-call-rate-threshold -0.1',
         outpath=lambda wildcards: fix_container_path(
             os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), "data"
         ),
@@ -79,15 +79,14 @@ rule run_gtc2vcf_vcf:
         genome=get_genome_fasta,
         gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
     output:
-        vcf=pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
-        metatxt=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.stats.txt"),
+        vcf = pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
+        stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt")
     threads: get_tool_resource("gtc2vcf", "threads")
     resources:
         runtime=get_tool_resource("gtc2vcf", "runtime"),
         mem_mb=get_tool_resource("gtc2vcf", "memory"),
         partition=get_tool_resource("gtc2vcf", "partition"),
     params:
-        options=get_tool_resource("gtc2vcf", "cmd-line-params"),
         csv=(
             '--csv "{}"'.format(config["static_data"]["csv_manifest_file"])
             if config["static_data"]["csv_manifest_file"]
@@ -100,9 +99,9 @@ rule run_gtc2vcf_vcf:
     conda:
         "../envs/gtc2vcf.yaml"
     shell:
-        'bcftools plugin gtc2vcf {params.options} -O v '
+        'bcftools plugin gtc2vcf -O v '
         '--bpm "{input.bpm}" {params.csv} --egt "{input.egt}" '
-        '--fasta-ref "{input.genome}" --extra {output.metatxt} '
+        '--fasta-ref "{input.genome}" --extra {output.stats} '
         '{input.gtc} 2> {log.vcf} | '
         'bcftools sort 2> {log.sort} | '
         'bcftools norm -m- --multi-overlaps . -o {output.vcf} 2> {log.norm}'

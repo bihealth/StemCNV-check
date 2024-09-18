@@ -23,15 +23,9 @@ sample_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('DUP', 'DUP', 'DEL', 'DEL', 'DEL', 'DEL'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = list(c('toolA','toolB'), 'toolA', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB'),
-  # n_premerged_calls = list(c(2,1), 1, c(2,1), c(2,2,1),1,1),
+  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB'),
   n_probes = c(15, 5, 15, 25, 5, 5),
   CN = c(3, 3, 0, 1, 1, 1), 
-      #list(c('3','3'), '3', c('1','0'), c('1','1','1'), '1', '1'),
-  # caller_confidence = list(c(1,1), 1, c(1,1), c(1,1,1), 1,1),
-  overlap_merged_call = NA_real_,
-  caller_merging_coverage = c('toolA-100,toolB-100', NA, 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA),
-  caller_merging_state = c('combined', NA, rep('combined', 2), 'no-overlap', 'no-overlap')
 )
 
 ref_cnvs <- tibble(   
@@ -41,30 +35,20 @@ ref_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('DUP', 'DUP', 'DUP', 'DEL', 'DEL', 'DEL'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = list(c('toolA','toolB'), 'faketool', c('toolA','toolB'), c('toolA','toolA','toolB'), 'toolA', 'toolB'),
-  # n_premerged_calls = list(c(2,1), 5, c(2,1), c(2,2,1),1,1),
+  CNV_caller = c('StemCNV-check', 'faketool', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB'),
   n_probes = c(15, 20, 15, 25, 5, 5),
   CN = c(3, 4, 3, 1, 1, 1),
-  # caller_confidence = list(c(1,1), 5, c(1,1), c(1,1,1), 1,1),
-  overlap_merged_call = NA_real_,
-  caller_merging_coverage = c('toolA-100,toolB-100', 'faketool', 'toolA-100,toolB-100', 'toolA-80,toolB-100', NA, NA),
-  caller_merging_state = c(rep('combined', 4), 'no-overlap', 'no-overlap')
-) %>% 
-  bind_rows(get_expected_final_tb('UCSC')) %>%
-  dplyr::select(-width, -reference_overlap, -reference_coverage, 
-                -reference_caller, -n_genes, -overlapping_genes) %>%
+) %>%
   as_granges()
 
-test_that("Annotate CNVs with ref", {
-  #Note: this test will fail if `sample_cnvs` is converted to a granges object first and then
-  # (changed back &) mutated, because somehow that makes the list columns appear as class 'AsIs'
+test_that("annotate_reference_overlap", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%
     mutate(
         reference_overlap = c(T, T, F, F, F, F),
         reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_),
-        reference_caller = c('toolA;toolB', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_)
+        reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_)
     ) %>%
     as_granges()
   
@@ -76,7 +60,7 @@ test_that("Annotate CNVs with ref", {
     expect_equal(expected_gr) 
 } )
 
-test_that("Annotate CNVs empty ref", {
+test_that("annotate_reference_overlap, empty ref", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%
@@ -97,7 +81,7 @@ test_that("Annotate CNVs empty ref", {
     expect_equal(expected_gr)        
 } )
 
-test_that("Annotate CNVs with empty input", {
+test_that("annotate_reference_overlap, empty input", {
   min.reciprocal.coverage.with.ref <- 80
   
   expected_gr <- sample_cnvs %>%

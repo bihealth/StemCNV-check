@@ -144,6 +144,7 @@ def create_missing_staticdata(args):
                                 # 'configfile': args.config,
                                 # 'target': 'SNP-probe-data',
                                 'cache_path': str(cache_path),
+                                'verbose_level': args.verbose,
                             }
                         ),
                         deployment_settings=DeploymentSettings(

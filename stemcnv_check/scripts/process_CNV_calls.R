@@ -1,7 +1,5 @@
-# Redirect all output to snakemake logging
-log <- file(snakemake@log[['err']], 'wt')
-sink(log, append = T)
-sink(log, append = T, type = 'message')
+# Redirect warnings & errors to snakemake logging, save R environment if debugging
+source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(plyranges)
 library(GenomicRanges)
@@ -53,17 +51,20 @@ combined_tools_sample <- combine_CNV_callers(gr, processing_config, snp_vcf_gr)
 ## <- function() {
 if (length(snakemake@input$ref_data) > 0) {
     
-	combined_tools_ref <- load_preprocessed_cnvs(snakemake@input$ref_data) %>%
+	combined_tools_ref <- parse_cnv_vcf(snakemake@input$ref_data) %>%
 		# These cols will interefere
-		dplyr::select(-width, -reference_overlap, -reference_coverage, -reference_caller,
-									-n_genes, -overlapping_genes) %>%
-		filter(caller_merging_state != 'pre-overlap') %>%
-		as_granges()
+		select(-reference_coverage, -Genes)
+    
 	
 	cnvs <- annotate_reference_overlap(combined_tools_sample, combined_tools_ref,
                                        processing_config$min.reciprocal.coverage.with.ref)
 } else {
-	cnvs <- combined_tools_sample
+	cnvs <- combined_tools_sample %>%
+        mutate(
+            reference_overlap = FALSE,
+            reference_coverage = NA_real_,
+            reference_caller = NA_character_
+        )
 }
 ## }
 
@@ -82,8 +83,8 @@ check_scores <- config$settings$CNV_processing$Check_score_values
 size_categories <- config$settings$CNV_processing$Precision$size_categories
 precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 
-gr_genes <- load_gtf_data(config)
-gr_info  <- load_genomeInfo(config)
+gr_genes <- load_gtf_data(config, target_chrom_style)
+gr_info  <- load_genomeInfo(config, target_chrom_style)
 
 HI_file <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
 	str_replace('__inbuilt__', config$snakedir)
@@ -116,19 +117,24 @@ cnvs <- cnvs %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
 	annotate_cnv.check.score(high_impact_gr, highlight_gr, check_scores) %>%
-	annotate_precision.estimates(size_categories, precision_estimates)
-
-cnvs.tb <- finalise_tb(cnvs, target_chrom_style) %>%
-	rowwise() %>%
-	mutate(across(one_of(get_list_cols()), ~paste(., collapse=';')))
-write_tsv(cnvs.tb, snakemake@output$tsv)
+	annotate_precision.estimates(size_categories, precision_estimates) %>%
+    annotate_call.label(config$evaluation_settings$CNV_call_categorisation)
 
 
 # Also directly write out a cnv vcf
-combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vcf_meta, target_style) {
+combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config, vcf_meta, target_style) {
+    
+    tb <- cnv_tb %>%
+        as_tibble() %>%
+        rowwise() %>%
+        mutate(
+            CNV_type = ifelse(CNV_type == 'LOH', 'CNV:LOH', CNV_type),
+            CNV_caller = ifelse(length(CNV_caller) > 1, 'StemCNV-check', unlist(CNV_caller)),
+            FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
+        )
     
     filtersettings <- processing_config$`filter-settings`
-    if (filtersettings == '__default__') {
+    if (filtersettings == '_default_') {
         filtersettings <- config$settings$`default-filter-settings`
     }    
 
@@ -137,10 +143,10 @@ combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vc
         static_cnv_vcf_header(processing_config, extra_annotation = TRUE),
         '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
         #FIXME (future): maybe also keep the PennCNV & CBS lines? (doesn't seem to be 100% standard though)
-        paste(
+        str_glue(
             '##StemCNV-check process_CNV_calls',
             'tool.overlap.greatest.call.min.perc={processing_config$tool.overlap.greatest.call.min.perc}',
-            'tool.overlap.median.cov.perc={processing_config$tool.overlap.median.cov.perc}'
+            'tool.overlap.min.cov.sum.perc={processing_config$tool.overlap.min.cov.sum.perc}'
         )
     )
     
@@ -155,21 +161,7 @@ combined_calls_to_vcf <- function(tb, vcf_out, sample_sex, processing_config, vc
     
 }
 
-#FIXME (future): keep the filtered original (small) calls in this vcf as well?
 cnvs %>%
-    filter(caller_merging_state != 'pre-overlap') %>%
-    as_tibble() %>%
-    rowwise() %>%
-    mutate(
-        CNV_caller = ifelse(length(CNV_caller) > 1, 'StemCNV-check', unlist(CNV_caller)),
-        FILTER = case_when(
-           high_probe_density & probe_coverage_gap  ~ 'high_probe_dens;probe_gap', 
-           high_probe_density                       ~ 'high_probe_dens',
-           probe_coverage_gap                       ~ 'probe_gap',
-           TRUE                                     ~ 'PASS'
-        )
-        #across(one_of(get_list_cols()), ~paste(., collapse=';'))
-    ) %>%
     combined_calls_to_vcf(
         snakemake@output$vcf,
         get_sample_info(sample_id, 'sex', sampletable),
