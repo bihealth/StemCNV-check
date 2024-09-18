@@ -219,6 +219,7 @@ get_fix_section <- function(tb) {
             #FIXME (future): CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
             ALT = str_glue("<{CNV_type}>"),
             QUAL = '.',
+            FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
             # END position of the longest variant described in this record. The END of each allele is defined as
             # <DEL>, <DUP>, <INV>, and <CNV> symbolic structural variant alleles:, POS + SVLEN.
             # in granges: width = end - start + 1; so this fits with corrected POS

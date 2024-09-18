@@ -103,6 +103,8 @@ test_that('get_target_chrom_style', {
     expect_equal(get_target_chrom_style(config, gr), 'UCSC')
 })
 
+#TODO: add test for NCBI chrom style output
+
 test_that("load_gtf_data", {
     # Construct minimal config
     config <- list(
@@ -115,6 +117,9 @@ test_that("load_gtf_data", {
                     'exclude_gene_type_regex' = c(),
                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding')
                 )
+            ),
+            'vcf_output' = list(
+                'chrom_style' = 'UCSC'
             )
         )
     )

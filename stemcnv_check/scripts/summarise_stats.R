@@ -237,12 +237,12 @@ collect_summary_stats <- function(
         sample_CNV_gr,
         config
     )
-    if (!is.null(summary_excel_ref)) {
+    if (!is.na(ref_id)) {
         summary_table_sample <- summary_table_sample %>%
             full_join(
                 read_excel(summary_excel_ref, sheet = 'summary_stats') %>%
                     rename_with(~ str_replace(., 'sample', 'reference')) %>%
-                    mutate(across(matches('critical|reportable'), ~ NA_character_)),
+                    filter(!str_detect(Description, 'critical|reportable')),
                 by = 'Description'
             )
     }
@@ -270,7 +270,7 @@ collect_summary_stats <- function(
                     full_join(
                         read_excel(summary_excel_ref, sheet = paste0(name, '_stats')) %>%
                             rename_with(~ str_replace(., 'sample', 'reference')) %>%
-                            mutate(across(matches('critical|reportable'), ~ NA_character_)),
+                            filter(!str_detect(Description, 'critical|reportable')),
                         by = 'Description'
                     )
             }

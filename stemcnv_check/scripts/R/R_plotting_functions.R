@@ -1,4 +1,6 @@
-
+library(tidyverse)
+library(patchwork)
+library(ggrepel)
 
 
 make_LRR_BAF_plots <- function(
@@ -44,7 +46,7 @@ make_LRR_BAF_plots <- function(
     if (nrow(plot.data)==0){
         warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{win_start}-{win_end}')
         warning(warn_msg)
-        return(list('gg' = warn_msg, 'calls' = tibble(), 'genes' = tibble()))
+        return(list('gg' = warn_msg, 'genes' = tibble(), 'hotspots' = c()))
     }
 
     calls <- cnv_calls %>%
@@ -71,8 +73,8 @@ make_LRR_BAF_plots <- function(
         filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = call.row$start, end = call.row$end))) %>%
         as_tibble()
 
-    high_impact_list <- call.row$HighImpact %>% str_split(',') %>% unlist()
-    highlight_list <- call.row$Highlight %>% str_split(',') %>% unlist()
+    high_impact_list <- call.row$HighImpact %>% str_split('\\|') %>% unlist()
+    highlight_list <- call.row$Highlight %>% str_split('\\|') %>% unlist()
     gene.data <- gr_genes %>%
         filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
         as_tibble() %>%
@@ -126,113 +128,150 @@ make_LRR_BAF_plots <- function(
     cnv_track <- ggplot(calls) +
         geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color)) +
         scale_fill_identity() +
-        geom_text(aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
-                  vjust = 0.5, hjust = 0.5, size = 2.5) +
-        scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','),
-                           limits = c(win_start, win_end), oob = oob_keep) +
+        geom_text(
+            aes(label = paste0(CNV_caller, ': ', CNV_type), x = x_pos, y = y_pos),
+            vjust = 0.5, hjust = 0.5, size = 2.5
+        ) +
+        scale_x_continuous(
+            expand = expansion(),
+            labels = label_number(big.mark = '..', decimal.mark = ','),
+            limits = c(win_start, win_end),
+            oob = oob_keep
+        ) +
         scale_y_continuous(expand = expansion()) +
         facet_wrap(~Sample_Name, nrow = 1) +
         theme_classic() +
-        theme(axis.title = element_blank(),
-              axis.line = element_blank(),
-              axis.text = element_blank(),
-              axis.ticks = element_blank(),
-              plot.background = element_blank(),
-              panel.background = element_blank(),
-              panel.border = element_blank(),
-              strip.background = element_blank(),
-              strip.text.x = element_blank(),
-              panel.spacing = panel_space_val) +
+        theme(
+            axis.title = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            plot.background = element_blank(),
+            panel.background = element_blank(),
+            panel.border = element_blank(),
+            strip.background = element_blank(),
+            strip.text.x = element_blank(),
+            panel.spacing = panel_space_val
+        ) +
         labs(y = 'Calls')
 
     gene_track <- ggplot(gene.data) +
-        geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9,
-                      fill = case_when(
-                        high_impact ~ 'red',
-                        highlight   ~ 'orange',
-                        direct_hit  ~ 'black',
-                        TRUE        ~ 'grey50'
-                      )),
-            show.legend = F) +
+        geom_tile(
+            aes(
+                x = x_pos, y = y_pos, width = width, height = .9,
+                fill = case_when(
+                    high_impact ~ 'red',
+                    highlight   ~ 'orange',
+                    direct_hit  ~ 'black',
+                    TRUE        ~ 'grey50'
+                )
+            ),
+            show.legend = F
+        ) +
         scale_x_continuous(expand = expansion(), limits = c(win_start, win_end), oob = oob_keep) +
         scale_y_continuous(expand = expansion(add = c(0.25, 0.25))) +
         scale_fill_identity() +
         facet_wrap(~Sample_Name, nrow = 1) +
         theme_void() +
         theme(
-          strip.background = element_blank(),
-          strip.text.x = element_blank(),
-          axis.title.y = element_text(angle = 90, vjust = 1),
-          panel.spacing = panel_space_val
+            strip.background = element_blank(),
+            strip.text.x = element_blank(),
+            axis.title.y = element_text(angle = 90, vjust = 1),
+            panel.spacing = panel_space_val
         ) +
         labs(y = 'Genes')
 
     lrr <- ggplot(plot.data) +
-        geom_rect(data = tibble(Sample_Name = sample_headers),
-                  aes(xmin = call.row$start, xmax = call.row$end, ymin = -1.5, ymax = 1.5), fill = 'grey50', alpha = 0.3) +
+        geom_rect(
+            data = tibble(Sample_Name = sample_headers),
+            aes(xmin = call.row$start, xmax = call.row$end, ymin = -1.5, ymax = 1.5),
+            fill = 'grey50', alpha = 0.3
+        ) +
         geom_hline(yintercept = 0, col = 'grey10', linewidth=0.2) +
-        geom_point(aes(x = Position, y = `Log R Ratio`,color = filter.passed),
-                   size = 0.5, shape = 20, show.legend = F) +
+        geom_point(
+            aes(x = Position, y = `Log R Ratio`,color = filter.passed),
+            size = 0.5, shape = 20, show.legend = F
+        ) +
         scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
         theme_classic() +
-        scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','),
-                           limits = c(win_start, win_end), position = 'top') +
+        scale_x_continuous(
+            expand = expansion(),
+            labels = label_number(big.mark = '..', decimal.mark = ','),
+            limits = c(win_start, win_end),
+            position = 'top'
+        ) +
         scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
         labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) +
         facet_wrap(~Sample_Name, nrow = 1) +
         theme(
-          strip.background = element_blank(),
-          strip.text.x = element_blank(),
-          panel.spacing = panel_space_val
+            strip.background = element_blank(),
+            strip.text.x = element_blank(),
+            panel.spacing = panel_space_val
         )
 
     baf <- ggplot(plot.data) +
         geom_hline(yintercept = 0, col = 'black', linewidth=0.5) +
         geom_hline(yintercept = 1, col = 'black', linewidth=0.5) +
-        geom_rect(data = tibble(Sample_Name = sample_headers),
-                  aes(xmin = call.row$start, xmax = call.row$end, ymin = 0, ymax = 1), fill = 'grey50', alpha = 0.3) +
-        geom_point(aes(x = Position, y = `B Allele Freq`,color = filter.passed),
-                   size = 0.5, shape = 20, show.legend = F) +
+        geom_rect(
+            data = tibble(Sample_Name = sample_headers),
+            aes(xmin = call.row$start, xmax = call.row$end, ymin = 0, ymax = 1),
+            fill = 'grey50', alpha = 0.3
+        ) +
+        geom_point(
+            aes(x = Position, y = `B Allele Freq`,color = filter.passed),
+            size = 0.5, shape = 20, show.legend = F
+        ) +
         scale_color_manual(values=c('TRUE' = 'blue', 'FALSE' = 'grey70')) +
         theme_classic() +
-        scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+        scale_x_continuous(
+            expand = expansion(),
+            labels = label_number(big.mark = '..', decimal.mark = ','),
+            limits = c(win_start, win_end),
+            oob = oob_keep
+        ) +
         scale_y_continuous(expand = expansion(), limits = c(-0.1, 1.1), oob = oob_squish, breaks = c(0, 0.5, 1)) +
         labs(y = 'B Allele Frequency', x = paste0('Position (', chr, ')')) +
         facet_wrap(~Sample_Name, nrow = 1) +
         theme(
-          strip.background = element_blank(),
-          strip.text.x = element_blank(),
-          panel.spacing = panel_space_val
+            strip.background = element_blank(),
+            strip.text.x = element_blank(),
+            panel.spacing = panel_space_val
         )
 
-    header <- ggplot(info_data) + facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
-        geom_tile(aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
-                  color = 'black', linewidth = 0.2) +
+    header <- ggplot(info_data) + 
+        facet_wrap(~Sample_Name, nrow=1) + theme_classic() +
+        geom_tile(
+            aes(x = x_pos, y = y_pos, width = width, height = .9, fill = color),
+            color = 'black', linewidth = 0.2
+        ) +
         scale_fill_identity() +
-        geom_text(aes(label = section_name, x = x_pos, y = y_pos, color = textcolor),
-                  vjust = 0.5, hjust = 0.5, size = 2.5, show.legend = F) +
+        # Use repel to keep gband names in the plot area
+        geom_text(
+            aes(label = section_name, x = x_pos, y = y_pos, color = textcolor),
+            vjust = 0.5, hjust = 0.5, size = 2.5, show.legend = F
+        ) +
         scale_color_identity() +
         theme_classic() +
-        scale_x_continuous(expand = expansion(), labels = label_number(big.mark = '..', decimal.mark = ','), limits = c(win_start, win_end), oob = oob_keep) +
+        scale_x_continuous(
+            expand = expansion(),
+            labels = label_number(big.mark = '..', decimal.mark = ','),
+            limits = c(win_start, win_end),
+            oob = oob_keep
+        ) +
         scale_y_continuous(expand = expansion()) +
-        theme(axis.line = element_blank(),
-              axis.title = element_blank(),
-              axis.ticks = element_blank(),
-              axis.text = element_blank(),
-              plot.background = element_blank(),
-              panel.background = element_blank(),
-              panel.border = element_blank(),
-              panel.spacing = panel_space_val)
+        theme(
+            axis.line = element_blank(),
+            axis.title = element_blank(),
+            axis.ticks = element_blank(),
+            axis.text = element_blank(),
+            plot.background = element_blank(),
+            panel.background = element_blank(),
+            panel.border = element_blank(),
+            panel.spacing = panel_space_val
+        )
 
     n_cnvs <- length(na.omit(unique(calls$CNV_type)))
     gg <- header / cnv_track / lrr / baf / cnv_track / gene_track + plot_layout(heights = c(1, n_cnvs, 10, 10, n_cnvs, 2))
-    
-    # calls <- calls %>%
-    #     filter(!is.na(x_pos)) %>%
-    #     dplyr::select(Sample_Name, 1, 3:4, Call_label, Check_Score, reference_overlap, CNV_type, CNV_caller) %>%
-    #     arrange(Sample_Name, Call_label, Check_Score, start) %>%
-    #     rowwise() %>%
-    #     mutate(across(c(CNV_type, CNV_caller), ~paste(., collapse = ',')))
 
     gene.data <- gene.data %>%
         filter(!is.na(x_pos)) %>%
@@ -240,6 +279,6 @@ make_LRR_BAF_plots <- function(
         mutate(CNVtype = as.character(call.row$CNV_type)) %>%
         unique()
 
-    list('gg' = gg, 'genes' = gene.data)
+    list('gg' = gg, 'genes' = gene.data, 'hotspots' = c(high_impact_list, highlight_list) %>% na.omit())
 
 }

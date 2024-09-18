@@ -196,7 +196,7 @@ reports:
         min_number_plots: int_ge0
         always_include: list__str__(Critical|Reportable)
         include.plot: bool
-        include.call.table: bool
+        include.hotspot.table: bool
         include.gene.table.details: str_(All|Call|None)
         plot.flanking.region.relative: float_ge0
         plot.region.minsize: float_ge10000
@@ -204,6 +204,7 @@ reports:
     SNP_comparison:
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet
+    ideogram.exclude_filter: list__str__(probe_gap|high_probe_dens|Size|min_probes|Density)
 
 wildcard_constraints:
   sample_id: str
@@ -215,5 +216,4 @@ tools:
     threads: int
     memory: '[0-9]+M?'
     runtime: str
-    cmd-line-params: str
     partition: str

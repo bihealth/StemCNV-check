@@ -81,14 +81,14 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 		filter(mapping == 'gband')
 
 	empty_gr <- GRanges(
-						list_name = character(),
-						hotspot = character(),
-						mapping = character(),
-						call_type = character(),
-						check_score = numeric(),
-						source = character(),
-						comment = character()
-						)
+        list_name = character(),
+        hotspot = character(),
+        mapping = character(),
+        call_type = character(),
+        check_score = numeric(),
+        source = character(),
+        comment = character()
+    )
 
 	if (nrow(sub_tb_name) > 0) {
 		gr_name <- gr_genes %>%
@@ -128,7 +128,7 @@ annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
 		ov_hits <- ov %>%
 			mutate(type_check = str_detect(CNV_type, str_replace(call_type, '^any$', '.*'))) %>%
 			filter(type_check) %>%
-			reduce_ranges(hits = paste(unique(sort(hotspot)),collapse = ','))
+			reduce_ranges(hits = paste(unique(sort(hotspot)),collapse = '|'))
 		gr[ov_hits$query,]@elementMetadata[[paste0(list_name, '_hits')]] <- ov_hits$hits
 	}
 
@@ -171,7 +171,7 @@ annotate_roi <- function(gr, sample_id, sampletable, gr_genes, gr_info) {
 	ov <- group_by_overlaps(gr, roi_gr)
 	if (length(ov) > 0) {
 		ov_hits <- ov %>%
-			reduce_ranges(hits = paste(unique(roi_name),collapse = ','))
+			reduce_ranges(hits = paste(unique(roi_name), collapse = '|'))
 		gr[ov_hits$query,]$ROI_hits <- ov_hits$hits
 	}
 

@@ -29,7 +29,7 @@ toolA <- tibble(
     end   = c(2000, 5500, 7500, 10000, 140000, 17e5, 20e5, 23e4, 27.8e4, 35e4, 40e4, 54e4, 58e4) %>% as.integer(),
     CNV_type = c(rep('DUP', 3), rep('DEL', 10)),
     sample_id = 'test_sample',
-    FILTER = c('Size', 'Test;Test2', 'min_probes', rep('PASS', 10)),
+    FILTER = c('Size', 'Test;Test2', 'min_probes', rep(NA_character_, 10)),
     CNV_caller = 'toolA',
     n_probes = 10,
     n_uniq_probes = n_probes,
@@ -46,7 +46,7 @@ toolB <- tibble(
     end   = c(3000, 5500, 7500, 10000, 140000, 20e5, 30e4, 36e4, 56e4, 60e4) %>% as.integer(),
     CNV_type = c(rep('DUP', 2), rep('DEL', 8)),
     sample_id = 'test_sample',
-    FILTER = c('PASS', 'PASS', 'Density', rep('PASS', 7)),
+    FILTER = c(NA_character_, NA_character_, 'Density', rep(NA_character_, 7)),
     CNV_caller = 'toolB',
     n_probes = 5,
     n_uniq_probes = n_probes,
@@ -82,7 +82,7 @@ combined_tools <- bind_ranges(
         n_uniq_probes = n_probes,
         # this *should* be correct
         probe_density_Mb = n_uniq_probes / (end - start + 1) * 1e6,
-        FILTER = c('PASS', 'PASS', 'min_probes'),
+        FILTER = c(NA, NA, 'min_probes'),
     ) %>% as_granges(),
     # single calls
     # sorted by type, then caller, then start

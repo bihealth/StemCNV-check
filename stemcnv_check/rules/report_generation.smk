@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+from loguru import logger as logging
 from deepdiff import DeepDiff
 from pydantic.v1.utils import deep_update
 from stemcnv_check.helpers import load_config, collect_SNP_cluster_ids
@@ -50,68 +51,12 @@ rule make_summary_table:
     params:
         config = config['evaluation_settings']
     log:
-        err=os.path.join(LOGPATH, "report", "{sample_id}", "summary-stats.error.log"),
+        err=os.path.join(LOGPATH, "summary_stats", "{sample_id}", "summary-stats.error.log"),
     conda:
         "../envs/general-R.yaml"
     script:
         "../scripts/summarise_stats.R"
 
-
-# def get_report_sample_input(wildcards):
-#     sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
-#     report_settings = config["reports"][wildcards.report]
-# 
-#     sample_files = expand(
-#         [
-#             os.path.join(DATAPATH, "{ids}", "{ids}.combined-cnv-calls.tsv"),
-#             os.path.join(DATAPATH, "{ids}", "{ids}.stats.txt"),
-#             os.path.join(LOGPATH, "PennCNV", "{ids}", "{chrs}.error.log"),
-#             os.path.join(
-#                 DATAPATH, "{ids}", "{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
-#             ),
-#         ],
-#         ids=(sample_id, ref_id) if ref_id else (sample_id,),
-#         chrs=["auto", "chrx"] + (["chry"] if sex == "m" else []),
-#         filter=get_tool_filter_settings(
-#             f"report:{wildcards.report}:call.data.and.plots"
-#         ),
-#     )
-# 
-#     incl_sections = config_extract(
-#         ("include_sections",), report_settings, config["reports"]["_default_"]
-#     )
-#     excl_sections = config_extract(
-#         ("exclude_sections",), report_settings, config["reports"]["_default_"]
-#     )
-#     do_snp_clustering = (
-#         incl_sections == "__all__" or "SNP.dendrogram" in incl_sections
-#     ) and not "SNP.dendrogram" in excl_sections
-#     if do_snp_clustering:
-#         extra_sample_def = config_extract(
-#             ("SNP_comparison", "extra_samples"),
-#             report_settings,
-#             config["reports"]["_default_"],
-#         )
-#         ids = collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full)
-#         # VCF has both filtered & unfiltered SNPs now
-#         # if not config_extract(('SNP_comparison', 'ignore_filter'), report_settings, config['reports']['_default_']):
-#         sample_files += expand(
-#             [
-#                 os.path.join(
-#                     DATAPATH, "{ids}", "{ids}.annotated-SNP-data.{filter}-filter.vcf.gz"
-#                 )
-#             ],
-#             ids=ids,
-#             filter=get_tool_filter_settings(
-#                 f"report:{wildcards.report}:SNP_comparison"
-#             ),
-#         )
-# 
-#     if wildcards.ext == "pdf":
-#         sample_files += [os.path.join(LOGPATH, "report", "_latex_installation_check")]
-# 
-#     return sample_files
-# 
 
 rule check_latex_installation:
     output:
@@ -139,28 +84,6 @@ system("touch {output}")
 EOF
 """
 
-# rule html_report:
-#     input: 
-#         snp_vcf = cnv_vcf_input_function("settings:CNV_processing:call_processing"),
-#         cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
-#         summary_xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
-#         ref_snp_vcf = get_ref_input_function(cnv_vcf_input_function("settings:CNV_processing:call_processing")),
-#         ref_cnv_vcf = get_ref_input_function('combined-cnv-calls.vcf.gz'),
-#     output: 
-#         os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report_name}.html"),
-#         # plots=directory(os.path.join(DATAPATH,"{sample_id}","{report_name}_images")),
-#     threads: get_tool_resource("knitr", "threads")
-#     params:
-#         # config = get_report_config
-#         out_format = 'html',
-#         version = __version__
-#     resources:
-#         runtime=get_tool_resource("knitr", "runtime"),
-#         mem_mb=get_tool_resource("knitr", "memory"),
-#         partition=get_tool_resource("knitr", "partition"),
-#     script:
-#         "../scripts/report_template.Rmd"
-
 
 def get_config_delta(wildcards, compare_on=('evaluation_settings', 'settings', 'report_settings')):
     default_config = load_config(
@@ -169,14 +92,12 @@ def get_config_delta(wildcards, compare_on=('evaluation_settings', 'settings', '
     )
     # Check if report name exists in default!
     default_config['report_settings'] = deep_update(
-        default_config['reports'][wildcards.report] if wildcards.report in default_config['reports'] else {},
-        default_config['reports']['_default_']
-        
+        default_config['reports']['_default_'],
+        default_config['reports'][wildcards.report] if wildcards.report in default_config['reports'] else {}
     )
     config['report_settings'] = deep_update(
-        config['reports'][wildcards.report],
-        config['reports']['_default_']
-        
+        config['reports']['_default_'],
+        config['reports'][wildcards.report]
     )
     ddiff = DeepDiff(default_config, config, include_paths=compare_on, verbose_level=2)
     return ddiff.to_dict()
@@ -187,7 +108,9 @@ rule knit_report:
         snp_vcf = cnv_vcf_input_function("settings:CNV_processing:call_processing"),
         cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
         summary_xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
-        ref_snp_vcf = get_ref_input_function(cnv_vcf_input_function("settings:CNV_processing:call_processing")),
+        ref_snp_vcf = get_ref_input_function(
+            f"annotated-SNP-data.{get_tool_filter_settings('settings:CNV_processing:call_processing')}-filter.vcf.gz"
+            ),
         ref_cnv_vcf = get_ref_input_function('combined-cnv-calls.vcf.gz'),
     output:
         report=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report}.{ext}"),
@@ -196,7 +119,7 @@ rule knit_report:
         ext="(pdf|html)",
     threads: get_tool_resource("knitr", "threads")
     params:
-        report_config = lambda wildcards: deep_update(config['reports'][wildcards.report], config['reports']['_default_']),
+        report_config = lambda wildcards: deep_update(config['reports']['_default_'], config['reports'][wildcards.report]),
         version = __version__,
         config_delta = get_config_delta,
     resources:

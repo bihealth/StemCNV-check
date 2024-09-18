@@ -61,96 +61,55 @@ library(sessioninfo)
 library(readxl)
 `%!in%` <- Negate(`%in%`)
 
+config <- params$config
+report_config <- params$report_config 
+
 # Load helper functions
 source(file.path(config$snakedir, 'scripts/R/helper_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/R_table_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/R_plotting_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/vcf_io_functions.R'))
 
-fix_empty_config_lists <- function(report_config) {
-    if (is.null(report_config$include_sections)) {
-        report_config$include_sections <- list() 
-    }
-    if (is.null(report_config$sample.info.extra.cols)) {
-        report_config$sample.info.extra.cols <- list() 
-    }
-    for (plotsection in c('denovo', 'reference_gt', 'regions_of_interest')) {
-        if (is.null(report_config$call.data.and.plots[[plotsection]]$always_include)) {
-            report_config$call.data.and.plots[[plotsection]]$always_include <- list()
-        }
-        if (is.null(report_config$call.data.and.plots[[plotsection]]$exclude_filter)) {
-            report_config$call.data.and.plots[[plotsection]]$exclude_filter <- list()
-        }
-    }
-    report_config
-}
-
-#TODO: replace these config functions if the yaml anchoring works
-# config_parse <- function(args, report_name) {
-#     subconfig <- config$reports[[report_name]]
-#     toplevel <- subconfig
-#     for (arg in args) {
-#         subconfig <- subconfig[[arg]]
+# fix_empty_config_lists <- function(report_config) {
+#     # covered in config & cehck AND not needed
+#     # if (is.null(report_config$include_sections)) {
+#     #     report_config$include_sections <- list() 
+#     # }
+#     # This actually makes it worse
+#     # if (is.null(report_config$sample.info.extra.cols)) {
+#     #     report_config$sample.info.extra.cols <- list() 
+#     # }
+#     # if is.null(report_config$ideogram.exclude_filter
+#     
+#     # Empty lists and NULL will make issues here, might need a 'dummy' instead?
+#     for (plotsection in c('denovo', 'reference_gt', 'regions_of_interest')) {
+#         if (is.null(report_config$call.data.and.plots[[plotsection]]$always_include)) {
+#             report_config$call.data.and.plots[[plotsection]]$always_include <- list()
+#         }
+#         if (is.null(report_config$call.data.and.plots[[plotsection]]$exclude_filter)) {
+#             report_config$call.data.and.plots[[plotsection]]$exclude_filter <- list()
+#         }
 #     }
-#     # empty lists are miss-represented in the config object created by snakemake
-#     if (is.null(subconfig) & args[length(args)] %in% c('exclude_sections', 'sample.info.extra.cols', 
-#                                                        'exclude_filter', 'always_include')) {
-#         # nested lists, the other two are already the toplevel of report_settings
-#         if (args[length(args)] %in% c('exclude_filter', 'always_include')) {
-#             for (arg in args[1:(length(args)-1)]) {
-#                 toplevel <- toplevel[[arg]]
-#             }
-#         }
-#         # these to lists are not nested inside the report_settings toplevel
-#         if (args[length(args)] %in% names(toplevel) ) {
-#             subconfig <- list()
-#         }
-#     }    
-#     subconfig
+#     report_config
 # }
-#
-# report.setting <- function(...) {
-#   args <- list(...)
-#   #Check if retry for '_default_' plot-section is needed
-#   if (args[[1]] == 'call.data.and.plots') {
-#     retry_default <- args[[2]] != 'filter-settings'
-#     retry_args <- args
-#     retry_args[[2]] <- '_default_'
-#   } else {
-#     retry_default <- FALSE
-#   }
-#   #Check config settings for this specific report
-#   out.value <- config_parse(args, params$report_name)
-#   if (is.null(out.value) & retry_default) out.value <- config_parse(retry_args, params$report_name)
-#   # Fall back to default report settings
-#   if (is.null(out.value)) out.value <- config_parse(args, '_default_')
-#   if (is.null(out.value) & retry_default) out.value <- config_parse(retry_args, '_default_')
-#   # Setting not found - error
-#   if (is.null(out.value)) {
-#     stop(paste0('Tried to find non-existing config settings: reports$',
-#                 params$report_name, "$", paste(args, collapse="$")))
-#   }
-#   #Convert to numeric if that makes sense
-#   if (!any(is.na(suppressWarnings(as.numeric(out.value))))) {
-#     out.value <- as.numeric(out.value)
-#   }
-#   out.value
-# }
-
-config <- params$config
-report_settings <- params$report_config %>%
-    # Empty yaml lists are converted to NULL by snakemake
-    fix_empty_config_lists()
+# 
+# report_config <- params$report_config  %>%
+#     # Empty yaml lists are converted to NULL by snakemake
+#     fix_empty_config_lists()
 
 include.section <- function(section) {
-  include <- ifelse(all(report.setting('include_sections') == '__all__'), T, section %in% report.setting('include_sections'))
-  exclude <- section %in% report.setting('exclude_sections')
-  # also exclude QC sections if they are not defined in settings
-  include <- include & !(
-      str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & 
-      str_remove(section, 'QC\\.') %!in% config$settings$CNV.calling.tools
-  )
-  include & !exclude
+    include <- ifelse(
+        all(report_config$include_sections == '__all__'), 
+        T,
+        section %in% report_config$include_sections
+    )
+    exclude <- section %in% report_config$exclude_sections
+    # also exclude QC sections if they are not defined in settings
+    include <- include & !(
+        str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & 
+        str_remove(section, 'QC\\.') %!in% config$settings$CNV.calling.tools
+    )
+    include & !exclude
 }
 
 # General variables & settings
@@ -175,25 +134,26 @@ sex.ref <- get_sample_info(sample_id, 'sex.ref', sampletable)
 
 #Sample_Name is an optional column in the sampletable
 if ('Sample_Name' %in% colnames(sampletable)) {
-  sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
-  ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_Name == ref_id, ]$Sample_Name)
+    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
+    ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name)
 } else {
-  sample_name <- sample_id
-  ref_name <- ifelse(is.na(ref_id), NA, ref_id)
+    sample_name <- sample_id
+    ref_name <- ifelse(is.na(ref_id), NA, ref_id)
 }
 
 if (!is.na(ref_id)) {
-  sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
-  names(sample_headers) <- c(sample_id, ref_id)
-  use_ids <- c(sample_id, ref_id)
+    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
+    names(sample_headers) <- c(sample_id, ref_id)
+    use_ids <- c(sample_id, ref_id)
 } else {
-  sample_headers <- sample_name
-  names(sample_headers) <- sample_id
-  use_ids <- sample_id
+    sample_headers <- sample_name
+    names(sample_headers) <- sample_id
+    use_ids <- sample_id
 }
 
-gr_genes <- load_gtf_data(config)
-gr_info  <- load_genomeInfo(config)
+target_chrom_style <- get_target_chrom_style(config, parse_cnv_vcf(params$input$cnv_vcf))
+gr_genes <- load_gtf_data(config, target_chrom_style)
+gr_info  <- load_genomeInfo(config, target_chrom_style)
 
 roi_regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
@@ -214,74 +174,75 @@ highlight_tb <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
 ## general functions
 
 tr_tibble <- function(tb) {
-  tr <- t(tb )
-  colnames(tr) <- sample_headers[tr[1,]]
-  tb <- as_tibble(tr, rownames = ' ')
-  tb[2:nrow(tb),]
+    tr <- t(tb )
+    colnames(tr) <- sample_headers[tr[1,]]
+    tb <- as_tibble(tr, rownames = ' ')
+    tb[2:nrow(tb),]
 }
 
 ## Rmd related functions
 
-CNV_ID_str <- function(Call_label, CNV_type, chrom, Size, i,
-                       region_name = NULL,
-                       formatting = 'nice', ...) {
-  #ROIs might have user defined names
-  if(!is.null(region_name) & formatting == 'nice') return(paste0('ROI: ', region_name))
-  else if(!is.null(region_name)) return(paste0('ROI-',region_name))
-  # All other calls
-  if (formatting == 'nice') {
-    return(str_glue('Nr-{i} {CNV_type}: {chrom} - {format_size(Size)}'))
-  } else {
-    return(str_glue('nr-{i}-{CNV_type}-{chrom}---{format_size(Size)}') %>%
-             str_to_lower())
-  }
+CNV_ID_str <- function(ID, i, region_name = NULL, ...) {
+    #ROIs might have user defined names
+    if(!is.null(region_name)) id_str <- paste0('roi-', region_name)
+    # All other calls
+    else id_str <- str_glue('nr{i}-{ID}')
+    
+    str_to_lower(id_str) %>%
+        str_replace_all('[:]', '')
 }
 
 
 format_size <- function(size) {
-  oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
-  num <- round(size / oom_f)
-  paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
+    oom_f <- ifelse(size >= 1e6, 1e6, 1e3)
+    num <- round(size / oom_f)
+    paste0(num, ifelse(oom_f == 1e3, 'kb', 'Mb'))
 }
 
 make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
-  if (nrow(call.table) == 0) {
-    return(str_glue('No {plotsection} CNV calls found.'))
-  }
-  always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
-  for (i in call.table$i) {
-    row <- call.table[i,]
-    res <- make_LRR_BAF_plots(row,
-                              raw_LRR_BAF, cnv_calls, gr_genes, gr_info,
-                              report.setting('call.data.and.plots', plotsection, 'plot.region.minsize'),
-                              report.setting('call.data.and.plots', plotsection, 'plot.flanking.region.relative')
-                              )
-    if(i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | row$Call_label %in% always_include) {
-      cat('### ', pmap_chr(row, CNV_ID_str, formatting = 'nice'), '\n\n')
-      if (typeof(res$gg) == 'character') {
-        cat(res$gg, '\n\n')
-          next()
-      }
-      if (report.setting('call.data.and.plots', plotsection, 'include.plot')) {
-        subchunkify(res$gg, str_glue('CNV_call.{plotsection}.nr{i}.plot'), 5, 10)
-        cat('\n\n')
-      } 
-      #TODO: replace this with HI/HL/ROI table
-      # if (report.setting('call.data.and.plots', plotsection, 'include.call.table')) {
-      #   subchunkify(simple_table_output(res$calls, params$out_format), str_glue('CNV_call.{plotsection}.nr{i}.table'))
-      #   cat('\n\n')
-      # }
-      if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') != 'None') {
-        gene.tb <-  res$genes
-        subchunkify(gene_table_output(gene.tb, plotsection, high_impact_tb, highlight_tb),
-                    str_glue('CNV_call.{plotsection}.nr{i}.table.genes'))
-        cat('\n\n')
-      }
-      cat('\n\n')
-    } else if (typeof(res$gg) != 'character') {
-        ggsave(file.path(image_folder, str_glue('CNV_call.{plotsection}.nr{i}.plot-1.png')), res$gg, width = 20, height = 10, dpi=200)
+    if (nrow(call.table) == 0) {
+        return(str_glue('No {plotsection} CNV calls found.'))
     }
-  }
+    always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
+    for (i in call.table$i) {
+        
+        row <- call.table[i,]
+        res <- make_LRR_BAF_plots(
+            row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info,
+            report_config$call.data.and.plots[[plotsection]]$plot.region.minsize,
+            report_config$call.data.and.plots[[plotsection]]$plot.flanking.region.relative
+        )
+        if(i <= report_config$call.data.and.plots[[plotsection]]$min_number_plots | row$Call_label %in% always_include) {
+            cat('### ', pmap_chr(row, CNV_ID_str), '\n\n')
+            if (typeof(res$gg) == 'character') {
+                cat(res$gg, '\n\n')
+                next()
+            }
+            if (report_config$call.data.and.plots[[plotsection]]$include.plot) {
+                subchunkify(res$gg, str_glue('CNV_call.{plotsection}.nr{i}.plot'), 5, 10)
+                cat('\n\n')
+            }
+            message(str_glue('N hotspots: {length(res$hotspots)}'))
+            if (report_config$call.data.and.plots[[plotsection]]$include.hotspot.table & length(res$hotspots)>0) {
+                res$hotspots %>%
+                    hotspot_table_output(plotsection, high_impact_tb, highlight_tb, report_config, params$out_format) %>%
+                    subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.hotspots'))
+                cat('\n\n')
+            }
+            if (report_config$call.data.and.plots[[plotsection]]$include.gene.table.details != 'None') {
+                gene_table_output(res$genes, plotsection, high_impact_tb, highlight_tb, report_config) %>%
+                    subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.table.genes'))
+                cat('\n\n')
+            }
+            cat('\n\n')
+        } else if (typeof(res$gg) != 'character') {
+            ggsave(
+                file.path(image_folder, str_glue('CNV_call.{plotsection}.nr{i}.plot-1.png')),
+                res$gg, 
+                width = 20, height = 10, dpi=200
+            )
+        }
+    }
 }
 
 # Make a separate subchunnk, this is often needed when mixing loops, tabsets & html elements
@@ -307,8 +268,7 @@ cat('## Sample Information\n\n')
 
 info.tb <- sampletable %>%
   filter(Sample_ID %in% c(sample_id, ref_id)) %>%
-  dplyr::select(Sample_ID, Sex, Reference_Sample,
-                any_of(report.setting('sample.info.extra.cols'))) %>%
+  dplyr::select(Sample_ID, Sex, Reference_Sample, any_of(report_config$sample.info.extra.cols)) %>%
   mutate(`Analysis run date` = Sys.Date()) %>%
   tr_tibble() %>%
   dplyr::select(-starts_with('Reference ('))
@@ -372,16 +332,18 @@ cat('### Config\n\n')
 config_delta <- params$config_delta %>%
     lapply(\(sublist) {
         names(sublist) <- names(sublist) %>%
-            str_replace("root['", "config: ") %>%
-            str_replace_all("']['", " : ") %>%
-            str_remove("']")
+            str_replace("root\\['", "config: ") %>%
+            str_replace_all("'\\]\\['", " : ") %>%
+            str_remove("'\\]") %>%
+            str_replace('report_settings', paste('reports :', params$report_name, ': '))
+        sublist
      })
 
 cat('Changes from default config:\n\n')
 cat(knitr::knit(text = knitr::knit_expand(text = '```yaml\n`r as.yaml(config_delta)`\n```'), quiet = TRUE))
 cat('\n\n')
 
-cat('Complete used config:\n\n')
+cat('Complete config used by StemCNV-check:\n\n')
 cat(knitr::knit(text = knitr::knit_expand(text = '```yaml\n`r as.yaml(config)`\n```'), quiet = TRUE))
 cat('\n\n')
 # session_info()
@@ -405,7 +367,7 @@ raw_LRR_BAF <- c(params$input$snp_vcf, params$input$ref_snp_vcf) %>%
     sapply(fix_rel_filepath, config=config) %>%
     lapply(parse_snp_vcf, apply_filter = FALSE) %>%
     bind_ranges() %>%
-    fix_CHROM_format('UCSC') %>%
+    fix_CHROM_format(target_chrom_style) %>%
     as_tibble() %>%
     #FIXME / future: adapt this
     dplyr::rename(Chr = seqnames, Position = start, Name = ID,
@@ -417,7 +379,7 @@ cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
     sapply(fix_rel_filepath, config=config) %>%
     lapply(parse_cnv_vcf) %>%
     bind_ranges() %>%
-    fix_CHROM_format('UCSC') %>%
+    fix_CHROM_format(target_chrom_style) %>%
     as_tibble() %>%
     mutate(
         CNV_type = factor(CNV_type),
@@ -438,23 +400,35 @@ cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
         }),
     ) 
 
-#Needed for factor comparison
+#factor levels need to include all chromosomes for comparison
 levels(cnv_calls$seqnames) <- levels(raw_LRR_BAF$Chr)
 
+
+denovo_filter_regex <- ifelse(
+    is.null(report_config$call.data.and.plots$denovo$exclude_filter),
+    'dummy',
+    report_config$call.data.and.plots$denovo$exclude_filter %>% paste(collapse = '|')
+)
 denovo_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
     filter(sample_id == !!sample_id & Call_label != 'Reference genotype') %>%
-    filter(!str_detect(FILTER, report.setting('call.data.and.plots', 'denovo', 'exclude_filter') %>% paste(collapse = '|'))) %>%
+    filter(!str_detect(FILTER, denovo_filter_regex)) %>%
     mutate(i = row_number())
 
+refgt_filter_regex <- ifelse(
+    is.null(report_config$call.data.and.plots$reference_gt$exclude_filter),
+    'dummy',
+    report_config$call.data.and.plots$reference_gt$exclude_filter %>% paste(collapse = '|')
+)
 reference_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
-    mutate(Call_label = ifelse(is.na(Call_label), '', Call_label)) %>%
     filter(sample_id == !!sample_id & Call_label == 'Reference genotype') %>%
-    filter(!str_detect(FILTER, report.setting('call.data.and.plots', 'reference_gt', 'exclude_filter') %>% paste(collapse = '|'))) %>%
+    filter(!str_detect(FILTER, refgt_filter_regex)) %>%
     mutate(i = row_number())
+
+
 
 ```
 
@@ -464,7 +438,7 @@ cat('This section describes all de-novo CNV calls, meaning calls without a match
 ```
 
 ```{r denovo_calls.table, results='asis', eval = include.section('denovo_calls.table')}
-CNV_table_output(denovo_calls.table, 'denovo', high_impact_tb, highlight_tb, caption = 'de-novo CNV calls')
+CNV_table_output(denovo_calls.table, 'denovo', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'de-novo CNV calls')
 cat('\n\n')
 ```
 
@@ -478,7 +452,7 @@ cat('This section describes all CNV calls that match the reference sample.\n\n')
 ```
 
 ```{r reference_gt_calls.table, results='asis', eval = !is.na(ref_id) & include.section('reference_gt_calls.table')}
-CNV_table_output(reference_calls.table, 'reference_gt', high_impact_tb, highlight_tb, caption = 'reference genotype CNV calls')
+CNV_table_output(reference_calls.table, 'reference_gt', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'reference genotype CNV calls')
 cat('\n\n')
 ```
 
@@ -513,18 +487,18 @@ if (any(!is.na(regions)) & length(regions)>0) {
         mutate(
             chrom = mapSeqlevels(chrom, seqlevelsStyle(cnv_calls$chrom)),
             i = row_number(),
-            region_name = ifelse(is.na(region_name), paste('Region', i), region_name),
+            region_name = ifelse(is.na(region_name), paste('ROI_Region', i), region_name),
             Check_Score = 0,
             ID = region_name,
         )
 
   # Rmd doesn"t auto-print output inside {}
-  print(CNV_table_output(fake_call_tb, 'regions_of_interest', high_impact_tb, highlight_tb, caption = 'Regions of Interest'))
+    print(CNV_table_output(fake_call_tb, 'regions_of_interest', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'Regions of Interest'))
 
-  make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
+    make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 
 } else {
-  cat('No regions of interest defined.')
+    cat('No regions of interest defined.')
 }
 
 cat('\n\n')
@@ -542,8 +516,8 @@ snp.distance.tb <-  read_excel(
 )
 
 #Build annotation table
-color_by <- report.setting('SNP_comparison', 'dendrogram.color.by') #%>% check_cols_exits()
-shape_by <- report.setting('SNP_comparison', 'dendrogram.shape.by') #%>% check_cols_exits()
+color_by <- report_config$SNP_comparison$dendrogram.color.by #%>% check_cols_exits()
+shape_by <- report_config$SNP_comparison$dendrogram.shape.by #%>% check_cols_exits()
 dend.format.df <- sampletable %>%
     filter(Sample_ID %in% snp.distance.tb$sample_distance_to)
 
@@ -593,7 +567,7 @@ if (length(shape_by) == 1) {
     } else {
         others <- dend.format.df[pull(dend.format.df, !!sym(shape_by)) %>% as.integer() > 15, shape_by] %>% na.omit() %>% unlist()
         warn_str <- str_glue('Only 15 shapes are available, but "{shape_by}" would need {length(unique(pull(dend.format.df, !!sym(shape_by))))}. ',
-							 'Consider using fewer unqiue entries. These values are summarised as "Other": {paste(others, collapse = ", ")}')
+                             'Consider using fewer unqiue entries. These values are summarised as "Other": {paste(others, collapse = ", ")}')
         cat(warn_str, '\n\n')
         warning(warn_str)
 
@@ -601,14 +575,17 @@ if (length(shape_by) == 1) {
         na.shape <- 16
 
         dend.format.df <- dend.format.df %>%
-            mutate(across(all_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
-                         across(all_of(shape_by), ~ factor(., levels = unique(.))) )
+            mutate(
+                across(all_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
+                across(all_of(shape_by), ~ factor(., levels = unique(.)))
+            )
     }
 
     dend.format.df <- dend.format.df %>%
-        mutate(shape = use.shapes[match(!!sym(shape_by), unique(!!sym(shape_by)))],
-                     shape = ifelse(is.na(!!sym(shape_by)), na.shape, shape)
-                     )
+        mutate(
+            shape = use.shapes[match(!!sym(shape_by), unique(!!sym(shape_by)))],
+            shape = ifelse(is.na(!!sym(shape_by)), na.shape, shape)
+        )
 
     shape_map <- dend.format.df$shape %>% unique()
     names(shape_map) <- levels(pull(dend.format.df, !!sym(shape_by)))
@@ -637,48 +614,63 @@ dd <- as.dendrogram(hc)
 dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$Sample_ID),]
 
 dend <- dd %>%
-  set('labels_col', dend.format.df$col) %>%
-  set('leaves_col', dend.format.df$col) %>%
-  set('leaves_pch', dend.format.df$shape) 
+    set('labels_col', dend.format.df$col) %>%
+    set('leaves_col', dend.format.df$col) %>%
+    set('leaves_pch', dend.format.df$shape) 
 
 gg1 <- dend %>%
-  raise.dendrogram (max(SNP.genotype.distances)/50) %>% 
-  set('labels_cex', .8) %>%
-  set('leaves_cex', 2) %>%
-  set('branches_lwd', .5) %>%
-  as.ggdend() %>%
-  ggplot(offset_labels = -max(SNP.genotype.distances)/25,
-             theme = theme_classic()) +
-    scale_y_continuous(name = 'SNP distance (manhattan method)',
-                                         breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
-                                         labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','),
-                                         limits = c(-max(SNP.genotype.distances)/2, NA),
-                                         expand = expansion()) +
+    raise.dendrogram (max(SNP.genotype.distances)/50) %>% 
+    set('labels_cex', .8) %>%
+    set('leaves_cex', 2) %>%
+    set('branches_lwd', .5) %>%
+    as.ggdend() %>%
+    ggplot(offset_labels = -max(SNP.genotype.distances)/25, theme = theme_classic()) +
+    scale_y_continuous(
+        name = 'SNP distance (manhattan method)',
+        breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
+        labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','),
+        limits = c(-max(SNP.genotype.distances)/2, NA),
+        expand = expansion()
+    ) +
     scale_x_continuous(limits = c(0, NA), expand = expansion(add = c(0, .5))) +
-    geom_line(data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
-                        aes(x=x, y=y)) +
-  theme(legend.position = "bottom",
-            axis.text.x = element_blank(),
-            axis.title.x = element_blank(),
-            axis.line.x = element_blank(),
-            axis.ticks.x = element_blank(),
-            axis.line.y = element_blank(),
-            axis.title.y = element_text(angle = 90, hjust = .75)
-            )
+    geom_line(
+        data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
+        aes(x=x, y=y)
+    ) +
+    theme(
+        legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.title.y = element_text(angle = 90, hjust = .75)
+    )
 
 # make legend
 gg2 <- dend.format.df %>%
-  #arrange(SampleGroup) %>%
-  ggplot(aes(x = Sample_ID, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) +
-  geom_point() + 
-  scale_color_manual(values = col_map, guide = ifelse(color_by == '_dummy_color', list('none'),
-                                        list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] )  +
-  scale_shape_manual(values = shape_map, guide = ifelse(shape_by == '_dummy_shape', list('none'),
-                                  list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T)))[[1]] ) +
-  theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
+    #arrange(SampleGroup) %>%
+    ggplot(aes(x = Sample_ID, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) +
+    geom_point() + 
+    scale_color_manual(
+        values = col_map,
+        guide = ifelse(
+            color_by == '_dummy_color',
+            list('none'),
+            list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
+        )[[1]]
+    )  +
+    scale_shape_manual(
+        values = shape_map,
+        guide = ifelse(
+            shape_by == '_dummy_shape',
+            list('none'),
+            list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
+        )[[1]]
+    ) +
+    theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
 
-gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(
-  5, 1))
+gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(5, 1))
 
 subchunkify(gg, 'snp.dendrogram.plot', 8, 10)
 
@@ -695,21 +687,28 @@ snp.distance.tb %>%
 cat('## Virtual Karyotype\n\n')
 
 if (!is.na(ref_id)) {
-  cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
+    cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
 }
 
 # Use prepared static data table (genome build specific, UCSC derived) instead of inbuilt RIdeogram
 # data(human_karyotype, package="RIdeogram")
-genome_data <- gr_info %>% filter(centromer) %>%
-  group_by(size) %>%
-  reduce_ranges() %>%
-  as.data.frame() %>%
-  dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
-  mutate(Start = 0,
-         Chr = str_remove(Chr, 'chr')) %>%
-  select(Chr, Start, End, CE_start, CE_end)
+genome_data <- gr_info %>% 
+    filter(centromer) %>%
+    group_by(size) %>%
+    reduce_ranges() %>%
+    as.data.frame() %>%
+    dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
+    mutate(Start = 0, Chr = str_remove(Chr, 'chr')) %>%
+    select(Chr, Start, End, CE_start, CE_end)
 
+
+# ideo_filter_regex <- ifelse(
+#     is.null(report_config$ideogram.exclude_filter),
+#     'dummy',
+#     report_config$ideogram.exclude_filter %>% paste(collapse = '|')
+# )
 sample.calls <- cnv_calls %>%
+    #filter(!str_detect(FILTER, ideo_filter_regex)) %>%
     dplyr::select(seqnames, start, end, CNV_type, sample_id) %>%
     dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
     mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
@@ -734,27 +733,34 @@ convertSVG(svg_file1, file = png_file1)
 if (params$out_format == 'html') {
     cat(paste0('<img src="', png_file1, '" width="800" />'))
 } else {
-  #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
-  include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
+    #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
+    include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
 }
 
 if (!is.na(ref_id)) {
-  refdata <- sample.calls %>%
+    refdata <- sample.calls %>%
         filter(sample_id == ref_id) %>%
         dplyr::select(Chr, Start, End, Value)
 
-  svg_file2 <- tempfile(fileext = '.svg')
-  png_file2 <- file.path(image_folder, 'virtualKaryotype_ideogram_vsRef.png')
+    svg_file2 <- tempfile(fileext = '.svg')
+    png_file2 <- file.path(image_folder, 'virtualKaryotype_ideogram_vsRef.png')
 
-  ideogram(genome_data, overlaid = overlay.tb, label = refdata, label_type = 'heatmap',
-         colorset1 = c('red', 'grey50', 'green'), colorset2 = c('red', 'grey50', 'green'), output = svg_file2)
-  convertSVG(svg_file2, file = png_file2)
+    ideogram(
+        genome_data,
+        overlaid = overlay.tb,
+        label = refdata,
+        label_type = 'heatmap',
+        colorset1 = c('red', 'grey50', 'green'),
+        colorset2 = c('red', 'grey50', 'green'), 
+        output = svg_file2
+    )
+    convertSVG(svg_file2, file = png_file2)
 
-  if (params$out_format == 'html') {
-    cat(paste0('<img src="', png_file2, '" width="800" />'))
-  } else {
-    include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
-  }
+    if (params$out_format == 'html') {
+        cat(paste0('<img src="', png_file2, '" width="800" />'))
+    } else {
+        include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
+    }
 }
 
 cat('\n\n')

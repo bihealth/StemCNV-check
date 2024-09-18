@@ -83,8 +83,8 @@ check_scores <- config$settings$CNV_processing$Check_score_values
 size_categories <- config$settings$CNV_processing$Precision$size_categories
 precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 
-gr_genes <- load_gtf_data(config)
-gr_info  <- load_genomeInfo(config)
+gr_genes <- load_gtf_data(config, target_chrom_style)
+gr_info  <- load_genomeInfo(config, target_chrom_style)
 
 HI_file <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
 	str_replace('__inbuilt__', config$snakedir)

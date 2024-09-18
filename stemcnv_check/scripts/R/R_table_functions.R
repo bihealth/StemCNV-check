@@ -1,3 +1,6 @@
+library(tidyverse)
+library(DT)
+library(knitr)
 
 vector_to_js <- function(v) {
     if (is.null(names(v))) {
@@ -121,7 +124,9 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
 
 }
 
-format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, listname = 'high_impact') {
+format_hotspots_to_badge <- function(
+    hotspot_vec, CNVtype_vec, gene_details, listname = 'high_impact',  include_hover = TRUE
+) {
   if (listname == "high_impact") {
     shorthand <- 'HI'
   } else if (listname == "highlight") {
@@ -130,81 +135,109 @@ format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, lis
     stop(str_glue("Unsupported list type '{listname}', only 'high_impact' and 'highlight' are defined"))
   }
 
-  tb <- tibble(hotspot = str_split(hotspot_vec, ','),
-               CNV_type = CNVtype_vec) %>%
-          mutate(id = 1:dplyr::n()) %>%
-          unnest(hotspot) %>%
-          left_join(gene_details) %>%
-          mutate(
+    tb <- tibble(
+        hotspot = str_split(hotspot_vec, '\\|'),
+        CNV_type = CNVtype_vec
+    ) %>%
+        mutate(id = 1:dplyr::n()) %>%
+        unnest(hotspot) %>%
+        left_join(gene_details, by = 'hotspot') %>%
+        mutate(
+            include_hover = include_hover,
             do_format = case_when(
-              is.na(call_type) ~ FALSE,
-              call_type == CNV_type ~ TRUE,
-              call_type == 'any' ~ TRUE,
-              TRUE ~ FALSE
+                is.na(call_type) ~ FALSE,
+                call_type == CNV_type ~ TRUE,
+                call_type == 'any' ~ TRUE,
+                TRUE ~ FALSE
             ),
             source = str_replace_all(source, '\\\\n', '&#013;') %>%
-              str_replace_all('\\n', '&#013;'),
+                str_replace_all('\\n', '&#013;'),
             out_str = ifelse(
-              hotspot != "" & !is.na(list_name) & do_format,
-              paste0(str_glue('<span class="badge badge-{shorthand}" title="'),
-                     str_glue('{listname} list name: {list_name}&#013;'), #\\n
-                     ifelse(!is.na(check_score), str_glue('custom Check_Score: {check_score}&#013;'), ''),
-                     str_glue('Annotation source:&#013;{source}'),
-                     str_glue('">{hotspot}</span>')),
-             hotspot
+                hotspot != "" & !is.na(list_name) & do_format,
+                paste0(
+                    str_glue('<span class="badge badge-{shorthand}"'),
+                    ifelse(
+                        include_hover,
+                        paste0(
+                            str_glue(' title="{listname} list name: {list_name}&#013;'),
+                            ifelse(!is.na(check_score), 'custom Check_Score: {check_score}&#013;', ''),
+                            str_glue('Annotation source:&#013;{source}"')
+                        ),
+                        ''
+                    ),                    
+                    str_glue('>{hotspot}</span>')
+                ),
+                hotspot
             )
-          ) %>%
-          group_by(id) %>%
-          summarise(
-                  sep = ifelse(all(str_detect(out_str, '^<')), "", ', '),
-                  hotspot = base::paste(out_str, collapse='')
-          ) %>%
-          mutate(hotspot = ifelse(hotspot %in% c('', 'NA'), '-', hotspot))
+        ) %>%
+        group_by(id) %>%
+        summarise(
+            sep = ifelse(all(str_detect(out_str, '^<')), "", ', '),
+            hotspot = base::paste(out_str, collapse='')
+        ) %>%
+        mutate(hotspot = ifelse(hotspot %in% c('', 'NA'), '-', hotspot))
 
-  if (nrow(tb) == 0 | all(is.na(hotspot_vec) | hotspot_vec == 'NA')) {
-    out_vec <- ifelse(is.na(hotspot_vec), '-', hotspot_vec)
-    return(out_vec)
-  } else {
-    return(tb$hotspot)
-  }
+    if (nrow(tb) == 0 | all(is.na(hotspot_vec) | hotspot_vec == 'NA')) {
+        out_vec <- ifelse(is.na(hotspot_vec), '-', hotspot_vec)
+        return(out_vec)
+    } else {
+        return(tb$hotspot)
+    }
 }
 
-CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, caption = NULL) {
-  always_include <- report.setting('call.data.and.plots', plotsection, 'always_include')
-  # Reorder & subset columns
-  tb <- tb %>%
+CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_info, report_config, caption = NULL) {
+    always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
+    # Reorder & subset columns
+    tb <- tb %>%
     # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
-    mutate(Plot = ifelse(
-             i <= report.setting('call.data.and.plots', plotsection, 'min_number_plots') | Call_label %in% always_include,
-             paste0('<a data-toggle="tab" href="#', pmap_chr(., CNV_ID_str, formatting = 'link'),
-             #       ' onclick="$(', "'#", pmap_chr(., CNV_ID_str, formatting = 'link'), "').trigger('click')",
-                    '">Nr. ', i, '</a>'),
-             #       '">', pmap_chr(., CNV_ID_str), '</a>'),
-             paste0('<a href="" onclick="window.open(\'./', image_folder, "/CNV_call.", plotsection, ".nr", i, '.plot-1.png\'); return false;">',
-                    'Nr. ', i,' (ext. plot)</a>')
-              # pmap_chr(., CNV_ID_str),' (ext. plot)</a>')
-             ),
-           Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-           HighImpact = map2_chr(HighImpact, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
-           Highlight = map2_chr(Highlight, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
-    ) %>%
-    dplyr::rename(copynumber = CN) %>%  
-    select(sample_id, ID, i, #invis 0-2
-           Plot, Call_label, Check_Score,
-           CNV_type, chrom, Size,
-           start, end, #invis 9-10
-           CNV_caller, HighImpact, Highlight, ROI_hits,
-           Precision_Estimate, probe_coverage_gap, high_probe_density,
-           # invis: 18++
-           copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
-           caller_merging_coverage,
-           Gap_percent
-    ) 
+        mutate(
+            Plot = ifelse(
+                i <= report_config$call.data.and.plots[[plotsection]]$min_number_plots | Call_label %in% always_include,
+                paste0(
+                    '<a data-toggle="tab" href="#',
+                    pmap_chr(., CNV_ID_str),
+                    '">Nr. ', i, '</a>'
+                ),
+                paste0(
+                    '<a href="" onclick="window.open(\'./',
+                    image_folder, "/CNV_call.", plotsection, ".nr", i, '.plot-1.png\'); return false;">',
+                    'Nr. ', i,' (ext. plot)</a>'
+                )
+            ), 
+            Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
+            HighImpact = map2_chr(HighImpact, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
+            Highlight = map2_chr(Highlight, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
+            genome_bands = pmap_chr(., \(chrom, start, end, ...) {
+                gr_info %>% 
+                    filter_by_overlaps(GRanges(seqnames = chrom, strand = '*', ranges = IRanges(start, end))) %>%
+                    as_tibble() %>%
+                    summarise(
+                        gbands = ifelse(
+                            dplyr::n() > 1,
+                            paste(section_name[start == min(start)], '-', section_name[start == max(start)]),
+                            section_name
+                        )
+                    ) %>%
+                    pull(gbands)
+            })
+        ) %>%
+        dplyr::rename(copynumber = CN) %>%  
+        select(
+            sample_id, ID, i, #invis 0-2
+            Plot, Call_label, Check_Score,
+            CNV_type, chrom, Size, genome_bands,
+            start, end, #invis 10-11
+            CNV_caller, HighImpact, Highlight, ROI_hits,
+            Precision_Estimate, probe_coverage_gap, high_probe_density,
+            # invis: 19++
+            copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
+            caller_merging_coverage, Gap_percent
+        ) 
 
-  if (params$out_format == 'html') {
+    if (params$out_format == 'html') {
       
-    #TODO adjust plot hovertext to match settings  
-    column_help_text <- c(
+        #TODO adjust plot/link hovertext to match settings  
+        column_help_text <- c(
             'Sample_ID from the input "sample_table"',
             'Internal ID for the CNV call',
             'Number of the CNV call, sorted by descending Check_Score',
@@ -214,6 +247,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             'Type of CNV call (gain, loss, LOH)',
             'Chromosome of the CNV call',
             'Size of the CNV call (in base pairs)',
+            'Genome bands overlapping the CNV call',
             'Start position of the CNV call',
             'End position of the CNV call',
             'Caller tools detecting this CNV call',
@@ -232,93 +266,149 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, capt
             # 'Call confidence of the caller where available, comma separated for multiple callers',
             'For calls with multiple CNV callers: percentage overlap of each caller with the combined call area',
             'Percentage of the CNV call area with a gap probe coverage'
-    )
+        )
 
-
-    dt <- datatable(tb %>% rename_with(format_column_names),
+        dt <- datatable(
+            tb %>% rename_with(format_column_names),
             rownames = FALSE,
             escape = FALSE,
             extensions = c('Buttons', 'Scroller'),
             filter = 'top',
             caption = caption,
             options = list(
-              scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
-              dom = 'Bftilp',
-              buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-              columnDefs = list(
-                #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0:2,9:10,18:(ncol(tb)-1)), visible = FALSE)
-              )
+                scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
+                dom = 'Bftilp',
+                buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+                columnDefs = list(
+                    #This uses 0-indexing vs the usual R 1-indexing
+                    list(targets = c(0:2,10:11,19:(ncol(tb)-1)), visible = FALSE)
+                )
             ),
             callback = JS(
-              "var info_text = ", vector_to_js(column_help_text), ";",
-              "header = table.columns().header();",
-              "for (var i = 0; i < info_text.length; i++) {",
-              "  $(header[i]).attr('title', info_text[i]);",
-              "};"
+                "var info_text = ", vector_to_js(column_help_text), ";",
+                "header = table.columns().header();",
+                "for (var i = 0; i < info_text.length; i++) {",
+                "  $(header[i]).attr('title', info_text[i]);",
+                "};"
             )
-          ) %>%
-      formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
-      formatRound(c('Check Score', 'Gap Percent'), digits = 2)
+        ) %>%
+        formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
+        formatRound(c('Check Score', 'Gap Percent'), digits = 2)
     return(dt)
-  } else {
-    tb <- tb %>% select(CNV_type, Check_Score,
-                        chrom, start, end, Size, CNV_caller,
-                        HighImpact, Highlight,
-                        Precision_Estimate, probe_coverage_gap, high_probe_density
-    ) %>% rename_with(format_column_names)
-    return(kable(tb, caption = caption))
-  }
+    } else {
+        tb <- tb %>% 
+            select(
+                CNV_type, Check_Score,
+                chrom, start, end, Size, genome_bands, CNV_caller,
+                HighImpact, Highlight,
+                Precision_Estimate, probe_coverage_gap, high_probe_density
+            ) %>% 
+            rename_with(format_column_names)
+        return(kable(tb, caption = caption))
+    }
 }
 
-gene_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, caption = NULL, extra_cols = c()) {
+gene_table_output <- function(
+    tb, plotsection, high_impact_tb, highlight_tb, report_config, caption = NULL, extra_cols = c()
+) {
 
-  if (report.setting('call.data.and.plots', plotsection, 'include.gene.table.details') == 'Call') {
-    tb <- filter(tb, direct_hit)
-    gene_area <- 'call'
-  } else {
-    extra_cols <- c(extra_cols, 'direct_hit')
-    gene_area <- 'plot'
-  }
-  if (nrow(tb) == 0) {
-    return(str_glue('No genes in the {gene_area} area.'))
-  }
-  tb <- tb %>%
-    mutate(
-      across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)),
-      high_impact = factor(ifelse(high_impact, 'hit', '-'), levels = c('hit', '-')),
-      highlight = factor(ifelse(highlight, 'hit', '-'), levels = c('hit', '-')),
-      name_is_geneid = str_detect(gene_name, 'ENSG[0-9]{11}'),
-      # REEV: gene_id *should* work, but won't if they are deprectated/not in Annonars
-      REEV = str_glue("<a href='https://reev.bihealth.org/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
-      GTex = str_glue("<a href='https://gtexportal.org/home/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
-      NCBI = ifelse(name_is_geneid, '-', str_glue("<a href='https://pubmed.ncbi.nlm.nih.gov/?term={gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>")),
-      Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
-      #Reformat gene name
-      gene_name = ifelse(
-              high_impact == 'hit',
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact')),
-              map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight'))
-              ),
+    if (report_config$call.data.and.plots[[plotsection]]$include.gene.table.details == 'Call') {
+        tb <- filter(tb, direct_hit)
+        gene_area <- 'call'
+    } else {
+        extra_cols <- c(extra_cols, 'direct_hit')
+        gene_area <- 'plot'
+    }
+    if (nrow(tb) == 0) {
+        return(str_glue('No genes in the {gene_area} area.'))
+    }
+    tb <- tb %>%
+        mutate(
+            across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)),
+            high_impact = factor(ifelse(high_impact, 'hit', '-'), levels = c('hit', '-')),
+            highlight = factor(ifelse(highlight, 'hit', '-'), levels = c('hit', '-')),
+            name_is_geneid = str_detect(gene_name, 'ENSG[0-9]{11}'),
+            # REEV: gene_id *should* work, but won't if they are deprectated/not in Annonars
+            REEV = str_glue("<a href='https://reev.bihealth.org/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
+            GTex = str_glue("<a href='https://gtexportal.org/home/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
+            NCBI = ifelse(name_is_geneid, '-', str_glue("<a href='https://pubmed.ncbi.nlm.nih.gov/?term={gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>")),
+            Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
+            #Reformat gene name
+            gene_name = ifelse(
+                high_impact == 'hit',
+                map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
+                map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight', FALSE))
+            ),
+        ) %>%
+        arrange(high_impact, highlight, desc(direct_hit), start) %>%
+        select(
+            gene_name, gene_id, seqnames, start, end, strand, high_impact, highlight,
+            any_of(extra_cols), REEV, GTex, NCBI, Ensembl
+        )
+    if (params$out_format == 'html') {
+        colors1 <- ifelse(tb$high_impact == 'hit', 'red' , 'white')
+        colors2 <- ifelse(tb$highlight == 'hit', 'orange', 'white')
+        dt <- datatable(
+            tb, rownames = FALSE, escape = FALSE,
+            options = list(
+                dom = 'Bftilp', pageLength = 10,
+                extensions = c('Buttons'),
+                buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+                columnDefs = list(list(targets = 1:7, visible = FALSE))
+                )
+            ) %>%
+            formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
+            formatStyle('highlight', backgroundColor = styleRow(1:nrow(tb), colors2))
+        return(dt)
+    } else {
+        tb <- tb %>% select(gene_name, gene_id, high_impact, highlight, any_of(extra_cols))
+        return(kable(tb, caption = caption))
+    }
+}
+
+hotspot_table_output <- function(
+    hotspots, plotsection, high_impact_tb, highlight_tb, report_config, out_format, caption = NULL
+){
+    tb <- bind_rows(
+        high_impact_tb,
+        highlight_tb
     ) %>%
-    arrange(high_impact, highlight, desc(direct_hit), start) %>%
-    select(gene_name, gene_id, seqnames, start, end, strand, high_impact, highlight, any_of(extra_cols), REEV, GTex, NCBI, Ensembl)
-  if (params$out_format == 'html') {
-    colors1 <- ifelse(tb$high_impact == 'hit', 'red' , 'white')
-    colors2 <- ifelse(tb$highlight == 'hit', 'orange', 'white')
-    dt <- datatable(tb, rownames = FALSE, escape = FALSE,
-                     options = list(dom = 'Bftilp', pageLength = 10,
-                                    extensions = c('Buttons'),
-                                    buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-                                    columnDefs = list(list(
-                                      targets = 1:7, visible = FALSE
-                                    ))
-                     )) %>%
-        formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
-        formatStyle('highlight', backgroundColor = styleRow(1:nrow(tb), colors2))
-    return(dt)
-  } else {
-    tb <- tb %>% select(gene_name, gene_id, high_impact, highlight, any_of(extra_cols))
-    return(kable(tb, caption = caption))
-  }
+        filter(hotspot %in% hotspots) 
+    
+    if (out_format == 'html') {
+        dt <- datatable(
+            tb %>%
+                select(hotspot, list_name, source, check_score, comment, any_of(colnames(tb))) %>%
+                mutate(
+                    #TODO: badge only, no hover
+                    hotspot = ifelse(
+                        list_name %in% unique(high_impact_tb$list_name),
+                        map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
+                        map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight', FALSE))
+                    )
+                ) %>%
+                rename_with(format_column_names),
+            caption = caption,
+            options = list(
+                dom = 'Bt', 
+                extensions = c('Buttons'),
+                buttons = c('colvis', 'copy', 'print'),
+                pageLength = nrow(tb),
+                # DT cols are 0-indexed
+                columnDefs = list(list(targets = 5:(ncol(tb)-1), visible = FALSE))
+            ),
+            rownames = FALSE,
+            escape = FALSE
+        )
+        return(dt)
+    } else {
+        return(
+            kable(
+                tb %>%
+                    select(hotspot, list_name, source, check_score, comment) %>%
+                    rename_with(format_column_names),
+                caption = caption
+            )
+        )
+    }
 }

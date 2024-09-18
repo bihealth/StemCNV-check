@@ -126,11 +126,11 @@ def get_ref_input_function(input_file_type):
     if callable(input_file_type):
         get_file_pattern = input_file_type
     else:
-        get_file_pattern = lambda wildcards: os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{file_pattern}")
+        get_file_pattern = lambda wildcards: os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{input_file_type}")
     def input_function(wildcards):
         sample_id, ref_id = get_ref_id(wildcards)
         if ref_id:
-            return get_file_pattern(wildcards)
+            return expand(get_file_pattern(wildcards), sample_id = ref_id)
         else:
             return []
-    return  input_function
+    return input_function

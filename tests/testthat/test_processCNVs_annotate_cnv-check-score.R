@@ -12,19 +12,19 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score
 # - annotate_Call.label
 
 config <- list(
-  'static_data' = list(
-    'genome_gtf_file' = test_path('../data/hg_minimal.gtf'),
-    'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
-  ),
-  'settings' = list(
-    'CNV_processing' = list(
-      'gene_overlap' = list(
-        'exclude_gene_type_regex' = c(),
-        'include_only_these_gene_types' = c()
-      )
+    'static_data' = list(
+        'genome_gtf_file' = test_path('../data/hg_minimal.gtf'),
+        'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
     ),
-    'chromosomes' = paste0('chr', c(1:22, 'X', 'Y'))
-  )
+    'settings' = list(
+        'CNV_processing' = list(
+            'gene_overlap' = list(
+                'exclude_gene_type_regex' = c(),
+                'include_only_these_gene_types' = c()
+            )
+        ),
+        'chromosomes' = paste0('chr', c(1:22, 'X', 'Y'))
+    )
 )
 
 base_tb <- tibble(
@@ -42,8 +42,8 @@ base_tb <- tibble(
     reference_overlap = c(T, T, F, F, F, F, T),
     reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
     reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
-    high_impact_hits = c(NA, NA, 'dummyC', NA, '1p36,chr1:40000-50000', NA, NA),
-    highlight_hits = c(NA, 'DDX11L1', NA, NA, NA, NA, 'DDX11L1,dummyB'),
+    high_impact_hits = c(NA, NA, 'dummyC', NA, '1p36|chr1:40000-50000', NA, NA),
+    highlight_hits = c(NA, 'DDX11L1', NA, NA, NA, NA, 'DDX11L1|dummyB'),
     ROI_hits = c('fake-ROI', NA, NA, 'dummyC', NA, NA, NA),    
     Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
     probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
@@ -51,16 +51,16 @@ base_tb <- tibble(
 )
 
 expected_gene_tb <- base_tb %>%
-  mutate(
-    width = c( 1501, 4001, 55001, 5001, 10001, 2000001, 57001) %>% as.integer(),
-    n_genes = c(1, 1, 1, 1, 1, 0, 3)  %>% as.integer(),
-    overlapping_genes = c('dummyA', 'DDX11L1', "dummyC", "dummyC", 'dummyB', NA, 'dummyA,DDX11L1,dummyB'),
-  )
+    mutate(
+        width = c( 1501, 4001, 55001, 5001, 10001, 2000001, 57001) %>% as.integer(),
+        n_genes = c(1, 1, 1, 1, 1, 0, 3)  %>% as.integer(),
+        overlapping_genes = c('dummyA', 'DDX11L1', "dummyC", "dummyC", 'dummyB', NA, 'dummyA|DDX11L1|dummyB'),
+    )
 
 expected_final_tb <- expected_gene_tb %>%
-  mutate(
-    seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']])
-  )
+    mutate(
+        seqnames = factor(seqnames, levels = genomeStyles('Homo_sapiens')[['UCSC']])
+    )
 
 test_that("annotate_gene_overlap", {
     # Test scenarios:
@@ -74,93 +74,74 @@ test_that("annotate_gene_overlap", {
     
 })
 
-# test_that("test gr_to_final_tb", {
-#     # Test scenarios:
-#     # - missing columns (list & normal)
-#     expect_equal(finalise_tb(as_granges(expected_gene_tb), 'UCSC'), expected_final_tb)
-#     # extra tests:
-#     # - input column is not list and will be converted
-#     # Note: this should not really happen, also list cols are slowly being deprecated
-#     expect_equal(
-#         finalise_tb(
-#             expected_gene_tb %>%
-#                 mutate(CNV_caller = c("3","3","3","1","1","2","2")) %>%
-#                 as_granges(),
-#             'UCSC'
-#         ), 
-#         expected_final_tb %>%
-#             mutate(CNV_caller = c("3","3","3","1","1","2","2"))
-#     )
-# })
-
 
 test_that("Annotate CNV check scores", {
-  CNV_size_score <- function(len) {   1/3 * log(len) * log(len) - 15 }
-  LOH_size_score <- function(len) { 0.275 * log(len) * log(len) - 15 }
-  config$settings$CNV_processing$Check_score_values <- list(
-      'roi_hit_base' = 50,
-      'highimpact_base' = 20,
-      'highlight_base' = 0,
-      'per_gene_roi' = 10,
-      'per_gene_highimpact' = 10,
-      'per_gene_highlight' = 5,
-      'per_gene_any' = 0.2
-  )
-  
-  hi_gr <- tibble(
-    seqnames = 'chr1',
-    start = c(28050000, 40000, 0),
-    end = c(28070000, 50000, 7200000),
-    strand = c('+', '*', '*'),
-    list_name = 'test-list',
-    hotspot = c('dummyC', 'chr1:40000-50000', '1p36'),
-    mapping = c('gene_name', 'position', 'gband'),
-    call_type = c('gain', 'any', 'loss'),
-    check_score = c(15, NA, NA),
-    source = c('dummy', 'dummy', 'dummy'),
-    comment = NA
-  ) %>% as_granges()
-  
-  hl_gr <- tibble(
-    seqnames = 'chr1',
-    start = 11873,
-    end = 14409,
-    strand = '+',
-    list_name = 'test-list',
-    hotspot = 'DDX11L1', 
-    mapping = 'gene_name', 
-    call_type = 'any', 
-    check_score = NA_real_,
-    source = 'dummy',
-    comment = NA
-  ) %>% as_granges()
-  
-  expected_tb <- expected_final_tb %>%
-    mutate(
-      # Test scenarios:
-      Check_Score = c(
-        # ROI (base + 1 hit) + 1 other gene 
-        CNV_size_score(1501) + 50 + 10 + 0.2, 
-        # HL hit (base is 0)
-        CNV_size_score(4001) + 5, 
-        # HI hit, 1 gene with custom score 15
-        CNV_size_score(55001) + 20 + 15, 
-        # ROI hit (base + 1), ROI *is* the one overlapping gene, so no extra
-        CNV_size_score(5001) + 50 + 10,
-        # HI hit (base  + 2 genes) , + 1 other gene
-        CNV_size_score(10001) + 20 + 10+10 + 0.2,
-        # no genes
-        LOH_size_score(2000001) + 0,
-        # HL hit (1 gene) + 2 other genes
-        LOH_size_score(57001) + 5 + 0.4
-      )
+    CNV_size_score <- function(len) {   1/3 * log(len) * log(len) - 15 }
+    LOH_size_score <- function(len) { 0.275 * log(len) * log(len) - 15 }
+    config$settings$CNV_processing$Check_score_values <- list(
+        'roi_hit_base' = 50,
+        'highimpact_base' = 20,
+        'highlight_base' = 0,
+        'per_gene_roi' = 10,
+        'per_gene_highimpact' = 10,
+        'per_gene_highlight' = 5,
+        'per_gene_any' = 0.2
     )
-  expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
-  # Extra test:
-  # - HL base score not 0
-  config$settings$CNV_processing$Check_score_values$highlight_base <- 2.7
-  expected_tb[c(2,7), 'Check_Score'] <- expected_tb[c(2,7), 'Check_Score'] + 2.7
-  expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
+  
+    hi_gr <- tibble(
+        seqnames = 'chr1',
+        start = c(28050000, 40000, 0),
+        end = c(28070000, 50000, 7200000),
+        strand = c('+', '*', '*'),
+        list_name = 'test-list',
+        hotspot = c('dummyC', 'chr1:40000-50000', '1p36'),
+        mapping = c('gene_name', 'position', 'gband'),
+        call_type = c('gain', 'any', 'loss'),
+        check_score = c(15, NA, NA),
+        source = c('dummy', 'dummy', 'dummy'),
+        comment = NA
+    ) %>% as_granges()
+  
+    hl_gr <- tibble(
+        seqnames = 'chr1',
+        start = 11873,
+        end = 14409,
+        strand = '+',
+        list_name = 'test-list',
+        hotspot = 'DDX11L1', 
+        mapping = 'gene_name', 
+        call_type = 'any', 
+        check_score = NA_real_,
+        source = 'dummy',
+        comment = NA
+    ) %>% as_granges()
+  
+    expected_tb <- expected_final_tb %>%
+        mutate(
+            # Test scenarios:
+            Check_Score = c(
+                # ROI (base + 1 hit) + 1 other gene 
+                CNV_size_score(1501) + 50 + 10 + 0.2, 
+                # HL hit (base is 0)
+                CNV_size_score(4001) + 5, 
+                # HI hit, 1 gene with custom score 15
+                CNV_size_score(55001) + 20 + 15, 
+                # ROI hit (base + 1), ROI *is* the one overlapping gene, so no extra
+                CNV_size_score(5001) + 50 + 10,
+                # HI hit (base  + 2 genes) , + 1 other gene
+                CNV_size_score(10001) + 20 + 10+10 + 0.2,
+                # no genes
+                LOH_size_score(2000001) + 0,
+                # HL hit (1 gene) + 2 other genes
+                LOH_size_score(57001) + 5 + 0.4
+            )
+        )
+    expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
+    # Extra test:
+    # - HL base score not 0
+    config$settings$CNV_processing$Check_score_values$highlight_base <- 2.7
+    expected_tb[c(2,7), 'Check_Score'] <- expected_tb[c(2,7), 'Check_Score'] + 2.7
+    expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
 })
 
 

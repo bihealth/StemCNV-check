@@ -72,7 +72,7 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                     str_glue(
                         "{CNV_caller}_{start}-{end}_CN{CN}_",
                         "cov{round(overlap_merged_call, 2)}_",
-                        "{str_replace_all(FILTER, ';', '&')}"
+                        "{ifelse(is.na(FILTER), 'PASS', str_replace_all(FILTER, ';', '&'))}"
                     ), 
                     collapse = '|'
                 ),

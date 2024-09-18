@@ -184,7 +184,6 @@ rule run_process_CNV_calls:
         ref_data=get_ref_input_function('combined-cnv-calls.vcf.gz'),
         snp_vcf=cnv_vcf_input_function("settings:CNV_processing:call_processing"),
     output:
-        # tsv=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.tsv"),
         vcf=os.path.join(
             DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
         ),
@@ -198,7 +197,6 @@ rule run_process_CNV_calls:
         settings=config["settings"]["CNV_processing"],
     log:
         err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
-        # out=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "out.log")
     conda:
         "../envs/general-R.yaml"
     script:

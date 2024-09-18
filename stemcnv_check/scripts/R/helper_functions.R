@@ -9,6 +9,7 @@ fix_CHROM_format <- function(gr, target_style) {
     return(sortSeqlevels(gr))
 }
 
+
 get_sex_chroms <- function(tb.or.gr) {
     if ("GRanges" %in% class(tb.or.gr)) {
         chroms <- tb.or.gr
@@ -20,6 +21,7 @@ get_sex_chroms <- function(tb.or.gr) {
         filter(sex) %>%
         pull(chroms %>% seqlevelsStyle() %>% head(1))
 }
+
 
 read_sampletable <- function(filename) {
     read_tsv(filename, col_types = 'cccccc', comment = '#')
@@ -59,15 +61,7 @@ get_target_chrom_style <- function(config, snp_vcf_gr) {
     return(target_style)
 }
 
-## preprocessed
 
-# load_preprocessed_cnvs <- function(fname){
-# 	read_tsv(fname) %>%
-# 		rowwise() %>%
-# 		mutate(across(any_of(get_list_cols()), ~ str_split(., ';')))
-# }
-
-## GTF data
 fix_rel_filepath <- function(path, config){
 	#Rmd might change cwd, so relative paths can break if not read/forwarded by snakemake
 	if(file.exists(path)) return(path)
@@ -76,7 +70,7 @@ fix_rel_filepath <- function(path, config){
 	else stop(paste('Could not find file path:', path))
 }
 
-load_gtf_data <- function(config) {
+load_gtf_data <- function(config, target_style='UCSC') {
 	gtf_file <- fix_rel_filepath(config$static_data$genome_gtf_file, config)
 	exclude_regexes <- config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
@@ -84,7 +78,9 @@ load_gtf_data <- function(config) {
 
 	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
 		filter(type == 'gene') %>%
-		mutate(gene_id = str_remove(gene_id, '\\..*'))
+		mutate(gene_id = str_remove(gene_id, '\\..*')) %>%
+        fix_CHROM_format(target_style)
+    
 	if (exclude_regexes != ''){
 		gr_genes <- filter(gr_genes, !str_detect(gene_type, exclude_regexes))
 	}
@@ -96,70 +92,18 @@ load_gtf_data <- function(config) {
 
 ## GenomeInfo Data
 
-load_genomeInfo <- function(config) {
-
+load_genomeInfo <- function(config, target_style='UCSC') {
+    
 	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
 	gr_info <- read_tsv(fix_rel_filepath(config$static_data$genomeInfo_file, config),
 	                    show_col_types = FALSE) %>%
 		filter(!is.na(band_start)) %>%
 		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
-		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name))
+		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name)) %>%
+        fix_CHROM_format(target_style)
 
 	gr_info
 }
-
-# Output
-
-# ## Default table structure for CNVs
-# get_expected_final_tb <- function(chrom_style='UCSC') {
-# 
-#     tibble(
-#         sample_id = character(),
-#         seqnames = factor(c(), levels = genomeStyles('Homo_sapiens')[[chrom_style]]),
-#         start = integer(),
-#         end = integer(),
-#         width = integer(),
-#         CNV_type = character(),
-#         ID = character(),
-#         Check_Score = double(),
-#         Call_label = character(),
-#         reference_overlap = logical(), # not needed for vcf output
-#         CNV_caller = list(),
-#         # n_premerged_calls = list(),
-#         n_probes = integer(),
-#         n_uniq_probes = integer(),
-#         probe_density_Mb = double(),
-#         CN = integer(),
-#         LRR = double(),
-#         Precision_Estimate = double(),
-#         caller_merging_state = character(),
-#         overlap_merged_call = double(),
-#         caller_merging_coverage = character(),
-#         reference_caller = character(), # deprecate this
-#         reference_coverage = double(),
-#         high_impact_hits = character(),
-#         highlight_hits = character(),
-#         ROI_hits = character(),
-#         Gap_percent = double(),
-#         probe_coverage_gap = logical(),
-#         high_probe_density = logical(),
-#         n_genes = integer(),
-#         overlapping_genes = character()
-#     )
-# }
-# 
-# 
-# get_list_cols <- function() {
-#     colnames(get_expected_final_tb())[sapply(get_expected_final_tb(), function(x) is(x, 'list'))]
-# }
-# 
-# 
-# ensure_list_cols <- function(tb.or.gr){
-# 	as_tibble(tb.or.gr) %>%
-# 		rowwise() %>%
-# 		mutate(across(any_of(get_list_cols()), ~ list(.))) %>%
-# 		as_granges()
-# }
 
 
 unsplit_merged_CNV_callers <- function(cnv_gr) {

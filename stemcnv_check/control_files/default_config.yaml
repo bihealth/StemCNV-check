@@ -328,7 +328,7 @@ reports:
 
     # List of columns from the sample_table that should be included in the "Sample Information section"
     sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
-
+      
     call.data.and.plots:
       #Specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
       _default_: &default_plot_settings
@@ -344,7 +344,7 @@ reports:
           - 'Reportable'
         # Include plots, table of individual calls and table of genes
         include.plot: True
-        include.call.table: True
+        include.hotspot.table: True
         include.gene.table.details: 'Call' # Choice of: None|Call|All
         # Minimum relative size of (each) flanking region compared to call
         plot.flanking.region.relative: 2
@@ -375,15 +375,12 @@ tools:
     threads: 1
     memory: 2000 # "2000MB"
     runtime: "1h"
-    cmd-line-params: ""
     partition: 'medium'
   GenCall:
     threads: 4
     memory: 8000 # "8000MB"
     runtime: "4h"
-    cmd-line-params: "--gender-estimate-call-rate-threshold -0.1"
   gtc2vcf:
-    cmd-line-params: ""
     memory: 1000 # "2000MB"
     runtime: "1h"
   CNV.process:

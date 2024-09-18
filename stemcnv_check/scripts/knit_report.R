@@ -38,9 +38,9 @@ rmarkdown::render(
         config = config,
         report_config = snakemake@params$report_config,
         config_delta = snakemake@params$config_delta,
-        report_name = report_name,
+        #report_name = report_name,
         out_format = snakemake@wildcards$ext,
-        workdir = rmd_workdir,
+        #workdir = rmd_workdir,
         basedir = config$basedir,
         version = snakemake@params$version
     )
