@@ -70,7 +70,7 @@ def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
                 raise FileNotFoundError(f"Static data file '{file}' does not exist.")
         bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
 
-    bind_point_str = "-B " + ','.join(f"{host}:{cont}" for host, cont in bind_points)
+    bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in bind_points)
     logging.debug("Binding points for apptainer: " + str(bind_point_str))
 
     return bind_point_str

@@ -380,9 +380,12 @@ tools:
     threads: 4
     memory: 8000 # "8000MB"
     runtime: "4h"
-  gtc2vcf:
-    memory: 1000 # "2000MB"
-    runtime: "1h"
+#   gtc2vcf:
+#     memory: 1000 # "2000MB"
+#     runtime: "1h"
+  CBS:
+    memory: 4000 # "4000MB"
+    runtime: "30m"  
   CNV.process:
     memory: 4000 # "4000MB"
     runtime: "30m"
