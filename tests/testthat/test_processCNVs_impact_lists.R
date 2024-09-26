@@ -143,14 +143,14 @@ test_that('parse_hotspot_table', {
 #             )
 #         )
 #     )
-#     
+# 
 #     high_impact_tb <- load_hotspot_table(config)
 #     highlight_tb <- load_hotspot_table(config, 'Highlight')
 #     config$settings$CNV_processing$gene_overlap$highlight_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 #     highlight_tb2 <- load_hotspot_table(config, 'Highlight')
 #     gr_info <- load_genomeInfo(config)
 #     gr_genes <- load_gtf_data(config)
-#     
+# 
 #     parse_hotspot_table(high_impact_tb, gr_genes, gr_info)
 #     parse_hotspot_table(highlight_tb, gr_genes, gr_info)
 #     parse_hotspot_table(highlight_tb2, gr_genes, gr_info)

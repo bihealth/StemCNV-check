@@ -25,18 +25,18 @@ jobs:
         python-version:
           - "3.12"
     steps:
-      - name: Install Python via conda
-        uses: s-weigand/setup-conda@v1
+      - name: Setup conda
+        uses: s-weigand/setup-conda@v1.2
         with:
           python-version: ${{ matrix.python-version }}
-          conda-channels: defaults,bioconda,conda-forge
+          conda-channels: bioconda,conda-forge
       - name: Checkout repository
         uses: actions/checkout@v4
 #         with:
 #           lfs: true
 #           fetch-depth: 2
       - name: Install mamba
-        run: conda install -y mamba>=1.0.0
+        run: conda install -y mamba>=1
       - name: Prepare environment.yml file
         run: cp stemcnv_check/envs/general-R.yaml /tmp/environment.yml
       - name: Update environment using mamba

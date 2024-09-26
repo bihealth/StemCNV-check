@@ -46,16 +46,23 @@ tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
 	}
 
 	tb <- tb %>% filter(str_detect(!!sym(colname), '[0-9XY]{1,2}(p|q)[0-9.]+'))
-	filter_regex <- paste0('^(',
-		paste(str_replace(unlist(tb[, colname]), fixed('.'), '\\.'), collapse='|'),
-		')')
 
-	gr.tb <- gr_info %>%
-		filter(str_detect(section_name, filter_regex)) %>%
-		mutate(!!colname := str_extract(section_name, filter_regex)) %>%
-		group_by(!!sym(colname)) %>%
-		reduce_ranges() %>%
-		as_tibble()
+    # get a _set_ of matching bands (=gr rows) for each tb row
+    # then do the str_extract and group_by on each set
+    gr.tb <- paste0(
+        '^', str_replace(unlist(tb[, colname]), fixed('.'), '\\.')
+    ) %>%        
+        lapply(\(gband_regex) {
+            gr_info %>%
+                filter(str_detect(section_name, gband_regex)) %>%
+                mutate(!!colname := str_extract(section_name, gband_regex)) %>%
+                group_by(!!sym(colname)) %>%
+                reduce_ranges() %>%
+                as_tibble()
+        }) %>%
+        bind_rows() %>%
+        # discard multiples in case of same gband for i.e. loss & gain
+        unique()
 
 	not_matched <- tb[unlist(tb[colname]) %!in% unlist(gr.tb[colname]), colname]
 	if (any(unlist(tb[colname]) %!in% unlist(gr.tb[colname]))) {
@@ -96,7 +103,7 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 			filter(gene_name %in% sub_tb_name$hotspot) %>%
 			as_tibble() %>%
 			dplyr::rename(hotspot = gene_name) %>%
-			left_join(sub_tb_name) %>%
+			left_join(sub_tb_name, by = 'hotspot') %>%
 			as_granges()
 		#message('parsed gene names')
 	} else {
@@ -105,7 +112,6 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 
 	if (nrow(sub_tb_pos) > 0) {
 		gr_pos <- tb_to_gr_by_position(sub_tb_pos, 'hotspot')
-		#message('parsed gene positions')
 	} else {
 		gr_pos <- empty_gr
 	}
