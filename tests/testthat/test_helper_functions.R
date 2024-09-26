@@ -14,6 +14,7 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 # - [ ] fix_rel_filepath         #! hard to test; should only do things if inside the Rmd environment; deprecate?
 # - [x] load_gtf_data
 # - [x] load_genomeInfo
+# - [x] load_hotspot_table
 # - [ ] unsplit_merged_CNV_callers
 
 # Note: primary checks are done in python, R just needs to work
@@ -163,4 +164,23 @@ test_that('load_genomeInfo', {
     ) %>% as_granges()
 
     expect_equal(load_genomeInfo(config), expected_gr)
+})
+
+test_that('load_hotspot_table', {
+    config <- list(
+        'snakedir' = '',
+        'settings' = list(
+            'CNV_processing' = list(
+                'gene_overlap' = list(
+                    'high_impact_list' = test_path('../data/minimal-hotspots.tsv'),
+                    'highlight_list' = test_path('../data/minimal-hotspots.tsv')
+                )
+            )
+        )
+    )
+    load_hotspot_table(config, 'HighImpact') %>%
+        # remove 'spec_tbl_df' class from readr
+        .[] %>% expect_equal(minimal_probes)
+    load_hotspot_table(config, 'Highlight') %>%
+        .[] %>% expect_equal(minimal_probes)
 })

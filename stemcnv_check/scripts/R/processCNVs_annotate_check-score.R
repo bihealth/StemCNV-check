@@ -24,37 +24,42 @@ annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_sco
                 CNV_type %in% c('gain', 'loss'),
 				1/3 * log(width) * log(width) - 15,
 				0.275 * log(width) * log(width) - 15
-			) +
-			# Base score for hitting HI / HL / ROI
-			(check_scores$highimpact_base * !is.na(high_impact_hits) ) +
-		    (check_scores$highlight_base * !is.na(highlight_hits) ) +
-		    (check_scores$roi_hit_base * !is.na(ROI_hits) ) +
-		    # Per gene/region score:
-			# - scores per ROI (gene & others handeled the same)
-			ifelse(!is.na(ROI_hits), (1 + str_count(ROI_hits, '\\|')) * check_scores$per_gene_roi, 0) +
+			) * 
+            # Size modifier for large copynumbers
+            ifelse(
+                CN < 1 | CN > 3,
+                check_scores$large_CN_size_modifier,
+                1
+            ) +
+			# Base score for any ROI hit
+			ifelse(!is.na(ROI_hits), check_scores$any_roi_hit, 0) +
+            # Per gene/region score:
 			# - scores per non-gene HI / HL
 			(high_impact_gr %>% as_tibble() %>%
 				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(high_impact_hits, '\\|'))) %>%
-				mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highimpact, check_score)) %>%
+				# mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highimpact, check_score)) %>%
 				pull(check_score) %>%	sum()) +
 			(highlight_gr %>% as_tibble() %>%
 				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(highlight_hits, '\\|'))) %>%
-				mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highlight, check_score)) %>%
+				# mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highlight, check_score)) %>%
 				pull(check_score) %>%	sum()) +
-			# - score all genes that aren't also an ROI, use scores from tsv where available
+			# - score all genes that aren't also an ROI, use max score of matching overlaps (but only one score per gene)
 			# dplyr will generate a bunch of warnings for calls without any genes
 			suppressWarnings(bind_rows(
-				high_impact_gr %>% as_tibble() %>%
-					mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highimpact, check_score)),
-				highlight_gr %>% as_tibble() %>%
-					mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highlight, check_score)),
+				high_impact_gr %>% as_tibble(), # %>%
+					#mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highimpact, check_score)),
+				highlight_gr %>% as_tibble(), # %>%
+					#mutate(check_score = ifelse(is.na(check_score), check_scores$per_gene_highlight, check_score)),
 				str_split(overlapping_genes, '\\|') %>% unlist() %>%
 					as_tibble() %>% dplyr::rename(hotspot = value) %>%
-					mutate(mapping = 'gene_name', check_score = check_scores$per_gene_any)
+					mutate(mapping = 'gene_name', check_score = check_scores$any_other_gene)
 			  	) %>%
-				filter(hotspot %in% unlist(str_split(overlapping_genes, '\\|')) &
-						   hotspot %!in% unlist(str_split(ROI_hits, '\\|')) &
-						   mapping == 'gene_name') %>%
+				filter(
+                    hotspot %in% unlist(str_split(overlapping_genes, '\\|')) & 
+                        !is.na(hotspot) &
+                        #hotspot %!in% unlist(str_split(ROI_hits, '\\|')) &
+						mapping == 'gene_name'
+                ) %>%
 				group_by(hotspot) %>% summarise(check_score = max(check_score)) %>%
 				pull(check_score) %>% sum())
 	  ) %>%

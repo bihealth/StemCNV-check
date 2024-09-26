@@ -121,13 +121,9 @@ settings:
       highlight_list: str
 
     Check_score_values:
-      roi_hit_base: float_ge0
-      highimpact_base: float_ge0
-      highlight_base: float_ge0
-      per_gene_roi: float_ge0
-      per_gene_highimpact: float_ge0
-      per_gene_highlight: float_ge0
-      per_gene_any: float_ge0
+      any_roi_hit: float_ge0
+      any_other_gene: float_ge0
+      large_CN_size_modifier: float_ge1
 
     Precision:
       size_categories:

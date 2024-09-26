@@ -8,6 +8,7 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_impact_list
 
 
 config <- list(
+    'snakedir' = '',
     'static_data' = list(
         'genome_gtf_file' = test_path('../data/hg_minimal.gtf'),
         'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
@@ -16,7 +17,8 @@ config <- list(
         'CNV_processing' = list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
-                'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding')
+                'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+                'high_impact_list' = test_path('../data/minimal-hotspots.tsv')
             )
         )
     )
@@ -97,23 +99,18 @@ test_that('tb_to_gr_by_gband', {
 })
 
 test_that('parse_hotspot_table', {
-    tb <- read_tsv(test_path('../data/minimal-hotspots.tsv'))
+    tb <- load_hotspot_table(config)
     gr_info <- load_genomeInfo(config)
     gr_genes <- load_gtf_data(config)
 
-    expected_gr <- tibble(
-        seqnames = 'chr1',
-        start = c(11873, 28050000, 40000, 0, 30200000, 142600000),
-        end = c(14409, 28070000, 50000, 7200000, 32400000, 155000000),
-        strand = c('+', '+', '*', '*', '*', '*'),
-        list_name = 'test-list',
-        hotspot = c('DDX11L1', 'dummyC', 'chr1:40000-50000', '1p36', '1p35.2', '1q21'),
-        mapping = c('gene_name', 'gene_name', 'position', 'gband', 'gband', 'gband'),
-        call_type = c('any', 'gain', 'any', 'loss', 'any', 'gain'),
-        check_score = c(NA, 15, NA, NA, 12, NA),
-        source = c('dummy', 'dummy', 'dummy', 'dummy', 'dummy', 'dummy\\n dummy'),
-        comment = NA
-    ) %>% as_granges()
+    expected_gr <- minimal_probes %>%
+        mutate(
+            seqnames = 'chr1',
+            start = c(11873, 28050000, 40000, 0, 30200000, 142600000),
+            end = c(14409, 28070000, 50000, 7200000, 32400000, 155000000),
+            strand = c('+', '+', '*', '*', '*', '*'),
+        ) %>%
+        as_granges()
 
     expect_equal(parse_hotspot_table(tb, gr_genes, gr_info), expected_gr)
     
@@ -122,10 +119,44 @@ test_that('parse_hotspot_table', {
     
     #test empty input
     expect_length(
-        parse_hotspot_table(tb %>% filter(comment == '123'), gr_genes, gr_info),
+        parse_hotspot_table(tb %>% filter(description_doi == '123'), gr_genes, gr_info),
         0
     )
 })
+
+# FIXME: enable skipping on all but manual execution
+# test_that('parse inbuilt tables', {
+#     config <- list(
+#         'snakedir' = test_path('../../stemcnv_check/'),
+#         'static_data' = list(
+#             'genome_gtf_file' = test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz'),
+#             'genomeInfo_file' = test_path('../../test_folders/static-data/UCSC_hg38_chromosome-info.tsv')
+#         ),
+#         'settings' = list(
+#             'CNV_processing' = list(
+#                 'gene_overlap' = list(
+#                     'exclude_gene_type_regex' = c(),
+#                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+#                     'high_impact_list' = '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.tsv',
+#                     'highlight_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+#                 )
+#             )
+#         )
+#     )
+#     
+#     high_impact_tb <- load_hotspot_table(config)
+#     highlight_tb <- load_hotspot_table(config, 'Highlight')
+#     config$settings$CNV_processing$gene_overlap$highlight_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
+#     highlight_tb2 <- load_hotspot_table(config, 'Highlight')
+#     gr_info <- load_genomeInfo(config)
+#     gr_genes <- load_gtf_data(config)
+#     
+#     parse_hotspot_table(high_impact_tb, gr_genes, gr_info)
+#     parse_hotspot_table(highlight_tb, gr_genes, gr_info)
+#     parse_hotspot_table(highlight_tb2, gr_genes, gr_info)
+# 
+# })
+
 
 # 1 - not hit
 # 2 - gene hit, any (but not gband): DDX11L1

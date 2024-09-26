@@ -79,13 +79,9 @@ test_that("Annotate CNV check scores", {
     CNV_size_score <- function(len) {   1/3 * log(len) * log(len) - 15 }
     LOH_size_score <- function(len) { 0.275 * log(len) * log(len) - 15 }
     config$settings$CNV_processing$Check_score_values <- list(
-        'roi_hit_base' = 50,
-        'highimpact_base' = 20,
-        'highlight_base' = 0,
-        'per_gene_roi' = 10,
-        'per_gene_highimpact' = 10,
-        'per_gene_highlight' = 5,
-        'per_gene_any' = 0.2
+        'any_roi_hit' = 50,
+        'any_other_gene' = 0.2,
+        'large_CN_size_modifier' = 1.5
     )
   
     hi_gr <- tibble(
@@ -97,7 +93,7 @@ test_that("Annotate CNV check scores", {
         hotspot = c('dummyC', 'chr1:40000-50000', '1p36'),
         mapping = c('gene_name', 'position', 'gband'),
         call_type = c('gain', 'any', 'loss'),
-        check_score = c(15, NA, NA),
+        check_score = c(15, 30, 10),
         source = c('dummy', 'dummy', 'dummy'),
         comment = NA
     ) %>% as_granges()
@@ -111,7 +107,7 @@ test_that("Annotate CNV check scores", {
         hotspot = 'DDX11L1', 
         mapping = 'gene_name', 
         call_type = 'any', 
-        check_score = NA_real_,
+        check_score = 5,
         source = 'dummy',
         comment = NA
     ) %>% as_granges()
@@ -120,28 +116,30 @@ test_that("Annotate CNV check scores", {
         mutate(
             # Test scenarios:
             Check_Score = c(
-                # ROI (base + 1 hit) + 1 other gene 
-                CNV_size_score(1501) + 50 + 10 + 0.2, 
-                # HL hit (base is 0)
+                # ROI (50) + 1 other gene w/o hotspot 
+                CNV_size_score(1501) + 50 + 0.2, 
+                # HL gene (5)
                 CNV_size_score(4001) + 5, 
-                # HI hit, 1 gene with custom score 15
-                CNV_size_score(55001) + 20 + 15, 
-                # ROI hit (base + 1), ROI *is* the one overlapping gene, so no extra
-                CNV_size_score(5001) + 50 + 10,
-                # HI hit (base  + 2 genes) , + 1 other gene
-                CNV_size_score(10001) + 20 + 10+10 + 0.2,
+                # CN4, HI gene (15)
+                CNV_size_score(55001) * 1.5 + 15, 
+                # ROI hit (50) + HI gene (15)
+                CNV_size_score(5001) + 50 + 15,
+                # HI hits (30 & 10) + 1 other gene
+                CNV_size_score(10001) + 30 + 10 + 0.2,
                 # no genes
                 LOH_size_score(2000001) + 0,
-                # HL hit (1 gene) + 2 other genes
+                # HL hit (5) + 2 other genes
                 LOH_size_score(57001) + 5 + 0.4
             )
         )
-    expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
-    # Extra test:
-    # - HL base score not 0
-    config$settings$CNV_processing$Check_score_values$highlight_base <- 2.7
-    expected_tb[c(2,7), 'Check_Score'] <- expected_tb[c(2,7), 'Check_Score'] + 2.7
-    expect_equal(annotate_cnv.check.score(expected_final_tb, hi_gr, hl_gr, config$settings$CNV_processing$Check_score_values), expected_tb)
+    
+    annotate_cnv.check.score(
+        expected_final_tb,
+        hi_gr,
+        hl_gr,
+        config$settings$CNV_processing$Check_score_values
+    ) %>%
+        expect_equal(expected_tb)
 })
 
 

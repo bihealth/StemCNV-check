@@ -214,25 +214,28 @@ settings:
       include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
       # These genelists are used to mark genes with high impact
       # Gene lists files are tabular (tsv) and need the following columns:
-      # list_name, hotspot, mapping, call_type, check_score, source, comment
-      # list_name, hotspot, mapping, call_type, need to be filled out
+      # list_name, hotspot, mapping, call_type, check_score, description, description_doi
+      # list_name, hotspot, mapping, call_type & check_score need to be filled out
+      # description & description_doi will be used to display extra info in the report
       # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
       # call_type can be 'any', 'gain', 'loss' or 'LOH'
       high_impact_list: '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.tsv'
       highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 
+    # Scoring for CNV and LOH calls
+    # scoring combines a Size based contribution with scores for overlapping annotated regions
     Check_score_values:
-      # Scoring for CNV and LOH calls
-      # Base scores are used once for each CNV overlapping a gene/region of the specific type
-      roi_hit_base:    50
-      highimpact_base: 20
-      highlight_base:   0
-      # Genes are scored _once_ based on category, other regions are also scored as if they were one gene
-      per_gene_roi:        10
-      per_gene_highimpact: 10
-      per_gene_highlight:   5
-      per_gene_any:       0.2
+      # HighImpact & Highlight scores need to be defined in the respective tables
+      # CNVs/LOHs get the summed scored of each overlapping annotated gene or region (gband/position)
+      # genes are only scored _once_ per call, i.e. a gene with both highimpact and highlight match will only 
+      # contribute the higher of the two annotated scores. 
+      # Genes without a score in the genelists are scored as 'any_other_gene'
+      any_other_gene:         0.2
+      # Calls overlapping any sample defined ROI get this one-time score
+      any_roi_hit:           50
+      # CNVs with a large CN (<1 or >3) have their size contribution multiplied by this factor
+      large_CN_size_modifier: 1.5
 
 ##!advanced
     Precision:

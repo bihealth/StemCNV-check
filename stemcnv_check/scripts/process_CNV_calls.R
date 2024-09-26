@@ -86,23 +86,10 @@ precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 gr_genes <- load_gtf_data(config, target_chrom_style)
 gr_info  <- load_genomeInfo(config, target_chrom_style)
 
-HI_file <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
-	str_replace('__inbuilt__', config$snakedir)
-if (!is.null(HI_file)) {
-	high_impact_gr <- read_tsv(HI_file, show_col_types = FALSE) %>%
-		parse_hotspot_table(gr_genes, gr_info)
-} else {
-	high_impact_gr <- GRanges()
-}
-HL_file <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
-	str_replace('__inbuilt__', config$snakedir)
-if (!is.null(HL_file)) {
-	highlight_gr <- read_tsv(HL_file, show_col_types = FALSE) %>%
-		parse_hotspot_table(gr_genes, gr_info)
-} else {
-	highlight_gr <- GRanges()
-}
-
+high_impact_gr <- load_hotspot_table(config, 'HighImpact') %>%
+    parse_hotspot_table(gr_genes, gr_info)
+highlight_gr <- load_hotspot_table(config, 'Highlight') %>%
+    parse_hotspot_table(gr_genes, gr_info)
 
 cnvs <- cnvs %>%
     plyranges::select(-LRR) %>%

@@ -163,14 +163,9 @@ include_roi_plots <-  include.section('regions.of.interest') & ifelse(
     FALSE
 )
 
-high_impact_tb <- config$settings$CNV_processing$gene_overlap$high_impact_list %>%
-    str_replace('__inbuilt__', config$snakedir) %>%
-    fix_rel_filepath(config) %>%
-    read_tsv()
-highlight_tb <- config$settings$CNV_processing$gene_overlap$highlight_list %>%
-    str_replace('__inbuilt__', config$snakedir) %>%
-    fix_rel_filepath(config) %>%
-    read_tsv()
+high_impact_tb <- load_hotspot_table(config, 'HighImpact')
+highlight_tb <- load_hotspot_table(config, 'Highlight')
+
 ## general functions
 
 tr_tibble <- function(tb) {

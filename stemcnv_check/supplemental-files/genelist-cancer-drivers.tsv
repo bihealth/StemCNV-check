@@ -1,620 +1,620 @@
-list_name	hotspot	mapping	call_type	check_score	source	comment
-CancerDrivers	ABCC4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ABL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ABL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACKR3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACSL3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACSL6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACSM3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACVR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACVR1B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ACVR2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AFDN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AFF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AJUBA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AKAP9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AKT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AKT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ALDH2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ALK	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ALPK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AMER1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ANK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ANKRD11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	APC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARAF	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARHGAP35	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARHGAP5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARHGEF10	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARHGEF10L	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARHGEF12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARID1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARID1B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARID2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ARNT	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ASXL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ASXL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATF7IP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATG7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATM	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATP1A1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ATRX	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AXIN1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	AXIN2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	B2M	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BAP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BARD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BAZ1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL10	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL11A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL11B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL2L12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL7A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCL9L	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCLAF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCOR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCORL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BCR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BIRC3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BIRC6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BLM	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BMP6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BMPR1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BRAF	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BRCA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BRCA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BRD4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BRD7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BTG1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BTG2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	BTK	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CACNA1D	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CADM2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CAMTA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CANT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CARD11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CASP8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CASZ1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CBFB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CBL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CBLB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCDC6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCND1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCND2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCND3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCNE1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CCR7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CD209	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CD274	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CD58	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CD79B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDC73	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDH1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDH10	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDH11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDK12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDK4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDKN1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDKN1B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDKN2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDKN2C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CDX2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CEBPA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CHD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CHD4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CHEK2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CHRDL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CIC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CIITA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CLIP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CLTC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CLTCL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CMTR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CNOT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CNOT9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CNTRL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	COL1A1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	COL2A1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	COL6A3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	COL6A6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CPEB3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CREBBP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CREM	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CRNKL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CRTC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CSF1R	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CSF3R	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CSMD3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CSPG4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CTCF	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CTNNA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CTNNB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CTNND2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CUL3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CUX1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CXCR4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CYLD	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CYP2C8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	CYSLTR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DAXX	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DCAF12L2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DCC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DCSTAMP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DDB2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DDR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DDX3X	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DDX6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DGCR8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DHX9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DICER1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DIS3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DNMT3A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DOT1L	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DROSHA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DSP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DTX1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	DUSP16	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EBF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EFTUD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EGFR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EGR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EIF1AX	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EIF3E	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EIF4A2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ELF3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ELF4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ELL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ELN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EP300	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EPAS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EPHA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EPHA3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EPHA7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EPS15	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ERBB2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ERBB3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ERBB4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ERCC2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ERCC3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ESR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ESRRA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ETNK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ETV1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ETV4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ETV5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ETV6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EWSR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	EZH2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAM135B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAM174B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FANCC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FANCD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FANCF	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAT2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FAT4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FBLN2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FBN2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FBXO11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FBXW7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FCGBP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FCGR2B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FCRL4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGD5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGFR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGFR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGFR3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FGFR4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FH	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FHIT	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FLCN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FLT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FLT4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FMN2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FN1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXO1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXO3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FOXP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	FUBP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GATA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GATA3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GLI1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GMPS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GNA11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GNA13	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GNAI2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GNAQ	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GNAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GPAA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GPC5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GRIN2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GRM3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	GTF2I	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	H3-3A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	H3C2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HCAR3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HDAC4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HIP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HLA-A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HLA-B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HLA-C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HNF1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HNRNPA2B1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HOXC13	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HRAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HSP90AA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HSP90AB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	HSPG2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ID3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IDH1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IDH2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IKBKB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IKZF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IKZF3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IL6ST	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IL7R	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ING1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	INPPL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IRAK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IRF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IRF4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	IRS4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ITGAV	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	JAK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	JAK2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	JAK3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	JUN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KAT6A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KAT6B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KDM3B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KDM5C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KDM6A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KDR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KDSR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KEAP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KIF5B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KIT	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KLF4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KLF5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KLF6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KLHL6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KMT2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KMT2B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KMT2C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KMT2D	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KMT5A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KNL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KNSTRN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	KRAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LATS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LATS2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LDB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LEF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LIFR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LPA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LRIG3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LRP1B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LSM14A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LTB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LYN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	LZTR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MACC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAF	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAML2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAP2K1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAP2K4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAP2K7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAP3K1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAP3K13	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAPK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MARK2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MAX	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MB21D2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MDGA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MDM2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MDM4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MECOM	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MED12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MED23	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MEF2B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MEN1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MET	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MGA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MIB2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MLLT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MLLT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MLLT6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MPL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MSI2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MSN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MTOR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MUC20	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MUC6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYCN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYD88	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYEOV	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYH11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYH9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	MYO5A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NBEA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NCAPH	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NCOA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NCOR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NCOR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NF2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFATC2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFE2L2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFIB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFKB2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFKBIA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NFKBIE	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NIN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NIPBL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NKX2-1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NOTCH1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NOTCH2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NPRL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NRAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NRG1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NRK	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NSD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NSD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NSD3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NT5C3A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NTRK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NTRK3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NUMA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NUP214	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NUTM1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NUTM2D	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NVL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	NXF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	P2RY8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PABPC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PARP4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PAX5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PBRM1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PCBP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PCM1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PCMTD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PDCD1LG2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PDE4DIP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PDGFRA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PDGFRB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PEG3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PER1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PER3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PHF6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PICALM	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PIK3CA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PIK3CB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PIK3R1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PIM1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PLAG1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PLCG1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PML	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PMS2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	POLD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	POLE	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	POLQ	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	POT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	POU2F2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PPM1D	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PPP2R1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PPP3CA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PPP6C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRDM1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRDM16	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRDM2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PREX2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRKAR1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRKCB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRKCD	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PRKD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PSIP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PSPC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTCH1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTEN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTK6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTMA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPN11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPN13	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPN14	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPN3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPN6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRD	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRK	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRT	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PTPRU	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	PWWP2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	QKI	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RAC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RAD21	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RAF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RANBP2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RAP1GDS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RASA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RASA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RBFOX1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RBM10	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RBM15	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RBM38	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RBM39	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RECQL4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RELA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	REST	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RET	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RGPD3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RGS7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RHOA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RHPN2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RIPK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RNF213	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RNF43	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RNF6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ROBO2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ROS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RPL10	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RPL22	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RPL5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RPS3A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RPS6KA3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RRAGC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RRAS2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RRN3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RSPO2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RUNX1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RUNX1T1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	RXRA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	S100A7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SALL4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SAMHD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SDCBP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SDHA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SETBP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SETD1B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SETD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SETDB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SF3B1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SGK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SH2B3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SIN3A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SIRPA	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SIX1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SLC34A2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SLC35E2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMAD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMAD3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMAD4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMARCA1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMARCA2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMARCA4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMARCB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMARCD1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMC1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMO	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SMURF2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SNX29	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOCS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOHLH2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOS1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOX17	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOX21	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SOX9	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SP140	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SPEN	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SPOP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SRGAP3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SRSF2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STAG2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STAT3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STAT5B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STAT6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STIL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	STK11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SUFU	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SUSD2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	SUZ12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TAF15	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TAF1L	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TAL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TAL2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TBL1XR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TBX3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TCF12	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TCF4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TCF7L2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TCL1A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TEC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TENT5C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TERT	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TET1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TET2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TFAP4	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TFEB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TFG	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TFRC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TGFBR1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TGFBR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TGIF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TLL1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TMSB4X	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TNC	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TNFAIP3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TNFRSF14	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TOP1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TOP2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TP53	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TP63	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TPR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRAF3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRAF7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRIM24	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRIM33	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRIM49C	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRIP11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRPM8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TRRAP	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TSC1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TSC2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	TSHR	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	U2AF1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	U2AF2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	UBE2A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	UBR5	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	UBXN11	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ULK1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	USP13	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	USP6	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	USP7	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	USP8	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	USP9X	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	VHL	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	WAS	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	WNK2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	WT1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	XPO1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZBTB16	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZBTB20	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZBTB48	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZBTB7B	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZCRB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZEB1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZFHX3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZFP36L1	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZMYM2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZMYM3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF208	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF274	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF331	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF395	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF429	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF521	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF626	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF680	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF721	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF750	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF780A	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF799	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF814	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF90	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNF93	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZNRF3	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZRSR2	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
-CancerDrivers	ZXDB	gene_name	any		www.intogen.org; Release 2023.05.31; https://doi.org/10.1038/s41568-020-0290-x	
+list_name	hotspot	mapping	call_type	check_score	description	description_doi
+CancerDrivers	ABCC4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ABL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ABL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACKR3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACSL3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACSL6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACSM3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACVR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACVR1B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ACVR2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AFDN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AFF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AJUBA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AKAP9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AKT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AKT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ALDH2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ALK	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ALPK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AMER1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ANK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ANKRD11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	APC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARAF	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARHGAP35	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARHGAP5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARHGEF10	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARHGEF10L	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARHGEF12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARID1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARID1B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARID2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ARNT	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ASXL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ASXL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATF7IP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATG7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATM	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATP1A1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ATRX	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AXIN1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	AXIN2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	B2M	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BAP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BARD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BAZ1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL10	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL11A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL11B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL2L12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL7A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCL9L	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCLAF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCOR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCORL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BCR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BIRC3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BIRC6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BLM	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BMP6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BMPR1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BRAF	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BRCA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BRCA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BRD4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BRD7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BTG1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BTG2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	BTK	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CACNA1D	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CADM2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CAMTA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CANT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CARD11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CASP8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CASZ1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CBFB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CBL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CBLB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCDC6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCND1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCND2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCND3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCNE1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CCR7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CD209	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CD274	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CD58	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CD79B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDC73	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDH1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDH10	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDH11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDK12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDK4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDKN1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDKN1B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDKN2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDKN2C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CDX2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CEBPA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CHD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CHD4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CHEK2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CHRDL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CIC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CIITA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CLIP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CLTC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CLTCL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CMTR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CNOT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CNOT9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CNTRL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	COL1A1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	COL2A1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	COL6A3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	COL6A6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CPEB3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CREBBP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CREM	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CRNKL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CRTC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CSF1R	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CSF3R	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CSMD3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CSPG4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CTCF	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CTNNA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CTNNB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CTNND2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CUL3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CUX1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CXCR4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CYLD	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CYP2C8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	CYSLTR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DAXX	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DCAF12L2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DCC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DCSTAMP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DDB2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DDR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DDX3X	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DDX6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DGCR8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DHX9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DICER1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DIS3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DNMT3A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DOT1L	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DROSHA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DSP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DTX1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	DUSP16	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EBF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EFTUD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EGFR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EGR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EIF1AX	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EIF3E	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EIF4A2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ELF3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ELF4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ELL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ELN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EP300	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EPAS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EPHA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EPHA3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EPHA7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EPS15	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ERBB2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ERBB3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ERBB4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ERCC2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ERCC3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ESR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ESRRA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ETNK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ETV1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ETV4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ETV5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ETV6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EWSR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	EZH2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAM135B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAM174B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FANCC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FANCD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FANCF	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAT2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FAT4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FBLN2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FBN2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FBXO11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FBXW7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FCGBP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FCGR2B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FCRL4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGD5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGFR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGFR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGFR3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FGFR4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FH	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FHIT	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FLCN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FLT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FLT4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FMN2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FN1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXO1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXO3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FOXP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	FUBP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GATA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GATA3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GLI1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GMPS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GNA11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GNA13	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GNAI2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GNAQ	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GNAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GPAA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GPC5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GRIN2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GRM3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	GTF2I	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	H3-3A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	H3C2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HCAR3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HDAC4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HIP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HLA-A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HLA-B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HLA-C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HNF1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HNRNPA2B1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HOXC13	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HRAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HSP90AA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HSP90AB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	HSPG2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ID3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IDH1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IDH2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IKBKB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IKZF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IKZF3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IL6ST	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IL7R	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ING1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	INPPL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IRAK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IRF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IRF4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	IRS4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ITGAV	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	JAK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	JAK2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	JAK3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	JUN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KAT6A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KAT6B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KDM3B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KDM5C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KDM6A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KDR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KDSR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KEAP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KIF5B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KIT	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KLF4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KLF5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KLF6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KLHL6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KMT2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KMT2B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KMT2C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KMT2D	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KMT5A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KNL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KNSTRN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	KRAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LATS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LATS2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LDB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LEF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LIFR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LPA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LRIG3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LRP1B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LSM14A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LTB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LYN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	LZTR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MACC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAF	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAML2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAP2K1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAP2K4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAP2K7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAP3K1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAP3K13	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAPK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MARK2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MAX	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MB21D2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MDGA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MDM2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MDM4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MECOM	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MED12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MED23	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MEF2B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MEN1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MET	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MGA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MIB2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MLLT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MLLT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MLLT6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MPL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MSI2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MSN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MTOR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MUC20	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MUC6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYCN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYD88	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYEOV	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYH11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYH9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	MYO5A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NBEA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NCAPH	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NCOA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NCOR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NCOR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NF2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFATC2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFE2L2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFIB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFKB2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFKBIA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NFKBIE	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NIN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NIPBL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NKX2-1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NOTCH1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NOTCH2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NPRL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NRAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NRG1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NRK	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NSD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NSD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NSD3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NT5C3A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NTRK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NTRK3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NUMA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NUP214	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NUTM1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NUTM2D	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NVL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	NXF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	P2RY8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PABPC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PARP4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PAX5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PBRM1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PCBP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PCM1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PCMTD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PDCD1LG2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PDE4DIP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PDGFRA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PDGFRB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PEG3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PER1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PER3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PHF6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PICALM	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PIK3CA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PIK3CB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PIK3R1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PIM1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PLAG1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PLCG1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PML	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PMS2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	POLD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	POLE	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	POLQ	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	POT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	POU2F2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PPM1D	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PPP2R1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PPP3CA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PPP6C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRDM1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRDM16	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRDM2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PREX2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRKAR1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRKCB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRKCD	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PRKD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PSIP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PSPC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTCH1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTEN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTK6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTMA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPN11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPN13	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPN14	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPN3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPN6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRD	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRK	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRT	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PTPRU	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	PWWP2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	QKI	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RAC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RAD21	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RAF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RANBP2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RAP1GDS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RASA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RASA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RBFOX1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RBM10	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RBM15	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RBM38	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RBM39	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RECQL4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RELA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	REST	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RET	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RGPD3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RGS7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RHOA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RHPN2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RIPK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RNF213	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RNF43	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RNF6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ROBO2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ROS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RPL10	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RPL22	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RPL5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RPS3A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RPS6KA3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RRAGC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RRAS2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RRN3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RSPO2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RUNX1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RUNX1T1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	RXRA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	S100A7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SALL4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SAMHD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SDCBP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SDHA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SETBP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SETD1B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SETD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SETDB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SF3B1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SGK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SH2B3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SIN3A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SIRPA	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SIX1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SLC34A2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SLC35E2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMAD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMAD3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMAD4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMARCA1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMARCA2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMARCA4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMARCB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMARCD1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMC1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMO	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SMURF2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SNX29	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOCS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOHLH2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOS1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOX17	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOX21	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SOX9	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SP140	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SPEN	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SPOP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SRGAP3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SRSF2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STAG2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STAT3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STAT5B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STAT6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STIL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	STK11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SUFU	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SUSD2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	SUZ12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TAF15	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TAF1L	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TAL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TAL2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TBL1XR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TBX3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TCF12	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TCF4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TCF7L2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TCL1A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TEC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TENT5C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TERT	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TET1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TET2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TFAP4	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TFEB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TFG	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TFRC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TGFBR1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TGFBR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TGIF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TLL1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TMSB4X	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TNC	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TNFAIP3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TNFRSF14	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TOP1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TOP2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TP53	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TP63	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TPR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRAF3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRAF7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRIM24	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRIM33	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRIM49C	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRIP11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRPM8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TRRAP	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TSC1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TSC2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	TSHR	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	U2AF1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	U2AF2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	UBE2A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	UBR5	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	UBXN11	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ULK1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	USP13	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	USP6	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	USP7	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	USP8	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	USP9X	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	VHL	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	WAS	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	WNK2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	WT1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	XPO1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZBTB16	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZBTB20	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZBTB48	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZBTB7B	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZCRB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZEB1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZFHX3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZFP36L1	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZMYM2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZMYM3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF208	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF274	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF331	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF395	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF429	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF521	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF626	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF680	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF721	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF750	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF780A	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF799	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF814	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF90	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNF93	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZNRF3	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZRSR2	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x
+CancerDrivers	ZXDB	gene_name	any	5	Source: www.intogen.org; Release 2023.05.31{1}	10.1038/s41568-020-0290-x

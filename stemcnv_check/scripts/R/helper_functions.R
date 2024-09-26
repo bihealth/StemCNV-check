@@ -105,6 +105,36 @@ load_genomeInfo <- function(config, target_style='UCSC') {
 	gr_info
 }
 
+load_hotspot_table <- function(config, table = 'HighImpact') {
+    
+    if (table == 'HighImpact') {
+        filename <- config$settings$CNV_processing$gene_overlap$high_impact_list 
+    } else if (table == 'Highlight') {
+        filename <- config$settings$CNV_processing$gene_overlap$highlight_list
+    } else {
+        stop('Invalid table name')
+    }
+    
+    tb <- str_replace(filename, '__inbuilt__', config$snakedir) %>%
+        fix_rel_filepath(config) %>%
+        read_tsv(show_col_types = FALSE) 
+    
+    # str_glue with argument injection only works properly with named arguments that aren't numbers
+    description_html_pattern <- str_replace_all(
+        tb$description,
+        '([:,] ?)(.+?)\\{([0-9]+)\\}(?=, ?|\\\\n|$)',
+        '\\1<a href="{a\\3}">\\2</a>'
+    )
+    tb$description_htmllinks <- map2_chr(
+        tb$description_doi, description_html_pattern, 
+        \(doi, pattern) {
+            args <- doi %>% str_split(', ?') %>% unlist() %>% set_names(paste0('a', 1:length(.)))
+            rlang::inject(str_glue(pattern, !!!args))
+        }
+    )
+    
+    tb
+}
 
 unsplit_merged_CNV_callers <- function(cnv_gr) {
     

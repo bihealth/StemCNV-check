@@ -125,7 +125,7 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
 }
 
 format_hotspots_to_badge <- function(
-    hotspot_vec, CNVtype_vec, gene_details, listname = 'high_impact',  include_hover = TRUE
+    hotspot_vec, CNVtype_vec, hotspot_table, listname = 'high_impact', include_hover = TRUE
 ) {
   if (listname == "high_impact") {
     shorthand <- 'HI'
@@ -141,7 +141,8 @@ format_hotspots_to_badge <- function(
     ) %>%
         mutate(id = 1:dplyr::n()) %>%
         unnest(hotspot) %>%
-        left_join(gene_details, by = 'hotspot') %>%
+        left_join(hotspot_table, by = 'hotspot') %>%
+        rowwise() %>%
         mutate(
             include_hover = include_hover,
             do_format = case_when(
@@ -150,7 +151,7 @@ format_hotspots_to_badge <- function(
                 call_type == 'any' ~ TRUE,
                 TRUE ~ FALSE
             ),
-            source = str_replace_all(source, '\\\\n', '&#013;') %>%
+            description = str_replace_all(description, '\\\\n', '&#013;') %>%
                 str_replace_all('\\n', '&#013;'),
             out_str = ifelse(
                 hotspot != "" & !is.na(list_name) & do_format,
@@ -159,9 +160,10 @@ format_hotspots_to_badge <- function(
                     ifelse(
                         include_hover,
                         paste0(
-                            str_glue(' title="{listname} list name: {list_name}&#013;'),
-                            ifelse(!is.na(check_score), 'custom Check_Score: {check_score}&#013;', ''),
-                            str_glue('Annotation source:&#013;{source}"')
+                            str_glue(' title="{list_name}&#013;'),
+                            ifelse(!is.na(check_score), str_glue('Check_Score contribution: {check_score}&#013;'), ''),
+                            description,
+                            '"'
                         ),
                         ''
                     ),                    
@@ -378,9 +380,10 @@ hotspot_table_output <- function(
     if (out_format == 'html') {
         dt <- datatable(
             tb %>%
-                select(hotspot, list_name, source, check_score, comment, any_of(colnames(tb))) %>%
+                select(-description) %>%
+                dplyr::rename(description = description_htmllinks) %>%
+                select(hotspot, list_name, description, check_score, any_of(colnames(tb))) %>%
                 mutate(
-                    #TODO: badge only, no hover
                     hotspot = ifelse(
                         list_name %in% unique(high_impact_tb$list_name),
                         map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
@@ -394,8 +397,8 @@ hotspot_table_output <- function(
                 extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = nrow(tb),
-                # DT cols are 0-indexed
-                columnDefs = list(list(targets = 5:(ncol(tb)-1), visible = FALSE))
+                # DT cols are 0-indexed, 1 col removed
+                columnDefs = list(list(targets = 4:(ncol(tb)-2), visible = FALSE))
             ),
             rownames = FALSE,
             escape = FALSE
@@ -405,7 +408,8 @@ hotspot_table_output <- function(
         return(
             kable(
                 tb %>%
-                    select(hotspot, list_name, source, check_score, comment) %>%
+                    dplyr::rename(dois = description_doi) %>%
+                    select(hotspot, list_name, description, check_score, dois) %>%
                     rename_with(format_column_names),
                 caption = caption
             )

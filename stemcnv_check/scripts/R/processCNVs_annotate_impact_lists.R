@@ -86,8 +86,8 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
         mapping = character(),
         call_type = character(),
         check_score = numeric(),
-        source = character(),
-        comment = character()
+        description = character(),
+        description_doi = character()
     )
 
 	if (nrow(sub_tb_name) > 0) {

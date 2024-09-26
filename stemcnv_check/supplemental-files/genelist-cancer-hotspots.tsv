@@ -1,241 +1,241 @@
-list_name	hotspot	mapping	call_type	check_score	source	comment
-CancerHotspots	ACVR1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	AKT1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	AKT3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ALK	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ANKRD11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	APC	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	AR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ARAF	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ARID1A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ARID1B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ARID2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ASXL2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ATM	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ATRX	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	AXIN1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	AXL	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	B2M	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BCL10	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BCL2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BCL2L11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BCL6	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BCOR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BRAF	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BRCA2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	BRD4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CARD11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CASP8	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CBFB	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CBL	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CCND1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CCND3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CD79B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDH1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDK12	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDK4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDK6	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDKN1A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDKN1B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CDKN2A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CHEK2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CIC	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CREBBP	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CRLF2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CTCF	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CTLA4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CTNNB1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CUL3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CYSLTR2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DICER1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DIS3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DNAJB1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DNMT1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DNMT3A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	DNMT3B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EGFR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EIF1AX	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EIF4A2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EP300	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EPAS1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EPHA3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EPHA7	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EPHB1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERBB2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERBB3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERBB4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERCC2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERCC3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERG	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ERRFI1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ESR1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ETV6	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	EZH2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	CCNQ	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: FAM58A
-CancerHotspots	FAT1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FBXW7	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FGFR1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FGFR2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FGFR3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FGFR4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FH	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FLT3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FOXA1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FOXL2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FOXO1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FOXP1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	FUBP1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GATA2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GATA3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GLI1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GNA11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GNAQ	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GNAS	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GPS2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GSK3B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	GTF2I	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	H3-3A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: H3F3A
-CancerHotspots	HGF	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	H1-2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: HIST1H1C
-CancerHotspots	H3C2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: HIST1H3B
-CancerHotspots	H3C3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: HIST1H3C
-CancerHotspots	H3C10	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: HIST1H3H
-CancerHotspots	HLA-A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	HLA-B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	HNF1A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	HRAS	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IDH1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IDH2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IGF1R	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IKZF1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IL7R	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	INPPL1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IRF4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	IRS2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	JAK1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	JUN	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KDM6A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KDR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KEAP1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KIT	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KLF4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KMT2A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KMT2C	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KMT2D	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KNSTRN	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	KRAS	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	LYN	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAP2K1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAP2K2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAP2K4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAP3K1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAP3K13	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAPK1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MAX	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MED12	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MEF2B	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MET	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MGA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MSH2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MST1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MTOR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MYC	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MYCN	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MYD88	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	MYOD1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NCOA3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NF1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NFE2L2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NOTCH1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NOTCH2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NRAS	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NSD1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NUP93	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PAK5	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: PAK7
-CancerHotspots	PARP1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PAX5	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PBRM1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PDGFRA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PDPK1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PGR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIK3CA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIK3CB	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIK3CD	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIK3R1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIK3R2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PIM1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PLK2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PMS2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	POLE	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PPM1D	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PPP2R1A	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PPP4R2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PPP6C	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PRDM14	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PREX2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PRKCI	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PTEN	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PTPN11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PTPRD	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PTPRS	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	PTPRT	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RAC1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RAD50	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RAD51C	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RAD52	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RAF1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RARA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RB1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RBM10	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RECQL4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RET	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RHEB	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RHOA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RICTOR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RIT1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RNF43	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RPS6KA4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RPTOR	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RRAS2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RUNX1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	RXRA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SDHA	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SDHAF2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SESN2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SETD2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SF3B1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMAD2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMAD3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMAD4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMARCA4	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMARCB1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMARCD1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SMO	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SOCS1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SOS1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SOX17	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SPOP	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SPRED1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SRSF2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	STAG2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	STAT3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	STK11	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	STK19	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	SUZ12	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TBX3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	ELOC	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: TCEB1
-CancerHotspots	TCF3	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TCF7L2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TET1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TET2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TGFBR1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TGFBR2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TNFRSF14	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TP53	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TP63	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TRAF7	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	TSC1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	U2AF1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	VHL	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
-CancerHotspots	NSD2	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	Originally used symbol: WHSC1
-CancerHotspots	XPO1	gene_name	any		www.cancerhotspots.org; hotspot results V2; https://doi.org/10.1158/2159-8290.cd-17-0321	
+list_name	hotspot	mapping	call_type	check_score	description	description_doi
+CancerHotspots	ACVR1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	AKT1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	AKT3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ALK	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ANKRD11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	APC	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	AR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ARAF	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ARID1A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ARID1B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ARID2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ASXL2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ATM	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ATRX	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	AXIN1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	AXL	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	B2M	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BCL10	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BCL2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BCL2L11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BCL6	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BCOR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BRAF	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BRCA2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	BRD4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CARD11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CASP8	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CBFB	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CBL	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CCND1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CCND3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CD79B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDH1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDK12	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDK4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDK6	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDKN1A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDKN1B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CDKN2A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CHEK2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CIC	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CREBBP	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CRLF2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CTCF	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CTLA4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CTNNB1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CUL3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CYSLTR2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DICER1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DIS3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DNAJB1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DNMT1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DNMT3A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	DNMT3B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EGFR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EIF1AX	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EIF4A2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EP300	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EPAS1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EPHA3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EPHA7	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EPHB1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERBB2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERBB3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERBB4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERCC2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERCC3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERG	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ERRFI1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ESR1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ETV6	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	EZH2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	CCNQ	gene_name	any	5	Originally used symbol: FAM58A\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FAT1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FBXW7	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FGFR1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FGFR2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FGFR3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FGFR4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FH	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FLT3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FOXA1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FOXL2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FOXO1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FOXP1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	FUBP1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GATA2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GATA3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GLI1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GNA11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GNAQ	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GNAS	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GPS2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GSK3B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	GTF2I	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	H3-3A	gene_name	any	5	Originally used symbol: H3F3A\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	HGF	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	H1-2	gene_name	any	5	Originally used symbol: HIST1H1C\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	H3C2	gene_name	any	5	Originally used symbol: HIST1H3B\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	H3C3	gene_name	any	5	Originally used symbol: HIST1H3C\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	H3C10	gene_name	any	5	Originally used symbol: HIST1H3H\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	HLA-A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	HLA-B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	HNF1A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	HRAS	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IDH1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IDH2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IGF1R	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IKZF1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IL7R	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	INPPL1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IRF4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	IRS2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	JAK1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	JUN	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KDM6A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KDR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KEAP1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KIT	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KLF4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KMT2A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KMT2C	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KMT2D	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KNSTRN	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	KRAS	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	LYN	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAP2K1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAP2K2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAP2K4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAP3K1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAP3K13	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAPK1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MAX	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MED12	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MEF2B	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MET	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MGA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MSH2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MST1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MTOR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MYC	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MYCN	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MYD88	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	MYOD1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NCOA3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NF1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NFE2L2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NOTCH1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NOTCH2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NRAS	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NSD1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NUP93	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PAK5	gene_name	any	5	Originally used symbol: PAK7\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PARP1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PAX5	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PBRM1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PDGFRA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PDPK1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PGR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIK3CA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIK3CB	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIK3CD	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIK3R1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIK3R2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PIM1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PLK2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PMS2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	POLE	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PPM1D	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PPP2R1A	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PPP4R2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PPP6C	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PRDM14	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PREX2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PRKCI	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PTEN	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PTPN11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PTPRD	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PTPRS	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	PTPRT	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RAC1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RAD50	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RAD51C	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RAD52	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RAF1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RARA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RB1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RBM10	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RECQL4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RET	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RHEB	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RHOA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RICTOR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RIT1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RNF43	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RPS6KA4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RPTOR	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RRAS2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RUNX1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	RXRA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SDHA	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SDHAF2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SESN2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SETD2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SF3B1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMAD2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMAD3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMAD4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMARCA4	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMARCB1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMARCD1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SMO	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SOCS1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SOS1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SOX17	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SPOP	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SPRED1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SRSF2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	STAG2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	STAT3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	STK11	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	STK19	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	SUZ12	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TBX3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	ELOC	gene_name	any	5	Originally used symbol: TCEB1\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TCF3	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TCF7L2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TET1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TET2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TGFBR1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TGFBR2	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TNFRSF14	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TP53	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TP63	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TRAF7	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	TSC1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	U2AF1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	VHL	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	NSD2	gene_name	any	5	Originally used symbol: WHSC1\nSource: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
+CancerHotspots	XPO1	gene_name	any	5	Source: www.cancerhotspots.org; hotspot results V2{1}	10.1158/2159-8290.cd-17-0321
