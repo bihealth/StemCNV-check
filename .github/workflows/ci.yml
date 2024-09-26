@@ -36,8 +36,9 @@ jobs:
           environment-file: stemcnv_check/envs/general-R.yaml
           miniforge-version: latest
           auto-activate-base: false
-      - run: |
-            Rscript -e "testthat::test_local()"
+      - name: Run tests
+        shell: bash -l {0}
+        run: Rscript -e "testthat::test_local()"
 #         env:
 #           DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
 #           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
