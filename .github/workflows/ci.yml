@@ -25,22 +25,17 @@ jobs:
         python-version:
           - "3.12"
     steps:
-      - name: Setup conda
-        uses: s-weigand/setup-conda@v1.2
-        with:
-          python-version: ${{ matrix.python-version }}
-          conda-channels: bioconda,conda-forge
       - name: Checkout repository
         uses: actions/checkout@v4
-#         with:
-#           lfs: true
-#           fetch-depth: 2
-      - name: Install mamba
-        run: conda install -y mamba>=1
-      - name: Prepare environment.yml file
-        run: cp stemcnv_check/envs/general-R.yaml /tmp/environment.yml
-      - name: Update environment using mamba
-        run: mamba env update --name root --file /tmp/environment.yml
+
+      - name: Set up Miniforge
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: stemcnv-check-general-R
+          channels: conda-forge,bioconda
+          environment-file: stemcnv_check/envs/general-R.yaml
+          miniforge-version: latest
+          auto-activate-base: false
       - name: Run tests
         run: Rscript -e "testthat::test_local()"
 #         env:
