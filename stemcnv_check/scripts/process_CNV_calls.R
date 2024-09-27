@@ -97,10 +97,17 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(high_impact_gr, 'high_impact') %>%
 	annotate_impact_lists(highlight_gr, 'highlight') %>%
 	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
-	annotate_gaps(config$static_data$array_gaps,
-                  processing_config$min.perc.gap_area, 
-                  processing_config$gap_area.uniq_probes.rel) %>%
-	annotate_high_density(config$static_data$array_density, processing_config$density.quantile.cutoff) %>%
+	annotate_gaps(
+        config$static_data$array_gaps,
+        processing_config$min.perc.gap_area, 
+        processing_config$gap_area.uniq_probes.rel,
+        target_chrom_style
+    ) %>%
+	annotate_high_density(
+        config$static_data$array_density,
+        processing_config$density.quantile.cutoff,
+        target_chrom_style
+    ) %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
 	annotate_cnv.check.score(high_impact_gr, highlight_gr, check_scores) %>%

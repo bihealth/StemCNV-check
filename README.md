@@ -14,9 +14,9 @@ StemCNV-check will be made available through the bioconda channel in the future.
 For now, only installation 'from source' is possible:
 
 1. Clone this git repository
-2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12 
-3. Install both dependencies and the stemcnv-check script with pip `pip install -e .`. For development, use `pip install -e .[all]`
-4. All further dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
+2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12, then activate it
+3. Install dependencies and the stemcnv-check script using pip `pip install -e .`. For development, use `pip install -e .[all]`
+4. All further runtime dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
 ## Setup
 
@@ -75,19 +75,24 @@ Run the example data:
 ## Output
 
 StemCNV-check will produce the following output files for each sample, when run with default settings:
-- `data_path/{sample}/{sample}.processed-SNP-data.{filter}-filter.vcf` or 
-  `data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz`  
-  The filtered, processed 9and annotated) SNP data of the array in vcf format
+- `data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz`  
+  The filtered, processed and annotated SNP data of the array in vcf format
 - `data_path/{sample}/{sample}.stats.txt`  
   The CNV calls for the sample GenCall stat
 - `data_path/{sample}/{sample}.CNV_calls.CBS.vcf.gz`  
   The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm in vcf format
 - `data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz`  
   The CNV calls for the sample from the PennCNV caller, in vcf format
-- `data_path/{sample}/{sample}.combined-cnv-calls.{tsv|vcf.gz}`  
+- `data_path/{sample}/{sample}.combined-cnv-calls.vcf.gz`  
   The CNV calls processed, combined and annotated by StemCNV-check in tabular and vcf format. 
   Annotation includes comparison against reference sample, call scoring and gene annotation.
-- `data_path/{sample}/{sample}.StemCNV-check-report.html`; ...  
+- `data_path/{sample}/extra_files`  
+  Folder in which additional QC log files are stored.
+- `data_path/{sample}/{sample}.summary-stats.xlsx`  
+  An excel file with summary information for the sample. The first sheets contains quality summary statistics, including 
+  array quality measures, number of CNV and LOH calls, the number of calls above Check_Score thresholds. The further 
+  sheets have more details from individual CNV callers or sample comparisons.
+- `data_path/{sample}/{sample}.StemCNV-check-report.html`; ... 
   Html report containing summary statistics, QC statistics, lists of CNV calls sorted by annotation score, 
   plots of most/all CNVs and sample comparison. The default 'StemCNV-check-report' only contains plots for the top20 
   calls or calls above a user defined Check_Score threshold. A full report can easily be enabled in the config.yaml. 

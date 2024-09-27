@@ -241,6 +241,7 @@ collect_summary_stats <- function(
         summary_table_sample <- summary_table_sample %>%
             full_join(
                 read_excel(summary_excel_ref, sheet = 'summary_stats') %>%
+                    select(-contains('reference')) %>%
                     rename_with(~ str_replace(., 'sample', 'reference')) %>%
                     filter(!str_detect(Description, 'critical|reportable')),
                 by = 'Description'
