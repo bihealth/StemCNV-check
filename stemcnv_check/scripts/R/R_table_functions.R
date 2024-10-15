@@ -63,27 +63,37 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
         set_names(sample_headers)
         
     if (params$out_format == 'html') {
+    
+        call_count_excl_filters <- config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters
+        ignored_calls <- ifelse(
+            is.null(call_count_excl_filters) || length(call_count_excl_filters) == 0,
+            '',
+            paste0('\\nCalls with any of these Filters are not counted: ', call_count_excl_filters %>% paste(collapse = '|'))
+        )
 
         summary_row_help <- c(
             "Call Rate" = 'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be determined.\\nLow values are strong indicator of sample quality issues that also impact make any further analysis including CNV calling.',
             "Computed Gender" = 'The Illumina computed gender (sex) based on X and Y chromosome probes.\\nMismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.',
             "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
             "SNP Distance To Reference" = 'The number of probes with a different genotype than the reference sample.\\nIncreased values can indicate a sample swap or a considerable number of genomic mutations between sample and references.',
-            "Loss Gain Log2ratio" = 'The log2 transformed ratio of loss and gain CNV calls.\\nDeviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
-            "Total Calls CNV" = 'The total number of CNV (gain/loss) calls.',
-            "Total Calls LOH" = 'The total number of LOH calls.'
+            "Loss Gain Log2ratio" = paste0(
+                'The log2 transformed ratio of loss and gain CNV calls.\\n',
+                'Deviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
+                ignored_calls
+            ),
+            "Total Calls CNV" = paste0('The total number of CNV (gain/loss) calls.', ignored_calls),
+            "Total Calls LOH" = paste0('The total number of LOH calls.', ignored_calls)
         )
-        #FIXME (future): add actual tresholds into the help text
         if ("Reportable Calls CNV" %in% Combined.metrics$` `) {
             summary_row_help <- c(summary_row_help,
-                "Reportable Calls CNV" = 'The number of CNV calls with a Check_Score above the reportable threshold.',
-                "Reportable Calls LOH" = 'The number of LOH calls with a Check_Score above the reportable threshold.'
+                "Reportable Calls CNV" = 'The number of CNV calls designated as "reportable".',
+                "Reportable Calls LOH" = 'The number of LOH calls designated as "reportable".'
             )
         }
         if ("Critical Calls CNV" %in% Combined.metrics$` `) {
             summary_row_help <- c(summary_row_help,
-                "Critical Calls CNV" = 'The number of CNV calls with a Check_Score above the critical threshold.',
-                "Critical Calls LOH" = 'The number of LOH calls with a Check_Score above the critical threshold.'
+                "Critical Calls CNV" = 'The number of CNV calls designated as "critical".',
+                "Critical Calls LOH" = 'The number of LOH calls designated as "critical".'
             )
         }
         datatable(Combined.metrics,
@@ -99,7 +109,8 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
                 )
             ),
             rownames = FALSE
-        ) %>%
+        ) %>% 
+        # Color coding of values
         formatStyle(
             2, 
             backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])),
@@ -110,7 +121,16 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
             3,
             backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), 
             textAlign = 'center'
+        ) %>%
+        # Make all critical (= potentially red) rows have bold text
+        formatStyle(
+            1, 
+            fontWeight = styleEqual(
+                unlist(config$evaluation_settings$summary_stat_warning_levels$last_level_critical) %>% format_column_names(), 
+                'bold'
+            )
         )
+        
     } else {
     
         tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
@@ -127,34 +147,33 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
 format_hotspots_to_badge <- function(
     hotspot_vec, CNVtype_vec, hotspot_table, listname = 'high_impact', include_hover = TRUE
 ) {
-  if (listname == "high_impact") {
-    shorthand <- 'HI'
-  } else if (listname == "highlight") {
-    shorthand <- 'HL'
-  } else {
-    stop(str_glue("Unsupported list type '{listname}', only 'high_impact' and 'highlight' are defined"))
-  }
+    if (listname == "high_impact") {
+        shorthand <- 'HI'
+    } else if (listname == "highlight") {
+        shorthand <- 'HL'
+    } else {
+        stop(str_glue("Unsupported list type '{listname}', only 'high_impact' and 'highlight' are defined"))
+    }
 
+    hotspot_table.any <- hotspot_table %>%
+        mutate(call_type = str_replace(call_type, 'any', 'any;gain;loss;LOH')) %>%
+        separate_rows(call_type, sep = ';')
+    
     tb <- tibble(
         hotspot = str_split(hotspot_vec, '\\|'),
-        CNV_type = CNVtype_vec
+        call_type = CNVtype_vec
     ) %>%
         mutate(id = 1:dplyr::n()) %>%
         unnest(hotspot) %>%
-        left_join(hotspot_table, by = 'hotspot') %>%
+        # simple joining with base hotspot table by call_type does not work due to 'any' not matching
+        left_join(hotspot_table.any, by = c('hotspot', 'call_type')) %>%
         rowwise() %>%
         mutate(
             include_hover = include_hover,
-            do_format = case_when(
-                is.na(call_type) ~ FALSE,
-                call_type == CNV_type ~ TRUE,
-                call_type == 'any' ~ TRUE,
-                TRUE ~ FALSE
-            ),
             description = str_replace_all(description, '\\\\n', '&#013;') %>%
                 str_replace_all('\\n', '&#013;'),
             out_str = ifelse(
-                hotspot != "" & !is.na(list_name) & do_format,
+                hotspot != "" & !is.na(list_name),
                 paste0(
                     str_glue('<span class="badge badge-{shorthand}"'),
                     ifelse(
@@ -382,13 +401,14 @@ hotspot_table_output <- function(
             tb %>%
                 select(-description) %>%
                 dplyr::rename(description = description_htmllinks) %>%
-                select(hotspot, list_name, description, check_score, any_of(colnames(tb))) %>%
+                select(hotspot, call_type, list_name, description, check_score, any_of(colnames(tb))) %>%
                 mutate(
                     hotspot = ifelse(
                         list_name %in% unique(high_impact_tb$list_name),
                         map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
                         map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight', FALSE))
-                    )
+                    ),
+                    description = str_replace_all(description, '&#013;', '<br/>')
                 ) %>%
                 rename_with(format_column_names),
             caption = caption,
@@ -398,7 +418,7 @@ hotspot_table_output <- function(
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = nrow(tb),
                 # DT cols are 0-indexed, 1 col removed
-                columnDefs = list(list(targets = 4:(ncol(tb)-2), visible = FALSE))
+                columnDefs = list(list(targets = 5:(ncol(tb)-2), visible = FALSE))
             ),
             rownames = FALSE,
             escape = FALSE
@@ -409,7 +429,7 @@ hotspot_table_output <- function(
             kable(
                 tb %>%
                     dplyr::rename(dois = description_doi) %>%
-                    select(hotspot, list_name, description, check_score, dois) %>%
+                    select(hotspot, call_type, list_name, description, check_score, dois) %>%
                     rename_with(format_column_names),
                 caption = caption
             )

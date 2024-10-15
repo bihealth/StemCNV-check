@@ -151,9 +151,9 @@ test_that('parse_hotspot_table', {
 #     gr_info <- load_genomeInfo(config)
 #     gr_genes <- load_gtf_data(config)
 # 
-#     parse_hotspot_table(high_impact_tb, gr_genes, gr_info)
-#     parse_hotspot_table(highlight_tb, gr_genes, gr_info)
-#     parse_hotspot_table(highlight_tb2, gr_genes, gr_info)
+#     expect_no_error(parse_hotspot_table(high_impact_tb, gr_genes, gr_info))
+#     expect_no_error(parse_hotspot_table(highlight_tb, gr_genes, gr_info))
+#     expect_no_error(parse_hotspot_table(highlight_tb2, gr_genes, gr_info))
 # 
 # })
 

@@ -79,7 +79,7 @@ cnv_tb <- tibble(
   n_probes =      c(5, 3, 11, 5, 20, 5, 10, 15, 20),
   n_uniq_probes = c(5, 3, 10, 5, 20, 5, 10, 15, 20),
   probe_density_Mb = n_uniq_probes / width * 1e6,
-  FILTER = c('Size', 'Size;min_probes', 'PASS', 'PASS', 'Density', 'PASS', 'PASS', 'PASS', 'Density'),
+  FILTER = c('min_size', 'min_size;min_probes', 'PASS', 'PASS', 'min_density', 'PASS', 'PASS', 'PASS', 'min_density'),
   LRR = c(1, 1.3, 0.89, 2, 1.385, 0, -0.88, -1.31, -0.895) 
   #BAF clusters:
   #4, 2, 4, 3, 4, 2, 2, 2, 2  

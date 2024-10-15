@@ -115,9 +115,9 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
     filter.mindensity.Mb <- toolconfig$filter.mindensity
     filter <- c(
         '##FILTER=<ID=PASS,Description="All filters passed">',
-        str_glue('##FILTER=<ID=Size,Description="CNV call <below min. size <{filter.minsize}bp">'),
+        str_glue('##FILTER=<ID=min_size,Description="CNV call <below min. size <{filter.minsize}bp">'),
         str_glue('##FILTER=<ID=min_probes,Description="CNV call from <{filter.minprobes} probes">'),
-        str_glue('##FILTER=<ID=Density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
+        str_glue('##FILTER=<ID=min_density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
     )
     if (extra_annotation) {
         density.perc.cutoff <- toolconfig$density.quantile.cutoff * 100 %>% round(1)

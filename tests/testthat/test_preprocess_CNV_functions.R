@@ -76,8 +76,8 @@ merged_tb <- tibble(
 )
 
 merged_filtered_tb <- merged_tb 
-merged_filtered_tb$FILTER <- c('Size', 'Size;min_probes', NA, NA,
-                               'Density', NA, NA, NA, 'Density')
+merged_filtered_tb$FILTER <- c('min_size', 'min_size;min_probes', NA, NA,
+                               'min_density', NA, NA, NA, 'min_density')
 
 test_that("add_snp_probe_counts", {
     as_granges(cnv_tb_raw) %>%

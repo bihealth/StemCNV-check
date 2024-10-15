@@ -47,9 +47,9 @@ log_path: logs      #REQUIRED
 evaluation_settings:
   CNV_call_categorisation:
     check_score.critical: 55
-    filters.exclude.critical: ['probe_gap'] # high_probe_dens, probe_gap, (Size, min_probes, density)
+    filters.exclude.critical: ['probe_gap', 'min_size', 'min_probes', 'min_density'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
     check_score.reportable: null 
-    filters.exclude.reportable: [] # high_probe_dens, probe_gap, (Size, min_probes, density)
+    filters.exclude.reportable: ['min_size', 'min_probes'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
   
   SNP_clustering:
     filter-settings: '_default_' # "_default_", Filterset name, or "none"
@@ -68,6 +68,7 @@ evaluation_settings:
     call_rate: [0.995, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
     # Consider? call_rate: [0.99, 0.97]
     SNP_distance_to_reference: [2, 5]
+    call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters
     loss_gain_log2ratio: [2, 4]
     total_calls_CNV: [10, 50]
     total_calls_LOH: [30, 75]
@@ -78,10 +79,9 @@ evaluation_settings:
     # These measures use 'critical' instead of 'warning'
     last_level_critical:
       - call_rate
+      - computed_gender
       - critical_calls_CNV
       - critical_calls_LOH
-      - high_impact_calls
-      - computed_gender
 
 
 ##!medium
@@ -335,11 +335,13 @@ reports:
     call.data.and.plots:
       #Specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
       _default_: &default_plot_settings
+        # Calls with any of these filters are excluded from the table of CNV calls
+        # Note: if they overlap any other plot area, they are still included there!
         exclude_filter: 
           - min_probes
-          - Size
-          - Density
-            # high_probe_dens, probe_gap, (Size, min_probes, density)  
+          - min_size
+          - min_density
+            # high_probe_dens, probe_gap, (min_size, min_probes, min_density)  
         # How many plots to show at least
         min_number_plots: 20
         always_include: #[]
@@ -364,6 +366,9 @@ reports:
       # You can also use additional metadata columns from the sample table, i.e. "Sample_Group"
       dendrogram.color.by: 'Chip_Name'
       dendrogram.shape.by: 'Chip_Name'
+      
+    # Calls with any of these Filters are excluded from the digital karyotype plot
+    ideogram.exclude_filter: ['min_size', 'min_probes', 'min_density']
 
 ##!complete
 # These contraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid

@@ -8,10 +8,13 @@ minimal_probes <- tibble(
     check_score = c(30, 15, 10, 10, 12, 10),
     description = c('Sources: dummy', 'Something: Dummy{1}', 'dummy', 'Sources: dummy{1}\\nSomething: else{2}',
                     'dummy', 'Sources: dummy{1},dummy{2}'),
-    description_doi = c(NA, 'link', NA, 'link, link2', NA, 'link, link2'),
+    description_doi = c(NA, 'doi', NA, 'doi, doi2', NA, 'doi, doi2'),
     description_htmllinks = c(
-        'Sources: dummy', 'Something: <a href="link">Dummy</a>', 'dummy',
-        'Sources: <a href="link">dummy</a>\\nSomething: <a href="link2">else</a>',
-        'dummy', 'Sources: <a href="link">dummy</a>,<a href="link2">dummy</a>'
+        'Sources: dummy', 
+        'Something: <a href="https://doi.org/doi" target="_blank" rel="noopener noreferrer">Dummy</a>',
+        'dummy',
+        'Sources: <a href="https://doi.org/doi" target="_blank" rel="noopener noreferrer">dummy</a>&#013;Something: <a href="https://doi.org/doi2" target="_blank" rel="noopener noreferrer">else</a>',
+        'dummy', 
+        'Sources: <a href="https://doi.org/doi" target="_blank" rel="noopener noreferrer">dummy</a>,<a href="https://doi.org/doi2" target="_blank" rel="noopener noreferrer">dummy</a>'
     )
 )

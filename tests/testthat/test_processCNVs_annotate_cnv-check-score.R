@@ -38,7 +38,7 @@ base_tb <- tibble(
     n_probes = c(15, 100, 150, 100, 100, 50, 50),
     n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
     CN = c(3, 3, 4, 1, 1, 2, 2),
-    FILTER = c('Size', 'Probe_dens;probe_gap', 'probe_gap;high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_),
+    FILTER = c('min_size', 'Probe_dens;probe_gap', 'probe_gap;high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_),
     reference_overlap = c(T, T, F, F, F, F, T),
     reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
     reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),

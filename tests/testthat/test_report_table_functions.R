@@ -90,17 +90,20 @@ test_that("hotspot_table_output", {
         filter(hotspot %in% hotspots) 
     
     expected <- expected_tb %>%
-        select(hotspot, list_name, description_htmllinks, check_score, mapping, call_type, description_doi) %>%
+        select(hotspot, call_type, list_name, description_htmllinks, check_score, mapping, description_doi) %>%
         dplyr::rename(description = description_htmllinks) %>%
         rename_with(format_column_names) %>%
-        mutate(Hotspot = paste0('<span class="badge badge-HI">', Hotspot, '</span>')) %>%
+        mutate(
+            Hotspot = paste0('<span class="badge badge-HI">', Hotspot, '</span>'),
+            Description = str_replace_all(Description, '&#013;', '<br/>')
+        ) %>%
         datatable(
             options = list(
                 dom = 'Bt', 
                 extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = 2,
-                columnDefs = list(list(targets = 4:6, visible = FALSE))
+                columnDefs = list(list(targets = 5:6, visible = FALSE))
             ),
             rownames = FALSE,
             escape = FALSE
@@ -111,7 +114,7 @@ test_that("hotspot_table_output", {
     
     # test non-html output
     expected <- expected_tb %>%
-        select(hotspot, list_name, description, check_score, description_doi) %>%
+        select(hotspot, call_type, list_name, description, check_score, description_doi) %>%
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
@@ -122,14 +125,38 @@ test_that("hotspot_table_output", {
     highlight_tb <- high_impact_tb %>%
         filter(hotspot == '1p36') %>%
         mutate(list_name = 'highlight')
-    high_impact_tb <- high_impact_tb %>%
+    high_impact_tb.no_ov <- high_impact_tb %>%
         filter(hotspot != '1p36')
     expected <- expected_tb %>% 
         mutate(list_name = ifelse(hotspot == '1p36', 'highlight', list_name)) %>%
-        select(hotspot, list_name, description, check_score, description_doi) %>%
+        select(hotspot, call_type, list_name, description, check_score, description_doi) %>%
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(hotspots, plotsection, high_impact_tb.no_ov, highlight_tb, report_config, 'not-html') %>%
+        expect_equal(expected)
+    # test with same hotspot in both HighImpact and highlight table
+    expected <- expected_tb %>% 
+        mutate(list_name = ifelse(hotspot == '1p36', 'test-list|highlight', list_name)) %>%
+        separate_rows(list_name, sep = '\\|') %>%
+        select(hotspot, call_type, list_name, description_htmllinks, check_score, mapping, description_doi) %>%
+        dplyr::rename(description = description_htmllinks) %>%
+        rename_with(format_column_names) %>%
+        mutate(
+            Hotspot = paste0('<span class="badge badge-', c('HI', 'HI', 'HL'), '">', Hotspot, '</span>'),
+            Description = str_replace_all(Description, '&#013;', '<br/>')
+        ) %>%
+        datatable(
+            options = list(
+                dom = 'Bt', 
+                extensions = c('Buttons'),
+                buttons = c('colvis', 'copy', 'print'),
+                pageLength = 3,
+                columnDefs = list(list(targets = 5:6, visible = FALSE))
+            ),
+            rownames = FALSE,
+            escape = FALSE
+        )
+    hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
         expect_equal(expected)
 })

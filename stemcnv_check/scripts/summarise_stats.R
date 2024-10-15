@@ -66,7 +66,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
             sample_id = sample_id,
             SNP_distance_to_reference = SNP_distance_to_reference
         ),
-        get_call_stats(sample_CNV_data)
+        get_call_stats(sample_CNV_data, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
     )
     
     callrate_warnings <- config$evaluation_settings$summary_stat_warning_levels$call_rate
@@ -101,10 +101,17 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
 
 }
 
-get_call_stats <- function(gr.or.tb, name_addition = NA) {
+get_call_stats <- function(gr.or.tb, call_count_excl_filters = list(), name_addition = NA) {
+    
+    call_filter_regex <- ifelse(
+        is.null(call_count_excl_filters) || length(call_count_excl_filters) == 0,
+        'dummy',
+        call_count_excl_filters %>% paste(collapse = '|')
+    )
     
     tb <- gr.or.tb %>%
         as_tibble() %>%
+        filter(is.na(FILTER) | !str_detect(FILTER, call_filter_regex)) %>%
         group_by(sample_id) %>%
         mutate(
             loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
@@ -198,6 +205,7 @@ sample_GT_distances <- function(sample_SNP_gr, extra_snp_files, use_filter=TRUE)
 }
 
 collect_summary_stats <- function(
+    sample_id,
     gencall_stat_file,
     SNP_vcf_file,
     #TODO: SNP_analysis_file,
@@ -220,7 +228,7 @@ collect_summary_stats <- function(
         use_filter = config$evaluation_settings$SNP_clustering$`filter-settings` != 'none'
     )
     
-    sample_id <- unique(gencall_stats$sample_id)
+    stopifnot(sample_id == unique(gencall_stats$sample_id))
     ref_id <- get_sample_info(sample_id, 'ref_id', config$sample_table)
     SNP_distance_to_reference <- ifelse(
         is.na(ref_id),
@@ -253,7 +261,7 @@ collect_summary_stats <- function(
         imap(function (gr, name) {
             tb1 <- gr %>%
                 annotate_call.label(config$evaluation_settings$CNV_call_categorisation) %>%
-                get_call_stats()
+                get_call_stats(config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters)
             tb2 <- tb1 %>%
                  mutate(across(2:(ncol(tb1)-1), ~apply_greq_th(., cur_column(), config)))
             
@@ -270,6 +278,7 @@ collect_summary_stats <- function(
                 out <- out %>%
                     full_join(
                         read_excel(summary_excel_ref, sheet = paste0(name, '_stats')) %>%
+                            select(-contains('reference')) %>%
                             rename_with(~ str_replace(., 'sample', 'reference')) %>%
                             filter(!str_detect(Description, 'critical|reportable')),
                         by = 'Description'
@@ -299,6 +308,7 @@ collect_summary_stats <- function(
 
 
 collect_summary_stats(
+    sample_id = snakemake@wildcards[['sample_id']],
     gencall_stat_file = snakemake@input[['gencall_stats']],
     SNP_vcf_file = snakemake@input[['snp_vcf']],
     #TODO: SNP_analysis_file,

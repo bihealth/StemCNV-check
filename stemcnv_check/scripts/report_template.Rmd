@@ -251,6 +251,29 @@ cat('\n\n')
 
 ```{r qc.summary, eval = include.section('QC.summary'), results='asis'}
 cat('### Summary\n\n')
+
+crit_excl_filters <- ifelse(
+    is.null(config$evaluation_settings$CNV_call_categorisation$filters.exclude.critical),
+    '<none>',
+    config$evaluation_settings$CNV_call_categorisation$filters.exclude.critical %>% paste(collapse = ', ')
+)
+repo_excl_filters <- ifelse(
+    is.null(config$evaluation_settings$CNV_call_categorisation$filters.exclude.reportable),
+    '<none>',
+    config$evaluation_settings$CNV_call_categorisation$filters.exclude.reportable %>% paste(collapse = ', ')
+)
+
+cat(paste(
+    'Call designation takes into account the Check_Score thresholds for critical and optoinally reportable level.',
+    'Additionally, calls having an exclusion filter (i.e. below minimum size, or having a probe coverage gap) ',
+    'for a specific designation are assigend the next lower level (i.e. critical -> reportable or reportable -> no label).\n',
+    'The current thresholds and exclsuion filters are:\n',
+    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n',
+    ' - Critical exclusion Filters:', crit_excl_filters, '\n',
+    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.reportable, '\n',
+    ' - Reportable exclusion Filters: ', repo_excl_filters
+))
+
 read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'summary_stats'
@@ -327,10 +350,6 @@ session_info()
 # CNV calling
 
 ```{r CNV.call.plot.data}
-
-#TODO:
-# - hardcoded chrom style
-
 raw_LRR_BAF <- c(params$input$snp_vcf, params$input$ref_snp_vcf) %>%
     sapply(fix_rel_filepath, config=config) %>%
     lapply(parse_snp_vcf, apply_filter = FALSE) %>%
@@ -368,8 +387,9 @@ cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
         }),
     ) 
 
-#factor levels need to include all chromosomes for comparison
-levels(cnv_calls$seqnames) <- levels(raw_LRR_BAF$Chr)
+#for comparison/overlap factor levels need to include all chromosomes and have same order
+cnv_calls$seqnames <- fct_expand(cnv_calls$seqnames, levels(raw_LRR_BAF$Chr))
+cnv_calls$seqnames <- fct_relevel(cnv_calls$seqnames, levels(raw_LRR_BAF$Chr))
 
 
 denovo_filter_regex <- ifelse(
@@ -699,13 +719,13 @@ genome_data <- gr_info %>%
     select(Chr, Start, End, CE_start, CE_end)
 
 
-# ideo_filter_regex <- ifelse(
-#     is.null(report_config$ideogram.exclude_filter),
-#     'dummy',
-#     report_config$ideogram.exclude_filter %>% paste(collapse = '|')
-# )
+ideo_filter_regex <- ifelse(
+    is.null(report_config$ideogram.exclude_filter),
+    'dummy',
+    report_config$ideogram.exclude_filter %>% paste(collapse = '|')
+)
 sample.calls <- cnv_calls %>%
-    #filter(!str_detect(FILTER, ideo_filter_regex)) %>%
+    filter(!str_detect(FILTER, ideo_filter_regex)) %>%
     dplyr::select(seqnames, start, end, CNV_type, sample_id) %>%
     dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
     mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),

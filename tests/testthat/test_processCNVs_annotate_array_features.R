@@ -22,7 +22,7 @@ sample_cnvs <- tibble(
   n_probes = c(15, 100, 150, 250, 100, 50, 50),
   n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
   CN = c(3, 3, 4, 1, 1, 1, 0),
-  FILTER = c('Size', 'Probe_dens', NA_character_, 'test-dummy', NA_character_, NA_character_, NA_character_),
+  FILTER = c('min_size', 'Probe_dens', NA_character_, 'test-dummy', NA_character_, NA_character_, NA_character_),
   reference_overlap = c(T, T, F, F, F, F, T),
   reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60) %>% as.list(),
   reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
@@ -50,7 +50,7 @@ test_that("Annotate CNVs with gaps", {
     mutate(
       Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
       probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
-      FILTER = c('Size', 'Probe_dens;probe_gap', 'probe_gap', 'test-dummy', NA_character_, NA_character_, NA_character_)
+      FILTER = c('min_size', 'Probe_dens;probe_gap', 'probe_gap', 'test-dummy', NA_character_, NA_character_, NA_character_)
     )
   
   annotate_gaps(sample_cnvs, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
@@ -77,7 +77,7 @@ test_that("Annotate CNVs with probe density flags", {
   expexted_gr <- sample_cnvs %>%
     mutate(
       high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE),
-      FILTER = c('Size', 'Probe_dens', 'high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_)
+      FILTER = c('min_size', 'Probe_dens', 'high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_)
     )
   
   annotate_high_density(sample_cnvs, density_file, density.quantile.cutoff) %>%

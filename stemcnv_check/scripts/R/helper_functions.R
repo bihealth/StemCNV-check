@@ -122,13 +122,20 @@ load_hotspot_table <- function(config, table = 'HighImpact') {
     # str_glue with argument injection only works properly with named arguments that aren't numbers
     description_html_pattern <- str_replace_all(
         tb$description,
-        '([:,] ?)(.+?)\\{([0-9]+)\\}(?=, ?|\\\\n|$)',
-        '\\1<a href="{a\\3}">\\2</a>'
-    )
+        '([:,] ?)([^:,]+?)\\{([0-9]+)\\}(?=, ?|\\\\\\\\n|\\\\n|$)',
+        '\\1<a href="{a\\3}" target="_blank" rel="noopener noreferrer">\\2</a>'
+    ) %>%
+        str_replace_all('\\\\n', '&#013;') %>%
+        str_replace_all('\\n', '&#013;')
     tb$description_htmllinks <- map2_chr(
         tb$description_doi, description_html_pattern, 
         \(doi, pattern) {
-            args <- doi %>% str_split(', ?') %>% unlist() %>% set_names(paste0('a', 1:length(.)))
+            args <- doi %>% 
+                str_split(', ?') %>% 
+                # Make the doi text into an actual link
+                sapply(\(x) paste0('https://doi.org/', x)) %>%
+                unlist() %>%
+                set_names(paste0('a', 1:length(.)))
             rlang::inject(str_glue(pattern, !!!args))
         }
     )
