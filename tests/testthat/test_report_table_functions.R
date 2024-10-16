@@ -77,9 +77,10 @@ test_that("format_hotspots_to_badge", {
     )
 })
 
-# hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, out_format) %>%
+# hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, out_format) %>%
 test_that("hotspot_table_output", {
-    hotspots <- c('dummyC', '1p36')
+    hotspots <- c('DDX11L1', '1p36')
+    cnv_type <- 'loss'
     high_impact_tb <- load_hotspot_table(config, 'HighImpact') 
     highlight_tb <- tibble()
     # these aren't used so far
@@ -109,7 +110,7 @@ test_that("hotspot_table_output", {
             escape = FALSE
         )
     
-    hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
+    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
         expect_equal(expected)
     
     # test non-html output
@@ -118,7 +119,7 @@ test_that("hotspot_table_output", {
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
         expect_equal(expected)
     
     # test with highlight table
@@ -133,7 +134,7 @@ test_that("hotspot_table_output", {
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, plotsection, high_impact_tb.no_ov, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb.no_ov, highlight_tb, report_config, 'not-html') %>%
         expect_equal(expected)
     # test with same hotspot in both HighImpact and highlight table
     expected <- expected_tb %>% 
@@ -157,6 +158,17 @@ test_that("hotspot_table_output", {
             rownames = FALSE,
             escape = FALSE
         )
-    hotspot_table_output(hotspots, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
+    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
         expect_equal(expected)
+    # test with only partially matching cnv_type
+    cnv_type <-  'LOH'
+    expected <- expected_tb %>%
+        filter(hotspot == 'DDX11L1') %>%
+        select(hotspot, call_type, list_name, description, check_score, description_doi) %>%
+        dplyr::rename(dois = description_doi) %>%
+        rename_with(format_column_names) %>% 
+        kable()
+    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
+        expect_equal(expected)
+    
 })

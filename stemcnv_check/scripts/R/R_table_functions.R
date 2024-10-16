@@ -388,13 +388,13 @@ gene_table_output <- function(
 }
 
 hotspot_table_output <- function(
-    hotspots, plotsection, high_impact_tb, highlight_tb, report_config, out_format, caption = NULL
+    hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, out_format, caption = NULL
 ){
     tb <- bind_rows(
         high_impact_tb,
         highlight_tb
     ) %>%
-        filter(hotspot %in% hotspots) 
+        filter(hotspot %in% hotspots & call_type %in% c('any', cnv_type))
     
     if (out_format == 'html') {
         dt <- datatable(

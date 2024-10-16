@@ -193,7 +193,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
             # message(str_glue('N hotspots: {length(res$hotspots)}'))
             if (report_config$call.data.and.plots[[plotsection]]$include.hotspot.table & length(res$hotspots)>0) {
                 res$hotspots %>%
-                    hotspot_table_output(plotsection, high_impact_tb, highlight_tb, report_config, params$out_format) %>%
+                    hotspot_table_output(plotsection, row$CNV_type, high_impact_tb, highlight_tb, report_config, params$out_format) %>%
                     subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.hotspots'))
                 cat('\n\n')
             }
@@ -266,12 +266,12 @@ repo_excl_filters <- ifelse(
 cat(paste(
     'Call designation takes into account the Check_Score thresholds for critical and optoinally reportable level.',
     'Additionally, calls having an exclusion filter (i.e. below minimum size, or having a probe coverage gap) ',
-    'for a specific designation are assigend the next lower level (i.e. critical -> reportable or reportable -> no label).\n',
-    'The current thresholds and exclsuion filters are:\n',
-    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n',
-    ' - Critical exclusion Filters:', crit_excl_filters, '\n',
-    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.reportable, '\n',
-    ' - Reportable exclusion Filters: ', repo_excl_filters
+    'for a specific designation are assigend the next lower level (i.e. critical -> reportable or reportable -> no label).\n\n',
+    'The current thresholds and exclsuion filters are:\n\n',
+    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n\n',
+    ' - Critical exclusion Filters:', crit_excl_filters, '\n\n',
+    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.reportable, '\n\n',
+    ' - Reportable exclusion Filters: ', repo_excl_filters, '\n\n'
 ))
 
 read_excel(
@@ -401,7 +401,10 @@ denovo_calls.table <- cnv_calls %>%
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
     filter(sample_id == !!sample_id & Call_label != 'Reference genotype') %>%
-    filter(!str_detect(FILTER, denovo_filter_regex)) %>%
+    filter(
+        !str_detect(FILTER, denovo_filter_regex) | 
+            Call_label %in% report_config$call.data.and.plots$denovo$always_include
+    ) %>%
     mutate(i = row_number())
 
 refgt_filter_regex <- ifelse(
@@ -412,7 +415,10 @@ refgt_filter_regex <- ifelse(
 reference_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
-    filter(sample_id == !!sample_id & Call_label == 'Reference genotype') %>%
+    filter(
+        sample_id == !!sample_id & Call_label == 'Reference genotype' |
+            Call_label %in% report_config$call.data.and.plots$reference_gt$always_include
+    ) %>%
     filter(!str_detect(FILTER, refgt_filter_regex)) %>%
     mutate(i = row_number())
 
