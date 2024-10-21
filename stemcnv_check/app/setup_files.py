@@ -23,7 +23,6 @@ def setup_control_files(args):
                     comment_lines.append(line.rstrip())
                 else:
                     break
-        logging.info('writing sample table: ' + args.sample_table)
         with pd.ExcelWriter(args.sample_table) as writer:
             pd.DataFrame(comment_lines).to_excel(writer, index=False, header=False)
             read_sample_table(source_file, return_type='dataframe').to_excel(writer, index=False)
