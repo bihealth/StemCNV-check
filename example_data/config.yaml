@@ -1,16 +1,13 @@
-static_data:
-    bpm_manifest_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.bpm'
-    egt_cluster_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.egt'
-    csv_manifest_file: 'static-data/GSAMD-24v3-0-EA_20034606_A1.csv.gz'
-    genome_gtf_file: static-data/gencode.hg19.v45.gtf.gz
-    penncnv_GCmodel_file: static-data/PennCNV-GCmodel_hg19_ExampleArray.gcmodel
-    penncnv_pfb_file: static-data/PennCNV-PFB_hg19_ExampleArray.pfb
-    array_density_file: static-data/density_hg19_ExampleArray.bed
-    array_gaps_file: static-data/gaps_hg19_ExampleArray.bed
-    genomeInfo_file: static-data/UCSC_hg19_chromosome-info.tsv
-
-genome_version: 'hg19'
-array_name: 'ExampleArray'
+array_definition:
+  ExampleArray:
+    genome_version: 'hg19'
+    bpm_manifest_file: 'static-data/ExampleArray/GSAMD-24v3-0-EA_20034606_A1.bpm'
+    egt_cluster_file: 'static-data/ExampleArray/GSAMD-24v3-0-EA_20034606_A1.egt'
+    csv_manifest_file: 'static-data/ExampleArray/GSAMD-24v3-0-EA_20034606_A1.csv.gz'
+    penncnv_GCmodel_file: static-data/ExampleArray/PennCNV-GCmodel_hg19_ExampleArray.gcmodel
+    penncnv_pfb_file: static-data/ExampleArray/PennCNV-PFB_hg19_ExampleArray.pfb
+    array_density_file: static-data/ExampleArray/density_hg19_ExampleArray.bed
+    array_gaps_file: static-data/ExampleArray/gaps_hg19_ExampleArray.bed
 
 raw_data_folder: 'RAW'
 data_path: data

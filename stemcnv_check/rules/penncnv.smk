@@ -56,8 +56,8 @@ rule run_PennCNV:
     input:
         tsv=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.input.tsv"),
         sexfile=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.sexfile.txt"),
-        pfb=config["static_data"]["penncnv_pfb_file"],
-        gcmodel=config["static_data"]["penncnv_GCmodel_file"],
+        pfb=get_static_input("penncnv_pfb_file"),
+        gcmodel=get_static_input("penncnv_GCmodel_file"),
     output:
         tsv=temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv-{chr}.tsv")),
         extra=os.path.join(DATAPATH, "{sample_id}", "extra_files", "PennCNV.{chr}.error.log"),
@@ -107,7 +107,10 @@ rule run_PennCNV:
             ),
             "data",
         ),
-        pfb=fix_container_path(config["static_data"]["penncnv_pfb_file"], "static"),
+        pfb=lambda wildcards: fix_container_path(
+            get_static_input("penncnv_pfb_file")(wildcards), 
+            get_sample_info(wildcards)["Array_Name"]
+        ),
         sexfile=lambda wildcards: (
             ""
             if wildcards.chr == "auto"
@@ -123,8 +126,9 @@ rule run_PennCNV:
                 )
             )
         ),
-        gcmodel=fix_container_path(
-            config["static_data"]["penncnv_GCmodel_file"], "static"
+        gcmodel=lambda wildcards: fix_container_path(
+            get_static_input("penncnv_GCmodel_file")(wildcards), 
+            get_sample_info(wildcards)["Array_Name"]
         ),
         logerr=lambda wildcards: fix_container_path(
             os.path.join(

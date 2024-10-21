@@ -40,8 +40,10 @@ rmarkdown::render(
         config_delta = snakemake@params$config_delta,
         #report_name = report_name,
         out_format = snakemake@wildcards$ext,
-        #workdir = rmd_workdir,
+        workdir = rmd_workdir,
         basedir = config$basedir,
+        gtf_file = snakemake@params$gtf_file,
+        ginfo_file = snakemake@params$ginfo_file,
         version = snakemake@params$version
     )
 )

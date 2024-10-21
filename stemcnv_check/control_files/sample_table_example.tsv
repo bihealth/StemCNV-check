@@ -1,27 +1,29 @@
-# All lines that start with a `#` will be ignored by the pipeline
-# Required Columns are: Sample_Name	Chip_Name	Chip_Pos	Sample_ID	Sex	Reference_Sample
-# Any number of additional/optional columns can be used, but the columns `Regions_of_Interest` and `Sample_Name` have specific usage if included
-# Specific explanations for columns:
-# - Sample_ID:
-#       The folder and samples names for samples are derived from this entry. All entries *must* be unique and
-#       conform with unix filename patterns (i.e. no /). The recommended default allows only alphanumeric characters and -_
-# - Chip_Name and Chip_Pos:
-#       These entries must match the Sentrix name (usually a 12 digit number) and position (usually R..C..) on the Illumina array
-# - Sex
-#       The sex of the sample is needed for analysis and mandatory. Allowed: f[emale]/m[ale] (not case sensitive)
-# - Reference_Sample
-#       This column should refer to the (exact) Sample_ID of reference sample (i.e. a parental fibroblast line or master bank)
-#       If there is no usable or applicable reference sample the entry should be empty
-# - Sample_Name
-#       This is used in the report instead of the Sample_ID. Can contain any kind of character
-# - Regions_of_Interest
-#       Definition of regions for which plots are always generated in the report (i.e. gene edited sites)
-#       The syntax for regions is `NAME|chr?:start-end`, the `NAME|` part is optional, `chr?` can be i.e. 'chr3' or just '3'
-#       multiple regions for a single sample should all be in one column entry and be separated by a `;`
-# Any other number of additional/optional columns can be added (here Sample_Group)
-#       These can be referred to in the config to determine i.e. which samples are included for dendrogram clustering of SNPS
-Sample_Name	Chip_Name	Chip_Pos	Sample_ID	Sex	Reference_Sample	Sample_Group	Regions_of_Interest
-Cellline-A MasterBank	123456789000	R01C01	Cellline-A-MB	Female		ExampleCellines	Example1|chr1:100000-200000
-Cellline-A WorkingBank	123456789001	R01C01	Cellline-A-WB	Female	Cellline-A-MB	ExampleCellines	Example1|chr1:100000-200000;chr11:60000-70000
-Cellline-B MasterBank	123456789000	R01C02	Cellline-B-MB	Male		ExampleCellines	Example1|chr1:100000-200000;chr11:60000-70000
-Cellline-B-1 clone1	123456789001	R01C02	Cellline-B-1-cl1	Male	Cellline-B-MB	ExampleCellines	
+# All lines that start with a `#` will be ignored by the pipeline								
+# Required Columns are: Sample_ID	Chip_Name	Chip_Pos	Array_Name	Sex	Reference_Sample			
+# Any number of additional/optional columns can be used, but the columns `Regions_of_Interest` and `Sample_Name` have specific usage if included								
+# Specific explanations for columns:								
+# - Sample_ID:								
+#       The folder and samples names for samples are derived from this entry. All entries *must* be unique and								
+#       conform with unix filename patterns (i.e. no /). The recommended default allows only alphanumeric characters and -_								
+# - Chip_Name and Chip_Pos:								
+#       These entries must match the Sentrix name (usually a 12 digit number) and position (usually R..C..) on the Illumina array								
+# - Array_Name								
+#       The name of the array used for the sample. This needs to match one of the arrays defined in the config under `array_definition`								
+# - Sex								
+#       The sex of the sample is needed for analysis and mandatory. Allowed: f[emale]/m[ale] (not case sensitive)								
+# - Reference_Sample								
+#       This column should refer to the (exact) Sample_ID of reference sample (i.e. a parental fibroblast line or master bank)								
+#       If there is no usable or applicable reference sample the entry should be empty								
+# - Sample_Name								
+#       This is used in the report instead of the Sample_ID. Can contain any kind of character								
+# - Regions_of_Interest								
+#       Definition of regions for which plots are always generated in the report (i.e. gene edited sites)								
+#       The syntax for regions is `NAME|chr?:start-end`, the `NAME|` part is optional, `chr?` can be i.e. 'chr3' or just '3'								
+#       multiple regions for a single sample should all be in one column entry and be separated by a `;`								
+# Any other number of additional/optional columns can be added (here Sample_Group)								
+#       These can be referred to in the config to determine i.e. which samples are included for dendrogram clustering of SNPS								
+Sample_ID	Chip_Name	Chip_Pos	Array_Name	Sex	Reference_Sample	Sample_Name	Regions_of_Interest	Sample_Group
+Cellline-A-MB	123456789000	R01C01	ExampleArray	Female		Cellline-A MasterBank	Example1|chr1:100000-200000	ExampleCellines
+Cellline-A-WB	123456789001	R01C01	ExampleArray	Female	Cellline-A-MB	Cellline-A WorkingBank	Example1|chr1:100000-200000;chr11:60000-70000	ExampleCellines
+Cellline-B-MB	123456789000	R01C02	ExampleArray	Male		Cellline-B MasterBank	Example1|chr1:100000-200000;chr11:60000-70000	ExampleCellines
+Cellline-B-1-cl1	123456789001	R01C02	ExampleArray	Male	Cellline-B-MB	Cellline-B-1 clone1		ExampleCellines

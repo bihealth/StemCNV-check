@@ -2,8 +2,8 @@ import importlib.resources
 import os
 import shutil
 from loguru import logger as logging
-
 from .. import STEM_CNV_CHECK
+from ..helpers import read_sample_table
 
 def setup_control_files(args):
 
@@ -11,8 +11,22 @@ def setup_control_files(args):
 
     if os.path.exists(args.sample_table) and not args.overwrite:
         logging.info(f"Sample table already exists: {args.sample_table}. Use --overwrite to replace it.")
-    else:
+    elif args.sampletable_format == 'tsv':
         shutil.copyfile(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'), args.sample_table)
+    elif args.sampletable_format == 'xlsx':
+        import pandas as pd
+        source_file = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv')
+        comment_lines = []
+        with open(source_file, 'r') as fin:
+            for line in fin:
+                if line.startswith('#'):
+                    comment_lines.append(line.rstrip())
+                else:
+                    break
+        logging.info('writing sample table: ' + args.sample_table)
+        with pd.ExcelWriter(args.sample_table) as writer:
+            pd.DataFrame(comment_lines).to_excel(writer, index=False, header=False)
+            read_sample_table(source_file, return_type='dataframe').to_excel(writer, index=False)
 
     if os.path.exists(args.config) and not args.overwrite:
         logging.info(f"Config file already exists: {args.config}. Use --overwrite to replace it.")

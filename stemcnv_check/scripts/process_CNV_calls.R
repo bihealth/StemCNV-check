@@ -25,7 +25,7 @@ snakemake@source('R/processCNVs_annotate_check-score.R')
 
 config <- snakemake@config
 sample_id <- snakemake@wildcards$sample_id
-sampletable <- read_sampletable(config$sample_table)
+sampletable <- read_sampletable(config$sample_table, config$column_remove_regex)
 
 # Load data & set CHROM Style
 processing_config <- config$settings$CNV_processing$call_processing
@@ -83,13 +83,19 @@ check_scores <- config$settings$CNV_processing$Check_score_values
 size_categories <- config$settings$CNV_processing$Precision$size_categories
 precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 
-gr_genes <- load_gtf_data(config, target_chrom_style)
-gr_info  <- load_genomeInfo(config, target_chrom_style)
+gr_genes <- load_gtf_data(snakemake@params$gtf_file, config, target_chrom_style)
+gr_info  <- load_genomeInfo(snakemake@params$ginfo_file, config, target_chrom_style)
 
 high_impact_gr <- load_hotspot_table(config, 'HighImpact') %>%
     parse_hotspot_table(gr_genes, gr_info)
 highlight_gr <- load_hotspot_table(config, 'Highlight') %>%
     parse_hotspot_table(gr_genes, gr_info)
+
+array <- sampletable %>%
+    filter(Sample_ID == sample_id) %>%
+    pull('Array_Name')
+gap_file <- config$array_definition[[array]]$array_gaps_file
+density_file <- config$array_definition[[array]]$array_density_file
 
 cnvs <- cnvs %>%
     plyranges::select(-LRR) %>%
@@ -98,13 +104,13 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(highlight_gr, 'highlight') %>%
 	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
 	annotate_gaps(
-        config$static_data$array_gaps,
+        gap_file,
         processing_config$min.perc.gap_area, 
         processing_config$gap_area.uniq_probes.rel,
         target_chrom_style
     ) %>%
 	annotate_high_density(
-        config$static_data$array_density,
+        density_file,
         processing_config$density.quantile.cutoff,
         target_chrom_style
     ) %>%
@@ -158,7 +164,7 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
 cnvs %>%
     combined_calls_to_vcf(
         snakemake@output$vcf,
-        get_sample_info(sample_id, 'sex', sampletable),
+        get_sample_info(sample_id, 'sex', snakemake$config, sampletable),
         processing_config,
         snp_vcf_meta,
         target_chrom_style

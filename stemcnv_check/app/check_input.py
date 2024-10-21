@@ -30,68 +30,86 @@ def flatten(dictionary, parent_key='', separator=':'):
 
 ### Sanity checks ###
 @logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError), reraise=True)
-def check_sample_table(sample_table_file, config_file):
+def check_sample_table(sample_table_file, config_file, column_remove_regex=None):
 
     if not os.path.isfile(sample_table_file):
         raise FileNotFoundError(f"Sample table file '{sample_table_file}' does not exist.")
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
 
-    sample_data = read_sample_table(sample_table_file)
+    sample_data_df = read_sample_table(sample_table_file, column_remove_regex, return_type='dataframe')
     yaml = ruamel_yaml.YAML(typ='safe')
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
 
     # Check sample_ids are unique
-    #The way the sample_table is read in means that non-unique sample_ids would silently overwrite one another ...
-    all_ids = [sid for sid, _, _, _, _ in sample_data]
-    non_unique_ids = [sid for sid in all_ids if all_ids.count(sid) > 1]
+    non_unique_ids = sample_data_df['Sample_ID'][sample_data_df['Sample_ID'].duplicated()].to_list()
     if non_unique_ids:
         raise SampleConstraintError('The following Sample_IDs occur more than once: ' + ', '.join(non_unique_ids))
 
-    # Check sex values
-    samples = {sid: sex for sid, _, _, sex, _ in sample_data}
+    # Check sex values exist & are formatted correctly
+    samples = sample_data_df['Sex'].to_dict()
     if any(not s for s in samples.values()):
         missing = [sid for sid, s in samples.items() if not s]
         raise SampleConstraintError("Missing values for 'Sex' in the samplesheet. Affected samples: " + ', '.join(missing))
     elif not all(s in ('m', 'f') for s in map(lambda x: x[0].lower(), samples.values())):
         missing = [f"{sid}: {s}" for sid, s in samples.items() if not s[0].lower() in ('m', 'f')]
         raise SampleFormattingError("Not all values of the 'Sex' column in the samplesheet can be coerced to 'm' or 'f'. Affected samples: " + ', '.join(missing))
+
     # Check that all reference samples exist
-    ref_samples = {rid: sex for _, _, _, sex, rid in sample_data if rid}
+    ref_samples = sample_data_df.set_index('Reference_Sample')['Sex'].to_dict()
+    if '' in ref_samples:
+        del ref_samples['']
     missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
     if missing_refs:
         raise SampleConstraintError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
     # Give warning if sex of reference and sample don't match
-    sex_mismatch = [f"{s} ({sex})" for s, _, _, sex, ref in sample_data if ref and sex[0].lower() != samples[ref][0].lower()]
+    sex_mismatch = [
+        f"{s} ({sex})" for s, sex in samples.items() if
+            sample_data_df.loc[s]['Reference_Sample'] and
+            sex[0].lower() != samples[sample_data_df.loc[s]['Reference_Sample']][0].lower()
+    ]
     if sex_mismatch:
         logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
-    # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex
+
+    # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex (& aren't empty!)
     with open(config_file) as f:
         yaml = ruamel_yaml.YAML(typ='safe')
         config = yaml.load(f)
 
+    sample_data = read_sample_table(sample_table_file, column_remove_regex)
     for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
         pattern = config_extract(['wildcard_constraints', constraint], config, default_config)
-        mismatch = [sid for sid, n, p, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val))]
+        mismatch = [sid for sid, n, p, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val)) and eval(val)]
         if mismatch:
             raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
 
-    sample_data_full = read_sample_table(sample_table_file, with_opt=True)
+    # Check that all Array_Name values are defined in config, the example files WILL not pass this check
+    array_names = set(sample_data_df['Array_Name'])
+    array_names_not_config = [array for array in array_names if array not in config['array_definition']]
+    if array_names_not_config:
+        logging.error("The following Array_Name values are not defined in the config file: " + ', '.join(array_names_not_config))
+        raise SampleConstraintError("The following Array_Name values are not defined in the config file: " + ', '.join(array_names_not_config))
 
-    # Check optional 'Regions of Interest' column
-    # FIXME (future): this can now accept gene bands and gene names!
-    if 'Regions_of_Intertest' in sample_data_full[0].keys():
-        for data_dict in sample_data_full:
-            regions = data_dict['Regions_of_Intertest'].split(';')
-            checks = [re.match('^(.*|)?(chr)?[0-9XY]{1,2}:[0-9]+-[0-9]+$', region) for region in regions]
-            if not all(checks):
-                raise SampleFormattingError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {data_dict['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
+    # Check that all Chip_Name values have the same Array_Name
+    n_arrays = sample_data_df.groupby(['Chip_Name']).nunique()['Array_Name']
+    chip_name_nonuniq_array = list(n_arrays[n_arrays > 1].to_dict().keys())
+    if chip_name_nonuniq_array:
+        logging.error("The following Chip_Name values are listed with different Array_Names: " + ', '.join(chip_name_nonuniq_array))
+        raise SampleConstraintError("The following Chip_Name values are listed with different Array_Names: " + ', '.join(chip_name_nonuniq_array))
+
+    # # Check optional 'Regions of Interest' column, non-matching regions will be taken as gene_names
+    # if 'Regions_of_Intertest' in sample_data_df.columns:
+    #     for sample in samples:
+    #         regions = sample_data_df.loc[sample]['Regions_of_Intertest'].split(';')
+    #         checks = [re.match('^(.*|)?(chr)?[0-9XY]{1,2}:[0-9]+-[0-9]+$', region) for region in regions]
+    #         if not all(checks):
+    #             raise SampleFormattingError(f"The 'Region_of_Interest' entry for this sample is not properly formatted: {sample_data_df.loc[sample]['Regions_of_Intertest']['Sample_ID']}. Format: (NAME_)?(chr)?[CHR]:[start]-[end], separate multiple regions with only ';'.")
 
 
 @logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
-def check_config(config_file, sample_table_file, required_only=False):
+def check_config(config_file, sample_table_file, column_remove_regex=None, required_only=False):
 
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
@@ -106,30 +124,34 @@ def check_config(config_file, sample_table_file, required_only=False):
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('allowedvalues_config.yaml').open() as f:
         allowed_values = yaml.load(f)
 
-    ## Check required enrties
+    ## Check required entries
 
     # Files: static-data/*
-    for req in allowed_values['static_data'].keys():
-        # Optional
-        if req == 'csv_manifest_file':
-            continue
-        if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'genomeInfo_file', 'array_density_file', 'array_gaps_file',
-                   'array_gaps_file', 'genome_gtf_file'):
-            infostr = "\nYou can create it by running `StemCNV-check make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
-        else:
-            infostr = ""
-        if req not in config['static_data'] or not config['static_data'][req]:
-            raise ConfigValueError(f"Required config entry is missing: static_data:{req}")
-        if not required_only and not os.path.isfile(config['static_data'][req]):
-            raise FileNotFoundError(f"static_data file '{req}' does not exist." + infostr)
+    for array in config['array_definition'].keys():
+        for req in allowed_values['array_definition']['__array'].keys():          
+            # Optional
+            if req == 'csv_manifest_file':
+                continue
+            if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
+                infostr = "\nYou can create it by running `StemCNV-check make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
+            else:
+                infostr = ""
+
+            if req not in config['array_definition'][array] or not config['array_definition'][array][req]:
+                raise ConfigValueError(f"Required config entry is missing: array_definition:{array}:{req}")
+
+            if req != 'genome_version' and not required_only and not os.path.isfile(config['array_definition'][array][req]):
+                raise FileNotFoundError(f"array definition file '{array}:{req}' does not exist." + infostr)
+            elif req == 'genome_version' and config['array_definition'][array][req] not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
+                raise ConfigValueError(f"Genome version '{config['array_definition'][array][req]}' for array '{array}' is not supported. Use 'hg38' or 'hg19'.")
 
     # Folders: log, data, raw-input
     # and other settings
-    for req in ('data_path', 'log_path', 'raw_data_folder', 'genome_version', 'array_name'):
+    for req in ('data_path', 'log_path', 'raw_data_folder'):
         try:
             if not config[req]:
                 raise ConfigValueError(f"Required config entry is missing: {req}")
-            if req not in ('genome_version', 'array_name') and not os.path.isdir(config[req]):
+            if not os.path.isdir(config[req]):
                 warn_str = f"Entry for required setting '{req}' is not an existing folder ({config[req]})! Creating it now."
                 logging.warning(warn_str)
                 os.makedirs(config[req], exist_ok=False)
@@ -151,7 +173,7 @@ def check_config(config_file, sample_table_file, required_only=False):
                 raise ConfigValueError(f"Required config entry is missing: reports:{rep}:file_type")
 
     ## Check value ranges
-    sample_data = read_sample_table(sample_table_file, with_opt=True)
+    sample_data = read_sample_table(sample_table_file, column_remove_regex, return_type='list_withopt')
 
     def parse_scientific(n):
         if isinstance(n, (int, float)):
@@ -198,7 +220,8 @@ def check_config(config_file, sample_table_file, required_only=False):
     allowed_plotsections = allowed_values['allowed_plotsections'] + ['_default_']
     for flatkey, config_value in flatten(config).items():
         # Need to change the key for variable config sections
-        flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey)
+        flatkey_ = re.sub('array_definition:[^:]+', 'array_definition:__array', flatkey)
+        flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey_)
         flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
         flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
         flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),

@@ -3,7 +3,7 @@ import os
 from loguru import logger as logging
 from deepdiff import DeepDiff
 from pydantic.v1.utils import deep_update
-from stemcnv_check.helpers import load_config, collect_SNP_cluster_ids
+from stemcnv_check.helpers import load_config, collect_SNP_cluster_ids, get_global_file
 from stemcnv_check import __version__, STEM_CNV_CHECK
 
 def get_penncnv_log_input(wildcards):
@@ -122,6 +122,12 @@ rule knit_report:
         report_config = lambda wildcards: deep_update(config['reports']['_default_'], config['reports'][wildcards.report]),
         version = __version__,
         config_delta = get_config_delta,
+        gtf_file=lambda wildcards: get_global_file(
+            'gtf', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
+        ),
+        ginfo_file=lambda wildcards: get_global_file(
+            'genome_info', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
+        ),
     resources:
         runtime=get_tool_resource("knitr", "runtime"),
         mem_mb=get_tool_resource("knitr", "memory"),

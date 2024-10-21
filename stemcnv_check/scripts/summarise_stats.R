@@ -70,7 +70,7 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
     )
     
     callrate_warnings <- config$evaluation_settings$summary_stat_warning_levels$call_rate
-    sample_sex <- get_sample_info(sample_id, 'sex', config$sample_table)
+    sample_sex <- get_sample_info(sample_id, 'sex', config)
     qc_eval_list <- list(
         mutate(
             qc_measure_list[[1]],
@@ -229,7 +229,7 @@ collect_summary_stats <- function(
     )
     
     stopifnot(sample_id == unique(gencall_stats$sample_id))
-    ref_id <- get_sample_info(sample_id, 'ref_id', config$sample_table)
+    ref_id <- get_sample_info(sample_id, 'ref_id', config)
     SNP_distance_to_reference <- ifelse(
         is.na(ref_id),
         NA_real_,

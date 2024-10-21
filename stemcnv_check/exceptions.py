@@ -12,3 +12,7 @@ class SampleConstraintError(Exception):
 
 class ConfigValueError(Exception):
     """Raised when the config file contains values not allowed in a given field"""
+
+
+class CacheUnavailableError(Exception):
+    """Raised when no cache path is available, but required for the workflow"""

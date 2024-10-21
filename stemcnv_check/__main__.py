@@ -31,7 +31,16 @@ def setup_argparse():
     group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
     group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
-    group_basic.add_argument('--sample-table', '-s', default='sample_table.tsv', help="Filename of sample table. Default: %(default)s")
+    group_basic.add_argument('--sample-table', '-s', default=None,
+                             help="Filename of sample table, can be tsv or xlsx format (1st sheet is read). "
+                                  "Default: sample_table.tsv or sample_table.xlsx")
+    group_basic.add_argument('--column-remove-regex', nargs='?', const=r'\s.*', type=str,
+                             help="Regex to remove text from sample table column names (before looking for required columns)."
+                                  " Not used by default, default if not regex given ' .*' (remove spaces and everything following a space)")
+    # group_basic.add_argument('--required-col-indices', default=None, nargs=6,
+    #                             help="Indexes of the required columns in the sample table. "
+    #                                  "Required columns are: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample. "
+    #                                  "This will set the corresponding names to the specified columns")
     group_basic.add_argument('--directory', '-d', default=None,
                              help="Directory to run pipeline in. Default: current directory")
     group_basic.add_argument('--verbose', '-v', action='count', default=0,
@@ -39,30 +48,31 @@ def setup_argparse():
 
     group_setupfiles = parser.add_argument_group("setup-files", "Details for setup-files")
     group_setupfiles.add_argument('--config-details', default='minimal', choices=('minimal', 'medium', 'advanced', 'complete'), help="Level of detail for the config file. Default: %(default)s")
+    group_setupfiles.add_argument('--sampletable-format', default='tsv', choices=('tsv', 'xlsx'), help="Format of the sample table. Default: %(default)s")
     group_setupfiles.add_argument('--overwrite', action='store_true', help="Allow overwriting of existing files")
 
     group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
-    group_static.add_argument('--edit-config-inplace', action='store_true', help = "Edit the config file in place with updated static-data entries")
-    group_static.add_argument('--penncnv-pfb-file', default='static-data/PennCNV-PFB_{genome}_{array}.pfb',
-                               help="Filename for generated PFB file. Default: %(default)s")
-    group_static.add_argument('--penncnv-gcmodel-file', default='static-data/PennCNV-GCmodel_{genome}_{array}.gcmodel',
-                               help="Filename for generated GCmodel file. Default: %(default)s")
-    group_static.add_argument('--array-density-file', default='static-data/density_{genome}_{array}.bed',
-                               help="Filename for generated bed file with probe density. Default: %(default)s")
-    group_static.add_argument('--array-gaps-file', default='static-data/gaps_{genome}_{array}.bed',
-                              help="Filename for generated bed file with probe gaps. Default: %(default)s")
-    group_static.add_argument('--genomeinfo-file', default='static-data/UCSC_{genome}_chromosome-info.tsv',
-                               help="Filename for generated chromosome info file. Default: %(default)s")
-    group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf.gz',
-                               help="Filename for generated chromosome info file. Default: %(default)s")
+    group_static.add_argument('--no-edit-inplace', action='store_true', help = "Do not edit the config file in place with updated static-data entries")
+    # group_static.add_argument('--penncnv-pfb-file', default='static-data/PennCNV-PFB_{genome}_{array}.pfb',
+    #                            help="Filename for generated PFB file. Default: %(default)s")
+    # group_static.add_argument('--penncnv-gcmodel-file', default='static-data/PennCNV-GCmodel_{genome}_{array}.gcmodel',
+    #                            help="Filename for generated GCmodel file. Default: %(default)s")
+    # group_static.add_argument('--array-density-file', default='static-data/density_{genome}_{array}.bed',
+    #                            help="Filename for generated bed file with probe density. Default: %(default)s")
+    # group_static.add_argument('--array-gaps-file', default='static-data/gaps_{genome}_{array}.bed',
+    #                           help="Filename for generated bed file with probe gaps. Default: %(default)s")
+    # group_static.add_argument('--genomeinfo-file', default='static-data/UCSC_{genome}_chromosome-info.tsv',
+    #                            help="Filename for generated chromosome info file. Default: %(default)s")
+    # group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf.gz',
+    #                            help="Filename for generated chromosome info file. Default: %(default)s")
 
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
     group_snake.add_argument('--cache-path', default=None,
-                             help="Override auto-selection of the cache path to a specific directory."
+                             help="Override auto-selection of the cache path to a specific directory. The default cache path is defined in the conifg file."
                              )
     group_snake.add_argument('--no-cache', action='store_true',
-                             help="Do not use the a chache directory. The cache is used for workflow created metadata "
-                             "(conda envs, singularity images, and VEP data). The default cache path is ~/.")
+                             help="Do not use a chache directory. The cache is used for workflow created metadata "
+                             "(conda envs, singularity images, and VEP data). The default cache path is defined in the conifg file.")
 
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'summary-tables', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
@@ -90,13 +100,25 @@ def main(argv=None):
                 diagnose=args.verbose > 1,
                 )
 
+    if args.sample_table is None and args.action != 'setup-files':
+        if os.path.isfile('sample_table.tsv'):
+            args.sample_table = 'sample_table.tsv'
+        elif os.path.isfile('sample_table.xlsx'):
+            args.sample_table = 'sample_table.xlsx'
+        else:
+            logging.error("No default sample table found (sample_table.tsv or sample_table.xlsx). "
+                          "Please create a sample table (i.e. stemcnv-check setup-files) or specify one with --sample-table")
+            raise FileNotFoundError("No sample table found")
+
     if args.action == 'run':
-        check_sample_table(args.sample_table, args.config)
-        check_config(args.config, args.sample_table)
+        check_sample_table(args.sample_table, args.config, args.column_remove_regex)
+        check_config(args.config, args.sample_table, args.column_remove_regex)
         if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = run_stemcnv_check_workflow(args)
     elif args.action == 'setup-files':
+        if not args.sample_table:
+            args.sample_table = 'sample_table.tsv' if args.sampletable_format == 'tsv' else 'sample_table.xlsx'
         ret = setup_control_files(args)
     elif args.action == 'make-staticdata':
         if args.directory is not None and not os.path.isdir(args.directory):

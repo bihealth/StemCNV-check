@@ -12,9 +12,10 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score
 # - annotate_Call.label
 
 config <- list(
-    'static_data' = list(
-        'genome_gtf_file' = test_path('../data/hg_minimal.gtf'),
-        'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
+    'genome_version' = 'hg19',
+    'global_settings' = list(
+        'hg19_gtf_file' = test_path('../data/hg_minimal.gtf'),
+        'hg19_genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
     ),
     'settings' = list(
         'CNV_processing' = list(
@@ -26,6 +27,8 @@ config <- list(
         'chromosomes' = paste0('chr', c(1:22, 'X', 'Y'))
     )
 )
+gtf_file <- test_path('../data/hg_minimal.gtf')
+ginfo_file <- test_path('../data/gr_info_minimal.tsv')
 
 base_tb <- tibble(
     seqnames = 'chr1',
@@ -67,7 +70,7 @@ test_that("annotate_gene_overlap", {
     # - CNV has no gene overlap
     # - CNV has (partial) gene overlap
     # - CNV has multiple genes overlapping    
-    gr_genes <- load_gtf_data(config)
+    gr_genes <- load_gtf_data(gtf_file, config)
     
     annotate_gene_overlaps(as_granges(base_tb), gr_genes) %>%
         expect_equal(as_granges(expected_gene_tb))

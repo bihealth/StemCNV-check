@@ -84,7 +84,7 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
 
 get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
     # Get settings
-    sample_sex <- get_sample_info(sample_id, "sex", config$sample_table)
+    sample_sex <- get_sample_info(sample_id, "sex", config)
     tool_config <- config$settings$CBS
     # Get SNP data
     snp_vcf <- read.vcfR(input_vcf, verbose = F) 

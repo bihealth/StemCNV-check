@@ -1,6 +1,7 @@
 #General
 suppressMessages(require(GenomeInfoDb))
 suppressMessages(require(tidyverse))
+suppressMessages(require(readxl))
 suppressMessages(require(plyranges))
 `%!in%` <- Negate(`%in%`)
 
@@ -23,34 +24,57 @@ get_sex_chroms <- function(tb.or.gr) {
 }
 
 
-read_sampletable <- function(filename) {
-    read_tsv(filename, col_types = 'cccccc', comment = '#')
+read_sampletable <- function(filename, col_remove_regex = NA) {
+    
+    if (str_detect(filename, '\\.tsv$')) {
+        tb <- read_tsv(filename, comment = '#', show_col_types = F) 
+    } else if (str_detect(filename, '\\.xlsx$')) {
+        tb <- read_excel(filename) %>%
+            filter(!str_detect(pick(1), '^#'))
+    } else stop(paste('Unsupported file format:', filename))
+    
+    # Optional removal/editing of columns with a regex
+    if (!is.na(col_remove_regex) & col_remove_regex != '') {
+        tb <- rename_with(tb, ~str_remove(., col_remove_regex))
+    }
+    
+    # Ensure all columns are characters
+    mutate(tb, across(everything(), ~as.character(.)))
+
 }
 
 
-get_sample_info <- function(sample_id, value, sampletable) {
-    if ('data.frame' %in% class(sampletable)) { sampletable <- sampletable }
-    else if ('character' %in% class(sampletable)) { sampletable <- read_sampletable(sampletable) }
-    else { stop('`sampletable` needs to be a table or file path') }
+get_sample_info <- function(sample_id, value, config, sampletable = NA) {
+    if ('data.frame' %in% class(sampletable)) { 
+        sampletable <- sampletable 
+    } else { 
+        sampletable <- read_sampletable(config$sample_table, config$column_remove_regex)
+    }
+    # Handle NA input
+    if (is.na(sample_id)) {
+        return(NA_character_)
+    }
+    
+    value_mapping <- c(
+        'ref_id' = 'Reference_Sample',
+        'sex' = 'Sex'
+    )
+    if (value %!in% c(colnames(sampletable), names(value_mapping))) {
+        stop(paste('Unsupported sample info value:', value))
+    }
+    # remap legacy value names, then extract from sampletable
+    if (value %in% names(value_mapping)) {
+        value <- value_mapping[[value]]
+    }
 
-	ref_id <- sampletable[sampletable$Sample_ID == sample_id, ]$Reference_Sample
-	if (value == 'ref_id') return(ref_id)
-
-	sex <- sampletable[sampletable$Sample_ID == sample_id, ]$Sex %>%
-		tolower() %>% substr(1,1)
-	if (value == 'sex') return(sex)
-
-	if (!is.na(ref_id)){
-		sex.ref <- sampletable[sampletable$Sample_ID == ref_id, ]$Sex %>%
-  			tolower() %>% substr(1,1)
-		if(sex.ref != sex) {
-			stop('Sex of sample and reference does not match!')
-		}
-	} else {
-		sex.ref <- NA
-	}
-	if (value == 'sex.ref') return(sex.ref)
-	else stop(paste('Unsupported sample info value:', value))
+    out_val <- sampletable %>%
+        filter(Sample_ID == sample_id) %>%
+        pull(!!sym(value))
+    # Coerce Sex to single character
+    if (value == 'Sex') {
+        out_val <- out_val %>% tolower() %>% substr(1, 1)
+    }
+    return(out_val)
 }
 
 get_target_chrom_style <- function(config, snp_vcf_gr) {
@@ -70,13 +94,15 @@ fix_rel_filepath <- function(path, config){
 	else stop(paste('Could not find file path:', path))
 }
 
-load_gtf_data <- function(config, target_style='UCSC') {
-	gtf_file <- fix_rel_filepath(config$static_data$genome_gtf_file, config)
+load_gtf_data <- function(gtf_file, config, target_style='UCSC') {
 	exclude_regexes <- config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
 	gene_type_whitelist <- config$settings$CNV_processing$gene_overlap$include_only_these_gene_types
 
-	gr_genes  <- read_gff(gtf_file, col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')) %>%
+	gr_genes  <- read_gff(
+        fix_rel_filepath(gtf_file, config),
+        col_names = c('source', 'type', 'gene_id', 'gene_type', 'gene_name')
+    ) %>%
 		filter(type == 'gene') %>%
 		mutate(gene_id = str_remove(gene_id, '\\..*')) %>%
         fix_CHROM_format(target_style)
@@ -92,11 +118,12 @@ load_gtf_data <- function(config, target_style='UCSC') {
 
 ## GenomeInfo Data
 
-load_genomeInfo <- function(config, target_style='UCSC') {
-    
+load_genomeInfo <- function(ginfo_file, config, target_style='UCSC') {
 	# cols: chr	size	band_start	band_end	band_name	band_staining	centromer
-	gr_info <- read_tsv(fix_rel_filepath(config$static_data$genomeInfo_file, config),
-	                    show_col_types = FALSE) %>%
+	gr_info <- read_tsv(
+            fix_rel_filepath(ginfo_file, config),
+	        show_col_types = FALSE
+        ) %>%
 		filter(!is.na(band_start)) %>%
 		as_granges(seqnames = chr, start = band_start, end = band_end) %>%
 		mutate(section_name = paste0(str_remove(as.character(seqnames), 'chr'), band_name)) %>%

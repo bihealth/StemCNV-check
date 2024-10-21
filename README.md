@@ -15,6 +15,7 @@ For now, only installation 'from source' is possible:
 
 1. Clone this git repository
 2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12, then activate it
+   - Note: on some systems like WSL you may also need: `apptainer` and `gcc_linux-64` (<14 for recent datrie issue)
 3. Install dependencies and the stemcnv-check script using pip `pip install -e .`. For development, use `pip install -e .[all]`
 4. All further runtime dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
 
@@ -23,12 +24,12 @@ For now, only installation 'from source' is possible:
 StemCNV-check requires a sample table and a config file to run. Example files can be created using `stemcnv-check setup-files`.
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed:
-- Required columns: Sample_ID, Chip_Name, Chip_Pos, Sex, Reference_Sample
+- Required columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample
 - Optional columns (reserved): Sample_Name, Regions_of_Interest
 - See the `sample_table_example.tsv` file (of the sample_table.tsv created bye the setup-files command) for a description of individual columns
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  
-Required settings that are not defined by default include static files specific to the used array platform and genome build:
+Required settings that are not defined by default include array definition files specific to the used array platform and genome build:
 - egt_cluster_file: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array 
 - bpm_manifest_file: the beadpool manifest file (.bpm) for the array platform, available from Illumina or the provider running the array
 - csv_manifest_file (optional): the manifest file in csv format, available from Illumina or the provider running the array
@@ -42,7 +43,7 @@ Additionally, the config file needs to define the following paths:
 ## Usage
 
 Before the first analysis sample table and config file need to be set up (see above). 
-Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" and "config.yaml" file.  
+Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file.  
 
 Automatic generation of the additional array & genome-build specific static files can only be done if sample data for 
 that array is available.  
@@ -77,8 +78,6 @@ Run the example data:
 StemCNV-check will produce the following output files for each sample, when run with default settings:
 - `data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz`  
   The filtered, processed and annotated SNP data of the array in vcf format
-- `data_path/{sample}/{sample}.stats.txt`  
-  The CNV calls for the sample GenCall stat
 - `data_path/{sample}/{sample}.CNV_calls.CBS.vcf.gz`  
   The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm in vcf format
 - `data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz`  

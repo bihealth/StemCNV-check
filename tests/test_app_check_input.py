@@ -11,12 +11,13 @@ from stemcnv_check.exceptions import ConfigValueError, SampleFormattingError, Sa
 @pytest.fixture
 def minimal_config_block():
     return {
-        'static_data': {
-            'bpm_manifest_file': 'static/manifest.bpm',
-            'egt_cluster_file': 'static/cluster.egt',
+        'array_definition': {
+            'default': {
+                'genome_version': 'hg38',
+                'bpm_manifest_file': 'static/manifest.bpm',
+                'egt_cluster_file': 'static/cluster.egt',
+            }
         },
-        'genome_version': 'hg38',
-        'array_name': 'example',
         'raw_data_folder': 'rawdata',
         'data_path': 'data',
         'log_path': 'logs',
@@ -25,14 +26,12 @@ def minimal_config_block():
 @pytest.fixture
 def full_config_block(minimal_config_block):
     block = minimal_config_block
-    block['static_data'].update({
+    block['array_definition']['default'].update({
         'csv_manifest_file': 'static/manifest.csv',
-        'genome_gtf_file': 'static/gencode.v45.gtf',
         'penncnv_pfb_file': 'static/chip.pfb',
         'penncnv_GCmodel_file': 'static/chip.gcmodel',
         'array_density_file': 'static/density.bed',
         'array_gaps_file': 'static/gaps.bed',
-        'genomeInfo_file': 'static/genome_info.tsv',
     })
     return block
 
@@ -47,22 +46,27 @@ def prepare_fakefs_config(default_config, update_block, fs):
         yaml.dump(default_config, f)
     # Create the fake files:
     fs.create_dir('static')
-    for k, file in update_block['static_data'].items():
+    for k, file in update_block['array_definition']['default'].items():
+        if file == 'genome_version':
+            continue
         fs.create_file(file)
 
 
-def test_check_sample_table(fs):
+def test_check_sample_table(minimal_config_block, fs):
 
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(default_config, read_only=True)
 
     base_sample_table = textwrap.dedent("""\
-        Sample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample
-        Sample1\t123456789000\tR01C01\tM\t\n
-        Sample2\t123456789000\tR01C03\tM\tSample1\n
+        Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample
+        default\tSample1\t123456789000\tR01C01\tM\t\n
+        default\tSample2\t123456789000\tR01C03\tM\tSample1\n
         """)
 
-    fs.create_file('config.yaml', contents='data_path: data\nraw_data_folder: rawdata\nlog_path: logs\n')
+    testconfig = deepcopy(minimal_config_block)
+    yaml = ruamel_yaml.YAML()
+    with open('config.yaml', 'w') as f:
+        yaml.dump(testconfig, f)
     sampletable = fs.create_file('sample_table.tsv', contents=base_sample_table)
 
     # Check for missing file
@@ -74,37 +78,47 @@ def test_check_sample_table(fs):
     check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - dup ID
-    sampletable.set_contents(base_sample_table + 'Sample1\t123456789000\tR01C01\tM\t\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample1\t123456789000\tR01C01\tM\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - missing sex
-    sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\t\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\t\tSample1\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - sex mis-format
-    sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\twoman\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\twoman\tSample1\n')
     with pytest.raises(SampleFormattingError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - unknown ref
-    sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\tf\tSample0\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample0\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - ref sex mismatch
-    sampletable.set_contents(base_sample_table + 'Sample3\t123456789000\tR01C03\tf\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample1\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - wildcard constraint (mis)match
-    sampletable.set_contents(base_sample_table + 'Sample3\tChipName\tR01C03\tm\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\tChipName\tR01C03\tm\tSample1\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
-    #FIXME: - ROI formatting (needs to be adapted to new format allowing gband, gene or pos-string)
+    # - array name not in config
+    sampletable.set_contents(base_sample_table + 'undefined\tSample3\tChipName\tR01C03\tm\tSample1\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
+    # - different array names for one chip_name
+    testconfig['array_definition']['default2'] = dict()
+    with open('config.yaml', 'w') as f:
+        yaml.dump(testconfig, f)
+    sampletable.set_contents(base_sample_table + 'default2\tSample3\t123456789000\tR01C05\tm\tSample1\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table('sample_table.tsv', 'config.yaml')
 
 
 def test_check_config(minimal_config_block, full_config_block, fs, caplog):
@@ -114,7 +128,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
     fs.create_file('sample_table.tsv',
-                   contents='Sample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\nSample1\tChip1\t1\tM\tSample2\n')
+                   contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\ndefault\nSample1\tChip1\t1\tM\tSample2\n')
 
     yaml = ruamel_yaml.YAML()
     testconfig = deepcopy(minimal_config_block)
@@ -140,13 +154,13 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     assert fs.isdir('data') and fs.isdir('logs') and fs.isdir('rawdata')
 
     # Check for fail on missing required files
-    testconfig['static_data']['egt_cluster_file'] = 'missing.bpm'
+    testconfig['array_definition']['default']['egt_cluster_file'] = 'missing.bpm'
     update_config(testconfig)
     with pytest.raises(FileNotFoundError):
         check_config('config.yaml', 'sample_table.tsv')
 
     # Check for fail on missing required entries
-    del testconfig['static_data']['egt_cluster_file']
+    del testconfig['array_definition']['default']['egt_cluster_file']
     update_config(testconfig)
     with pytest.raises(ConfigValueError):
         check_config('config.yaml', 'sample_table.tsv', required_only=True)
@@ -192,13 +206,13 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     ]
 
     #FIXME: future tests
-    # - Check for matching/mismtahcing sample_table columns
+    # - Check for matching/mismatching sample_table columns
     # - Special other fields: filterset, filtersetdefault, section, sectionsall
     # - check that all the smaller functions (len, ge, le, ...) work as expected
 
 
 def test_default_config(full_config_block, caplog, fs):
-    """Check that the actual default cnfig passes the check_config function"""
+    """Check that the actual default config passes the check_config function"""
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
     sample_table = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv')

@@ -1,55 +1,73 @@
 # -*- coding: utf-8 -*-
 """Helper functions for pipeline"""
 import importlib.resources
+import pandas as pd
 import os
+import re
 import ruamel.yaml as ruamel_yaml
 from pathlib import Path
 from pydantic.v1.utils import deep_update
-from . import STEM_CNV_CHECK, mehari_db_version
-from .exceptions import SampleConstraintError, ConfigValueError
+from . import STEM_CNV_CHECK, mehari_db_version, VEP_version
+from .exceptions import SampleConstraintError, ConfigValueError, CacheUnavailableError
 from collections import OrderedDict
 from loguru import logger as logging
 
 
-def read_sample_table(filename, with_opt=False):
-    samples = []
-    cols = ['Sample_ID', 'Chip_Name', 'Chip_Pos', 'Sex', 'Reference_Sample']
-    # req_cols = cols[:]
-    # if with_opt:
-    #     cols += ['Sample_Group', 'Regions_of_Interest']
-    with open(filename, 'r') as f:
-        header = next(f).rstrip('\n')
-        while header.startswith('#'):
-            header = next(f).rstrip('\n')
-        header = header.split('\t')
-        if not all(col in header for col in cols):
-            missing = [c for c in cols if c not in header]
-            raise SampleConstraintError('Not all required sample_table columns found. Missing columns: ' + ', '.join(missing))
-        # add optinal cols
-        if with_opt:
-            cols = cols + [c for c in header if c not in cols]
-        for line in f:
-            line = line.rstrip('\n')
-            if not line:
-                continue
-            if line.startswith('#'):
-                continue
-            line = line.split('\t')
-            # reorder line
-            try:
-                line_ordered = [line[header.index(val)] for val in cols]
-            except IndexError:
-                logging.error("Could not extract proper columns from this line:\n" + '\t'.join(line))
-                raise
-            if with_opt:
-                samples.append(OrderedDict((name, val) for name, val in zip(cols, line_ordered)))
-            else:
-                samples.append(line_ordered)
+def read_sample_table(filename, name_remove_regex=None, return_type='list'):
+    """Read sample table from file, return either a list of the required col entires,
+    a list with Ordereddict of all rows (colnames as keys) or a pandas dataframe"""
+    
+    if return_type not in ('list', 'list_withopt', 'dataframe'):
+        raise ValueError('Invalid return_type: ' + return_type)
 
-    return samples
+    if str(filename).endswith('.xlsx'):
+        def reader_func(f): return pd.read_excel(f, comment='#')
+    elif str(filename).endswith('.tsv'):
+        def reader_func(f): return pd.read_csv(f, sep='\t', comment='#')
+    else:
+        raise ValueError('Unknown file format for sample table: ' + filename)
+
+    req_cols = ['Sample_ID', 'Chip_Name', 'Chip_Pos', 'Array_Name', 'Sex', 'Reference_Sample']
+
+    if name_remove_regex:
+        logging.debug(f'Removing regex from column names: "{name_remove_regex}"')
+        def rename_func(name): return re.sub(name_remove_regex, '', name)
+    else:
+        def rename_func(name): return name
+
+    sample_tb = reader_func(filename).rename(columns=rename_func, errors='raise').fillna('').astype(str)
+    # logging.debug('Final column names:' + ', '.join(sample_tb.columns))
+    # TODO raise error on duplicated col names?
+
+    if not all(col in sample_tb.columns for col in req_cols):
+        logging.debug('Sample table columns: ' + ', '.join(sample_tb.columns))
+        logging.debug('Required columns: ' + ', '.join(req_cols))
+
+        missing = [c for c in req_cols if c not in sample_tb.columns]
+        raise SampleConstraintError(
+            'Not all required sample_table columns found. Missing columns: ' + ', '.join(missing)
+        )
+    # TODO: ref sample & other sample_table internal checks can happen here already! 
+
+    # reorder columns to required order
+    cols = req_cols + [col for col in sample_tb.columns if col not in req_cols]
+    sample_tb = sample_tb[cols]
+
+    if return_type == 'list':
+        sample_list = []
+        for _, row in sample_tb.iterrows():
+            sample_list.append([row[col] for col in req_cols])
+        return sample_list
+    elif return_type == 'list_withopt':
+        sample_list = []
+        for _, row in sample_tb.iterrows():
+            sample_list.append(OrderedDict((col, row[col]) for col in sample_tb.columns))
+        return sample_list
+    elif return_type == 'dataframe':
+        return sample_tb.set_index('Sample_ID', drop=False)
 
 
-def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
+def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
     """Collect all outside filepaths that need to be bound inside container"""
 
     bind_points = [
@@ -58,17 +76,35 @@ def make_apptainer_args(config, tmpdir=None, not_existing_ok=False):
         (config['log_path'], '/outside/logs'),
         (importlib.resources.files(STEM_CNV_CHECK), '/outside/snakedir'),
     ]
+
+    # When apptainer is used these should always be present
+    used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items() if name != '_default_')
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+        for genome_version in used_genomes:
+            static_file = get_global_file(global_file, genome_version, config['global_settings'], cache_path)
+            # if not os.path.isfile(static_file):
+            #     if not_existing_ok or not static_file:
+            #         continue
+            #     else:
+            #         raise FileNotFoundError(f"Static data file '{static_file}' does not exist.")
+            bind_points.append((static_file, '/outside/static/' + os.path.basename(static_file)))
+
     if tmpdir is not None:
         bind_points.append((tmpdir, '/outside/tmp'))
 
-    for name, file in config['static_data'].items():
-        # Can only mount existing files
-        if not os.path.isfile(file):
-            if not_existing_ok or not file:
+    for array in config['array_definition'].keys():
+        if array == '_default_':
+            continue
+        for name, file in config['array_definition'][array].items():
+            if name == 'genome_version':
                 continue
-            else:
-                raise FileNotFoundError(f"Static data file '{file}' does not exist.")
-        bind_points.append((file, '/outside/static/{}'.format(os.path.basename(file))))
+            # Can only mount existing files
+            if not os.path.isfile(file):
+                if not_existing_ok or not file:
+                    continue
+                else:
+                    raise FileNotFoundError(f"Static data file '{file}' does not exist.")
+            bind_points.append((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
 
     bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in bind_points)
     logging.debug("Binding points for apptainer: " + str(bind_point_str))
@@ -143,17 +179,18 @@ def load_config(configfile, defaults=True):
 def get_cache_dir(args, config):
     """Check if given path can be used for caching, get default (in install dir or home) otherwise, create the path"""
     def check_path_usable(path):
-        if path.is_dir() and os.access(path, os.W_OK):
-            logging.debug(f"Using existing cache directory: {path}")
-            return path
-        else:
-            try:
-                path.mkdir()
+        try:
+            if path.is_dir() and os.access(path, os.W_OK):
+                logging.debug(f"Using existing cache directory: {path}")
+            else:
+                path.mkdir(parents=True)
                 logging.debug(f"Created cache directory: {path}")
-                return path
-            except PermissionError:
-                logging.debug(f"Could not create cache in {path}")
-                return None
+            return path
+        except PermissionError:
+            logging.debug(f"Failed to create or access cache in: {path}")
+        except FileExistsError:
+            logging.debug(f"Cache path exists but is not accessible: {path}")
+        return None
     if args.no_cache:
         logging.info("No cache directory will be used, conda and docker images will be stored in snakemake project directory")
         return None
@@ -163,7 +200,7 @@ def get_cache_dir(args, config):
         if cache_path:
             return cache_path
         else:
-            logging.warning(f"Could not use cache directory '{args.cache_path}'")
+            logging.debug(f"Could not use cache directory '{args.cache_path}'")
     else:
         auto_paths = [
             ('config-defined', Path(config['global_settings']['cache_dir']).expanduser()),
@@ -174,24 +211,70 @@ def get_cache_dir(args, config):
             cache_path = check_path_usable(path)
             if cache_path:
                 return cache_path
+            else:
+                logging.debug(f"Could not use cache directory '{path}'")
 
     # Nothing worked, return None & don't use specific cache
-    logging.info("Cache directory is not usable! Conda and docker images will be stored in snakemake project directory")
+    logging.warning("Cache directory is not usable! Trying to run without cache. Conda and docker images will be stored in snakemake project directory")
     return None
 
 
-def get_mehari_db_file(config_entry, cache_path, genome_version):
-    # If given use specific path
-    if config_entry != '__cache-default__':
-        return config_entry
-    # If cache should be used but is missing, throw error
-    elif not cache_path:
-        raise ConfigValueError('No StemCNV-check cache defined, but mehari-db path is set to use cache path.')
-    # Use same location as cache for conda & docker from workflow
+def get_global_file(type, genome_version, global_settings, cache_path, fill_wildcards = True):
+    """Get path to files defined in the global settings. All of these have an internally defined default.
+    Supported types are: fasta, gtf, genome_info, mehari_txdb"""
+
+    genome = 'hg38' if genome_version in ("hg38", "GRCh38") else 'hg19'
+    wildcards = {'genome': genome_version}
+
+    if type == 'fasta':
+        config_entry = global_settings[f"{genome}_genome_fasta"]
+        if config_entry != '__use-vep__':
+            outfname = config_entry
+        elif not cache_path:
+            raise CacheUnavailableError('No cache path defined, but VEP fasta files should be used.')
+        else:
+            base_args = (cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_{{genome}}')
+            if genome == 'hg38':
+                wildcards['genome'] = 'GRCh38'
+                outfname = os.path.join(*base_args, 'Homo_sapiens.{genome}.dna.toplevel.fa.gz')
+            else:
+                wildcards['genome'] = 'GRCh37'
+                outfname = os.path.join(*base_args, 'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz')
+
+    elif type == 'gtf':
+        config_entry = global_settings[f"{genome}_gtf_file"]
+        if config_entry != '__default-gencode__':
+            outfname = config_entry
+        elif not cache_path:
+            raise CacheUnavailableError('No cache path defined, but VEP fasta files should be used.')
+        else:
+            outfname = os.path.join(cache_path, 'static-data', 'gencode.{genome}.v45.gtf.gz')
+    elif type == 'genome_info':
+        config_entry = global_settings[f'{genome}_genomeInfo_file']
+        if config_entry != '__default-UCSC__':
+            outfname = config_entry
+        elif not cache_path:
+            raise CacheUnavailableError('No cache path defined, but VEP fasta files should be used.')
+        else:
+            outfname = os.path.join(cache_path, 'static-data', 'UCSC_{genome}_chromosome-info.tsv')
+    elif type == 'mehari_txdb':
+        config_entry = global_settings['mehari_transcript_db']
+        wildcards['genome'] = 'GRCh38' if genome == 'hg38' else 'GRCh37'
+        wildcards['mehari_db_version'] = mehari_db_version
+        if config_entry != '__cache-default__':
+            outfname = config_entry
+        elif not cache_path:
+            raise CacheUnavailableError('No StemCNV-check cache defined, but mehari-db path is set to use cache path.')
+        else:
+            outfname = os.path.join(
+                cache_path,
+                'mehari-db',
+                "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst"
+            )
     else:
-        genome_version = 'GRCh38' if genome_version in ("hg38", "GRCh38") else 'GRCh37'
-        return os.path.join(
-            cache_path,
-            'mehari-db',
-            f"mehari-data-txs-{genome_version}-ensembl-{mehari_db_version}.bin.zst"
-        )
+        raise ValueError('Unknown global file type: ' + type)
+
+    if fill_wildcards:
+        return outfname.format(**wildcards)
+    else:
+        return outfname

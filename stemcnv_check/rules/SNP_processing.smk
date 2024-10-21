@@ -1,7 +1,7 @@
 import os
 import importlib.resources
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import get_mehari_db_file
+from stemcnv_check.helpers import get_global_file
 
 
 rule filter_snp_vcf:
@@ -22,7 +22,8 @@ rule filter_snp_vcf:
         err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
         #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
     params:
-        sample_sex=lambda wildcards: get_ref_id(wildcards, True)[2]
+        sample_sex=lambda wildcards: get_ref_id(wildcards, True)[2],
+        genome_version=lambda wildcards: get_static_input('genome_version')(wildcards)
     conda:
         "../envs/python-vcf.yaml"
     script:
@@ -52,14 +53,10 @@ rule mehari_annotate_snp_vcf:
         ),
         out=os.path.join(LOGPATH, "mehari_annotate", "{sample_id}", "snp_vcf.{filter}.out.log"),
     params:
-        genomeversion=(
-            "grch38" if config["genome_version"] in ("hg38", "GRCh38") else "grch37"
+        genomeversion=lambda wildcards: (
+            "grch38" if get_static_input('genome_version')(wildcards) in ("hg38", "GRCh38") else "grch37"
         ),
-        mehari_db_path=get_mehari_db_file(
-            config['global_settings']['mehari_transcript_db'],
-            config['cache_path'],
-            config["genome_version"]
-        ),
+        mehari_db_path=lambda wildcards: get_static_input('mehari_txdb')(wildcards)
     conda:
         "../envs/snp-annotation.yaml"
     shell:

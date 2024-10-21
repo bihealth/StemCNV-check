@@ -160,7 +160,7 @@ PSEUDOAUTO_REGIONS = {
 }
 
 FILTERSET = get_filter_settings(snakemake.wildcards['filter'], snakemake.config, snakemake.params['sample_sex'])
-GENOME_VERSION = 'hg38' if snakemake.config['genome_version'] in ('hg38', 'GRCh38') else 'hg19'
+GENOME_VERSION = 'hg38' if snakemake.params['genome_version'] in ('hg38', 'GRCh38') else 'hg19'
 
 for name, vals in FILTERSET.items():
     logger.info(f"Adding Filter for {name} as '{vals[0]}'")

@@ -20,19 +20,20 @@ source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 # Note: primary checks are done in python, R just needs to work
 test_that("read_sampletable", {
     expected_tb <- tibble(
-        Sample_Name = c("Cellline-A MasterBank", "Cellline-A WorkingBank", "Cellline-B MasterBank", "Cellline-B-1 clone1"),
+        Sample_ID = c("Cellline-A-MB", "Cellline-A-WB", "Cellline-B-MB", "Cellline-B-1-cl1"),
         Chip_Name = c("123456789000", "123456789001", "123456789000", "123456789001"),
         Chip_Pos = c("R01C01", "R01C01", "R01C02", "R01C02"),
-        Sample_ID = c("Cellline-A-MB", "Cellline-A-WB", "Cellline-B-MB", "Cellline-B-1-cl1"),
+        Array_Name = rep('ExampleArray', 4),
         Sex = c("Female", "Female", "Male", "Male"),
         Reference_Sample = c(NA, "Cellline-A-MB", NA, "Cellline-B-MB"),
-        Sample_Group = c("ExampleCellines", "ExampleCellines", "ExampleCellines", "ExampleCellines"),
+        Sample_Name = c("Cellline-A MasterBank", "Cellline-A WorkingBank", "Cellline-B MasterBank", "Cellline-B-1 clone1"),
         Regions_of_Interest = c(
                 "Example1|chr1:100000-200000", 
                 "Example1|chr1:100000-200000;chr11:60000-70000", 
                 "Example1|chr1:100000-200000;chr11:60000-70000",
                 NA
-        )
+        ),
+        Sample_Group = c("ExampleCellines", "ExampleCellines", "ExampleCellines", "ExampleCellines"),
     )
     
     test_path('../../stemcnv_check/control_files/sample_table_example.tsv') %>%
@@ -41,22 +42,27 @@ test_that("read_sampletable", {
         # see here: https://www.tidyverse.org/blog/2018/12/readr-1-3-1/
         .[] %>%
         expect_equal(expected_tb)
+    
+    # test that regex name change works, use tmp file instead of fake filesystem
+    tmp_file <- tempfile(fileext='.tsv')
+    expected_tb %>%
+        rename_with(~paste(., 'dummy')) %>%
+        write_tsv(tmp_file)
+    read_sampletable(tmp_file, col_remove_regex = ' .*') %>% expect_equal(expected_tb)
 })
 
 test_that("get_sample_info", {
     sampletable <- test_path('../../stemcnv_check/control_files/sample_table_example.tsv') %>%
         read_sampletable()
+    config <- list()
     
-    expect_equal(get_sample_info('Cellline-A-MB', 'ref_id', sampletable), NA_character_)
-    expect_equal(get_sample_info('Cellline-A-MB', 'sex', sampletable), 'f')
+    expect_equal(get_sample_info('Cellline-A-MB', 'ref_id', config, sampletable), NA_character_)
+    expect_equal(get_sample_info('Cellline-A-MB', 'sex', config, sampletable), 'f')
     
-    expect_equal(get_sample_info('Cellline-B-1-cl1', 'ref_id', sampletable), 'Cellline-B-MB')
-    expect_equal(get_sample_info('Cellline-B-1-cl1', 'sex.ref', sampletable), 'm')
-    expect_equal(get_sample_info('Cellline-B-MB', 'sex', sampletable), 'm')
+    expect_equal(get_sample_info('Cellline-B-1-cl1', 'ref_id', config, sampletable), 'Cellline-B-MB')
+    expect_equal(get_sample_info('Cellline-B-MB', 'sex', config, sampletable), 'm')
     
-    expect_error(get_sample_info('Cellline-B-1-cl1', 'unsupported', sampletable))
-    sampletable$Sex <- c('f', 'f', 'f', 'm')
-    expect_error(get_sample_info('Cellline-B-1-cl1', 'sex.ref', sampletable))
+    expect_error(get_sample_info('Cellline-B-1-cl1', 'unsupported', config, sampletable))
 })
 
 input_tb <- tibble(
@@ -107,8 +113,9 @@ test_that('get_target_chrom_style', {
 test_that("load_gtf_data", {
     # Construct minimal config
     config <- list(
-        'static_data' = list(
-            'genome_gtf_file' = test_path('../data/hg_minimal.gtf')
+        'genome_version' = 'hg19',
+        'global_settings' = list(
+            'hg19_gtf_file' = test_path('../data/hg_minimal.gtf')
         ),
         'settings' = list(
             'CNV_processing' = list(
@@ -122,6 +129,7 @@ test_that("load_gtf_data", {
             )
         )
     )
+    gtf_file <- test_path('../data/hg_minimal.gtf')
     expected_tb <- tibble(
         seqnames = 'chr1',
         start = c(4000, 11873, 20000, 28050000, 50900000),
@@ -134,24 +142,27 @@ test_that("load_gtf_data", {
         gene_name = c("dummyA", 'DDX11L1', 'dummyB', 'dummyC', 'dummyD')
     )
 
-    expect_equal(load_gtf_data(config), as_granges(expected_tb %>% filter(gene_type %!in% c("unprocessed_pseudogene", 'something_else'))))
+    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type %!in% c("unprocessed_pseudogene", 'something_else'))))
     config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c('lncRNA', 'miRNA', 'protein_coding', 'something_else')
     config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c('lncRNA')
-    expect_equal(load_gtf_data(config), as_granges(expected_tb %>% filter(gene_type %!in% c('lncRNA', 'unprocessed_pseudogene'))))
+    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type %!in% c('lncRNA', 'unprocessed_pseudogene'))))
     config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c()
     config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c('lncRNA', 'something_else', 'unprocessed_pseudogene')
-    expect_equal(load_gtf_data(config), as_granges(expected_tb %>% filter(gene_type == 'protein_coding')))
+    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type == 'protein_coding')))
     config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c()
     config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c()
-    expect_equal(load_gtf_data(config), as_granges(expected_tb))
+    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb))
 } )
 
 test_that('load_genomeInfo', {
     config <- list(
-        'static_data' = list(
-            'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
+        'genome_version' = 'hg19',
+        'global_settings' = list(
+            'hg19_genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
         )
     )
+    ginfo_file <- test_path('../data/gr_info_minimal.tsv')
+    
     expected_gr <- tibble(
         seqnames = 'chr1',
         size = 249250621,
@@ -163,7 +174,7 @@ test_that('load_genomeInfo', {
         section_name = c("1p36.33", "1p36.32", "1p36.31", "1p35.3", "1p35.2", "1p35.1", "1p33", "1p11.2", "1p11.1", "1q11", "1q12", "1q21.1", "1q21.2", "1q21.3")
     ) %>% as_granges()
 
-    expect_equal(load_genomeInfo(config), expected_gr)
+    expect_equal(load_genomeInfo(ginfo_file, config), expected_gr)
 })
 
 test_that('load_hotspot_table', {

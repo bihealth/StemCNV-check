@@ -7,7 +7,7 @@ from loguru import logger as logging
 import tempfile
 import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import read_sample_table
+from stemcnv_check.helpers import read_sample_table, get_global_file
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
@@ -62,9 +62,9 @@ wildcard_constraints:
 localrules:
     all,
 
-
-sample_data = read_sample_table(SAMPLETABLE)
-sample_data_full = read_sample_table(SAMPLETABLE, with_opt=True)
+sample_data = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']))
+sample_data_df = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='dataframe')
+sample_data_full = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='list_withopt')
 
 
 include: "common.smk"
@@ -79,7 +79,7 @@ include: "report_generation.smk"
 
 def get_target_files(target=TARGET):
     # Target options: ('report', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
-    all_samples = [sample_id for sample_id, _, _, _, _ in sample_data]
+    all_samples = [sample_id for sample_id, _, _, _, _, _ in sample_data]
 
     # complete
     if target == "complete":
@@ -193,8 +193,14 @@ rule run_process_CNV_calls:
         mem_mb=get_tool_resource("CNV.process", "memory"),
         partition=get_tool_resource("CNV.process", "partition"),
     params:
-        eval_settings = config["evaluation_settings"],
+        eval_settings=config["evaluation_settings"],
         settings=config["settings"]["CNV_processing"],
+        gtf_file=lambda wildcards: get_global_file(
+            'gtf', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
+        ),
+        ginfo_file=lambda wildcards: get_global_file(
+            'genome_info', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
+        ),
     log:
         err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
     conda:

@@ -18,6 +18,8 @@ params:
   out_format: 'html'
   workdir: ''
   basedir: ''
+  gtf_file: ''
+  ginfo_file: ''
   version: 'unversioned'
 ---
 
@@ -101,9 +103,12 @@ sampletable <- config$sample_table %>%
     read_tsv(col_types = 'cccccc', comment = "#")
 
 sample_id <- params$sample_id
-sex <- get_sample_info(sample_id, 'sex', sampletable)
-ref_id <- get_sample_info(sample_id, 'ref_id', sampletable)
-sex.ref <- get_sample_info(sample_id, 'sex.ref', sampletable)
+sex <- get_sample_info(sample_id, 'sex', config, sampletable)
+ref_id <- get_sample_info(sample_id, 'ref_id', config, sampletable)
+sex.ref <- get_sample_info(ref_id, 'sex', config, sampletable)
+array <- sampletable %>%
+    filter(Sample_ID == sample_id) %>%
+    pull(Array_Name)
 
 #Sample_Name is an optional column in the sampletable
 if ('Sample_Name' %in% colnames(sampletable)) {
@@ -125,8 +130,8 @@ if (!is.na(ref_id)) {
 }
 
 target_chrom_style <- get_target_chrom_style(config, parse_cnv_vcf(params$input$cnv_vcf))
-gr_genes <- load_gtf_data(config, target_chrom_style)
-gr_info  <- load_genomeInfo(config, target_chrom_style)
+gr_genes <- load_gtf_data(params$gtf_file, config, target_chrom_style)
+gr_info  <- load_genomeInfo(params$ginfo_file, config, target_chrom_style)
 
 roi_regions <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest %>%
     str_split(';') %>% unlist()
@@ -236,7 +241,7 @@ cat('## Sample Information\n\n')
 
 info.tb <- sampletable %>%
   filter(Sample_ID %in% c(sample_id, ref_id)) %>%
-  dplyr::select(Sample_ID, Sex, Reference_Sample, any_of(report_config$sample.info.extra.cols)) %>%
+  dplyr::select(Sample_ID, Sex, Reference_Sample, Array_Name, any_of(report_config$sample.info.extra.cols)) %>%
   mutate(`Analysis run date` = Sys.Date()) %>%
   tr_tibble() %>%
   dplyr::select(-starts_with('Reference ('))
@@ -493,13 +498,13 @@ fake_call_tb <- tibble(
     ) %>%
     select(-list_name, -mapping, -call_type, -description_doi, -check_score) %>%
     annotate_gaps(
-        fix_rel_filepath(config$static_data$array_gaps, config),
+        fix_rel_filepath(config$array_definition[[array]]$array_gaps_file, config),
         config$settings$CNV_processing$call_processing$min.perc.gap_area, 
         config$settings$CNV_processing$call_processing$gap_area.uniq_probes.rel,
         target_chrom_style
     ) %>%
     annotate_high_density(
-        fix_rel_filepath(config$static_data$array_density, config),
+        fix_rel_filepath(config$array_definition[[array]]$array_density_file, config),
         config$settings$CNV_processing$call_processing$density.quantile.cutoff,
         target_chrom_style
     ) %>%

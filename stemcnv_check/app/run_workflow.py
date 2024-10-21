@@ -10,12 +10,13 @@ from ..helpers import load_config, make_apptainer_args, get_cache_dir
 def run_stemcnv_check_workflow(args):
 
     config = load_config(args.config)
+    cache_path = get_cache_dir(args, config)
 
     argv = [
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
         "--printshellcmds", "--rerun-incomplete",
         "--sdm", "conda", "apptainer",
-        "--apptainer-args", make_apptainer_args(config),
+        "--apptainer-args", make_apptainer_args(config, cache_path),
         #"--conda-frontend", args.conda_frontend,
         ]
     if args.directory:
@@ -23,7 +24,6 @@ def run_stemcnv_check_workflow(args):
 
     # make snakemake write conda & singularity files to an "external" cache-path, NOT individual project paths
     # This saves disk space when using multiple projects with the same conda envs
-    cache_path = get_cache_dir(args, config)
     if cache_path:
         # snakemake.main can not deal with Path objects
         cache_path = str(cache_path)
@@ -42,6 +42,7 @@ def run_stemcnv_check_workflow(args):
         args.config,
         '--config',
         f'sample_table={args.sample_table}',
+        f"column_remove_regex={args.column_remove_regex}",
         f'basedir={basedir}',
         f'configfile={args.config}',
         f'target={args.target}',
@@ -62,4 +63,5 @@ def run_stemcnv_check_workflow(args):
     if args.snake_options:
         argv += args.snake_options
 
+    logging.debug(f"Running snakemake with this command:\nsnakemake{' '.join(argv)}")
     return main(argv)

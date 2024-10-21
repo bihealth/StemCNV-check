@@ -5,8 +5,8 @@ localrules:
 
 rule run_gencall:
     input:
-        bpm=config["static_data"]["bpm_manifest_file"],
-        egt=config["static_data"]["egt_cluster_file"],
+        bpm=get_static_input("bpm_manifest_file"),
+        egt=get_static_input("egt_cluster_file"),
         idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}"),
     output:
         os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done"),
@@ -20,8 +20,15 @@ rule run_gencall:
         outpath=lambda wildcards: fix_container_path(
             os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), "data"
         ),
-        bpm=fix_container_path(config["static_data"]["bpm_manifest_file"], "static"),
-        egt=fix_container_path(config["static_data"]["egt_cluster_file"], "static"),
+        bpm=lambda wildcards: fix_container_path(
+            get_static_input("bpm_manifest_file")(wildcards),
+            # The get_sample_info function requires the sample_id wildcard, also need to deal with likely duplicated Chip_Names
+            set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
+        ),
+        egt=lambda wildcards: fix_container_path(
+            get_static_input("egt_cluster_file")(wildcards),
+            set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
+        ),
         idat_path=lambda wildcards: fix_container_path(
             os.path.join(IDAT_INPUT, wildcards.sentrix_name), "rawdata"
         ),
@@ -47,7 +54,7 @@ def get_chip(wildcards, outtype="dir_path"):
     """Get the chip name from a sample_id
     Values for outtype: 'dirpath' | 'file'"""
     chip_name, chip_pos = [
-        (n, p) for sid, n, p, _, _ in sample_data if sid == wildcards.sample_id
+        (n, p) for sid, n, p, _, _, _ in sample_data if sid == wildcards.sample_id
     ][0]
     if outtype == "dir_path":
         return os.path.join(DATAPATH, "gtc", chip_name)
@@ -74,9 +81,9 @@ rule relink_gencall:
 # FIXME (future): input functions to get correct fasta (& later correct manifest files)
 rule run_gtc2vcf_vcf:
     input:
-        bpm=config["static_data"]["bpm_manifest_file"],
-        egt=config["static_data"]["egt_cluster_file"],
-        genome=get_genome_fasta,
+        bpm=get_static_input("bpm_manifest_file"),
+        egt=get_static_input("egt_cluster_file"),
+        genome=get_static_input('fasta'),
         gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
     output:
         vcf = pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
@@ -87,9 +94,9 @@ rule run_gtc2vcf_vcf:
         mem_mb=get_tool_resource("gtc2vcf", "memory"),
         partition=get_tool_resource("gtc2vcf", "partition"),
     params:
-        csv=(
-            '--csv "{}"'.format(config["static_data"]["csv_manifest_file"])
-            if config["static_data"]["csv_manifest_file"]
+        csv=lambda wildcards: (
+            '--csv "{}"'.format(get_static_input("csv_manifest_file")(wildcards))
+            if get_static_input("csv_manifest_file")(wildcards)
             else ""
         ),
     log:

@@ -9,9 +9,10 @@ source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_impact_list
 
 config <- list(
     'snakedir' = '',
-    'static_data' = list(
-        'genome_gtf_file' = test_path('../data/hg_minimal.gtf'),
-        'genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
+    'genome_version' = 'hg19',
+    'global_settings' = list(
+        'hg19_gtf_file' = test_path('../data/hg_minimal.gtf'),
+        'hg19_genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
     ),
     'settings' = list(
         'CNV_processing' = list(
@@ -23,6 +24,8 @@ config <- list(
         )
     )
 )
+gtf_file <- test_path('../data/hg_minimal.gtf')
+ginfo_file <- test_path('../data/gr_info_minimal.tsv')
 
 # Functions to test
 test_that('tb_to_gr_by_position', {
@@ -58,7 +61,7 @@ test_that('tb_to_gr_by_position', {
 #TODO: somehow this didn't/doesn't catch all possible issues
 # function failed before, due to not correctly checking for all matched gband names
 test_that('tb_to_gr_by_gband', {
-    gr_info <- load_genomeInfo(config)
+    gr_info <- load_genomeInfo(ginfo_file, config)
     
     tb_band <- tibble(
         band_col = c('1p35', '1p11', '1q21.2'),
@@ -100,8 +103,8 @@ test_that('tb_to_gr_by_gband', {
 
 test_that('parse_hotspot_table', {
     tb <- load_hotspot_table(config)
-    gr_info <- load_genomeInfo(config)
-    gr_genes <- load_gtf_data(config)
+    gr_info <- load_genomeInfo(ginfo_file, config)
+    gr_genes <- load_gtf_data(gtf_file, config)
 
     expected_gr <- minimal_probes %>%
         mutate(
@@ -127,10 +130,11 @@ test_that('parse_hotspot_table', {
 # FIXME: enable skipping on all but manual execution
 # test_that('parse inbuilt tables', {
 #     config <- list(
+#         'genome_version' = 'hg19',
 #         'snakedir' = test_path('../../stemcnv_check/'),
-#         'static_data' = list(
-#             'genome_gtf_file' = test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz'),
-#             'genomeInfo_file' = test_path('../../test_folders/static-data/UCSC_hg38_chromosome-info.tsv')
+#         'global_settings' = list(
+#             'hg19_gtf_file' = test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz'),
+#             'hg19_genomeInfo_file' = test_path('../../test_folders/static-data/UCSC_hg38_chromosome-info.tsv')
 #         ),
 #         'settings' = list(
 #             'CNV_processing' = list(
@@ -143,13 +147,15 @@ test_that('parse_hotspot_table', {
 #             )
 #         )
 #     )
+#     gtf_file <- test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz')
+#     ginfo_file <- test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz')
 # 
 #     high_impact_tb <- load_hotspot_table(config)
 #     highlight_tb <- load_hotspot_table(config, 'Highlight')
 #     config$settings$CNV_processing$gene_overlap$highlight_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 #     highlight_tb2 <- load_hotspot_table(config, 'Highlight')
-#     gr_info <- load_genomeInfo(config)
-#     gr_genes <- load_gtf_data(config)
+#     gr_info <- load_genomeInfo(ginfo_file, config)
+#     gr_genes <- load_gtf_data(gtf_file, config)
 # 
 #     expect_no_error(parse_hotspot_table(high_impact_tb, gr_genes, gr_info))
 #     expect_no_error(parse_hotspot_table(highlight_tb, gr_genes, gr_info))
@@ -184,8 +190,8 @@ sample_cnvs <- tibble(
 
 #annotate_impact_lists
 test_that('annotate_impact_lists', {
-    gr_info <- load_genomeInfo(config)
-    gr_genes <- load_gtf_data(config)
+    gr_info <- load_genomeInfo(ginfo_file, config)
+    gr_genes <- load_gtf_data(gtf_file, config)
     
     hotspots <- parse_hotspot_table(read_tsv(test_path('../data/minimal-hotspots.tsv')), gr_genes, gr_info)
     
@@ -202,8 +208,8 @@ test_that('annotate_impact_lists', {
 
 
 test_that('annotate_roi', {
-    gr_info <- load_genomeInfo(config)
-    gr_genes <- load_gtf_data(config)
+    gr_info <- load_genomeInfo(ginfo_file, config)
+    gr_genes <- load_gtf_data(gtf_file, config)
     
     sample_tb <- tibble(
         Sample_ID = 'test_sample',

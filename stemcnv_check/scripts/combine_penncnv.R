@@ -67,7 +67,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
     snp_vcf_gr <- parse_snp_vcf(snp_vcf)
     
     # Read input files
-    sample_sex <- get_sample_info(sample_id, "sex", config$sample_table)
+    sample_sex <- get_sample_info(sample_id, "sex", config)
     all_calls <- lapply(input_files[['tsvs']], read_PennCNV, 
                         sample_id = sample_id, sample_sex = sample_sex) %>%
         bind_rows() %>%

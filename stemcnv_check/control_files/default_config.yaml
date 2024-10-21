@@ -1,39 +1,26 @@
 ##!minimal
-static_data:
-  # beadpool manifest file (.bpm) from Illumina, 
-  # needs to matching both the SNP array used and the desired genome version (usually A1 for hg19 and A2 for hg38)
-  bpm_manifest_file: '' #REQUIRED
-  # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
-  egt_cluster_file: ''  #REQUIRED
-  # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
-  csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most Indel probes unusable
-  # fasta file with the genome sequence
-  genome_gtf_file: 'static-data/gencode.{genome}.v45.gtf.gz'                           #REQUIRED, Auto-generatable
-  # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
-  penncnv_pfb_file: static-data/PennCNV-PFB_{genome}_{snp-array-name}.pfb              #REQUIRED, Auto-generatable
-  # PennCNV GC model file, containing GC content values, calculated by PennCNV
-  penncnv_GCmodel_file: static-data/PennCNV-GCmodel_{genome}_{snp-array-name}.gcmodel  #REQUIRED, Auto-generatable
-  # bed file with windows of very high array density, calculated by stemcnv-check
-  array_density_file: static-data/density_{genome}_{snp-array-name}.bed                #REQUIRED, Auto-generatable
-  # bed file with windows of probes gaps on the array
-  array_gaps_file: static-data/gaps_{genome}_{snp-array-name}.bed                      #REQUIRED, Auto-generatable
-  # tabular files with chromosome and gband details, derived form UCSC information
-  genomeInfo_file: static-data/UCSC_{genome}_chromosome-info.tsv                       #REQUIRED, Auto-generatable
-
-global_settings:
-  # By default all conda environments and apptainer images are stored to a common cache
-  # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
-  cache_dir: '~/.cache/stemcnv-check'
-  # Path to the mehari trsncript database file, either '__cache-default__' or a path for bin.zst database file
-  mehari_transcript_db: '__cache-default__' 
-  # fasta files can be compressed, but *only* with bgzip!
-  # The default will let VEP download appropriate files,
-  # but you can also specify a path if you already have files on the system
-  hg19_genome_fasta: '__use-vep__'
-  hg38_genome_fasta: '__use-vep__'
-
-genome_version: hg38   #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
-array_name: ExampleArray  #REQUIRED
+# Multiple arrays can be defined here, each array needs all required entries.
+# The entries auto-generatable files are created by the `stemcnv-check make-staticdata` command, which will also update 
+# this config file accordingly (unless --no-edit-inplace is used).
+array_definition:
+  # This 'default' entries *needs* to be renamed (or copied and renamed) to an actual array name
+  _default_:  
+    genome_version: hg38   #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
+    # beadpool manifest file (.bpm) from Illumina, needs to match both the SNP array used and 
+    # the desired genome version (usually filenames end with 'A1.bpm' for hg19 and 'A2.bpm' for hg38)
+    bpm_manifest_file: '' #REQUIRED
+    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
+    egt_cluster_file: ''  #REQUIRED
+    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
+    csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most InDel probes unusable
+    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
+    penncnv_pfb_file: static-data/{array_name}/PennCNV-PFB_{genome}.pfb              #REQUIRED, Auto-generatable
+    # PennCNV GC model file, containing GC content values, calculated by PennCNV
+    penncnv_GCmodel_file: static-data/{array_name}/PennCNV-GCmodel_{genome}.gcmodel  #REQUIRED, Auto-generatable
+    # bed file with windows of very high array density, calculated by stemcnv-check
+    array_density_file: static-data/{array_name}/density_{genome}.bed                #REQUIRED, Auto-generatable
+    # bed file with windows of probes gaps on the array
+    array_gaps_file: static-data/{array_name}/gaps_{genome}.bed                      #REQUIRED, Auto-generatable
 
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
@@ -85,6 +72,26 @@ evaluation_settings:
 
 
 ##!medium
+global_settings:
+  # By default all conda environments and apptainer images are stored to a common cache
+  # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
+  cache_dir: '~/.cache/stemcnv-check'
+  # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
+  mehari_transcript_db: '__cache-default__' 
+  # Fasta file for the genome sequence, either '__use-vep__' or a path to the genome fasta file
+  # '__use-vep__' will download the genome fasta file via vep-ensembl
+  # Note: fasta files can be compressed, but *only* with bgzip!
+  hg19_genome_fasta: '__use-vep__'
+  hg38_genome_fasta: '__use-vep__'
+  # Gene annotation of the genome in gtf format, either '__default-gencode__' or a path to the gtf file
+  # The default is to download GenCode v45 files
+  hg19_gtf_file: '__default-gencode__'
+  hg38_gtf_file: '__default-gencode__'
+  # tabular files with chromosome and gband details, derived from UCSC information
+  hg19_genomeInfo_file: '__default-UCSC__'
+  hg38_genomeInfo_file: '__default-UCSC__'
+
+
 settings:
   # Select tools to use
   # Currently implemented tools (=valid options): PennCNV, CBS
@@ -372,6 +379,7 @@ reports:
 
 ##!complete
 # These contraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid
+# Edit at your own risk!: if sample_ids to not match this constraint, they will not be run and errors might not be intuitive
 wildcard_constraints:
   sample_id: "[a-zA-Z0-9-_]+"
   sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
