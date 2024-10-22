@@ -19,7 +19,7 @@ config <- list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
                 'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
-                'high_impact_list' = test_path('../data/minimal-hotspots.tsv')
+                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv')
             )
         )
     )
@@ -58,7 +58,7 @@ test_that('tb_to_gr_by_position', {
     )
 })
 
-#TODO: somehow this didn't/doesn't catch all possible issues
+#Note: somehow this didn't/doesn't catch all possible issues
 # function failed before, due to not correctly checking for all matched gband names
 test_that('tb_to_gr_by_gband', {
     gr_info <- load_genomeInfo(ginfo_file, config)
@@ -127,41 +127,49 @@ test_that('parse_hotspot_table', {
     )
 })
 
-# FIXME: enable skipping on all but manual execution
-# test_that('parse inbuilt tables', {
-#     config <- list(
-#         'genome_version' = 'hg19',
-#         'snakedir' = test_path('../../stemcnv_check/'),
-#         'global_settings' = list(
-#             'hg19_gtf_file' = test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz'),
-#             'hg19_genomeInfo_file' = test_path('../../test_folders/static-data/UCSC_hg38_chromosome-info.tsv')
-#         ),
-#         'settings' = list(
-#             'CNV_processing' = list(
-#                 'gene_overlap' = list(
-#                     'exclude_gene_type_regex' = c(),
-#                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
-#                     'high_impact_list' = '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.tsv',
-#                     'highlight_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
-#                 )
-#             )
-#         )
-#     )
-#     gtf_file <- test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz')
-#     ginfo_file <- test_path('../../test_folders/static-data/gencode.v42.basic.annotation.gtf.gz')
-# 
-#     high_impact_tb <- load_hotspot_table(config)
-#     highlight_tb <- load_hotspot_table(config, 'Highlight')
-#     config$settings$CNV_processing$gene_overlap$highlight_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
-#     highlight_tb2 <- load_hotspot_table(config, 'Highlight')
-#     gr_info <- load_genomeInfo(ginfo_file, config)
-#     gr_genes <- load_gtf_data(gtf_file, config)
-# 
-#     expect_no_error(parse_hotspot_table(high_impact_tb, gr_genes, gr_info))
-#     expect_no_error(parse_hotspot_table(highlight_tb, gr_genes, gr_info))
-#     expect_no_error(parse_hotspot_table(highlight_tb2, gr_genes, gr_info))
-# 
-# })
+# This requires the default cache files for hg19, do *not* run this in CI
+# Also parsing the whole hg19 gtf takes a bit, so allow manual skipping as well?
+test_that('parse inbuilt tables', {
+    skip_on_ci()
+    skip_on_covr()
+    config <- list(
+        'genome_version' = 'hg19',
+        'snakedir' = test_path('../../stemcnv_check/'),
+        'global_settings' = list(
+            'hg19_gtf_file' = '~/.cache/stemcnv-check/static-data/gencode.hg19.v45.gtf.gz',
+            'hg19_genomeInfo_file' = '~/.cache/stemcnv-check/static-data/UCSC_hg19_chromosome-info.tsv'
+        ),
+        'settings' = list(
+            'CNV_processing' = list(
+                'gene_overlap' = list(
+                    'exclude_gene_type_regex' = c(),
+                    'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+                    'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv',
+                    'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+                )
+            )
+        )
+    )
+    gtf_file <- config$global_settings$hg19_gtf_file
+    ginfo_file <- config$global_settings$hg19_genomeInfo_file
+
+    stemcell_hotspot_tb <- load_hotspot_table(config)
+    cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
+    config$settings$CNV_processing$gene_overlap$cancer_gene_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
+    cancer_gene_tb2 <- load_hotspot_table(config, 'cancer_gene')
+    gr_info <- load_genomeInfo(ginfo_file, config)
+    gr_genes <- load_gtf_data(gtf_file, config)
+    score_settings <- list(
+        'pHaplo_threshold' = 0.86,
+        'pTriplo_threshold' = 0.94,
+        'dosage_sensitive_gene' =  5
+    )
+
+    expect_no_error(parse_hotspot_table(stemcell_hotspot_tb, gr_genes, gr_info))
+    expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
+    expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
+    expect_no_error(get_dosage_sensivity_tb(score_settings) %>% parse_hotspot_table(gr_genes, gr_info))
+})
 
 
 # 1 - not hit
@@ -196,12 +204,12 @@ test_that('annotate_impact_lists', {
     hotspots <- parse_hotspot_table(read_tsv(test_path('../data/minimal-hotspots.tsv')), gr_genes, gr_info)
     
     expected_gr <- sample_cnvs %>%
-        mutate(test_hits = c(NA, 'DDX11L1', 'dummyC', NA, '1p36|chr1:40000-50000', '1p36', '1p35.2'))
+        mutate(test = c(NA, 'DDX11L1', 'dummyC', NA, '1p36|chr1:40000-50000', '1p36', '1p35.2'))
     expect_equal(annotate_impact_lists(sample_cnvs, hotspots, 'test'), expected_gr)
 
     # test empty hotspots
     expected_gr <- sample_cnvs %>%
-        mutate(test_hits = NA_character_)
+        mutate(test = NA_character_)
     expect_equal(annotate_impact_lists(sample_cnvs, GRanges(), 'test'), expected_gr)
 
 })

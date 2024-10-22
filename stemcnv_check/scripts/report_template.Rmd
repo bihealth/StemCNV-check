@@ -68,6 +68,7 @@ report_config <- params$report_config
 
 # Load helper functions
 source(file.path(config$snakedir, 'scripts/R/helper_functions.R'))
+source(file.path(config$snakedir, 'scripts/R/processCNVs_annotate_impact_lists.R'))
 source(file.path(config$snakedir, 'scripts/R/R_table_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/R_plotting_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/vcf_io_functions.R'))
@@ -141,8 +142,9 @@ include_roi_plots <-  include.section('regions.of.interest') & ifelse(
     FALSE
 )
 
-high_impact_tb <- load_hotspot_table(config, 'HighImpact')
-highlight_tb <- load_hotspot_table(config, 'Highlight')
+stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot')
+dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(config$settings$CNV_processing$Check_score_values)
+cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
 
 ## general functions
 
@@ -198,12 +200,16 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
             # message(str_glue('N hotspots: {length(res$hotspots)}'))
             if (report_config$call.data.and.plots[[plotsection]]$include.hotspot.table & length(res$hotspots)>0) {
                 res$hotspots %>%
-                    hotspot_table_output(as.character(row$CNV_type), plotsection, high_impact_tb, highlight_tb, report_config, params$out_format) %>%
+                    hotspot_table_output(
+                        as.character(row$CNV_type), plotsection, 
+                        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, 
+                        report_config, params$out_format
+                    ) %>%
                     subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.hotspots'))
                 cat('\n\n')
             }
             if (report_config$call.data.and.plots[[plotsection]]$include.gene.table.details != 'None') {
-                gene_table_output(res$genes, plotsection, high_impact_tb, highlight_tb, report_config) %>%
+                gene_table_output(res$genes, plotsection, stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, report_config) %>%
                     subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.table.genes'))
                 cat('\n\n')
             }
@@ -269,9 +275,10 @@ repo_excl_filters <- ifelse(
 )
 
 cat(paste(
-    'Call designation takes into account the Check_Score thresholds for critical and optionally reportable level.',
-    'Additionally, calls flagged with an exclusion filter (i.e. below minimum size, or having a probe coverage gap) ',
-    'for a specific designation are assigend the next lower level (i.e. critical -> reportable or reportable -> no label).\n\n',
+    'Call designation takes into account minimum Check_Score thresholds for critical and (optionally) reportable level, ',
+    'and for exclusion overlap with a reference call (these calls are not denovo and never criticcal or reportable) and ',
+    'call filter flags (i.e. calls below minimum size, or having a probe coverage gap). ',
+    'If no reportable Check_Score threshold is defined the critical one is used (but the reportable exclusion filters).\n\n',
     'The current thresholds and exclsuion filters are:\n\n',
     ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n\n',
     ' - Critical exclusion Filters:', crit_excl_filters, '\n\n',
@@ -436,7 +443,11 @@ cat('This section describes all de-novo CNV calls, meaning calls without a match
 ```
 
 ```{r denovo_calls.table, results='asis', eval = include.section('denovo_calls.table')}
-CNV_table_output(denovo_calls.table, 'denovo', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'de-novo CNV calls')
+CNV_table_output(
+    denovo_calls.table, 'denovo',
+    stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+    gr_info, report_config, caption = 'de-novo CNV calls'
+)
 cat('\n\n')
 ```
 
@@ -450,7 +461,11 @@ cat('This section describes all CNV calls that match the reference sample.\n\n')
 ```
 
 ```{r reference_gt_calls.table, results='asis', eval = !is.na(ref_id) & include.section('reference_gt_calls.table')}
-CNV_table_output(reference_calls.table, 'reference_gt', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'reference genotype CNV calls')
+CNV_table_output(
+    reference_calls.table, 'reference_gt',
+    stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+    gr_info, report_config, caption = 'reference genotype CNV calls'
+)
 cat('\n\n')
 ```
 
@@ -519,13 +534,17 @@ fake_call_tb <- tibble(
         Call_label = ID,
         caller_merging_coverage = NA_real_,
         Precision_Estimate = NA_character_,
-        HighImpact = NA_character_,
-        Highlight = NA_character_,
+        stemcell_hotspot = NA_character_,
+        dosage_sensitive_gene = NA_character_,
+        cancer_gene = NA_character_,
         LRR = NA_real_, #FIXME: this could be calculated
     )
 
-CNV_table_output(fake_call_tb, 'regions_of_interest', high_impact_tb, highlight_tb, gr_info, report_config, caption = 'Regions of Interest')
-
+CNV_table_output(
+    fake_call_tb, 'regions_of_interest', 
+    stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+    gr_info, report_config, caption = 'Regions of Interest'
+)
 make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 
 cat('\n\n')

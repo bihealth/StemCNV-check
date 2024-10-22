@@ -116,8 +116,8 @@ get_call_stats <- function(gr.or.tb, call_count_excl_filters = list(), name_addi
         mutate(
             loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
             loss_gain_log2ratio = ifelse(is.infinite(loss_gain_log2ratio) | is.nan(loss_gain_log2ratio), NA, loss_gain_log2ratio),
-            highlight_calls = sum(!is.na(Highlight)),
-            high_impact_calls = sum(!is.na(HighImpact)),
+            cancer_gene_calls = sum(!is.na(cancer_gene)),
+            stemcell_hotspot_calls = sum(!is.na(stemcell_hotspot)),
             CNV_type = ifelse(CNV_type == 'LOH', 'LOH', 'CNV'),
         ) %>%
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%

@@ -22,15 +22,15 @@ config <- list(
     'settings' = list(
         'CNV_processing' = list(
             'gene_overlap' = list(
-                'high_impact_list' = test_path('../data/minimal-hotspots.tsv'),
-                'highlight_list' = test_path('../data/minimal-hotspots.tsv')
+                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
+                'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
             )
         )
     )
 )
 
 # Test `format_hotspots_to_badge` function
-# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, listname = 'high_impact')
+# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, listname = 'stemcell_hotspot')
 test_that("format_hotspots_to_badge", {
     testthat::local_edition(3)
     hotspot_vec <- c("", "1q21", "1q21", "dummyC", "1p36|DDX11L1", "1p36|DDX11L1")
@@ -42,7 +42,7 @@ test_that("format_hotspots_to_badge", {
     # 5 - gene hit & gband hit matching CNV (loss)
     # 6 - gene hit & gband hit not matching CNV (Note: theoretically possible)
 
-    gene_details <- load_hotspot_table(config, 'HighImpact')
+    gene_details <- load_hotspot_table(config, 'stemcell_hotspot')
     
     expected <- c(
         '-', 
@@ -58,11 +58,11 @@ test_that("format_hotspots_to_badge", {
         '1p36<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'high_impact'),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'stemcell_hotspot'),
         expected
     )
     
-    #test with include_hover = FALSE & listname = highlight
+    #test with include_hover = FALSE & listname = cancer_gene
     expected <- c(
         '-', 
         '<span class="badge badge-HL">1q21</span>', 
@@ -72,22 +72,31 @@ test_that("format_hotspots_to_badge", {
         '1p36<span class="badge badge-HL">DDX11L1</span>'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'highlight', FALSE),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'cancer_gene', FALSE),
         expected
     )
 })
 
-# hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, out_format) %>%
+# hotspot_table_output(hotspots, cnv_type, plotsection, stemcell_hotspot_tb, cancer_gene_tb, report_config, out_format) %>%
 test_that("hotspot_table_output", {
     hotspots <- c('DDX11L1', '1p36')
     cnv_type <- 'loss'
-    high_impact_tb <- load_hotspot_table(config, 'HighImpact') 
-    highlight_tb <- tibble()
+    stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot') 
+    dosage_sensitive_gene_tb <- tibble(
+        list_name = NA_character_,
+        hotspot = NA_character_,
+        call_type = NA_character_,
+        description = NA_character_,
+        check_score = NA_real_,
+        mapping = NA_character_,
+        description_doi = NA_character_
+    )
+    cancer_gene_tb <- dosage_sensitive_gene_tb
     # these aren't used so far
     plotsection <- 'test'
     report_config <- list()
     
-    expected_tb <- high_impact_tb %>%
+    expected_tb <- stemcell_hotspot_tb %>%
         filter(hotspot %in% hotspots) 
     
     expected <- expected_tb %>%
@@ -110,7 +119,11 @@ test_that("hotspot_table_output", {
             escape = FALSE
         )
     
-    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
+    hotspot_table_output(
+        hotspots, cnv_type, plotsection, 
+        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+        report_config, 'html'
+    ) %>%
         expect_equal(expected)
     
     # test non-html output
@@ -119,26 +132,34 @@ test_that("hotspot_table_output", {
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(
+        hotspots, cnv_type, plotsection, 
+        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+        report_config, 'not-html'
+    ) %>%
         expect_equal(expected)
     
-    # test with highlight table
-    highlight_tb <- high_impact_tb %>%
+    # test with cancer_gene table
+    cancer_gene_tb <- stemcell_hotspot_tb %>%
         filter(hotspot == '1p36') %>%
-        mutate(list_name = 'highlight')
-    high_impact_tb.no_ov <- high_impact_tb %>%
+        mutate(list_name = 'cancer_gene')
+    stemcell_hotspot_tb.no_ov <- stemcell_hotspot_tb %>%
         filter(hotspot != '1p36')
     expected <- expected_tb %>% 
-        mutate(list_name = ifelse(hotspot == '1p36', 'highlight', list_name)) %>%
+        mutate(list_name = ifelse(hotspot == '1p36', 'cancer_gene', list_name)) %>%
         select(hotspot, call_type, list_name, description, check_score, description_doi) %>%
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb.no_ov, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(
+        hotspots, cnv_type, plotsection,
+        stemcell_hotspot_tb.no_ov, dosage_sensitive_gene_tb, cancer_gene_tb,
+        report_config, 'not-html'
+    ) %>%
         expect_equal(expected)
-    # test with same hotspot in both HighImpact and highlight table
+    # test with same hotspot in both stemcell_hotspot and cancer_gene table
     expected <- expected_tb %>% 
-        mutate(list_name = ifelse(hotspot == '1p36', 'test-list|highlight', list_name)) %>%
+        mutate(list_name = ifelse(hotspot == '1p36', 'test-list|cancer_gene', list_name)) %>%
         separate_rows(list_name, sep = '\\|') %>%
         select(hotspot, call_type, list_name, description_htmllinks, check_score, mapping, description_doi) %>%
         dplyr::rename(description = description_htmllinks) %>%
@@ -158,7 +179,11 @@ test_that("hotspot_table_output", {
             rownames = FALSE,
             escape = FALSE
         )
-    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'html') %>%
+    hotspot_table_output(
+        hotspots, cnv_type, plotsection, 
+        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+        report_config, 'html'
+    ) %>%
         expect_equal(expected)
     # test with only partially matching cnv_type
     cnv_type <-  'LOH'
@@ -168,7 +193,11 @@ test_that("hotspot_table_output", {
         dplyr::rename(dois = description_doi) %>%
         rename_with(format_column_names) %>% 
         kable()
-    hotspot_table_output(hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, 'not-html') %>%
+    hotspot_table_output(
+        hotspots, cnv_type, plotsection,
+        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
+        report_config, 'not-html'
+    ) %>%
         expect_equal(expected)
     
 })

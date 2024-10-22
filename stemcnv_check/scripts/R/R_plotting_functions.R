@@ -73,8 +73,9 @@ make_LRR_BAF_plots <- function(
         filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = call.row$start, end = call.row$end))) %>%
         as_tibble()
 
-    high_impact_list <- call.row$HighImpact %>% str_split('\\|') %>% unlist()
-    highlight_list <- call.row$Highlight %>% str_split('\\|') %>% unlist()
+    stemcell_hotspot_list <- call.row$stemcell_hotspot %>% str_split('\\|') %>% unlist()
+    dosage_sensitive_gene_list <- call.row$dosage_sensitive_gene %>% str_split('\\|') %>% unlist()
+    cancer_gene_list <- call.row$cancer_gene %>% str_split('\\|') %>% unlist()
     gene.data <- gr_genes %>%
         filter_by_overlaps(GRanges(seqnames = chr, strand = '*', ranges = IRanges(start = win_start, end = win_end))) %>%
         as_tibble() %>%
@@ -83,8 +84,9 @@ make_LRR_BAF_plots <- function(
             y_pos = ifelse(strand == '+', 1, 0),
             Sample_Name = paste(sample_headers, collapse = '---'),
             direct_hit = gene_id %in% direct_genes$gene_id,
-            high_impact = gene_name %in% high_impact_list,
-            highlight = gene_name %in% highlight_list,
+            stemcell_hotspot = gene_name %in% stemcell_hotspot_list,
+            dosage_sensitive_gene = gene_name %in% dosage_sensitive_gene_list,
+            cancer_gene = gene_name %in% cancer_gene_list,
         ) %>%
         separate_rows(Sample_Name, sep = '---') %>%
         # Need to ensure table contains reference so everything is properly facet_wrapped
@@ -103,8 +105,9 @@ make_LRR_BAF_plots <- function(
             y_pos = 0,
             Sample_Name = paste(sample_headers, collapse = '---'),
             color = case_when(
-                str_detect(section_name, paste(high_impact_list, collapse = '|')) ~ 'red',
-                str_detect(section_name, paste(highlight_list, collapse = '|'))   ~ 'orange',
+                str_detect(section_name, paste(stemcell_hotspot_list, collapse = '|')) ~ 'red',
+                # Onlt the stemcell list contains gbands
+                # str_detect(section_name, paste(cancer_gene_list, collapse = '|'))   ~ 'orange',
                 band_staining == 'gpos100' ~ 'black',
                 band_staining ==  'gpos50' ~ 'grey30',
                 band_staining ==  'gpos25' ~ 'grey70',
@@ -160,8 +163,9 @@ make_LRR_BAF_plots <- function(
             aes(
                 x = x_pos, y = y_pos, width = width, height = .9,
                 fill = case_when(
-                    high_impact ~ 'red',
-                    highlight   ~ 'orange',
+                    stemcell_hotspot ~ 'red',
+                    dosage_sensitive_gene ~ 'orange',
+                    cancer_gene   ~ 'orange',
                     direct_hit  ~ 'black',
                     TRUE        ~ 'grey50'
                 )
@@ -275,10 +279,17 @@ make_LRR_BAF_plots <- function(
 
     gene.data <- gene.data %>%
         filter(!is.na(x_pos)) %>%
-        dplyr::select(seqnames, start, end, width, strand, high_impact, highlight, direct_hit, gene_name, gene_type, gene_id) %>%
+        dplyr::select(
+            seqnames, start, end, width, strand, stemcell_hotspot, dosage_sensitive_gene, cancer_gene, 
+            direct_hit, gene_name, gene_type, gene_id
+        ) %>%
         mutate(CNVtype = as.character(call.row$CNV_type)) %>%
         unique()
 
-    list('gg' = gg, 'genes' = gene.data, 'hotspots' = c(high_impact_list, highlight_list) %>% na.omit())
+    list(
+        'gg' = gg,
+        'genes' = gene.data,
+        'hotspots' = c(stemcell_hotspot_list, dosage_sensitive_gene_list, cancer_gene_list) %>% na.omit()
+    )
 
 }

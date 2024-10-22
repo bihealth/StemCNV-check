@@ -226,23 +226,31 @@ settings:
       # description & description_doi will be used to display extra info in the report
       # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
       # call_type can be 'any', 'gain', 'loss' or 'LOH'
-      high_impact_list: '__inbuilt__/supplemental-files/HighImpact-stemcell-hotspots.tsv'
-      highlight_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+      stemcell_hotspot_list: '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
+      cancer_gene_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
 
     # Scoring for CNV and LOH calls
     # scoring combines a Size based contribution with scores for overlapping annotated regions
     Check_score_values:
-      # HighImpact & Highlight scores need to be defined in the respective tables
+      # stemcell_hotspot & cancer_gene scores need to be defined in the respective tables
       # CNVs/LOHs get the summed scored of each overlapping annotated gene or region (gband/position)
-      # genes are only scored _once_ per call, i.e. a gene with both highimpact and highlight match will only 
+      # genes are only scored _once_ per call, i.e. a gene with both stemcell_hotspot and cancer_gene match will only 
       # contribute the higher of the two annotated scores. 
-      # Genes without a score in the genelists are scored as 'any_other_gene'
+      
+      # Dosage sensivity predicition is a based on Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
+      # CNV loss alls overlapping a gene with pHaplos score >= threshold are scored with the 'dosage_sensitive_gene' score
+      # CNV gain calls are respectively scored for the pTriplo score
+      pHaplo_threshold: 0.86
+      pTriplo_threshold: 0.94
+      dosage_sensitive_gene:  5
+      # Genes without any score from the hotspot lists of dosage sensivity are scored as 'any_other_gene'
       any_other_gene:         0.2
       # Calls overlapping any sample defined ROI get this one-time score
       any_roi_hit:           50
       # CNVs with a large CN (<1 or >3) have their size contribution multiplied by this factor
       large_CN_size_modifier: 1.5
+      
 
 ##!advanced
     Precision:

@@ -86,9 +86,11 @@ precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 gr_genes <- load_gtf_data(snakemake@params$gtf_file, config, target_chrom_style)
 gr_info  <- load_genomeInfo(snakemake@params$ginfo_file, config, target_chrom_style)
 
-high_impact_gr <- load_hotspot_table(config, 'HighImpact') %>%
+stemcell_hotspots_gr <- load_hotspot_table(config, 'stemcell_hotspot') %>%
     parse_hotspot_table(gr_genes, gr_info)
-highlight_gr <- load_hotspot_table(config, 'Highlight') %>%
+cancer_genes_gr <- load_hotspot_table(config, 'cancer_gene') %>%
+    parse_hotspot_table(gr_genes, gr_info)
+dosage_sensitive_gene_gr <- get_dosage_sensivity_tb(config$settings$CNV_processing$Check_score_values) %>%
     parse_hotspot_table(gr_genes, gr_info)
 
 array <- sampletable %>%
@@ -100,8 +102,9 @@ density_file <- config$array_definition[[array]]$array_density_file
 cnvs <- cnvs %>%
     plyranges::select(-LRR) %>%
     get_median_LRR(snp_vcf_gr) %>%
-	annotate_impact_lists(high_impact_gr, 'high_impact') %>%
-	annotate_impact_lists(highlight_gr, 'highlight') %>%
+	annotate_impact_lists(stemcell_hotspots_gr, 'stemcell_hotspot') %>%
+    annotate_impact_lists(dosage_sensitive_gene_gr, 'dosage_sensitive_gene') %>%
+	annotate_impact_lists(cancer_genes_gr, 'cancer_gene') %>%
 	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
 	annotate_gaps(
         gap_file,
@@ -116,7 +119,7 @@ cnvs <- cnvs %>%
     ) %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
-	annotate_cnv.check.score(high_impact_gr, highlight_gr, check_scores) %>%
+	annotate_cnv.check.score(stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores) %>%
 	annotate_precision.estimates(size_categories, precision_estimates) %>%
     annotate_call.label(config$evaluation_settings$CNV_call_categorisation)
 

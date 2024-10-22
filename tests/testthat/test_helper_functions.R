@@ -183,15 +183,15 @@ test_that('load_hotspot_table', {
         'settings' = list(
             'CNV_processing' = list(
                 'gene_overlap' = list(
-                    'high_impact_list' = test_path('../data/minimal-hotspots.tsv'),
-                    'highlight_list' = test_path('../data/minimal-hotspots.tsv')
+                    'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
+                    'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
                 )
             )
         )
     )
-    load_hotspot_table(config, 'HighImpact') %>%
+    load_hotspot_table(config, 'stemcell_hotspot') %>%
         # remove 'spec_tbl_df' class from readr
         .[] %>% expect_equal(minimal_probes)
-    load_hotspot_table(config, 'Highlight') %>%
+    load_hotspot_table(config, 'cancer_gene') %>%
         .[] %>% expect_equal(minimal_probes)
 })

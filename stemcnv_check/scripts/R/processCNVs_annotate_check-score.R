@@ -13,7 +13,7 @@ annotate_gene_overlaps <- function(gr, gr_genes) {
 }
 
 
-annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_scores) {
+annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores) {
 
 	tb %>%
 	  rowwise() %>%
@@ -33,30 +33,31 @@ annotate_cnv.check.score <- function(tb, high_impact_gr, highlight_gr, check_sco
             ) +
 			# Base score for any ROI hit
 			ifelse(!is.na(ROI_hits), check_scores$any_roi_hit, 0) +
-            # Per gene/region score:
-			# - scores per non-gene HI / HL
-			(high_impact_gr %>% as_tibble() %>%
-				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(high_impact_hits, '\\|'))) %>%
+            # Scores for each hotspot hit/dosage gene/cancer gene (cumulative, even if its the same gene)
+			(stemcell_hotspots_gr %>% as_tibble() %>%
+				filter(hotspot %in% unlist(str_split(stemcell_hotspot, '\\|'))) %>%
+				pull(check_score) %>%	sum()) + 
+            # dosage_sensitive & cancer lists should only have genes, but are included anyway
+            (dosage_sensitive_gene_gr %>% as_tibble() %>%
+				filter(hotspot %in% unlist(str_split(dosage_sensitive_gene, '\\|'))) %>%
+				pull(check_score) %>%	sum()) +    
+			(cancer_genes_gr %>% as_tibble() %>%
+				filter(hotspot %in% unlist(str_split(cancer_gene, '\\|'))) %>%
 				pull(check_score) %>%	sum()) +
-			(highlight_gr %>% as_tibble() %>%
-				filter(mapping != 'gene_name' & hotspot %in% unlist(str_split(highlight_hits, '\\|'))) %>%
-				pull(check_score) %>%	sum()) +
-			# - score all genes that aren't also an ROI, use max score of matching overlaps (but only one score per gene)
+			# Score all remaining (not hotpsot/dosage/cancer and not ROI)
 			# dplyr will generate a bunch of warnings for calls without any genes
-			suppressWarnings(bind_rows(
-				high_impact_gr %>% as_tibble(),
-				highlight_gr %>% as_tibble(),
-				str_split(overlapping_genes, '\\|') %>% unlist() %>%
-					as_tibble() %>% dplyr::rename(hotspot = value) %>%
-					mutate(mapping = 'gene_name', check_score = check_scores$any_other_gene)
-			  	) %>%
-				filter(
-                    hotspot %in% unlist(str_split(overlapping_genes, '\\|')) & 
-                        !is.na(hotspot) &
-						mapping == 'gene_name'
+            str_split(overlapping_genes, '\\|') %>% unlist() %>%
+                as_tibble() %>% dplyr::rename(gene_name = value) %>%
+                filter(
+                    gene_name %!in% c(
+                        unlist(str_split(stemcell_hotspot, '\\|')),
+                        unlist(str_split(dosage_sensitive_gene, '\\|')),
+                        unlist(str_split(cancer_gene, '\\|')),
+                        unlist(str_split(ROI_hits, '\\|'))
+                    )
                 ) %>%
-				group_by(hotspot) %>% summarise(check_score = max(check_score)) %>%
-				pull(check_score) %>% sum())
+                mutate(check_score = check_scores$any_other_gene) %>%
+                pull(check_score) %>% sum()
 	  ) %>%
 	  ungroup() 
 }
@@ -95,7 +96,8 @@ annotate_call.label <- function(gr.or.tb, call_cat_config) {
     check_score.critical <- ifelse(is.null(call_cat_config$check_score.critical), NA, call_cat_config$check_score.critical)
     critical_excl <- call_cat_config$filters.exclude.critical 
     check_score.reportable <- ifelse(is.null(call_cat_config$check_score.reportable), NA, call_cat_config$check_score.reportable)
-    reportable_excl <- call_cat_config$filters.exclude.reportable 
+    check_score.reportable <- ifelse(is.na(check_score.reportable), check_score.critical, call_cat_config$check_score.reportable)
+    reportable_excl <- call_cat_config$filters.exclude.reportable
     
     gr.or.tb %>%
         as_tibble() %>%
@@ -108,8 +110,6 @@ annotate_call.label <- function(gr.or.tb, call_cat_config) {
                         !is.na(ref_cov)                        ~ 'Reference genotype',
                         check_score >= check_score.critical & 
                             !any(filters %in% critical_excl)   ~ 'Critical',
-                        check_score >= check_score.critical & 
-                            any(filters %in% critical_excl)    ~ 'Reportable',
                         check_score >= check_score.reportable & 
                             !any(filters %in% reportable_excl) ~ 'Reportable',
                         TRUE                         		   ~ NA_character_

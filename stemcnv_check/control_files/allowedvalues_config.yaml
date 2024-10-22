@@ -119,10 +119,13 @@ settings:
     gene_overlap:
       exclude_gene_type_regex: list__str
       include_only_these_gene_types: list__str
-      high_impact_list: str
-      highlight_list: str
+      stemcell_hotspot_list: str
+      cancer_gene_list: str
 
     Check_score_values:
+      pHaplo_threshold: float_le1_ge0
+      pTriplo_threshold: float_le1_ge0
+      dosage_sensitive_gene: float_ge0  
       any_roi_hit: float_ge0
       any_other_gene: float_ge0
       large_CN_size_modifier: float_ge1

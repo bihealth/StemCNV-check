@@ -145,14 +145,14 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
 }
 
 format_hotspots_to_badge <- function(
-    hotspot_vec, CNVtype_vec, hotspot_table, listname = 'high_impact', include_hover = TRUE
+    hotspot_vec, CNVtype_vec, hotspot_table, listname = 'stemcell_hotspot', include_hover = TRUE
 ) {
-    if (listname == "high_impact") {
+    if (listname == "stemcell_hotspot") {
         shorthand <- 'HI'
-    } else if (listname == "highlight") {
+    } else if (listname %in% c("cancer_gene", "dosage_sensitive_gene")) {
         shorthand <- 'HL'
     } else {
-        stop(str_glue("Unsupported list type '{listname}', only 'high_impact' and 'highlight' are defined"))
+        stop(str_glue("Unsupported list type '{listname}', only 'stemcell_hotspot', 'dosage_sensitive_gene' and 'cancer_gene' are defined"))
     }
 
     hotspot_table.any <- hotspot_table %>%
@@ -206,7 +206,9 @@ format_hotspots_to_badge <- function(
     }
 }
 
-CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_info, report_config, caption = NULL) {
+CNV_table_output <- function(
+    tb, plotsection, stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, gr_info, report_config, caption = NULL
+) {
     always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
     # Reorder & subset columns
     tb <- tb %>%
@@ -226,8 +228,9 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
                 )
             ), 
             Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-            HighImpact = map2_chr(HighImpact, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, high_impact_tb, 'high_impact')),
-            Highlight = map2_chr(Highlight, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, highlight_tb, 'highlight')),
+            stemcell_hotspot = map2_chr(stemcell_hotspot, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, stemcell_hotspot_tb, 'stemcell_hotspot')),
+            dosage_sensitive_gene = map2_chr(dosage_sensitive_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene')),
+            cancer_gene = map2_chr(cancer_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, cancer_gene_tb, 'cancer_gene')),
             genome_bands = pmap_chr(., \(chrom, start, end, ...) {
                 gr_info %>% 
                     filter_by_overlaps(GRanges(seqnames = chrom, strand = '*', ranges = IRanges(start, end))) %>%
@@ -248,9 +251,9 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
             Plot, Call_label, Check_Score,
             CNV_type, chrom, Size, genome_bands,
             start, end, #invis 10-11
-            CNV_caller, HighImpact, Highlight, ROI_hits,
+            CNV_caller, stemcell_hotspot, dosage_sensitive_gene, cancer_gene, ROI_hits,
             Precision_Estimate, probe_coverage_gap, high_probe_density,
-            # invis: 19++
+            # invis: 20++
             copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
             caller_merging_coverage, Gap_percent
         ) 
@@ -264,7 +267,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
             'Number of the CNV call, sorted by descending Check_Score',
             'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch the active plot below. For other CNVs it will open the plot in a new browser tab.',
             'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
-            'Check_Score of the CNV call, calculated based on size, overlap high impact or highlight list, or other genes',
+            'Check_Score of the CNV call, calculated based on size, overlap with stemcell_hotspot, dosage_sensivity or cancer_gene list, or other genes',
             'Type of CNV call (gain, loss, LOH)',
             'Chromosome of the CNV call',
             'Size of the CNV call (in base pairs)',
@@ -272,8 +275,9 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
             'Start position of the CNV call',
             'End position of the CNV call',
             'Caller tools detecting this CNV call',
-            'High impact hotspots overlapping with this CNV call',
-            'Highlight hotspots overlapping with this CNV call',
+            'Stemcell hotspots overlapping with this CNV call',
+            'Dosage sensitive genes overlapping with this CNV call',
+            'Cancer genes overlapping with this CNV call',
             'Regions of interest overlapping with this CNV call',
             #FIXME (future): add a doi for precision benchmark once available
             'Precision estimate of the CNV call, based on internal benchmarking',
@@ -302,7 +306,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
                 buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
                 columnDefs = list(
                     #This uses 0-indexing vs the usual R 1-indexing
-                    list(targets = c(0:2,10:11,19:(ncol(tb)-1)), visible = FALSE)
+                    list(targets = c(0:2,10:11,20:(ncol(tb)-1)), visible = FALSE)
                 )
             ),
             callback = JS(
@@ -321,7 +325,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
             select(
                 CNV_type, Check_Score,
                 chrom, start, end, Size, genome_bands, CNV_caller,
-                HighImpact, Highlight,
+                stemcell_hotspot, dosage_sensitive_gene, cancer_gene,
                 Precision_Estimate, probe_coverage_gap, high_probe_density
             ) %>% 
             rename_with(format_column_names)
@@ -330,7 +334,7 @@ CNV_table_output <- function(tb, plotsection, high_impact_tb, highlight_tb, gr_i
 }
 
 gene_table_output <- function(
-    tb, plotsection, high_impact_tb, highlight_tb, report_config, caption = NULL, extra_cols = c()
+    tb, plotsection, stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, report_config, caption = NULL, extra_cols = c()
 ) {
 
     if (report_config$call.data.and.plots[[plotsection]]$include.gene.table.details == 'Call') {
@@ -346,8 +350,12 @@ gene_table_output <- function(
     tb <- tb %>%
         mutate(
             across(any_of(c('direct_hit', 'gene_type', 'strand')), ~ factor(.)),
-            high_impact = factor(ifelse(high_impact, 'hit', '-'), levels = c('hit', '-')),
-            highlight = factor(ifelse(highlight, 'hit', '-'), levels = c('hit', '-')),
+            across(
+                any_of(c('stemcell_hotspot', 'dosage_sensitive_gene', 'cancer_gene')),
+                ~ factor(ifelse(., 'yes', '-'), levels = c('yes', '-'))
+            ),
+            # stemcell_hotspot = factor(ifelse(stemcell_hotspot, 'hit', '-'), levels = c('hit', '-')),
+            # cancer_gene = factor(ifelse(cancer_gene, 'hit', '-'), levels = c('hit', '-')),
             name_is_geneid = str_detect(gene_name, 'ENSG[0-9]{11}'),
             # REEV: gene_id *should* work, but won't if they are deprectated/not in Annonars
             REEV = str_glue("<a href='https://reev.bihealth.org/gene/{gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>"),
@@ -355,44 +363,48 @@ gene_table_output <- function(
             NCBI = ifelse(name_is_geneid, '-', str_glue("<a href='https://pubmed.ncbi.nlm.nih.gov/?term={gene_name}' target='_blank' rel='noopener noreferrer'>{gene_name}</a>")),
             Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
             #Reformat gene name
-            gene_name = ifelse(
-                high_impact == 'hit',
-                map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
-                map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight', FALSE))
+            gene_name = case_when(
+                stemcell_hotspot == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'stemcell_hotspot', FALSE)),
+                dosage_sensitive_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene', FALSE)),
+                cancer_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'cancer_gene', FALSE)),
+                TRUE ~ gene_name
             ),
         ) %>%
-        arrange(high_impact, highlight, desc(direct_hit), start) %>%
+        arrange(stemcell_hotspot, cancer_gene, desc(direct_hit), start) %>%
         select(
-            gene_name, gene_id, seqnames, start, end, strand, high_impact, highlight,
+            gene_name, gene_id, seqnames, start, end, strand, stemcell_hotspot, dosage_sensitive_gene, cancer_gene,
             any_of(extra_cols), REEV, GTex, NCBI, Ensembl
         )
     if (params$out_format == 'html') {
-        colors1 <- ifelse(tb$high_impact == 'hit', 'red' , 'white')
-        colors2 <- ifelse(tb$highlight == 'hit', 'orange', 'white')
+        colors1 <- ifelse(tb$stemcell_hotspot == 'yes', 'red' , 'white')
+        colors2 <- ifelse(tb$dosage_sensitive_gene == 'yes', 'orange', 'white')
+        colors3 <- ifelse(tb$cancer_gene == 'yes', 'orange', 'white')
         dt <- datatable(
             tb, rownames = FALSE, escape = FALSE,
             options = list(
                 dom = 'Bftilp', pageLength = 10,
                 extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-                columnDefs = list(list(targets = 1:7, visible = FALSE))
+                columnDefs = list(list(targets = 1:8, visible = FALSE))
                 )
             ) %>%
-            formatStyle('high_impact', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
-            formatStyle('highlight', backgroundColor = styleRow(1:nrow(tb), colors2))
+            formatStyle('stemcell_hotspot', backgroundColor = styleRow(1:nrow(tb), colors1)) %>% # textAlign = 'center'
+            formatStyle('dosage_sensitive_gene', backgroundColor = styleRow(1:nrow(tb), colors2)) %>%
+            formatStyle('cancer_gene', backgroundColor = styleRow(1:nrow(tb), colors3))
         return(dt)
     } else {
-        tb <- tb %>% select(gene_name, gene_id, high_impact, highlight, any_of(extra_cols))
+        tb <- tb %>% select(gene_name, gene_id, stemcell_hotspot, dosage_sensitive_gene, cancer_gene, any_of(extra_cols))
         return(kable(tb, caption = caption))
     }
 }
 
 hotspot_table_output <- function(
-    hotspots, cnv_type, plotsection, high_impact_tb, highlight_tb, report_config, out_format, caption = NULL
+    hotspots, cnv_type, plotsection, stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, report_config, out_format, caption = NULL
 ){
     tb <- bind_rows(
-        high_impact_tb,
-        highlight_tb
+        stemcell_hotspot_tb,
+        dosage_sensitive_gene_tb,
+        cancer_gene_tb
     ) %>%
         filter(hotspot %in% hotspots & call_type %in% c('any', cnv_type))
     
@@ -403,10 +415,10 @@ hotspot_table_output <- function(
                 dplyr::rename(description = description_htmllinks) %>%
                 select(hotspot, call_type, list_name, description, check_score, any_of(colnames(tb))) %>%
                 mutate(
-                    hotspot = ifelse(
-                        list_name %in% unique(high_impact_tb$list_name),
-                        map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, high_impact_tb,'high_impact', FALSE)),
-                        map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, highlight_tb, 'highlight', FALSE))
+                    hotspot = case_when(
+                        list_name == unique(stemcell_hotspot_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'stemcell_hotspot', FALSE)),
+                        list_name == unique(dosage_sensitive_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene', FALSE)),
+                        list_name == unique(cancer_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'cancer_gene', FALSE))
                     ),
                     description = str_replace_all(description, '&#013;', '<br/>')
                 ) %>%

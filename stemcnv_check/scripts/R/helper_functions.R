@@ -132,12 +132,12 @@ load_genomeInfo <- function(ginfo_file, config, target_style='UCSC') {
 	gr_info
 }
 
-load_hotspot_table <- function(config, table = 'HighImpact') {
+load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
     
-    if (table == 'HighImpact') {
-        filename <- config$settings$CNV_processing$gene_overlap$high_impact_list 
-    } else if (table == 'Highlight') {
-        filename <- config$settings$CNV_processing$gene_overlap$highlight_list
+    if (table == 'stemcell_hotspot') {
+        filename <- config$settings$CNV_processing$gene_overlap$stemcell_hotspot_list 
+    } else if (table == 'cancer_gene') {
+        filename <- config$settings$CNV_processing$gene_overlap$cancer_gene_list
     } else {
         stop('Invalid table name')
     }

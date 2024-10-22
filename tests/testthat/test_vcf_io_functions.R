@@ -94,8 +94,9 @@ cnv_tb_annotated <- cnv_tb %>%
         Call_label = c('Critical', NA, 'Reportable', NA, NA, NA, NA, rep ('Reference genotype', 2)),
         # reference_caller
         reference_coverage = c(rep(NA, 4), runif(5, 0, 1)),
-        high_impact_hits = c(NA, NA, NA, NA, NA, 'gene1,gene2', NA, NA, NA),
-        highlight_hits = c(NA, NA, 'gene3', NA, NA, NA, NA, NA, NA),
+        stemcell_hotspot = c(NA, NA, NA, NA, NA, 'gene1,gene2', NA, NA, NA),
+        dosage_sensitive_gene = NA_character_,
+        cancer_gene = c(NA, NA, 'gene3', NA, NA, NA, NA, NA, NA),
         ROI_hits = c(NA, NA, NA, NA, NA, NA, NA, NA, 'ROI1'),
         Gap_percent = c(0, 0, 0, runif(6, 0, 1)),
         # not actually used in the function
@@ -141,8 +142,9 @@ test_that('get_fix_section', {
                 str_glue('Check_Score={cnv_tb_annotated_out$Check_Score};'),
                 str_glue('Precision_Estimate={cnv_tb_annotated_out$Precision_Estimate};'),
                 str_glue('Call_label={cnv_tb_annotated_out$Call_label};'),
-                str_glue('HighImpact={cnv_tb_annotated_out$high_impact_hits};'),
-                str_glue('Highlight={cnv_tb_annotated_out$highlight_hits};'),
+                str_glue('stemcell_hotspot={cnv_tb_annotated_out$stemcell_hotspot};'),
+                str_glue('dosage_sensitive_gene={cnv_tb_annotated_out$dosage_sensitive_gene};'),
+                str_glue('cancer_gene={cnv_tb_annotated_out$cancer_gene};'),
                 str_glue('ROI_hits={cnv_tb_annotated_out$ROI_hits};'),
                 str_glue('Gap_percent={cnv_tb_annotated_out$Gap_percent};'),
                 str_glue('Genes={cnv_tb_annotated_out$overlapping_genes}')

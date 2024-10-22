@@ -103,9 +103,19 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 			filter(gene_name %in% sub_tb_name$hotspot) %>%
 			as_tibble() %>%
 			dplyr::rename(hotspot = gene_name) %>%
-			left_join(sub_tb_name, by = 'hotspot') %>%
+            mutate(call_type = 'any;loss;gain;LOH') %>%
+            separate_rows(call_type, sep = ';') %>%
+            # Specifically merge each call_type
+			inner_join(sub_tb_name, by = c('hotspot', 'call_type')) %>%
+            # Remove duplicates (can result from non-unique gene_names)
+            slice_max(check_score, by = c(hotspot, call_type), with_ties = FALSE) %>%            
 			as_granges()
 		#message('parsed gene names')
+        unmatched_genes <- setdiff(sub_tb_name$hotspot, gr_name$hotspot)
+        if (length(unmatched_genes) > 0) {
+            message('The following gene names could not be identified in the gtf file (they are likely alternave names):', paste(unmatched_genes, collapse = ', '))
+        }
+        
 	} else {
 		gr_name <- empty_gr
 	}
@@ -124,18 +134,76 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 	bind_ranges(empty_gr, gr_name, gr_pos, gr_gband)
 }
 
+
+get_dosage_sensivity_tb <- function(score_settings) {
+    
+    dosage_data <- 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz'
+    doi <- '10.1016/j.cell.2022.06.036'
+    
+    tb <- read_tsv(dosage_data, show_col_types = F) %>%
+        rename_with(
+            ~str_replace(., '#gene', 'hotspot') %>%
+                str_replace('pHaplo', 'loss') %>%
+                str_replace('pTriplo', 'gain')        
+        ) %>%
+        pivot_longer(cols = -hotspot, names_to = 'call_type', values_to = 'dosage_score') %>%
+        mutate(
+            list_name = 'Dosage-sensivity',
+            mapping = 'gene_name',
+            check_score = case_when(
+                call_type == 'loss' & dosage_score >= score_settings$pHaplo_threshold ~ score_settings$dosage_sensitive_gene,
+                call_type == 'gain' & dosage_score >= score_settings$pTriplo_threshold ~ score_settings$dosage_sensitive_gene,
+                TRUE ~ NA_integer_
+            ),
+            description = paste0(
+                'Gene with predicted dosage sensitivity (',
+                ifelse(call_type == 'loss', 'haploinsufficiency', 'triplosensitivity'), ')\\n',
+                'Source: Collins et al. 2022 {1}.\\n',
+                ifelse(call_type == 'loss', 'pHaplo', 'pTriplo'),
+                ' score: ', round(dosage_score, 3)                
+            ),            
+            description_doi = doi,
+        ) %>%
+        filter(!is.na(check_score)) %>%
+        select(-dosage_score)
+    
+    description_html_pattern <- str_replace_all(
+        tb$description,
+        '([:,] ?)([^:,]+?)\\{([0-9]+)\\}(?=, ?|\\\\\\\\n|\\\\n|$)',
+        '\\1<a href="{a\\3}" target="_blank" rel="noopener noreferrer">\\2</a>'
+    ) %>%
+        str_replace_all('\\\\n', '&#013;') %>%
+        str_replace_all('\\n', '&#013;')
+    
+    tb$description_htmllinks <- map2_chr(
+        tb$description_doi, description_html_pattern, 
+        \(doi, pattern) {
+            args <- doi %>% 
+                str_split(', ?') %>% 
+                # Make the doi text into an actual link
+                sapply(\(x) paste0('https://doi.org/', x)) %>%
+                unlist() %>%
+                set_names(paste0('a', 1:length(.)))
+            rlang::inject(str_glue(pattern, !!!args))
+        }
+    )
+    
+    tb
+}
+
+
 annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
 	message('Annotation calls with gene lists')
 
 	# Make an extra col listing all overlapping directly defined genes
-	gr@elementMetadata[[paste0(list_name, '_hits')]] <- NA_character_
+	gr@elementMetadata[[list_name]] <- NA_character_
 	ov <- group_by_overlaps(gr, hotspot_gr)
 	if (length(ov) > 0) {
 		ov_hits <- ov %>%
 			mutate(type_check = str_detect(CNV_type, str_replace(call_type, '^any$', '.*'))) %>%
 			filter(type_check) %>%
 			reduce_ranges(hits = paste(unique(sort(hotspot)),collapse = '|'))
-		gr[ov_hits$query,]@elementMetadata[[paste0(list_name, '_hits')]] <- ov_hits$hits
+		gr[ov_hits$query,]@elementMetadata[[list_name]] <- ov_hits$hits
 	}
 
 	return(gr)

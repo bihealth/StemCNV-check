@@ -84,8 +84,9 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
         '##INFO=<ID=Precision_Estimate,Number=1,Type=Float,Description="Estimated precision for this call">',
         '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on refrence overlap, Check-Score and Filters (Critical|Reportable|Reference genotype)">',
-        '##INFO=<ID=HighImpact,Number=1,Type=String,Description="Overlapping high impact sites (StemCNV-check defined)">',
-        '##INFO=<ID=Highlight,Number=1,Type=String,Description="Overlapping highlight sites (COSMIC genes)">',
+        '##INFO=<ID=stemcell_hotspot,Number=1,Type=String,Description="Overlapping stemcell hotspot sites (StemCNV-check defined)">',
+        '##INFO=<ID=dosage_sensitive_gene,Number=1,Type=String,Description="Overlapping dosage sensitive genes (Collins et al. 2022)">',
+        '##INFO=<ID=cancer_gene,Number=1,Type=String,Description="Overlapping cancer genes">',
         '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
         '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
         '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes, sepearted by | character">'
@@ -186,7 +187,8 @@ get_fix_section <- function(tb) {
     extra_info_str <- paste(
         base_info_str,
         'Check_Score={Check_Score};Precision_Estimate={Precision_Estimate};Call_label={Call_label}',
-        'HighImpact={high_impact_hits};Highlight={highlight_hits};ROI_hits={ROI_hits}',
+        'stemcell_hotspot={stemcell_hotspot};dosage_sensitive_gene={dosage_sensitive_gene}',
+        'cancer_gene={cancer_gene};ROI_hits={ROI_hits}',
         'Gap_percent={Gap_percent};Genes={overlapping_genes}',
         sep=';'
     )
@@ -198,7 +200,7 @@ get_fix_section <- function(tb) {
             # Need to use across + any_of to make this work if the columns aren't there
             # replace , by | for separator in INFO cols
             across(
-                any_of(c("high_impact_hits", "highlight_hits", "ROI_hits", "overlapping_genes")),
+                any_of(c("stemcell_hotspot", "dosage_sensitive_gene", "cancer_gene", "ROI_hits", "overlapping_genes")),
                 ~ str_replace_all(., ',', '|')
             ),
             # round numbers
@@ -206,7 +208,7 @@ get_fix_section <- function(tb) {
             # convert NA or empty string to ".", all columns with possible NA to character
             across(
                 any_of(c("Check_Score", "Precision_Estimate", "Call_label",
-                         "high_impact_hits", "highlight_hits",
+                         "stemcell_hotspot", "cancer_gene", "dosage_sensitive_gene",
                          "ROI_hits", "Gap_percent", "overlapping_genes")),
                 ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),
