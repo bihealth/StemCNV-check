@@ -37,7 +37,7 @@ def read_sample_table(filename, name_remove_regex=None, return_type='list'):
 
     sample_tb = reader_func(filename).rename(columns=rename_func, errors='raise').fillna('').astype(str)
     # logging.debug('Final column names:' + ', '.join(sample_tb.columns))
-    # TODO raise error on duplicated col names?
+    # FIXME: raise error on duplicated col names?
 
     if not all(col in sample_tb.columns for col in req_cols):
         logging.debug('Sample table columns: ' + ', '.join(sample_tb.columns))
@@ -47,8 +47,6 @@ def read_sample_table(filename, name_remove_regex=None, return_type='list'):
         raise SampleConstraintError(
             'Not all required sample_table columns found. Missing columns: ' + ', '.join(missing)
         )
-    # TODO: ref sample & other sample_table internal checks can happen here already! 
-
     # reorder columns to required order
     cols = req_cols + [col for col in sample_tb.columns if col not in req_cols]
     sample_tb = sample_tb[cols]
@@ -106,34 +104,44 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
                     raise FileNotFoundError(f"Static data file '{file}' does not exist.")
             bind_points.append((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
 
-    bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in bind_points)
+    # Sort bind_points to make testing easier (loops over config_dict add them in a non-deterministic order)
+    bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in sorted(bind_points, key=lambda x: x[1]))
     logging.debug("Binding points for apptainer: " + str(bind_point_str))
 
     return bind_point_str
 
 
-def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_full):
+def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_df):
     ids = set()
     # '__[column]' entries: take all sample_ids with the same value in '[column]'
     col_val_match = [sampledef[2:] for sampledef in config_extra_samples if sampledef[:2] == '__']
     for col in col_val_match:
-        if col not in sample_data_full[0].keys():
+        if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        # FIXME (future): use pandas loc function
-        match_val = [dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0]
-        ids.update(dictline['Sample_ID'] for dictline in sample_data_full if dictline[col] == match_val)
+        match_val = sample_data_df[col].loc[sample_id]
+        ids.update(sample_data_df.set_index(col)['Sample_ID'].loc[match_val])
     # '_[column]' entry: take all sample_ids from '[column]'
     id_cols = [sampledef[1:] for sampledef in config_extra_samples if sampledef[0] == '_' and sampledef[:2] != '__']
     for col in id_cols:
-        if col not in sample_data_full[0].keys():
+        if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        # FIXME (future): use pandas loc function
-        ids.update([dictline[col] for dictline in sample_data_full if dictline['Sample_ID'] == sample_id][0].split(','))
+        ids.update(sample_data_df[col].loc[sample_id].split(','))
     # other entries: assume they are sample_ids & use them as is
     ids.update([sampledef for sampledef in config_extra_samples if sampledef[0] != '_'])
     # remove the original sample_id
     if sample_id in ids:
         ids.remove(sample_id)
+
+    # Check that all samples belong to the same array,
+    # remove all that don't match
+    sample_array = sample_data_df['Array_Name'].loc[sample_id]
+    wrong_array = set()
+    for id in ids:
+        if sample_data_df['Array_Name'].loc[id] != sample_array:
+            wrong_array.add(id)
+    if wrong_array:
+        logging.warning(f"Samples {', '.join(wrong_array)} do not belong to the same array as {sample_id}. They will be excluded from the SNP clustering.")
+        ids -= wrong_array
 
     return ids
 

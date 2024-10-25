@@ -14,10 +14,10 @@ def get_penncnv_log_input(wildcards):
     )
 
 def get_extra_snp_input_files(wildcards):
-    extra_sample_def = config['evaluation_settings']['SNP_clustering']['extra_samples']
+    extra_sample_def = config['settings']['SNV_analysis']['SNP_clustering_extra_samples']
     sample_id, ref_id = get_ref_id(wildcards)
 
-    ids = set(collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_full))
+    ids = set(collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_df))
     if ref_id:
         ids.add(ref_id)
 
@@ -28,17 +28,15 @@ def get_extra_snp_input_files(wildcards):
             )
         ],
         ids=ids,
-        filter=get_tool_filter_settings("evaluation_settings:SNP_clustering:filter-settings")
+        filter=get_tool_filter_settings("SNV_analysis")
     )
 
 rule make_summary_table:
     input:
-        gencall_stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt"),
-        snp_vcf = cnv_vcf_input_function("settings:CNV_processing:call_processing"),
+        gencall_stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt"), 
         cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
         penncnv_logs = get_penncnv_log_input,
-        #TODO: possibly move this to a separate rule?
-        extra_snp_files = get_extra_snp_input_files,
+        snv_analysis = os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
         summary_excel_ref = get_ref_input_function('summary-stats.xlsx'),
     output:
         xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
@@ -105,9 +103,10 @@ def get_config_delta(wildcards, compare_on=('evaluation_settings', 'settings', '
 
 rule knit_report:
     input:
-        snp_vcf = cnv_vcf_input_function("settings:CNV_processing:call_processing"),
+        snp_vcf = snp_vcf_input_function("settings:CNV_processing:call_processing"),
         cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
         summary_xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+        snv_analysis = os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
         ref_snp_vcf = get_ref_input_function(
             f"annotated-SNP-data.{get_tool_filter_settings('settings:CNV_processing:call_processing')}-filter.vcf.gz"
             ),

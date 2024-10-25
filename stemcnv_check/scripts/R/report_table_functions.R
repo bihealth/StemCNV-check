@@ -16,17 +16,27 @@ format_column_names <- function(n) {
         str_replace('Cnv', 'CNV') %>%
         str_replace('Loh', 'LOH') %>%
         str_replace('Snp', 'SNP') %>% 
+        str_replace('Snv', 'SNV') %>%
+        str_replace('Gt', 'GT') %>% 
+        str_replace('Cn', 'CN') %>% 
+        str_replace('Cdna', 'cDNA') %>% 
+        str_replace('Cds', 'CDS') %>% 
+        str_replace('Aa', 'AA') %>% 
+        
+        
+        
         str_replace('Lrr', 'LRR') %>%
         str_replace('Roi', 'ROI') %>%
         str_replace('Id', 'ID')
 }
 
-simple_table_output <- function(tb, out_format='html', caption=NULL) {
+simple_table_output <- function(tb, out_format='html', caption=NULL, escape=TRUE) {
     if (out_format == 'html') {
         return(
             datatable(
                 tb,
                 caption = caption,
+                escape = escape,
                 options = list(dom = 't', pageLength = nrow(tb)),
                 rownames = FALSE
             )
@@ -76,6 +86,7 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
             "Computed Gender" = 'The Illumina computed gender (sex) based on X and Y chromosome probes.\\nMismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.',
             "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
             "SNP Distance To Reference" = 'The number of probes with a different genotype than the reference sample.\\nIncreased values can indicate a sample swap or a considerable number of genomic mutations between sample and references.',
+            "Critical SNVs" = 'The number of detected SNVs designated as "critical".',
             "Loss Gain Log2ratio" = paste0(
                 'The log2 transformed ratio of loss and gain CNV calls.\\n',
                 'Deviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
@@ -145,14 +156,11 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
 }
 
 format_hotspots_to_badge <- function(
-    hotspot_vec, CNVtype_vec, hotspot_table, listname = 'stemcell_hotspot', include_hover = TRUE
+    hotspot_vec, CNVtype_vec, hotspot_table, color = 'orange', include_hover = TRUE
 ) {
-    if (listname == "stemcell_hotspot") {
-        shorthand <- 'HI'
-    } else if (listname %in% c("cancer_gene", "dosage_sensitive_gene")) {
-        shorthand <- 'HL'
-    } else {
-        stop(str_glue("Unsupported list type '{listname}', only 'stemcell_hotspot', 'dosage_sensitive_gene' and 'cancer_gene' are defined"))
+    
+    if (color %!in% c('orange', 'red')) {
+        stop(str_glue("Unsupported color '{color}', only 'red' and 'orange' are defined"))
     }
 
     hotspot_table.any <- hotspot_table %>%
@@ -175,7 +183,7 @@ format_hotspots_to_badge <- function(
             out_str = ifelse(
                 hotspot != "" & !is.na(list_name),
                 paste0(
-                    str_glue('<span class="badge badge-{shorthand}"'),
+                    str_glue('<span class="badge badge-{color}"'),
                     ifelse(
                         include_hover,
                         paste0(
@@ -228,9 +236,9 @@ CNV_table_output <- function(
                 )
             ), 
             Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-            stemcell_hotspot = map2_chr(stemcell_hotspot, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, stemcell_hotspot_tb, 'stemcell_hotspot')),
-            dosage_sensitive_gene = map2_chr(dosage_sensitive_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene')),
-            cancer_gene = map2_chr(cancer_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, cancer_gene_tb, 'cancer_gene')),
+            stemcell_hotspot = map2_chr(stemcell_hotspot, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, stemcell_hotspot_tb, 'red')),
+            dosage_sensitive_gene = map2_chr(dosage_sensitive_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, dosage_sensitive_gene_tb, 'orange')),
+            cancer_gene = map2_chr(cancer_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, cancer_gene_tb, 'orange')),
             genome_bands = pmap_chr(., \(chrom, start, end, ...) {
                 gr_info %>% 
                     filter_by_overlaps(GRanges(seqnames = chrom, strand = '*', ranges = IRanges(start, end))) %>%
@@ -259,13 +267,21 @@ CNV_table_output <- function(
         ) 
 
     if (params$out_format == 'html') {
-      
-        #TODO adjust plot/link hovertext to match settings  
+        
         column_help_text <- c(
             'Sample_ID from the input "sample_table"',
             'Internal ID for the CNV call',
             'Number of the CNV call, sorted by descending Check_Score',
-            'Link to the plot of the CNV call\\nNote: For the Top20/critical CNVs clicking on the link will switch the active plot below. For other CNVs it will open the plot in a new browser tab.',
+            paste0(
+                'Link to the plot of the CNV call\\nNote: For the Top',
+                paste(
+                    report_config$call.data.and.plots[[plotsection]]$min_number_plots, 
+                    always_include,
+                    collapse = '/'
+                ),
+                ' CNVs clicking on the link will switch the active plot below. ',
+                'For other CNVs it will open the plot in a new browser tab.'
+            ),
             'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
             'Check_Score of the CNV call, calculated based on size, overlap with stemcell_hotspot, dosage_sensivity or cancer_gene list, or other genes',
             'Type of CNV call (gain, loss, LOH)',
@@ -281,7 +297,10 @@ CNV_table_output <- function(
             'Regions of interest overlapping with this CNV call',
             #FIXME (future): add a doi for precision benchmark once available
             'Precision estimate of the CNV call, based on internal benchmarking',
-            'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. See config min.perc.gap_area and gap_area.uniq_probes.rel for details',
+            paste0(
+                'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. ',
+                'See config min.perc.gap_area and gap_area.uniq_probes.rel for details'
+            ),
             'Call has higher probe density than {density.quantile.cutoff} percent of the the array',
             '(Estimated) copy number of the CNV call',
             'Median Log R Ratio of the CNV call',
@@ -364,9 +383,9 @@ gene_table_output <- function(
             Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
             #Reformat gene name
             gene_name = case_when(
-                stemcell_hotspot == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'stemcell_hotspot', FALSE)),
-                dosage_sensitive_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene', FALSE)),
-                cancer_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'cancer_gene', FALSE)),
+                stemcell_hotspot == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'red', FALSE)),
+                dosage_sensitive_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'orange', FALSE)),
+                cancer_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'orange', FALSE)),
                 TRUE ~ gene_name
             ),
         ) %>%
@@ -416,9 +435,9 @@ hotspot_table_output <- function(
                 select(hotspot, call_type, list_name, description, check_score, any_of(colnames(tb))) %>%
                 mutate(
                     hotspot = case_when(
-                        list_name == unique(stemcell_hotspot_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'stemcell_hotspot', FALSE)),
-                        list_name == unique(dosage_sensitive_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'dosage_sensitive_gene', FALSE)),
-                        list_name == unique(cancer_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'cancer_gene', FALSE))
+                        list_name == unique(stemcell_hotspot_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'red', FALSE)),
+                        list_name == unique(dosage_sensitive_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'orange', FALSE)),
+                        list_name == unique(cancer_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'orange', FALSE))
                     ),
                     description = str_replace_all(description, '&#013;', '<br/>')
                 ) %>%

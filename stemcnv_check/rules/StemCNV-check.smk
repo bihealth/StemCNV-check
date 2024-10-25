@@ -150,9 +150,38 @@ rule all:
             os.remove(CONFIGFILE)
 
 
+
+rule run_SNV_analysis:
+    input:
+        snp_vcf = snp_vcf_input_function("SNV_analysis"), 
+        ref_snp_vcf = get_ref_input_function(f'annotated-SNP-data.{get_tool_filter_settings("SNV_analysis")}-filter.vcf.gz'),
+        extra_snp_files = get_extra_snp_input_files,
+    output:
+        xlsx=os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
+    threads:
+        get_tool_resource("SNV_analysis","threads"),
+    resources:
+        runtime=get_tool_resource("SNV_analysis","runtime"),
+        mem_mb=get_tool_resource("SNV_analysis","memory"),
+        partition=get_tool_resource("SNV_analysis","partition"),
+    params:
+        config=config['settings']['SNV_analysis'],
+        gtf_file= lambda wildcards: get_global_file(
+            'gtf',get_static_input('genome_version')(wildcards),config['global_settings'],config['cache_path']
+            ),
+        ginfo_file= lambda wildcards: get_global_file(
+            'genome_info',get_static_input('genome_version')(wildcards),config['global_settings'],config['cache_path']
+        ),
+    log:
+        err=os.path.join(LOGPATH,"SNV_analysis","{sample_id}","SNV_analysis.error.log"),
+    conda:
+        "../envs/general-R.yaml"
+    script:
+        "../scripts/SNV_analysis.R"
+
 rule run_CBS:
     input:
-        vcf=cnv_vcf_input_function("CBS"),
+        vcf=snp_vcf_input_function("CBS"),
     output:
         vcf=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.CBS.vcf.gz"),
     threads: get_tool_resource("CBS", "threads")
@@ -182,7 +211,7 @@ rule run_process_CNV_calls:
             caller=config["settings"]["CNV.calling.tools"],
         ),
         ref_data=get_ref_input_function('combined-cnv-calls.vcf.gz'),
-        snp_vcf=cnv_vcf_input_function("settings:CNV_processing:call_processing"),
+        snp_vcf=snp_vcf_input_function("settings:CNV_processing:call_processing"),
     output:
         vcf=os.path.join(
             DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"

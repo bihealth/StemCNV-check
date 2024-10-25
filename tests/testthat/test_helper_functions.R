@@ -176,22 +176,3 @@ test_that('load_genomeInfo', {
 
     expect_equal(load_genomeInfo(ginfo_file, config), expected_gr)
 })
-
-test_that('load_hotspot_table', {
-    config <- list(
-        'snakedir' = '',
-        'settings' = list(
-            'CNV_processing' = list(
-                'gene_overlap' = list(
-                    'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
-                    'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
-                )
-            )
-        )
-    )
-    load_hotspot_table(config, 'stemcell_hotspot') %>%
-        # remove 'spec_tbl_df' class from readr
-        .[] %>% expect_equal(minimal_probes)
-    load_hotspot_table(config, 'cancer_gene') %>%
-        .[] %>% expect_equal(minimal_probes)
-})

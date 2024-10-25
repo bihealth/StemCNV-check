@@ -4,7 +4,7 @@ library(tidyverse)
 library(plyranges)
 
 source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_reference_overlap.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_calculate_reference_overlap.R'))
 
 # Example calls for testing
 

@@ -7,7 +7,7 @@ localrules:
 
 rule prep_PennCNV_sexfile:
     input:
-        cnv_vcf_input_function("PennCNV"),
+        snp_vcf_input_function("PennCNV"),
     output:
         temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.sexfile.txt")),
     params:
@@ -29,7 +29,7 @@ rule prep_PennCNV_sexfile:
 # - extract tsv SNP file from vcf
 rule prep_PennCNV_input:
     input:
-        vcf=cnv_vcf_input_function("PennCNV"),
+        vcf=snp_vcf_input_function("PennCNV"),
     output:
         tsv=temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.input.tsv")),
     log:
@@ -179,7 +179,7 @@ def get_penncnv_output(wildcards, files="tsv"):
 # - combine calls and write out as vcf
 rule combined_PennCNV_output:
     input:
-        vcf=cnv_vcf_input_function("PennCNV"),
+        vcf=snp_vcf_input_function("PennCNV"),
         tsvs=get_penncnv_output,
         #logs=get_penncnv_output(wildcards, 'log')
     output:

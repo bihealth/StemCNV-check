@@ -14,10 +14,9 @@ snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/preprocess_CNV_functions.R')
 
 snakemake@source('R/processCNVs_combine_CNV_callers.R')
-snakemake@source('R/processCNVs_annotate_reference_overlap.R')
-snakemake@source('R/processCNVs_annotate_impact_lists.R')
-snakemake@source('R/processCNVs_annotate_array_features.R')
-snakemake@source('R/processCNVs_annotate_check-score.R')
+snakemake@source('R/processCNVs_calculate_reference_overlap.R')
+snakemake@source('R/processCNVs_annotation_functions.R')
+snakemake@source('R/hotspot_functions.R')
 
 ##################
 # Variable setup #
@@ -105,7 +104,7 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(stemcell_hotspots_gr, 'stemcell_hotspot') %>%
     annotate_impact_lists(dosage_sensitive_gene_gr, 'dosage_sensitive_gene') %>%
 	annotate_impact_lists(cancer_genes_gr, 'cancer_gene') %>%
-	annotate_roi(sample_id, sampletable, gr_genes, gr_info) %>%
+	annotate_roi(sample_id, sampletable, gr_genes, gr_info, config) %>%
 	annotate_gaps(
         gap_file,
         processing_config$min.perc.gap_area, 

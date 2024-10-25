@@ -4,14 +4,12 @@ library(tidyverse)
 library(plyranges)
 
 source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_check-score.R'))
+source(test_path('../../stemcnv_check/scripts/R/hotspot_functions.R'))
+source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotation_functions.R'))
 
-# Functions:
-# - annotate_cnv.check.score
-# - annotate_precision.estimates
-# - annotate_Call.label
 
 config <- list(
+    'snakedir' = '',
     'genome_version' = 'hg19',
     'global_settings' = list(
         'hg19_gtf_file' = test_path('../data/hg_minimal.gtf'),
@@ -21,14 +19,155 @@ config <- list(
         'CNV_processing' = list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
-                'include_only_these_gene_types' = c()
+                'include_only_these_gene_types' = c(), # c('lncRNA', 'miRNA', 'protein_coding'),
+                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv')
             )
         ),
-        'chromosomes' = paste0('chr', c(1:22, 'X', 'Y'))
+        'vcf_output' = list(
+            'chrom_style' = 'keep-original'
+        )
     )
 )
-gtf_file <- test_path('../data/hg_minimal.gtf')
-ginfo_file <- test_path('../data/gr_info_minimal.tsv')
+
+gr_info <- load_genomeInfo(config$global_settings$hg19_genomeInfo_file, config)
+gr_genes <- load_gtf_data(config$global_settings$hg19_gtf_file, config)
+
+sample_cnvs <- tibble(
+  seqnames = 'chr1',
+  start = c(4000, 10000, 28000000, 28060000, 40000, 5000000, 31000000),
+  end   = c(5500, 14000, 28055000, 28065000, 50000, 7000000, 32000000),
+  sample_id = 'test_sample',
+  CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'loss', 'loss'),
+  ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
+  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
+  n_probes = c(15, 100, 150, 250, 100, 50, 50),
+  n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
+  CN = c(3, 3, 4, 1, 1, 1, 0),
+  FILTER = c('min_size', 'min_density', NA_character_, 'test-dummy', NA_character_, NA_character_, NA_character_),
+  reference_overlap = c(T, T, F, F, F, F, T),
+  reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60) %>% as.list(),
+  reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA'),
+  test_hits = c(NA, 'DDX11L1', 'dummyC', NA, '1p36,chr1:40000-50000', '1p36', '1p35.2')
+) %>% as_granges()
+
+### Impact Lists ###
+
+# 1 - not hit
+# 2 - gene hit, any (but not gband): DDX11L1
+# 3 - gene hit, gain: dummyC
+# 4 - gene hit, no match
+# 5 - position hit (any) + gband_hit (loss): chr1:40000-50000 + 1p36
+# 6 - gband hit (any subband): 1p36
+# 7 - gband hit (specific subband): 1p35.2
+
+#annotate_impact_lists
+test_that('annotate_impact_lists', {
+    
+    hotspots <- parse_hotspot_table(read_tsv(test_path('../data/minimal-hotspots.tsv')), gr_genes, gr_info)
+    
+    expected_gr <- sample_cnvs %>%
+        mutate(test = c(NA, 'DDX11L1', 'dummyC', NA, '1p36|chr1:40000-50000', '1p36', '1p35.2'))
+    expect_equal(annotate_impact_lists(sample_cnvs, hotspots, 'test'), expected_gr)
+
+    # test empty hotspots
+    expected_gr <- sample_cnvs %>%
+        mutate(test = NA_character_)
+    expect_equal(annotate_impact_lists(sample_cnvs, GRanges(), 'test'), expected_gr)
+
+})
+
+
+test_that('annotate_roi', {
+    
+    sample_tb <- tibble(
+        Sample_ID = 'test_sample',
+        Regions_of_Interest = 'chr1:10000-20000;nametest|chr1:5000000-5500000;chrX:30000-40000;1p35'
+    )
+
+    expected_gr <- sample_cnvs %>%
+        mutate(ROI_hits = c(NA, 'chr1:10000-20000', '1p35', '1p35', NA, 'chr1:5000000-5500000', '1p35'))
+    
+    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
+    
+    # test empty roi
+    expected_gr <- sample_cnvs %>%
+        mutate(ROI_hits = NA_character_)
+    sample_tb$Regions_of_Interest <- ''
+    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
+    sample_tb <- tibble(Sample_ID = 'test_sample')
+    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
+})
+
+
+### Array Features ###
+
+# Gaps:
+# 1 - no gaps in CNV
+# 2 - single gap in CNV         -> above th, true
+# 3 - multiple gaps in one CNV  -> above th, true
+# 4 - CNV has single gap,    but below min.perc.gap_area
+# 5 - CNV has multiple gaps, but below min.perc.gap_area
+# 6 - CNV has gaps, but ! (gap_slope * Gap_percent + gap_intercept) <= log2(n_uniq_probes)
+# 7 - no gaps in CNV
+# Extra tests:
+# - [x] gap overlaps CNV border -> error
+# - [ ] gap fully conatins CNV  -> error
+
+test_that("Annotate CNVs with gaps", {
+  gapfile <- test_path('../data/gaps_minimal.bed')
+  gap_area.uniq_probes.rel <- list(-12, 12.5)
+  min.perc.gap_area <- 0.33
+  
+  expexted_gr <- sample_cnvs %>%
+    mutate(
+      Gap_percent = c(0, 2000/4001, 25000/55001, 1000/5001, 2000/10001, 1e6/(2e6+1), 0),
+      probe_coverage_gap = c(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
+      FILTER = c('min_size', 'min_density;probe_gap', 'probe_gap', 'test-dummy', NA_character_, NA_character_, NA_character_)
+    )
+  
+  annotate_gaps(sample_cnvs, gapfile, min.perc.gap_area, gap_area.uniq_probes.rel) %>%
+    expect_equal(expexted_gr)        
+  
+  # Call partially overlapping a gap (one endpoint in gap)
+  expect_error(
+    annotate_gaps(
+      sample_cnvs %>% bind_ranges(
+            tibble(seqnames = 'chr1', start = 12000, end = 15000, ID = 'error_test') %>%
+              as_granges()
+      ),
+      gapfile, min.perc.gap_area, gap_area.uniq_probes.rel
+    ),
+    regexp = 'CNV call endpoint\\(s\\) overlap with gap areas from ".+/data/gaps_minimal.bed": error_test'
+  )
+  
+} )
+
+# Density:
+# 1 - 
+# 2 - 
+# 3 -
+# 4 - 
+# 5 -
+# 6 - 
+# 7 - 
+
+test_that("Annotate CNVs with probe density flags", {
+  density_file <- test_path('../data/density_minimal.bed')
+  density.quantile.cutoff <- 0.99
+  
+  expexted_gr <- sample_cnvs %>%
+    mutate(
+      high_probe_density = c(NA, NA, TRUE, TRUE, NA, FALSE, FALSE),
+      FILTER = c('min_size', 'min_density', 'high_probe_dens', 'test-dummy;high_probe_dens', NA_character_, NA_character_, NA_character_)
+    )
+  
+  annotate_high_density(sample_cnvs, density_file, density.quantile.cutoff) %>%
+    expect_equal(expexted_gr)        
+
+} )
+
+### Genes & Check Score ###
+
 
 base_tb <- tibble(
     seqnames = 'chr1',
@@ -70,8 +209,7 @@ test_that("annotate_gene_overlap", {
     # Test scenarios:
     # - CNV has no gene overlap
     # - CNV has (partial) gene overlap
-    # - CNV has multiple genes overlapping    
-    gr_genes <- load_gtf_data(gtf_file, config)
+    # - CNV has multiple genes overlapping
     
     annotate_gene_overlaps(as_granges(base_tb), gr_genes) %>%
         expect_equal(as_granges(expected_gene_tb))
@@ -215,3 +353,4 @@ test_that("Annotate call label", {
         ) 
     expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
 })
+

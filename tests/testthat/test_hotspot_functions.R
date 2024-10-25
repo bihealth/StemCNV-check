@@ -4,8 +4,7 @@ library(tidyverse)
 library(plyranges)
 
 source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/processCNVs_annotate_impact_lists.R'))
-
+source(test_path('../../stemcnv_check/scripts/R/hotspot_functions.R'))
 
 config <- list(
     'snakedir' = '',
@@ -19,13 +18,18 @@ config <- list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
                 'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
-                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv')
-            )
+                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
+                'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
+            ),
+            'Check_score_values' = list('any_roi_hit' = 50)
+        ),
+        'vcf_output' = list(
+            'chrom_style' = 'keep-original'
         )
     )
 )
-gtf_file <- test_path('../data/hg_minimal.gtf')
-ginfo_file <- test_path('../data/gr_info_minimal.tsv')
+gr_info <- load_genomeInfo(config$global_settings$hg19_genomeInfo_file, config)
+gr_genes <- load_gtf_data(config$global_settings$hg19_gtf_file, config)
 
 # Functions to test
 test_that('tb_to_gr_by_position', {
@@ -35,7 +39,7 @@ test_that('tb_to_gr_by_position', {
         metacol2 = list(c('A', 'B'), c(1, 2), c(5))
     )
     gr_pos <- tibble(
-        seqnames = c('chr1', 'chrX', '4'),
+        seqnames = c('1', 'X', '4'),
         start = c(100, 30000, 300),
         end = c(20000, 40000, 500),
         pos_col = c('chr1:100-20000', 'chrX:30000-40000', '4:300-500'),
@@ -61,7 +65,6 @@ test_that('tb_to_gr_by_position', {
 #Note: somehow this didn't/doesn't catch all possible issues
 # function failed before, due to not correctly checking for all matched gband names
 test_that('tb_to_gr_by_gband', {
-    gr_info <- load_genomeInfo(ginfo_file, config)
     
     tb_band <- tibble(
         band_col = c('1p35', '1p11', '1q21.2'),
@@ -103,8 +106,7 @@ test_that('tb_to_gr_by_gband', {
 
 test_that('parse_hotspot_table', {
     tb <- load_hotspot_table(config)
-    gr_info <- load_genomeInfo(ginfo_file, config)
-    gr_genes <- load_gtf_data(gtf_file, config)
+    target_chrom_style <- 'UCSC'
 
     expected_gr <- minimal_probes %>%
         mutate(
@@ -115,14 +117,14 @@ test_that('parse_hotspot_table', {
         ) %>%
         as_granges()
 
-    expect_equal(parse_hotspot_table(tb, gr_genes, gr_info), expected_gr)
+    expect_equal(parse_hotspot_table(tb, gr_genes, gr_info, target_chrom_style), expected_gr)
     
     tb <- bind_rows(tb, tibble(mapping = 'unclear'))
-    expect_error(parse_hotspot_table(tb, gr_genes, gr_info))
+    expect_error(parse_hotspot_table(tb, gr_genes, gr_info, target_chrom_style))
     
     #test empty input
     expect_length(
-        parse_hotspot_table(tb %>% filter(description_doi == '123'), gr_genes, gr_info),
+        parse_hotspot_table(tb %>% filter(description_doi == '123'), gr_genes, gr_info, target_chrom_style),
         0
     )
 })
@@ -147,6 +149,9 @@ test_that('parse inbuilt tables', {
                     'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv',
                     'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
                 )
+            ),
+            'SNV_analysis' = list(
+                'snv_hotspot_table' = '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
             )
         )
     )
@@ -169,73 +174,59 @@ test_that('parse inbuilt tables', {
     expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
     expect_no_error(get_dosage_sensivity_tb(score_settings) %>% parse_hotspot_table(gr_genes, gr_info))
+    # This one can not be parsed like the others (it's never used as a gr either)
+    expect_no_error(load_hotspot_table(config, 'snv_hotspot'))
 })
 
-
-# 1 - not hit
-# 2 - gene hit, any (but not gband): DDX11L1
-# 3 - gene hit, gain: dummyC
-# 4 - gene hit, no match
-# 5 - position hit (any) + gband_hit (loss): chr1:40000-50000 + 1p36
-# 6 - gband hit (any subband): 1p36
-# 7 - gband hit (specific subband): 1p35.2
-
-sample_cnvs <- tibble(
-    seqnames = 'chr1',
-    start = c(4000, 12000, 28050000, 28060000, 45000, 5000000, 31000000),
-    end   = c(5500, 14000, 28055000, 28065000, 50000, 7000000, 32000000),
-    sample_id = 'test_sample',
-    CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'loss', 'loss'),
-    ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-    CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
-    n_probes = c(15, 5, 15, 25,5, 5, 5),
-    CN = c(3, 3, 4, 1, 1, 1, 0),
-    reference_overlap = c(T, T, F, F, F, F, T),
-    reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_, 60),
-    reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_, 'toolA')
-) %>% as_granges()
-
-
-#annotate_impact_lists
-test_that('annotate_impact_lists', {
-    gr_info <- load_genomeInfo(ginfo_file, config)
-    gr_genes <- load_gtf_data(gtf_file, config)
-    
-    hotspots <- parse_hotspot_table(read_tsv(test_path('../data/minimal-hotspots.tsv')), gr_genes, gr_info)
-    
-    expected_gr <- sample_cnvs %>%
-        mutate(test = c(NA, 'DDX11L1', 'dummyC', NA, '1p36|chr1:40000-50000', '1p36', '1p35.2'))
-    expect_equal(annotate_impact_lists(sample_cnvs, hotspots, 'test'), expected_gr)
-
-    # test empty hotspots
-    expected_gr <- sample_cnvs %>%
-        mutate(test = NA_character_)
-    expect_equal(annotate_impact_lists(sample_cnvs, GRanges(), 'test'), expected_gr)
-
+test_that('load_hotspot_table', {
+    load_hotspot_table(config, 'stemcell_hotspot') %>%
+        # remove 'spec_tbl_df' class from readr
+        .[] %>% expect_equal(minimal_probes)
+    load_hotspot_table(config, 'cancer_gene') %>%
+        .[] %>% expect_equal(minimal_probes)
 })
 
-
-test_that('annotate_roi', {
-    gr_info <- load_genomeInfo(ginfo_file, config)
-    gr_genes <- load_gtf_data(gtf_file, config)
+# get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
+test_that('get_roi_gr', {
     
-    sample_tb <- tibble(
-        Sample_ID = 'test_sample',
-        Regions_of_Interest = 'chr1:10000-20000;nametest|chr1:5000000-5500000;chrX:30000-40000;1p35'
+    sample_id <- 'testsample'
+    sampletable <- tibble(
+        Sample_ID = 'testsample',
+        Regions_of_Interest = 'DDX11L1;important|1q21.1;edit site|1:1000-2000;mygene|dummyC'
     )
-
-    expected_gr <- sample_cnvs %>%
-        mutate(ROI_hits = c(NA, 'ROI_1', 'ROI_4', 'ROI_4', NA, 'nametest', 'ROI_4'))
-
-    annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info)
+    target_chrom_style <- get_target_chrom_style(config, gr_genes)
     
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info), expected_gr)
+    expected <- GRanges(
+        seqnames = c('chr1', 'chr1', 'chr1', 'chr1'),
+        ranges = IRanges(
+            start = c(11873, 142600000, 1000, 28050000),
+            end = c(14409, 147000000, 2000, 28070000)
+        ),
+        strand = c('+', '*', '*', '+'), 
+        list_name = 'ROI',
+        hotspot = c('DDX11L1', '1q21.1', '1:1000-2000', 'dummyC'),
+        mapping = c('gene_name', 'gband', 'position', 'gene_name'),
+        call_type = 'any',
+        check_score = 50,
+        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description_doi = NA_character_,
+        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene')
+    )
     
-    # test empty roi
-    expected_gr <- sample_cnvs %>%
-        mutate(ROI_hits = NA_character_)
-    sample_tb$Regions_of_Interest <- ''
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info), expected_gr)
-    sample_tb <- tibble(Sample_ID = 'test_sample')
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info), expected_gr)
+    get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) %>%
+        expect_equal(expected)
+    
+    sampletable$Regions_of_Interest <- NA_character_
+    empty <- GRanges(
+        list_name = character(),
+        hotspot = character(),
+        mapping = character(),
+        call_type = character(),
+        check_score = numeric(),
+        description = character(),
+        description_doi = character(),
+        description_htmllinks = character()
+    )
+    get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) %>%
+        expect_equal(empty)
 })

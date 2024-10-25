@@ -20,7 +20,8 @@ tb_to_gr_by_position <- function(tb, colname = 'position') {
 	gr <- tb %>%
 		filter(str_detect(!!sym(colname), '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+')) %>%
 		mutate(
-			seqnames = str_remove(!!sym(colname),':.*'),
+            # need to return consistent seqnames
+			seqnames = str_remove(!!sym(colname),':.*') %>% str_remove('^chr'),
 			start = str_extract(!!sym(colname), '(?<=:)[0-9]+') %>% as.numeric(),
 			end = str_extract(!!sym(colname), '(?<=-)[0-9]+$') %>% as.numeric()
 		) %>% as_granges()
@@ -74,11 +75,15 @@ tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
 }
 
 # Hotspot list based annotation
-parse_hotspot_table <- function(tb, gr_genes, gr_info) {
+parse_hotspot_table <- function(tb, gr_genes, gr_info, target_chrom_style=NA) {
 
 	if (any(tb$mapping %!in% c('gene_name', 'position', 'gband'))) {
 		stop('Invalid mapping types in hotspot table')
 	}
+    
+    if (is.na(target_chrom_style) | target_chrom_style == 'keep-original') {
+        target_chrom_style <- seqlevelsStyle(gr_genes)
+    }
 
 	sub_tb_name <- tb %>%
 		filter(mapping == 'gene_name')
@@ -109,7 +114,8 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 			inner_join(sub_tb_name, by = c('hotspot', 'call_type')) %>%
             # Remove duplicates (can result from non-unique gene_names)
             slice_max(check_score, by = c(hotspot, call_type), with_ties = FALSE) %>%            
-			as_granges()
+			as_granges() %>%
+            fix_CHROM_format(target_chrom_style)
 		#message('parsed gene names')
         unmatched_genes <- setdiff(sub_tb_name$hotspot, gr_name$hotspot)
         if (length(unmatched_genes) > 0) {
@@ -121,13 +127,15 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info) {
 	}
 
 	if (nrow(sub_tb_pos) > 0) {
-		gr_pos <- tb_to_gr_by_position(sub_tb_pos, 'hotspot')
+		gr_pos <- tb_to_gr_by_position(sub_tb_pos, 'hotspot') %>%
+            fix_CHROM_format(target_chrom_style)
 	} else {
 		gr_pos <- empty_gr
 	}
 
 	if (nrow(sub_tb_gband) > 0) {
-		gr_gband <- tb_to_gr_by_gband(sub_tb_gband, gr_info, 'hotspot')
+		gr_gband <- tb_to_gr_by_gband(sub_tb_gband, gr_info, 'hotspot') %>%
+            fix_CHROM_format(target_chrom_style)
 	} else {
 		gr_gband <- empty_gr
 	}
@@ -192,62 +200,110 @@ get_dosage_sensivity_tb <- function(score_settings) {
 }
 
 
-annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
-	message('Annotation calls with gene lists')
-
-	# Make an extra col listing all overlapping directly defined genes
-	gr@elementMetadata[[list_name]] <- NA_character_
-	ov <- group_by_overlaps(gr, hotspot_gr)
-	if (length(ov) > 0) {
-		ov_hits <- ov %>%
-			mutate(type_check = str_detect(CNV_type, str_replace(call_type, '^any$', '.*'))) %>%
-			filter(type_check) %>%
-			reduce_ranges(hits = paste(unique(sort(hotspot)),collapse = '|'))
-		gr[ov_hits$query,]@elementMetadata[[list_name]] <- ov_hits$hits
-	}
-
-	return(gr)
+load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
+    
+    if (table == 'stemcell_hotspot') {
+        filename <- config$settings$CNV_processing$gene_overlap$stemcell_hotspot_list 
+    } else if (table == 'cancer_gene') {
+        filename <- config$settings$CNV_processing$gene_overlap$cancer_gene_list
+    } else if (table == 'snv_hotspot') {
+        filename <- config$settings$SNV_analysis$snv_hotspot_table        
+    } else {
+        stop('Invalid table name')
+    }
+    
+    tb <- str_replace(filename, '__inbuilt__', config$snakedir) %>%
+        fix_rel_filepath(config) %>%
+        read_tsv(show_col_types = FALSE) 
+    
+    # str_glue with argument injection only works properly with named arguments that aren't numbers
+    description_html_pattern <- str_replace_all(
+        tb$description,
+        '([:,] ?)([^:,]+?)\\{([0-9]+)\\}(?=, ?|\\\\\\\\n|\\\\n|$)',
+        '\\1<a href="{a\\3}" target="_blank" rel="noopener noreferrer">\\2</a>'
+    ) %>%
+        str_replace_all('\\\\n', '&#013;') %>%
+        str_replace_all('\\n', '&#013;')
+    tb$description_htmllinks <- map2_chr(
+        tb$description_doi, description_html_pattern, 
+        \(doi, pattern) {
+            args <- doi %>% 
+                str_split(', ?') %>% 
+                # Make the doi text into an actual link
+                sapply(\(x) paste0('https://doi.org/', x)) %>%
+                unlist() %>%
+                set_names(paste0('a', 1:length(.)))
+            rlang::inject(str_glue(pattern, !!!args))
+        }
+    )
+    
+    if (table == 'snv_hotspot') {
+        tb <- tb %>%
+            mutate(
+                gene_name = hotspot %>% str_remove('::.*'),
+                HGVS.p = paste0(
+                    'p.',
+                    hotspot %>% str_remove('^.*::')
+                )
+            )
+    }
+    
+    tb
 }
 
-annotate_roi <- function(gr, sample_id, sampletable, gr_genes, gr_info) {
 
-	if (! 'Regions_of_Interest' %in% colnames(sampletable)) {
-		return(gr %>% mutate(ROI_hits = NA_character_))
-	}
-
-	message('Annotating calls with ROI')
-
-	roi <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
-
-	if (is.na(roi) | is.null(roi) | roi == '') {
-		return(gr %>% mutate(ROI_hits = NA_character_))
-	}
-
-	roi_gr <- roi %>% str_split(';') %>% unlist() %>%
-		as_tibble() %>% dplyr::rename(roi = value) %>%
-		mutate(hotspot = str_remove(roi, '^.*\\|'),
-			   mapping = case_when(
-				   str_detect(roi, '(chr)?[0-9XY]{1,2}:[0-9.,]+-[0-9.,]+') ~ 'position',
-				   str_detect(roi, '[0-9XY]{1,2}(p|q)[0-9.]+') ~ 'gband',
-				   TRUE ~ 'gene_name'
-			   ),
-			   roi_name = str_extract(roi, '^[^|]+\\|') %>% str_remove('\\|'),
-			   roi_name = case_when(
-				   mapping == 'gene_name' ~ hotspot,
-				   is.na(roi_name) ~ paste0('ROI_', seq_along(roi_name)),
-				   TRUE  ~ roi_name
-			   ),
-		) %>%
-		parse_hotspot_table(gr_genes, gr_info)
-
-
-	gr$ROI_hits <- NA_character_
-	ov <- group_by_overlaps(gr, roi_gr)
-	if (length(ov) > 0) {
-		ov_hits <- ov %>%
-			reduce_ranges(hits = paste(unique(roi_name), collapse = '|'))
-		gr[ov_hits$query,]$ROI_hits <- ov_hits$hits
-	}
-
-	gr
+get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) {
+    
+    empty_res <- GRanges(
+        list_name = character(),
+        hotspot = character(),
+        mapping = character(),
+        call_type = character(),
+        check_score = numeric(),
+        description = character(),
+        description_doi = character(),
+        description_htmllinks = character()
+    )
+    if ('Regions_of_Interest' %!in% colnames(sampletable)) {
+        return(empty_res)
+    }
+    
+    roi_regions <- sampletable %>% 
+        filter(Sample_ID == sample_id) %>% 
+        pull(Regions_of_Interest) %>% 
+        str_split(';') %>% unlist()
+    
+    if (all(roi_regions == '' | is.na(roi_regions))) {
+        return(empty_res)
+	} 
+        
+    tibble(
+        list_name = 'ROI',
+        description = str_extract(roi_regions, '^[^|]+\\|') %>% str_remove('\\|'),
+        hotspot = str_remove(roi_regions, '^[^|]+\\|'),
+        mapping = case_when(
+            str_detect(hotspot, '^(chr)?[0-9XY]{1,2}[pq][0-9.]+') ~ 'gband',
+            str_detect(hotspot, '^(chr)?[0-9XY]{1,2}:[0-9]+-[0-9]+') ~ 'position',
+            TRUE ~ 'gene_name'
+        ),
+        call_type = 'any',
+        check_score = config$settings$CNV_processing$Check_score_values$any_roi_hit,
+        description_doi = NA_character_,
+    ) %>%
+        mutate(
+            description = paste0(
+                'ROI_', seq_along(description), ': ',
+                hotspot,
+                ifelse(
+                    !is.na(description), 
+                    paste(';', description),
+                    ''
+                )
+            ),
+            order = row_number(),
+            description_htmllinks = description
+        ) %>%
+		parse_hotspot_table(gr_genes, gr_info) %>%
+        fix_CHROM_format(target_chrom_style) %>%
+        arrange(order) %>% select(-order)
 }

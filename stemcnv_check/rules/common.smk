@@ -80,11 +80,10 @@ def get_tool_filter_settings(tool):
         )
     elif tool.count(":") == 2 and tool.split(":")[1] == "CNV_processing":
         out = config["settings"]["CNV_processing"]["call_processing"]["filter-settings"]
-    elif tool == "evaluation_settings:SNP_clustering:filter-settings":
-        out = config["evaluation_settings"]["SNP_clustering"]["filter-settings"]
-        out = out if out != "none" else '_default_'
     else:
         out = config["settings"][tool]["filter-settings"]
+        if tool == 'SNV_analysis':
+            out = out if out != "none" else '_default_'
     if out == "_default_":
         out = config["settings"]["default-filter-set"]
     return out
@@ -142,7 +141,7 @@ def get_static_input(type):
     return input_function
 
 
-def cnv_vcf_input_function(tool):
+def snp_vcf_input_function(tool):
     return lambda wildcards: os.path.join(
         DATAPATH,
         wildcards.sample_id,

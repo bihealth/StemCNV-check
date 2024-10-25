@@ -24,8 +24,8 @@ def flatten(dictionary, parent_key='', separator=':'):
             items.append((new_key, value))
     return dict(items)
 
-# TODO: scheme validation of hotspot tables!
-# > maybe better to do in snakemake / python
+# FIXME: scheme validation of hotspot tables!
+# > maybe best to do via snakemake json config?
 
 
 ### Sanity checks ###

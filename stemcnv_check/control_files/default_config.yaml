@@ -38,23 +38,16 @@ evaluation_settings:
     check_score.reportable: null 
     filters.exclude.reportable: ['min_size', 'min_probes'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
   
-  SNP_clustering:
-    filter-settings: '_default_' # "_default_", Filterset name, or "none"
-    #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
-    # enries with __[column] will use all other samples with the same value in [column]
-    # entries with _[column] expect a column that contains additional (, separated) sample_ids
-    # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
-    extra_samples: ['__Chip_Name']
-  
   # Each measure used for QC is categorised as 'OK', 'unusual', or 'warning'
   # Additonally the last level can eb set to 'critical' instead of 'warning'  
   # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
   summary_stat_warning_levels:   
     # List of threshold values between normal/abnormal and abnormal/problematic(critical)
     # The first values gives the maximum allowed for 'OK', the second for 'warning'
-    call_rate: [0.995, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
-    # Consider? call_rate: [0.99, 0.97]
+    call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
     SNP_distance_to_reference: [2, 5]
+    # SNP_distance_to_reference_span: undecided
+    critical_snvs: [1, 1]
     call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters
     loss_gain_log2ratio: [2, 4]
     total_calls_CNV: [10, 50]
@@ -63,10 +56,12 @@ evaluation_settings:
     reportable_calls_LOH: [5, 10]
     critical_calls_CNV: [1, 1]
     critical_calls_LOH: [1, 1]
-    # These measures use 'critical' instead of 'warning'
+    # These measures use 'critical' (red) instead of 'warning' (orange), they are also bold in the html summary table
     last_level_critical:
       - call_rate
       - computed_gender
+      - SNP_distance_to_reference
+      - critical_snvs
       - critical_calls_CNV
       - critical_calls_LOH
 
@@ -289,6 +284,36 @@ settings:
           small:      0.1  # full: 0.2
         Call_has_Gap:   -0.1
         HighSNPDensity: -0.1
+  
+  SNV_analysis:
+    filter-settings: 'none' # "_default_", Filterset name, or "none"
+    snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
+    flag_GenCall_minimum: 0.2
+    critical_SNV:
+        - 'ROI-match'
+        - 'hotspot-match'
+        - 'hotspot-gene'
+        - 'critical_annotation'
+        # - 'any-protein-changing'
+    critical_annotations:
+        - stop_gained
+        - start_lost
+        # - stop_lost
+        - frameshift_variant
+        - splice_acceptor_variant
+        - splice_donor_variant   
+    # Only variants matching one of the following criteria are considered for the SNV tabel
+    # The 'HIGH' impact category contains all annotations listed under critical
+    # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODEARTE' impact category
+    variant_selection:
+        Impact: [HIGH]
+        Annotation_regex: 'missense_variant|inframe'
+    
+    #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
+    # enries with __[column] will use all other samples with the same value in [column]
+    # entries with _[column] expect a column that contains additional (, separated) sample_ids
+    # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
+    SNP_clustering_extra_samples: ['__Chip_Name']
 
   vcf_output:
     # Which chromosome style to use in the vcf file ("1" vs "chr1")  
@@ -336,6 +361,9 @@ reports:
     #  - QC.PennCNV
     #  - QC.CBS
     #  - QC.settings
+    #  - SNV.table
+    #  - SNV.hotspot.coverage
+    #  - SNV.QC.details
     #  - denovo_calls.table
     #  - denovo_calls.plots
     #  - reference_gt_calls.table
@@ -416,8 +444,8 @@ tools:
   PennCNV:
     memory: 500 # "500MB"
     runtime: "30m"
-  summary_stats:
-    threads: 4
+  SNV_analysis:
+    threads: 2
     memory: 20000 # "2000MB"  
     runtime: "1h"
   knitr:

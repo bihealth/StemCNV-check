@@ -5,7 +5,7 @@ library(knitr)
 library(testthat)
 
 source(test_path("../../stemcnv_check/scripts/R/helper_functions.R"))
-source(test_path("../../stemcnv_check/scripts/R/R_table_functions.R"))
+source(test_path("../../stemcnv_check/scripts/R/report_table_functions.R"))
 
 # Functions to test:
 # - [ ] vector_to_js
@@ -30,7 +30,7 @@ config <- list(
 )
 
 # Test `format_hotspots_to_badge` function
-# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, listname = 'stemcell_hotspot')
+# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, color = 'red')
 test_that("format_hotspots_to_badge", {
     testthat::local_edition(3)
     hotspot_vec <- c("", "1q21", "1q21", "dummyC", "1p36|DDX11L1", "1p36|DDX11L1")
@@ -46,33 +46,33 @@ test_that("format_hotspots_to_badge", {
     
     expected <- c(
         '-', 
-        '<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
+        '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
         '1q21', 
-        '<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 15&#013;Something: Dummy{1}">dummyC</span>', 
+        '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 15&#013;Something: Dummy{1}">dummyC</span>', 
         paste0(
-            '<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 10&#013;',
+            '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 10&#013;',
             'Sources: dummy{1}&#013;Something: else{2}">1p36</span>',
-            '<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 30&#013;',
+            '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;',
             'Sources: dummy">DDX11L1</span>'
         ),
-        '1p36<span class="badge badge-HI" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>'
+        '1p36<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'stemcell_hotspot'),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'red'),
         expected
     )
     
-    #test with include_hover = FALSE & listname = cancer_gene
+    #test with include_hover = FALSE & shorthand = orange
     expected <- c(
         '-', 
-        '<span class="badge badge-HL">1q21</span>', 
+        '<span class="badge badge-orange">1q21</span>', 
         '1q21', 
-        '<span class="badge badge-HL">dummyC</span>', 
-        '<span class="badge badge-HL">1p36</span><span class="badge badge-HL">DDX11L1</span>', 
-        '1p36<span class="badge badge-HL">DDX11L1</span>'
+        '<span class="badge badge-orange">dummyC</span>', 
+        '<span class="badge badge-orange">1p36</span><span class="badge badge-orange">DDX11L1</span>', 
+        '1p36<span class="badge badge-orange">DDX11L1</span>'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'cancer_gene', FALSE),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'orange', FALSE),
         expected
     )
 })
@@ -104,7 +104,7 @@ test_that("hotspot_table_output", {
         dplyr::rename(description = description_htmllinks) %>%
         rename_with(format_column_names) %>%
         mutate(
-            Hotspot = paste0('<span class="badge badge-HI">', Hotspot, '</span>'),
+            Hotspot = paste0('<span class="badge badge-red">', Hotspot, '</span>'),
             Description = str_replace_all(Description, '&#013;', '<br/>')
         ) %>%
         datatable(
@@ -165,7 +165,7 @@ test_that("hotspot_table_output", {
         dplyr::rename(description = description_htmllinks) %>%
         rename_with(format_column_names) %>%
         mutate(
-            Hotspot = paste0('<span class="badge badge-', c('HI', 'HI', 'HL'), '">', Hotspot, '</span>'),
+            Hotspot = paste0('<span class="badge badge-', c('red', 'red', 'orange'), '">', Hotspot, '</span>'),
             Description = str_replace_all(Description, '&#013;', '<br/>')
         ) %>%
         datatable(

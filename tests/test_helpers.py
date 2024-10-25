@@ -35,7 +35,7 @@ def sample_table_extra_cols():
         """\
         # Commented line
         Array_Name\tSample_Name\tTest_col\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\tChip_Name\tChip_Pos\tSample_ID
-        ExampleArray\tCellline-A MasterBank\t123,456\tFemale\t\tExample1|chr1:100000-200000\tExampleCellines\t123456789000\tR01C01\tCellline-A-MB
+        ExampleArray\tCellline-A MasterBank\tCellline-A-WB,Cellline-B-MB\tFemale\t\tExample1|chr1:100000-200000\tExampleCellines\t123456789000\tR01C01\tCellline-A-MB
         ExampleArray\tCellline-A WorkingBank\tCellline-B-MB\tFemale\tCellline-A-MB\tExample1|chr1:100000-200000;chr11:60000-70000\tExampleCellines\t123456789001\tR01C01\tCellline-A-WB
         ExampleArray\tCellline-B MasterBank\t0\tMale\t\tExample1|chr1:100000-200000;chr11:60000-70000\tExampleCellines\t123456789000\tR01C02\tCellline-B-MB
         #ExampleArray\tremoved sample\t0\tMale\t\t\tExampleCellines\t123456789000\t000\tabc
@@ -86,7 +86,7 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
 
     # test extended example without dict output
     extra_expected = [
-        ["Cellline-A MasterBank", "123,456", "Example1|chr1:100000-200000", "ExampleCellines"],
+        ["Cellline-A MasterBank", "Cellline-A-WB,Cellline-B-MB", "Example1|chr1:100000-200000", "ExampleCellines"],
         ["Cellline-A WorkingBank", "Cellline-B-MB", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"],
         ["Cellline-B MasterBank", "0", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"],
         ["Cellline-B-1 clone1", "", "", "ExampleCellines"]
@@ -112,8 +112,6 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
         return_type='list_withopt'
     )
-    
-    
 
 
 @patch('stemcnv_check.helpers.importlib.resources.files')
@@ -138,24 +136,35 @@ def test_make_singularity_args(mock_resource_files, fs):
         }
     }
     # These are always expected to exist (no check outside apptainer though, since it's a mix of files & dirs)
-    expected = (
-        "-B '/path/to/data':'/outside/data','/path/to/rawdata':'/outside/rawdata',"
-        "'/path/to/logs':'/outside/logs','/fake/snakedir':'/outside/snakedir',"
-        "'relative/genome.fasta':'/outside/static/genome.fasta','relative/gtf.gtf':'/outside/static/gtf.gtf',"
-        "'relative/genome.info':'/outside/static/genome.info','relative/mehari_db':'/outside/static/mehari_db'"
-    )
-    assert expected == helpers.make_apptainer_args(config, None, not_existing_ok=True)
+    # output will be sorted by second path
+    expected_base = [
+        "'/path/to/data':'/outside/data'",
+        "'/path/to/logs':'/outside/logs'",
+        "'/path/to/rawdata':'/outside/rawdata'",
+        "'/fake/snakedir':'/outside/snakedir'"
+    ]
+    expected_extra = [
+        "'relative/genome.fasta':'/outside/static/genome.fasta'",
+        "'relative/genome.info':'/outside/static/genome.info'",
+        "'relative/gtf.gtf':'/outside/static/gtf.gtf'",
+        "'relative/mehari_db':'/outside/static/mehari_db'"
+    ]
+    def get_expected(extra=[]):
+        return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
+
+    assert get_expected(expected_extra) == helpers.make_apptainer_args(config, None, not_existing_ok=True)
 
     # Fail if some defined paths do not exist
     with pytest.raises(FileNotFoundError):
         helpers.make_apptainer_args(config, None)
 
-    assert expected + ",'/tmp/tmpdir':'/outside/tmp'" == helpers.make_apptainer_args(
+    # Test with tmpdir
+    assert get_expected(expected_extra + ["'/tmp/tmpdir':'/outside/tmp'"]) == helpers.make_apptainer_args(
         config, None, tmpdir='/tmp/tmpdir', not_existing_ok=True
     )
-
+    # test after file creation
     fs.create_file('relative/bpm_manifest.bpm')
-    expected += ",'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"
+    expected = get_expected(expected_extra + ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
     assert expected == helpers.make_apptainer_args(config, None)
 
     # test with cache_path & auto-creation of global paths
@@ -166,17 +175,30 @@ def test_make_singularity_args(mock_resource_files, fs):
         'hg19_genomeInfo_file': '__default-UCSC__',
         'mehari_transcript_db': '__cache-default__',
     }
-    expected = (
-        "-B '/path/to/data':'/outside/data','/path/to/rawdata':'/outside/rawdata',"
-        "'/path/to/logs':'/outside/logs','/fake/snakedir':'/outside/snakedir'"
-    )
+    expected_extra = []
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
-        expected += f",'{static_file}':'/outside/static/{os.path.basename(static_file)}'"
-    expected += ",'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"
-    assert expected == helpers.make_apptainer_args(config, cache_path)
+        expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
+    expected_extra += ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
-    # TODO: test with multiple arrays/genome versions
+    # test with multiple arrays/genome versions
+    config['global_settings'] .update({
+        'hg38_genome_fasta': '__use-vep__',
+        'hg38_gtf_file': '__default-gencode__',
+        'hg38_genomeInfo_file': '__default-UCSC__',
+    })
+    config['array_definition'].update({
+        'ExampleArray2': {'genome_version': 'hg38'}
+    })
+    expected_extra = []
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+        static_file = helpers.get_global_file(global_file, 'hg38', config['global_settings'], cache_path)
+        expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
+        static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
+        expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
+    expected_extra += ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
 @pytest.fixture
 def user_config():
@@ -249,24 +271,33 @@ def test_config_extract(caplog):
 
 
 def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
-    fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
-    sample_data_full = helpers.read_sample_table('sample_table.tsv', return_type='list_withopt')
+    sampletable = fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
+    sample_data_df = helpers.read_sample_table('sample_table.tsv', return_type='dataframe')
 
     all_ids = ['Cellline-A-MB', 'Cellline-A-WB', 'Cellline-B-MB', 'Cellline-B-1-cl1']
 
+    ""
+
     # Test finding sample_ids based on machting entries in given column
     # The search sample ID itself is *never* included in the result
-    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_full)
-    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_full)
+    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_df)
+    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_df)
     with pytest.raises(ConfigValueError):
-        helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__NonExisting'], sample_data_full)
+        helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__NonExisting'], sample_data_df)
     # Test finding sample_ids based on values in given column
-    assert {'123', '456'} == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_full)
-    assert {all_ids[2]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_full)
+    assert set(all_ids[1:3]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_df)
+    assert {all_ids[2]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_df)
     with pytest.raises(ConfigValueError):
-        helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Testcol'], sample_data_full)
+        helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Testcol'], sample_data_df)
     # Test using sample_ids directly
-    assert {all_ids[2], 'Test'} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Test'], sample_data_full)
+    assert set(all_ids[2:]) == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Cellline-B-1-cl1'], sample_data_df)
+    # Test exclusion of samples from a different array
+    sampletable.set_contents(
+        sample_table_extra_cols +
+        "DifferentArray\tCellline-X-MB\t0\tMale\tCellline-X\t\tExampleCellines\t773456789000\tR01C03\tCellline-X-MB"
+    )
+    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_df)
+
 
 
 def test_get_cache_dir(caplog, fs):

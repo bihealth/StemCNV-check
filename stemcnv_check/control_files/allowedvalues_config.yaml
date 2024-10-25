@@ -37,16 +37,14 @@ evaluation_settings:
     filters.exclude.critical: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
     check_score.reportable: noneorint
     filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
-  
-  SNP_clustering:
-    filter-settings: filtersetplusnone # "_default_", Filterset name, or "none"
-    extra_samples: list__insamplesheet
 
   summary_stat_warning_levels:   
     last_level_critical: list__str
-    call_rate: list_len2__float__le1
+    call_rate: list_len2__float__le1__ge0
     loss_gain_log2ratio: list_len2__int
     SNP_distance_to_reference: list_len2__int
+    # SNP_distance_to_reference_span: str
+    critical_snvs: list_len2__int
     call_count_excl_filters: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
     total_calls_CNV: list_len2__int
     total_calls_LOH: list_len2__int
@@ -161,6 +159,19 @@ settings:
           small: float_le1_ge0
         Call_has_Gap: float
         HighSNPDensity: float
+        
+  SNV_analysis:
+    filter-settings: filtersetplusnone
+    snv_hotspot_table: str # Path|File|exists
+    flag_GenCall_minimum: float_ge0_le1
+    critical_SNV: list__str__(ROI-match|hotspot-match|hotspot-gene|critical_annotation|any-protein-changing)
+    critical_annotations: list__str
+    variant_selection:
+        Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
+        Annotation_regex: str
+        
+    
+    SNP_clustering_extra_samples: list__insamplesheet
 
 
 allowed_sections:
@@ -170,6 +181,9 @@ allowed_sections:
      - QC.PennCNV
      - QC.CBS
      - QC.settings
+     - SNV.table
+     - SNV.hotspot.coverage
+     - SNV.QC.details
      - denovo_calls.table
      - denovo_calls.plots
      - reference_gt_calls.table

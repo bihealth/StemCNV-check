@@ -2,15 +2,15 @@
 source(file.path(snakemake@config$snakedir, 'scripts/common.R'))
 
 library(tidyverse)
-library(furrr)
+#library(furrr)
 library(readxl)
 library(writexl)
 
 snakemake@source('R/helper_functions.R')
 snakemake@source('R/vcf_io_functions.R')
-snakemake@source('R/processCNVs_annotate_check-score.R')
+snakemake@source('R/processCNVs_annotation_functions.R')
 
-plan(multisession, workers = snakemake@threads)
+# plan(multisession, workers = snakemake@threads)
 
 tr_sample_tb <- function(tb) {
   tr <- t(tb )
@@ -47,7 +47,7 @@ apply_greq_th <- function(datacol, measure, config){
     )
 }
 
-get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distance_to_reference, sample_CNV_data, config) {
+get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV_data, config) {
     
     sample_id <- unique(gencall_stats$sample_id)
 
@@ -55,17 +55,8 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
         gencall_stats %>%
             dplyr::select(sample_id, call_rate, computed_gender) %>%
             mutate(call_rate = round(call_rate, 3)),
-        sample_SNP_gr %>%
-            as_tibble() %>%
-            group_by(sample_id) %>%
-            summarise(
-                SNPs_post_filter = (100 * sum(FILTER == 'PASS', na.rm=T) / unique(gencall_stats$number_snps) ) %>%
-                    format(digits = 2, nsmall=2) %>% paste('%')
-            ),
-        tibble(
-            sample_id = sample_id,
-            SNP_distance_to_reference = SNP_distance_to_reference
-        ),
+        snp_qc_details %>%
+            dplyr::select(sample_id, SNPs_post_filter, SNP_distance_to_reference, critical_snvs),
         get_call_stats(sample_CNV_data, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
     )
     
@@ -83,12 +74,14 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
         ),
         mutate(
             qc_measure_list[[2]],
-            SNPs_post_filter = NA_character_
+            SNPs_post_filter = NA_character_,
+            SNP_distance_to_reference = apply_greq_th(SNP_distance_to_reference, 'SNP_distance_to_reference', config),
+            critical_snvs = apply_greq_th(critical_snvs, 'critical_snvs', config)
         ),
-        full_join(qc_measure_list[[3]],qc_measure_list[[4]]) %>%
-            mutate(across(2:(length(qc_measure_list[[4]])+1), ~apply_greq_th(., cur_column(), config)))
+        # full_join(qc_measure_list[[3]],)
+        qc_measure_list[[3]] %>%
+            mutate(across(where(is.numeric), ~apply_greq_th(., cur_column(), config)))
     )
-
     
     full_join(        
         purrr::reduce(qc_measure_list, full_join, by = 'sample_id') %>%
@@ -98,7 +91,6 @@ get_summary_overview_table <- function(gencall_stats, sample_SNP_gr, SNP_distanc
             tr_sample_tb() %>%
             dplyr::rename(sample_eval = Value)
     )
-
 }
 
 get_call_stats <- function(gr.or.tb, call_count_excl_filters = list(), name_addition = NA) {
@@ -179,69 +171,29 @@ parse_penncnv_logs <- function(penncnv_log_files) {
         dplyr::rename(Description = Name)
 }
 
-sample_GT_distances <- function(sample_SNP_gr, extra_snp_files, use_filter=TRUE) {
-    # Reading the SNP vcf files is the slowest thing here
-    # > parallelized via furrr:future_map to speed it up, esp. for large number of files
-    # FIXME (future): maybe don't parse the actual VCF here and use a faster table reader (readr / data.table) instead? 
-    future_map(
-        extra_snp_files,
-        parse_snp_vcf,
-        format_fields = c('GT'),
-        apply_filter = use_filter,
-        .options = furrr_options(seed = TRUE)
-    ) %>%
-        bind_ranges( sample_SNP_gr) %>%
-        select(ID, sample_id, GT) %>%
-        as_tibble() %>%
-        mutate(GT = ifelse(GT == './.', NA, str_count(GT, '1'))) %>%
-        pivot_wider(names_from = sample_id, values_from = GT, values_fill = NA) %>%
-        filter(if_all(everything(), ~!is.na(.))) %>%
-        dplyr::select(-seqnames, -start, -end, -strand, -width, -ID) %>%
-        t() %>%
-        dist(method = 'manhattan') %>%
-        as.matrix() %>% 
-        as.data.frame() %>%
-        as_tibble(rownames = 'sample_distance_to')
-}
 
 collect_summary_stats <- function(
     sample_id,
     gencall_stat_file,
-    SNP_vcf_file,
-    #TODO: SNP_analysis_file,
+    SNP_analysis_file,
     CNV_vcf_file,
     penncnv_log_files,
-    extra_snp_files,
     config,
     summary_excel_ref = NULL
 ) {
     
-    sample_SNP_gr <- parse_snp_vcf(SNP_vcf_file, format_fields = c('GT'), apply_filter = FALSE)
-    sample_CNV_gr <- parse_cnv_vcf(CNV_vcf_file, apply_filter = FALSE) 
-    
+    sample_CNV_gr <- parse_cnv_vcf(CNV_vcf_file, apply_filter = FALSE)
     
     gencall_stats <- get_gencall_stats(gencall_stat_file)
     
-    SNP_GT_distances <- sample_GT_distances(
-        sample_SNP_gr, 
-        extra_snp_files, 
-        use_filter = config$evaluation_settings$SNP_clustering$`filter-settings` != 'none'
-    )
-    
     stopifnot(sample_id == unique(gencall_stats$sample_id))
     ref_id <- get_sample_info(sample_id, 'ref_id', config)
-    SNP_distance_to_reference <- ifelse(
-        is.na(ref_id),
-        NA_real_,
-        SNP_GT_distances %>%
-            filter(sample_distance_to == ref_id) %>%
-            pull(!!sample_id)
-    )
+    
+    snp_qc_details <- read_excel(SNP_analysis_file, sheet = 'SNP_QC_details')
     
     summary_table_sample <- get_summary_overview_table(
         gencall_stats,
-        sample_SNP_gr,
-        SNP_distance_to_reference,
+        snp_qc_details,
         sample_CNV_gr,
         config
     )
@@ -292,15 +244,12 @@ collect_summary_stats <- function(
     # - summary stat table
     # - tool stat tables
     # - PennCNV log stats (too tricky to merge with tool stat table)
-    #FIXME (future): move this to somewhere else?
-    # - SNP_GT_distances 
     
     return( c(
         list(summary_stats = summary_table_sample),
         list(gencall_stats = gencall_stats %>% tr_sample_tb()),
         set_names(tool_stats, paste0(names(tool_stats), '_stats')),
-        list(PennCNV_QC_info = parse_penncnv_logs(penncnv_log_files)),
-        list(SNP_GT_distances = SNP_GT_distances)
+        list(PennCNV_QC_info = parse_penncnv_logs(penncnv_log_files))
     ))
                
     
@@ -310,11 +259,9 @@ collect_summary_stats <- function(
 collect_summary_stats(
     sample_id = snakemake@wildcards[['sample_id']],
     gencall_stat_file = snakemake@input[['gencall_stats']],
-    SNP_vcf_file = snakemake@input[['snp_vcf']],
-    #TODO: SNP_analysis_file,
+    SNP_analysis_file = snakemake@input[['snv_analysis']],
     CNV_vcf_file = snakemake@input[['cnv_vcf']],
     penncnv_log_files = snakemake@input[['penncnv_logs']],
-    extra_snp_files = snakemake@input[['extra_snp_files']],
     config = snakemake@config,
     summary_excel_ref = snakemake@input[['summary_excel_ref']]
 ) %>% 

@@ -53,18 +53,6 @@ def setup_argparse():
 
     group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
     group_static.add_argument('--no-edit-inplace', action='store_true', help = "Do not edit the config file in place with updated static-data entries")
-    # group_static.add_argument('--penncnv-pfb-file', default='static-data/PennCNV-PFB_{genome}_{array}.pfb',
-    #                            help="Filename for generated PFB file. Default: %(default)s")
-    # group_static.add_argument('--penncnv-gcmodel-file', default='static-data/PennCNV-GCmodel_{genome}_{array}.gcmodel',
-    #                            help="Filename for generated GCmodel file. Default: %(default)s")
-    # group_static.add_argument('--array-density-file', default='static-data/density_{genome}_{array}.bed',
-    #                            help="Filename for generated bed file with probe density. Default: %(default)s")
-    # group_static.add_argument('--array-gaps-file', default='static-data/gaps_{genome}_{array}.bed',
-    #                           help="Filename for generated bed file with probe gaps. Default: %(default)s")
-    # group_static.add_argument('--genomeinfo-file', default='static-data/UCSC_{genome}_chromosome-info.tsv',
-    #                            help="Filename for generated chromosome info file. Default: %(default)s")
-    # group_static.add_argument('--genome-gtf-file', default='static-data/gencode.{genome}.v45.gtf.gz',
-    #                            help="Filename for generated chromosome info file. Default: %(default)s")
 
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
     group_snake.add_argument('--cache-path', default=None,
@@ -77,7 +65,7 @@ def setup_argparse():
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'summary-tables', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
                              help="Final target of the pipeline. Default: %(default)s")
-    group_snake.add_argument('--cluster-profile', '-p', nargs='?', const='cubi-dev', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
+    group_snake.add_argument('--cluster-profile', '-p', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
     group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
     group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
     group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
