@@ -6,6 +6,8 @@
 ##FORMAT=<ID=BAF,Number=1,Type=Float,Description="B Allele Frequency">
 ##Minimal VCF file for testing
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test_sample
+chr1	1	dummy1a	.	.	.	PASS	GenTrain_Score=0.8	GT:LRR:BAF	.:1:1
+chr1	49	dummy1b	.	.	.	PASS	GenTrain_Score=0.8	GT:LRR:BAF	.:1:1
 chr1	100	.	.	.	.	PASS	GenTrain_Score=0.8;CSQ=gene_id|gene_name	GT:LRR:BAF	.:1:1
 chr1	105	.	.	.	.	PASS	GenTrain_Score=0.8	GT:LRR:BAF	.:1.1:0
 chr1	110	.	.	.	.	PASS	GenTrain_Score=0.8	GT:LRR:BAF	.:0.7:0.3
@@ -46,6 +48,14 @@ chr1	9700	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.88:0
 chr1	9800	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.69:1
 chr1	9900	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1.08:0
 chr1	9999	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1.22:1
+chr1	21999	dummyX	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	25000	dummy2	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	30000	dummy3	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	40000	dummy4	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	52000	dummy5	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	62000	dummy6	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	72000	dummy7	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	80000	dummyY	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
 chr1	110000	nocall	.	.	.	PASS	.	GT:LRR:BAF	.:1:0
 chr1	120000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.76:1
 chr1	122500	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.67:0
@@ -62,6 +72,7 @@ chr1	142500	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.84:0
 chr1	145000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.96:0
 chr1	147500	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.63:1
 chr1	149999	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1.36:1
+chr1	189999	dummyZ	.	.	.	PASS	.	GT:LRR:BAF	.:-1.36:1
 chr1	1000000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.9:0
 chr1	1125000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1:1
 chr1	1250000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.75:0
@@ -82,7 +93,10 @@ chr1	2750400	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.94:0
 chr1	2875400	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.83:1
 chr1	2900000	.	.	.	.	PASS	.	GT:LRR:BAF	.:-0.76:0
 chr1	3000399	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1.13:0
+chr1	3350400	.	.	.	.	PASS	.	GT:LRR:BAF	.:-1.13:0
 chr1	5000000	nocall	.	.	.	PASS	.	GT:LRR:BAF	.:99:5
+chr1	12000000	dummy8	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
+chr1	16020000	dummy9	.	.	.	PASS	.	GT:LRR:BAF	.:-1.25:1
 chr1	100000000	.	.	.	.	PASS	.	GT:LRR:BAF	.:0.87:0
 chr1	100500000	.	.	.	.	PASS	.	GT:LRR:BAF	.:1.39:0
 chr1	101000000	.	.	.	.	PASS	.	GT:LRR:BAF	.:1.65:0.67

@@ -67,7 +67,11 @@ settings:
   PennCNV:
     filter-settings: filterset
     enable_LOH_calls: bool
-    merge.distance: int_ge0
+    call.merging:
+      merge.gap.absolute: int_ge0
+      merge.gap.snps: int_ge0
+      call.extension.percent: float_ge0
+      maximum.gap.allowed: int_ge0
     filter.minprobes: int_ge0
     filter.minlength: int_ge0
     filter.mindensity.Mb: float_ge0
@@ -75,7 +79,11 @@ settings:
   CBS:
     filter-settings: filterset
     undo.SD.val: int
-    merge.distance: int_ge0
+    call.merging:
+      merge.gap.absolute: int_ge0
+      merge.gap.snps: int_ge0
+      call.extension.percent: float_ge0
+      maximum.gap.allowed: int_ge0
     filter.minprobes: int_ge0
     filter.minlength: int_ge0
     filter.mindensity.Mb: float_ge0

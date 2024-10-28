@@ -20,18 +20,18 @@ snp_vcfr <- read.vcfR(test_path('../data/minimal_probes.vcf'), verbose = F)
 
 expected_tb <- tibble(
     CHROM = 'chr1',
-    POS = c(100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
-    ID = c(NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
+    POS = c(1, 49, 100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
+    ID = c('dummy1a', 'dummy1b', NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
     REF = NA_character_, # or "."
     ALT = NA_character_, # or "."
     QUAL = NA_real_, # or "."
-    FILTER = c(rep('PASS', 4), 'LOWQUAL', rep('PASS', 10)),
-    GenTrain_Score = c(rep(0.8, 4), 0.2, rep(0.8, 7), 0.9, 0.8, NA),
-    CSQ = c('gene_id|gene_name', NA, NA, NA, NA, NA, NA, NA, NA, 'ABC|abc', NA, NA, NA, NA, NA),
+    FILTER = c(rep('PASS', 6), 'LOWQUAL', rep('PASS', 10)),
+    GenTrain_Score = c(rep(0.8, 6), 0.2, rep(0.8, 7), 0.9, 0.8, NA),
+    CSQ = c(NA,NA,'gene_id|gene_name', NA, NA, NA, NA, NA, NA, NA, NA, 'ABC|abc', NA, NA, NA, NA, NA),
     sample_id = 'test_sample',
     GT = NA_character_, # or "."
-    LRR = c(1, 1.1, 0.7, 1, 1, 0.9, 1.3, 1.2, 1.3, 0.85, 0.82, 0.8, 1.15, 0.87, 0.88),
-    BAF = c(1, 0, 0.3, 0.7, 1, 1, 1, 1, 0, 0.33, 1, 1, 0.67, 1, 0.67)        
+    LRR = c(1,1,1, 1.1, 0.7, 1, 1, 0.9, 1.3, 1.2, 1.3, 0.85, 0.82, 0.8, 1.15, 0.87, 0.88),
+    BAF = c(1,1,1, 0, 0.3, 0.7, 1, 1, 1, 1, 0, 0.33, 1, 1, 0.67, 1, 0.67)        
 )
 
 test_that("vcfR_to_tibble", {

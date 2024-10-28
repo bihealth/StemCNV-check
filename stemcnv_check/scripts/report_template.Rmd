@@ -631,8 +631,8 @@ cat(str_glue('This section includes all regions of interest defined for {sample_
 
 roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
-source(file.path(config$snakedir, 'scripts/R/preprocess_CNV_functions.R'))
-source(file.path(config$snakedir, 'scripts/R/processCNVs_annotation_functions.R'))
+source(file.path(config$snakedir, 'scripts/R/CNV_preprocess_functions.R'))
+source(file.path(config$snakedir, 'scripts/R/CNV_annotation_functions.R'))
 
 fake_call_tb <- roi_gr %>%
     add_snp_probe_counts(

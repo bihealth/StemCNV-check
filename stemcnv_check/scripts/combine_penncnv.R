@@ -8,7 +8,7 @@ library(GenomeInfoDb)
 
 snakemake@source('R/helper_functions.R')
 snakemake@source('R/vcf_io_functions.R')
-snakemake@source('R/preprocess_CNV_functions.R')
+snakemake@source('R/CNV_preprocess_functions.R')
 
 
 read_PennCNV <- function(filename, sample_id, sample_sex) {

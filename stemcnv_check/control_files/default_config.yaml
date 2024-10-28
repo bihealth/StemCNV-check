@@ -136,8 +136,15 @@ settings:
     # Specific filter setting for PennCNV, '_default_' uses `default-filter-set
     filter-settings: '_default_'
     enable_LOH_calls: True
-    # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
-    merge.distance: 500
+    # Neighbouring CNVs of the same state that are merged if
+    # a) the gap between them is <= 'merge.gap.absolute' [bp] or <= 'merge.gap.snps' [SNPs] or if 
+    # b) they would touch/overlap after increasing their size each by 'call.extension.percent' [%]
+    # Any chain of neighbouring CNVs meeting these conditions becomes a single call
+    call.merging:
+      merge.gap.absolute: 500
+      merge.gap.snps: 10
+      call.extension.percent: 20
+      maximum.gap.allowed: 100000
     # Prefiltering of calls is done (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5
@@ -149,8 +156,15 @@ settings:
     filter-settings: '_default_'
     # undo.SD split value for CBS
     undo.SD.val: 1
-    # CNVs of the same state/tool that are <= merge.distance [bp] apart are merged
-    merge.distance: 500
+    # Neighbouring CNVs of the same state that are merged if
+    # a) the gap between them is <= 'merge.distance' [bp] or <= 'merge.gap.snps' [SNPs] or if 
+    # b) they would touch/overlap after increasing their size each by 'call.extension.percent' [%]
+    # Any chain of neighbouring CNVs meeting these conditions becomes a single call
+    call.merging:
+      merge.gap.absolute: 500
+      merge.gap.snps: 10
+      call.extension.percent: 20
+      maximum.gap.allowed: 100000
     # Prefiltering of calls is done (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5

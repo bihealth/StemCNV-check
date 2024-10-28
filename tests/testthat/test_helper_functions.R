@@ -71,7 +71,7 @@ input_tb <- tibble(
     end = c(3e4, 5e6, 77e5)
 )
 
-# there is also a test for this is test_preprocess_CNV_functions.R
+# there is also a test for this is test_CNV_preprocess_functions.R
 test_that("fix_CHROM_format", {
     expected_ncbi <- input_tb %>%
         mutate(seqnames = factor(c('2', 'X', '1'), levels = c('1', '2', 'X'))) %>%

@@ -11,7 +11,7 @@ library(GenomeInfoDb)
 snakemake@source('R/helper_functions.R')
 snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/hotspot_functions.R')
-snakemake@source('R/processCNVs_annotation_functions.R')
+snakemake@source('R/CNV_annotation_functions.R')
 snakemake@source('R/snv_analysis_functions.R')
 
 #multicore support
