@@ -78,7 +78,7 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
     ]
 
     # When apptainer is used these should always be present
-    used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items() if name != '_default_')
+    used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items())
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
         for genome_version in used_genomes:
             static_file = get_global_file(global_file, genome_version, config['global_settings'], cache_path)
@@ -93,8 +93,6 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
         bind_points.append((tmpdir, '/outside/tmp'))
 
     for array in config['array_definition'].keys():
-        if array == '_default_':
-            continue
         for name, file in config['array_definition'][array].items():
             if name == 'genome_version':
                 continue
@@ -121,18 +119,24 @@ def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_df):
         if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
         match_val = sample_data_df[col].loc[sample_id]
-        ids.update(sample_data_df.set_index(col)['Sample_ID'].loc[match_val])
+        ids.update(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]])
     # '_[column]' entry: take all sample_ids from '[column]'
     id_cols = [sampledef[1:] for sampledef in config_extra_samples if sampledef[0] == '_' and sampledef[:2] != '__']
     for col in id_cols:
         if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        ids.update(sample_data_df[col].loc[sample_id].split(','))
+        ids.update([id for id in sample_data_df[col].loc[sample_id].split(',') if id])
     # other entries: assume they are sample_ids & use them as is
     ids.update([sampledef for sampledef in config_extra_samples if sampledef[0] != '_'])
     # remove the original sample_id
     if sample_id in ids:
         ids.remove(sample_id)
+
+    # If any collected ids don't exist, fail
+    if not ids.issubset(sample_data_df.index):
+        raise SampleConstraintError(
+            "Some of the extracted sample_id's SNP clustering do not exist in the sample_table."
+        )
 
     # Check that all samples belong to the same array,
     # remove all that don't match

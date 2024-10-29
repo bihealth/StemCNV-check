@@ -41,7 +41,7 @@ rule download_vep_fasta:
     params:
         fasta_path=os.path.join(config["cache_path"], 'fasta')
     shell:
-        "vep_install -a f -s homo_sapiens -y {wildcards.genome} -c {params.fasta_path}"
+        "vep_install -n -a f -s homo_sapiens -y {wildcards.genome} -c {params.fasta_path}"
 
 
 rule download_mehari_ensembl_db:

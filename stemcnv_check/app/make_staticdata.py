@@ -19,8 +19,6 @@ def create_missing_staticdata(args):
     config = load_config(args.config)
 
     for array_name in config['array_definition']:
-        if array_name == '_default_':
-            continue
         run_staticdata_workflow(args, array_name)
 
 

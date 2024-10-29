@@ -1,4 +1,2 @@
-example_data/static-data/GSAMD-24v3-0-EA_20034606_A1.bpm filter=lfs diff=lfs merge=lfs -text
-example_data/static-data/GSAMD-24v3-0-EA_20034606_A1.egt filter=lfs diff=lfs merge=lfs -text
 example_data/RAW/207521920117/*.idat filter=lfs diff=lfs merge=lfs -text
-example_data/static-data/GSAMD-24v3-0-EA_20034606_A1.csv.gz filter=lfs diff=lfs merge=lfs -text
+example_data/static-data/ExampleArray/* filter=lfs diff=lfs merge=lfs -text

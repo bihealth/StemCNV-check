@@ -36,6 +36,11 @@ def setup_control_files(args):
             use_mode = args.config_details
             write_lines = False
             for line in fin:
+                if line.startswith('#!'):
+                    line = line[2:]
+                if '###!strip:' in line:
+                    n_strip = int(line[line.index('###!strip:')+10:])
+                    line = line[:line.index('###!strip:')-n_strip] + '\n'
                 if line.startswith('##!'):
                     write_lines = modes.index(line[3:-1]) <= modes.index(use_mode)
                     continue

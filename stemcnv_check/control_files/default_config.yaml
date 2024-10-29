@@ -2,25 +2,25 @@
 # Multiple arrays can be defined here, each array needs all required entries.
 # The entries auto-generatable files are created by the `stemcnv-check make-staticdata` command, which will also update 
 # this config file accordingly (unless --no-edit-inplace is used).
-array_definition:
-  # This 'default' entries *needs* to be renamed (or copied and renamed) to an actual array name
-  _default_:  
-    genome_version: hg38   #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
-    # beadpool manifest file (.bpm) from Illumina, needs to match both the SNP array used and 
-    # the desired genome version (usually filenames end with 'A1.bpm' for hg19 and 'A2.bpm' for hg38)
-    bpm_manifest_file: '' #REQUIRED
-    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
-    egt_cluster_file: ''  #REQUIRED
-    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
-    csv_manifest_file: '' #RECOMMENDED, can be left empty, but this will make most InDel probes unusable
-    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
-    penncnv_pfb_file: static-data/{array_name}/PennCNV-PFB_{genome}.pfb              #REQUIRED, Auto-generatable
-    # PennCNV GC model file, containing GC content values, calculated by PennCNV
-    penncnv_GCmodel_file: static-data/{array_name}/PennCNV-GCmodel_{genome}.gcmodel  #REQUIRED, Auto-generatable
-    # bed file with windows of very high array density, calculated by stemcnv-check
-    array_density_file: static-data/{array_name}/density_{genome}.bed                #REQUIRED, Auto-generatable
-    # bed file with windows of probes gaps on the array
-    array_gaps_file: static-data/{array_name}/gaps_{genome}.bed                      #REQUIRED, Auto-generatable
+array_definition: [] ###!strip:4
+#!  # This 'ExampleArray' *should* to be renamed to the actual array name
+#!  ExampleArray:  
+#!    genome_version: hg38      #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
+#!    # beadpool manifest file (.bpm) from Illumina, needs to match both the SNP array used and 
+#!    # the desired genome version (usually filenames end with 'A1.bpm' for hg19 and 'A2.bpm' for hg38)
+#!    bpm_manifest_file: ''     #REQUIRED
+#!    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
+#!    egt_cluster_file: ''      #REQUIRED
+#!    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
+#!    csv_manifest_file: ''     #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
+#!    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
+#!    penncnv_pfb_file: static-data/{array_name}/PennCNV-PFB_{genome}.pfb              #REQUIRED, Auto-generatable
+#!    # PennCNV GC model file, containing GC content values, calculated by PennCNV
+#!    penncnv_GCmodel_file: static-data/{array_name}/PennCNV-GCmodel_{genome}.gcmodel  #REQUIRED, Auto-generatable
+#!    # bed file with windows of very high array density, calculated by stemcnv-check
+#!    array_density_file: static-data/{array_name}/density_{genome}.bed                #REQUIRED, Auto-generatable
+#!    # bed file with windows of probes gaps on the array
+#!    array_gaps_file: static-data/{array_name}/gaps_{genome}.bed                      #REQUIRED, Auto-generatable
 
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)

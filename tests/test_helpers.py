@@ -284,13 +284,20 @@ def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
     assert {all_ids[0]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_df)
     with pytest.raises(ConfigValueError):
         helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__NonExisting'], sample_data_df)
+    # also needs work when no other samples are matching
+    assert set() == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Sample_Name'], sample_data_df)
     # Test finding sample_ids based on values in given column
     assert set(all_ids[1:3]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_df)
     assert {all_ids[2]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_df)
     with pytest.raises(ConfigValueError):
         helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Testcol'], sample_data_df)
+    # test no/empty entry in given column
+    assert set() == helpers.collect_SNP_cluster_ids('Cellline-B-1-cl1', ['_Test_col'], sample_data_df)
     # Test using sample_ids directly
     assert set(all_ids[2:]) == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Cellline-B-1-cl1'], sample_data_df)
+    # fail on any extracted entries that contain non_existing samples
+    with pytest.raises(SampleConstraintError):
+        helpers.collect_SNP_cluster_ids('Cellline-B-MB', ['_Test_col'], sample_data_df)
     # Test exclusion of samples from a different array
     sampletable.set_contents(
         sample_table_extra_cols +
