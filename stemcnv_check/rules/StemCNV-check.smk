@@ -83,8 +83,12 @@ def get_target_files(target=TARGET):
 
     # complete
     if target == "complete":
-        out = get_target_files("report") + get_target_files('summary-tables') + get_target_files("combined-cnv-calls")
-
+        out = (
+            get_target_files("report") + 
+            get_target_files('summary-tables') + 
+            get_target_files("combined-cnv-calls") + 
+            get_target_files("collate-summary")
+        )
     # Report
     elif target == "report":
         out = expand(
@@ -96,13 +100,26 @@ def get_target_files(target=TARGET):
                 if rep != "_default_"
             ],
         )
+    # Collated summary table
+    elif target == "collate-summary":
+        out = [os.path.join(
+            DATAPATH,
+            ((config['collate_date']+'_') if 'collate_date' in config else '') + "summary-overview." + 
+            config["evaluation_settings"]["collate_output"]["file_format"]
+        )]
     # Stat summary tables
     elif target == "summary-tables":
         out = expand(
             os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
             sample_id=all_samples,
         )
-    
+    # Collated CNV call table
+    elif target == "collate-cnv-calls":
+        out = [os.path.join(
+            DATAPATH,
+            ((config['collate_date']+'_') if 'collate_date' in config else '') + "combined-cnv-calls." +
+            config["evaluation_settings"]["collate_output"]["file_format"]
+        )]
     # Target Processed-calls
     elif target == "combined-cnv-calls":
         out = expand(
@@ -236,3 +253,83 @@ rule run_process_CNV_calls:
         "../envs/general-R.yaml"
     script:
         "../scripts/process_CNV_calls.R"
+
+
+rule collate_cnv_calls:
+    input:
+        cnv_calls=expand(
+            os.path.join(
+                DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
+            ),
+            sample_id=sample_data_df['Sample_ID']
+        ),
+    output:
+        os.path.join(
+            DATAPATH,
+            ((config['collate_date']+'_') if 'collate_date' in config else '') + "combined-cnv-calls." +
+            config["evaluation_settings"]["collate_output"]["file_format"]
+        ),
+    threads: get_tool_resource("collate-cnv-calls", "threads")
+    resources:
+        runtime=get_tool_resource("collate-cnv-calls", "runtime"),
+        mem_mb=get_tool_resource("collate-cnv-calls", "memory"),
+        partition=get_tool_resource("collate-cnv-calls", "partition"),
+    log:
+        err=os.path.join(LOGPATH, "collate-cnv-calls", "error.log"),
+    params:
+        output_filters = config['evaluation_settings']['collate_output']['call_table_filters'],
+        output_format = config['evaluation_settings']['collate_output']['file_format'],
+    conda:
+        "../envs/general-R.yaml"
+    script:
+        "../scripts/collate_cnv_calls.R"
+
+rule collate_summary_overview:
+    input:
+        summary_files=expand(
+            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
+            sample_id=sample_data_df['Sample_ID']
+        ),
+    output:
+        os.path.join(
+            DATAPATH,
+            ((config['collate_date']+'_') if 'collate_date' in config else '') + "summary-overview." +
+            config["evaluation_settings"]["collate_output"]["file_format"]
+        ),
+    threads: get_tool_resource("collate-summary", "threads")
+    resources:
+        runtime=get_tool_resource("collate-summary", "runtime"),
+        mem_mb=get_tool_resource("collate-summary", "memory"),
+        partition=get_tool_resource("collate-summary", "partition"),
+    # log:
+    #     err=os.path.join(LOGPATH, "summary-overview", "error.log"),
+    params:
+        sampletable=sample_data_df,
+        extra_cols=config['evaluation_settings']['collate_output']['summary_extra_sampletable_cols'],
+        output_format= config['evaluation_settings']['collate_output']['file_format'],
+    run:
+        import pandas as pd
+        def prep_summary(file):
+            df = pd.read_excel(file, sheet_name='summary_stats').T
+            df = (
+                df.rename(columns=df.iloc[0]).
+                drop(df.index[0]).
+                head(2).
+                reset_index().
+                melt(id_vars=('sample_id', 'index')).
+                assign(index = lambda x: x['index'].str.replace('sample_', '').replace('value', '')).
+                pivot(index='sample_id', columns=['variable', 'index'], values='value')
+                )
+            df.columns = ['{a}{sep}{b}'.format(a=a, b=b, sep="_" if b else "") for a, b in df.columns]
+            return df
+        
+        summary = (pd.concat([prep_summary(file) for file in input.summary_files]).
+                   drop(columns=['SNPs_post_filter_eval']))
+        # Add extra columns from sampletable
+        sample_info = params.sampletable[['Sample_ID'] + params.extra_cols].set_index('Sample_ID')
+        summary = sample_info.join(summary, validate='1:1')
+        
+        if params.output_format == 'xlsx':
+            summary.to_excel(output[0], index=True, index_label='Sample_ID')
+        else: #tsv
+            summary.to_csv(output[0], index=True, index_label='Sample_ID', sep='\t')

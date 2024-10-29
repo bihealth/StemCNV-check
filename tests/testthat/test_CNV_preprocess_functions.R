@@ -278,6 +278,11 @@ test_that("merge_calls", {
         )
     merge_calls(df.or.GR, merge_config, snp_vcf_gr) %>%
         expect_equal(expected)
+    # test callset were nothing is merged (plyranges reduce can behave different with that)
+    df.or.GR <- df.or.GR[12:14,]
+    expected <- expected[7:9,]
+    merge_calls(df.or.GR, merge_config, snp_vcf_gr) %>%
+        expect_equal(expected)
 })
 
 test_that("merge_calls & add_call_prefilters", {

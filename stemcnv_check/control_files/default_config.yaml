@@ -64,6 +64,26 @@ evaluation_settings:
       - critical_snvs
       - critical_calls_CNV
       - critical_calls_LOH
+      
+  collate_output:
+    # xlsx or tsv output files can be generated
+    file_format: xlsx
+    # These columns from the sampletable will be included in the collated summary overview table
+    summary_extra_sampletable_cols: 
+      - Reference_Sample
+    # Different filter criteria for the collated table of all CNV calls 
+    call_table_filters:
+      # Only include CNV calls with one of these Call_labels
+      # Allowed values: 'Critical', 'Reportable', 'Reference genotype'
+      include_call_label: []
+      # Exclude calls with one of these filter flags
+      # Allowed values: 'min_probes', 'min_size', 'min_density', 'high_probe_dens', 'probe_gap'
+      exclude_filter_flags:
+        - min_probes
+        - min_size
+        - min_density
+      # Only include calls with a minimum Check_Score
+      min_check_score: 0  
 
 
 ##!medium
@@ -304,24 +324,24 @@ settings:
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
     flag_GenCall_minimum: 0.2
     critical_SNV:
-        - 'ROI-match'
-        - 'hotspot-match'
-        - 'hotspot-gene'
-        - 'critical_annotation'
-        # - 'any-protein-changing'
+      - 'ROI-match'
+      - 'hotspot-match'
+      - 'hotspot-gene'
+      - 'critical_annotation'
+      # - 'any-protein-changing'
     critical_annotations:
-        - stop_gained
-        - start_lost
-        # - stop_lost
-        - frameshift_variant
-        - splice_acceptor_variant
-        - splice_donor_variant   
+      - stop_gained
+      - start_lost
+      # - stop_lost
+      - frameshift_variant
+      - splice_acceptor_variant
+      - splice_donor_variant   
     # Only variants matching one of the following criteria are considered for the SNV tabel
     # The 'HIGH' impact category contains all annotations listed under critical
     # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODEARTE' impact category
     variant_selection:
-        Impact: [HIGH]
-        Annotation_regex: 'missense_variant|inframe'
+      Impact: [HIGH]
+      Annotation_regex: 'missense_variant|inframe'
     
     #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
     # enries with __[column] will use all other samples with the same value in [column]

@@ -98,7 +98,7 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
 
     # Test that xlsx files work
     fs.add_real_file('tests/data/sample_table.xlsx', read_only=True)
-    assert expected_dict == helpers.read_sample_table("sample_table_extra_cols.tsv", return_type='list_withopt')
+    assert expected_dict == helpers.read_sample_table("tests/data/sample_table.xlsx", return_type='list_withopt')
 
     # Test the included example file
     fs.add_real_file(

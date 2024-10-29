@@ -21,7 +21,7 @@ def read_sample_table(filename, name_remove_regex=None, return_type='list'):
         raise ValueError('Invalid return_type: ' + return_type)
 
     if str(filename).endswith('.xlsx'):
-        def reader_func(f): return pd.read_excel(f, comment='#')
+        def reader_func(f): return pd.read_excel(f, comment='#', dtype=str).dropna(how='all')
     elif str(filename).endswith('.tsv') or str(filename).endswith('.txt'):
         def reader_func(f): return pd.read_csv(f, sep='\t', comment='#')
     elif str(filename).endswith('.csv'):

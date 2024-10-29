@@ -52,6 +52,15 @@ evaluation_settings:
     reportable_calls_LOH: list_len2__int
     critical_calls_CNV: list_len2__int
     critical_calls_LOH: list_len2__int
+    
+  collate_output:
+    file_format: str_(xlsx|tsv)
+    summary_extra_sampletable_cols: list__insamplesheet
+    call_table_filters:
+      include_call_label: list__str__(Critical|Reportable|Reference genotype)
+      exclude_filter_flags: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
+      min_check_score: float_ge0
+
 
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS)
@@ -175,10 +184,8 @@ settings:
     critical_SNV: list__str__(ROI-match|hotspot-match|hotspot-gene|critical_annotation|any-protein-changing)
     critical_annotations: list__str
     variant_selection:
-        Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
-        Annotation_regex: str
-        
-    
+      Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
+      Annotation_regex: str
     SNP_clustering_extra_samples: list__insamplesheet
 
 

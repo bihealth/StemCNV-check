@@ -4,6 +4,7 @@
 """
 
 import argparse
+import datetime
 import os
 import sys
 
@@ -63,8 +64,12 @@ def setup_argparse():
                              "(conda envs, singularity images, and VEP data). The default cache path is defined in the conifg file.")
 
     group_snake.add_argument('--target', '-t', default='complete',
-                             choices=('complete', 'report', 'summary-tables', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
+                             choices=('complete', 'report', 'collate-summary', 'summary-tables', 'collate-cnv-calls',
+                                      'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
                              help="Final target of the pipeline. Default: %(default)s")
+    group_snake.add_argument('--collate-date', nargs='?', const=datetime.date.today().strftime("%Y-%m-%d"),
+                             default=None, help="Add a date to the collate output files. Default without argument: today's date")
+
     group_snake.add_argument('--cluster-profile', '-p', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
     group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
     group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")

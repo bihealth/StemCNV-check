@@ -25,8 +25,8 @@ StemCNV-check requires a sample table and a config file to run. Example files ca
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed:
 - Required columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample
-- Optional columns (reserved): Sample_Name, Regions_of_Interest
-- See the `sample_table_example.tsv` file (of the sample_table.tsv created bye the setup-files command) for a description of individual columns
+- Optional (reserved) columns: Sample_Name, Regions_of_Interest
+- See the `sample_table_example.tsv` file (or the sample_table created bye the setup-files command) for a description of individual columns
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  
 Required settings that are not defined by default include array definition files specific to the used array platform and genome build:
@@ -97,3 +97,13 @@ StemCNV-check will produce the following output files for each sample, when run 
   calls or calls above a user defined Check_Score threshold. A full report can easily be enabled in the config.yaml. 
   The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
 
+Furthermore, the following collated summary tables can be created. 
+(Optionally with a date prefix, or as tsv instead of xlsx files):
+- `data_path/[YYYY-MM-DD_]summary-overview.{xlsx,tsv}`  
+  A table that contains the information of the sample wise "summary-stats", but combined for all samples.
+  Additionally, more information derived from the sampletable columns can be included. This output is 
+  included in the default 'complete' target.
+- `data_path/[YYYY-MM-DD_]combined-cnv-calls.{xlsx,tsv}`  
+  A table that contains all CNV calls from all samples, that meet config defined filter criteria (By default: 
+  everything except calls with a minimum probe/size/density flag). This output is *not* included in the default 
+  'complete' target, but can be created with the 'collate-cnv-calls' target.
