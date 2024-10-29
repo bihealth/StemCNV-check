@@ -112,13 +112,14 @@ merge_calls <- function(df.or.GR, merge_config, snp_vcf_gr) {
                 NA_character_
             ),
             CN = median(CN),
-            orig_start = orig_start,
-            orig_end = orig_end
+            # Restore the original start & end coords, but ONLY from the ends of new merged calls
+            # tryint to create list cols here will fail if nothing gets reduced ...
+            orig_start = min(orig_start),
+            orig_end = max(orig_end)
         ) %>%
-        # Restore the original start & end coords, but ONLY from the ends of new merged calls
         mutate(
-            start = min(orig_start), 
-            end = max(orig_end)
+            start = orig_start, 
+            end = orig_end
         ) %>%
         select(-orig_start, -orig_end) %>%
         mutate(ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_')) %>%
@@ -214,6 +215,16 @@ apply_preprocessing <- function(cnv_gr, snp_vcf_gr, tool_config) {
 # FIXME (future): some way to get (PennCNV) GC correction for LRR?
 # FIXME (future): add solution for BAF
 get_median_LRR <- function(gr, snp_vcf_gr) {
+    
+        # Return early if input is empty
+    if (length(gr) == 0) {
+        return(
+            gr %>%
+                mutate(
+                    LRR = numeric(),
+                )
+        )
+    }
     
     median_lrr <- snp_vcf_gr %>%
         plyranges::select(LRR) %>%

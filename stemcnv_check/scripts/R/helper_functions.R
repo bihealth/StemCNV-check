@@ -26,8 +26,10 @@ get_sex_chroms <- function(tb.or.gr) {
 
 read_sampletable <- function(filename, col_remove_regex = NA) {
     
-    if (str_detect(filename, '\\.tsv$')) {
+    if (str_detect(filename, '\\.(txt|tsv)$')) {
         tb <- read_tsv(filename, comment = '#', show_col_types = F) 
+    } else if(str_detect(filename, '\\.csv$')) {
+        tb <- read_csv(filename, comment = '#', show_col_types = F) 
     } else if (str_detect(filename, '\\.xlsx$')) {
         tb <- read_excel(filename) %>%
             filter(!str_detect(pick(1), '^#'))
@@ -37,10 +39,8 @@ read_sampletable <- function(filename, col_remove_regex = NA) {
     if (!is.na(col_remove_regex) & col_remove_regex != '') {
         tb <- rename_with(tb, ~str_remove(., col_remove_regex))
     }
-    
     # Ensure all columns are characters
     mutate(tb, across(everything(), ~as.character(.)))
-
 }
 
 
@@ -54,7 +54,6 @@ get_sample_info <- function(sample_id, value, config, sampletable = NA) {
     if (is.na(sample_id)) {
         return(NA_character_)
     }
-    
     value_mapping <- c(
         'ref_id' = 'Reference_Sample',
         'sex' = 'Sex'

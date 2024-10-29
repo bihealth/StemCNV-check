@@ -241,9 +241,10 @@ load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
         tb <- tb %>%
             mutate(
                 gene_name = hotspot %>% str_remove('::.*'),
-                HGVS.p = paste0(
-                    'p.',
-                    hotspot %>% str_remove('^.*::')
+                HGVS.p = ifelse(
+                    str_detect(hotspot, '::.+'),
+                    paste0('p.', hotspot %>% str_remove('^.*::')),
+                    NA_character_
                 )
             )
     }

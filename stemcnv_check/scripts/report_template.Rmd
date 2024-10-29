@@ -378,138 +378,6 @@ cat('### R session info\n\n')
 session_info()
 ```
 
-# SNV analysis {.tabset}
-
-```{r load.SNV.data}
-
-SNV_table <- params$inputs$snv_analysis %>%
-    fix_rel_filepath(config) %>%
-    read_excel(sheet = 'SNV_table')
-
-gene_coverage_table <- params$inputs$snv_analysis %>%
-    fix_rel_filepath(config) %>%
-    read_excel(sheet = 'SNV_hotspot_coverage')
-
-snc_qc_tb <- params$inputs$snv_analysis %>%
-    fix_rel_filepath(config) %>%
-    read_excel(sheet = 'SNP_QC_details')
-
-```
-
-```{r SNV.table, eval = include.section('SNV.table'), results='asis'}
-cat('## Table of SNVs\n\n')
-
-snv_annotation_tb <- tibble(
-    list_name = 'critical_annotations',
-    hotspot = config$settings$SNV_analysis$critical_annotations,
-    description = NA_character_,
-    call_type = 'any',
-    check_score = NA_real_
-)
-gene_snv_hotspots <- snv_hotspot_tb %>%
-    select(-HGVS.p) %>%
-    mutate(hotspot = gene_name) %>%
-    unique()
-mutation_snv_hotspots <- snv_hotspot_tb %>%
-    mutate(hotspot = HGVS.p)
-
-#FIXME: don't hardcode colors here, as config may change critical reasons order
-SNV_table %>%
-    dplyr::rename(Chromosome = seqnames, Position = start) %>%
-    mutate(
-        SNV = paste0(Chromosome, ':', format(Position, big.mark='.', decimal.mark = ','), ':', REF, '>', ALT),
-        across(c(Chromosome, SNV_label, critical_reason), as.factor),
-        ROI_hits = ifelse(
-            critical_reason == 'ROI-match' & !is.na(critical_reason),
-            map_chr(ROI_hit, \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), 'red')),
-            ROI_hits
-        ),
-        HGVS.p = ifelse(
-            critical_reason == 'hotspot-match' & !is.na(critical_reason),
-            map_chr(HGVS.p, \(x) format_hotspots_to_badge(x, 'any', mutation_snv_hotspots, 'red')),
-            HGVS.p
-        ),
-        gene_name = ifelse(
-            critical_reason == 'hotspot-gene' & !is.na(critical_reason),
-            map_chr(gene_name, \(x) format_hotspots_to_badge(x, 'any', gene_snv_hotspots, 'orange')),
-            gene_name
-        ),
-        Annotation = ifelse(
-            critical_reason == 'critical_annotation' & !is.na(critical_reason),
-            map_chr(
-                str_replace_all(Annotation, '&', '|'), 
-                \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, 'orange')
-            ),
-            Annotation
-        ) %>%
-            str_replace_all('\\|', ', '),
-    ) %>%
-    select(
-        # 0-5
-        Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
-        # 6-9
-        REF, ALT, GT, ref_GT,
-        # 10-16
-        ROI_hits, gene_name, Annotation, Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
-        # 17-19
-        GenTrain_Score, GenCall_Score, ref_GenCall_Score
-    ) %>%
-    rename_with(format_column_names) %>%
-    datatable(
-        rownames = FALSE,
-        escape = FALSE,
-        extensions = c('Buttons', 'Scroller'),
-        filter = 'top',
-        # caption = caption,
-        options = list(
-            scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
-            dom = 'Bftilp',
-            buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-            #FIXME: column width restrictions don't work properly
-            # autoWidth = TRUE, # necessary for columnDefs/width to work
-            # fixedColumns = TRUE,
-            columnDefs = list(
-                #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0:1,3,5:7,13:15,17,19), visible = FALSE)
-                # list(targets = c(12), width = '300px'),
-                # list(targets = c(15,16), width = '200px')
-            )
-        )
-    ) %>%
-    formatRound(c('Position'), digits = 0, mark = '.')
-    
-cat('\n\n')
-
-```
-
-```{r SNV.hotspot.coverage, eval = include.section('SNV.hotspot.coverage'), results='asis'}
-cat('## SNV hotspot coverage\n\n')
-# TODO: line breaks
-# TODO: badges // description links from hotspot table
-
-full_join(
-    snv_hotspot_tb %>% select(gene_name, description_htmllinks) %>% 
-        dplyr::rename(description = description_htmllinks) %>%
-        unique(),
-    gene_coverage_table,
-    by = 'gene_name'
-) %>%
-    mutate(hotspots = str_replace_all(hotspots, '\\n', '<br>')) %>%
-    rename_with(format_column_names) %>%
-    simple_table_output(params$out_format, escape = FALSE)
-
-cat('\n\n')
-```
-
-```{r SNV.QC.details, eval = include.section('SNV.QC.details'), results='asis'}
-cat('## SNV QC details\n\n')
-snc_qc_tb %>%
-    rename_with(format_column_names) %>%
-    tr_tibble() %>%
-    simple_table_output(params$out_format)
-cat('\n\n')
-```
-
 # CNV calling
 
 ```{r CNV.call.plot.data}
@@ -683,11 +551,145 @@ make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 cat('\n\n')
 ```
 
+
+# SNV analysis {.tabset}
+
+```{r load.SNV.data}
+
+SNV_table <- params$inputs$snv_analysis %>%
+    fix_rel_filepath(config) %>%
+    read_excel(sheet = 'SNV_table')
+
+gene_coverage_table <- params$inputs$snv_analysis %>%
+    fix_rel_filepath(config) %>%
+    read_excel(sheet = 'SNV_hotspot_coverage')
+
+snc_qc_tb <- params$inputs$snv_analysis %>%
+    fix_rel_filepath(config) %>%
+    read_excel(sheet = 'SNP_QC_details')
+
+```
+
+```{r SNV.table, eval = include.section('SNV.table'), results='asis'}
+cat('## Table of SNVs\n\n')
+
+snv_annotation_tb <- tibble(
+    list_name = 'critical_annotations',
+    hotspot = config$settings$SNV_analysis$critical_annotations,
+    description = NA_character_,
+    call_type = 'any',
+    check_score = NA_real_
+)
+gene_snv_hotspots <- snv_hotspot_tb %>%
+    select(-HGVS.p) %>%
+    mutate(hotspot = gene_name) %>%
+    unique()
+mutation_snv_hotspots <- snv_hotspot_tb %>%
+    mutate(hotspot = HGVS.p)
+
+#FIXME: don't hardcode colors here, as config may change critical reasons order
+SNV_table %>%
+    dplyr::rename(Chromosome = seqnames, Position = start) %>%
+    mutate(
+        SNV = paste0(Chromosome, ':', format(Position, big.mark='.', decimal.mark = ','), ':', REF, '>', ALT),
+        across(c(Chromosome, SNV_label, critical_reason), as.factor),
+        ROI_hits = ifelse(
+            critical_reason == 'ROI-match' & !is.na(critical_reason),
+            map_chr(ROI_hit, \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), 'red')),
+            ROI_hits
+        ),
+        HGVS.p = ifelse(
+            critical_reason == 'hotspot-match' & !is.na(critical_reason),
+            map_chr(HGVS.p, \(x) format_hotspots_to_badge(x, 'any', mutation_snv_hotspots, 'red')),
+            HGVS.p
+        ),
+        gene_name = ifelse(
+            critical_reason == 'hotspot-gene' & !is.na(critical_reason),
+            map_chr(gene_name, \(x) format_hotspots_to_badge(x, 'any', gene_snv_hotspots, 'orange')),
+            gene_name
+        ),
+        Annotation = ifelse(
+            critical_reason == 'critical_annotation' & !is.na(critical_reason),
+            map_chr(
+                str_replace_all(Annotation, '&', '|'), 
+                \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, 'orange')
+            ),
+            Annotation
+        ) %>%
+            str_replace_all('\\|', ', '),
+    ) %>%
+    select(
+        # 0-5
+        Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
+        # 6-9
+        REF, ALT, GT, ref_GT,
+        # 10-16
+        ROI_hits, gene_name, Annotation, Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
+        # 17-19
+        GenTrain_Score, GenCall_Score, ref_GenCall_Score
+    ) %>%
+    rename_with(format_column_names) %>%
+    datatable(
+        rownames = FALSE,
+        escape = FALSE,
+        extensions = c('Buttons', 'Scroller'),
+        filter = 'top',
+        # caption = caption,
+        options = list(
+            scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
+            dom = 'Bftilp',
+            buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+            #FIXME: column width restrictions don't work properly
+            # autoWidth = TRUE, # necessary for columnDefs/width to work
+            # fixedColumns = TRUE,
+            columnDefs = list(
+                #This uses 0-indexing vs the usual R 1-indexing
+                list(targets = c(0:1,3,5:7,13:15,17,19), visible = FALSE)
+                # list(targets = c(12), width = '300px'),
+                # list(targets = c(15,16), width = '200px')
+            )
+        )
+    ) %>%
+    formatRound(c('Position'), digits = 0, mark = '.')
+    
+cat('\n\n')
+
+```
+
+```{r SNV.hotspot.coverage, eval = include.section('SNV.hotspot.coverage'), results='asis'}
+cat('## SNV hotspot coverage\n\n')
+# TODO: line breaks
+# TODO: badges // description links from hotspot table
+
+full_join(
+    snv_hotspot_tb %>% select(gene_name, description_htmllinks) %>% 
+        dplyr::rename(description = description_htmllinks) %>%
+        unique(),
+    gene_coverage_table,
+    by = 'gene_name'
+) %>%
+    mutate(hotspots = str_replace_all(hotspots, '\\n', '<br>')) %>%
+    rename_with(format_column_names) %>%
+    simple_table_output(params$out_format, escape = FALSE)
+
+cat('\n\n')
+```
+
+```{r SNV.QC.details, eval = include.section('SNV.QC.details'), results='asis'}
+cat('## SNV QC details\n\n')
+snc_qc_tb %>%
+    rename_with(format_column_names) %>%
+    tr_tibble() %>%
+    simple_table_output(params$out_format)
+cat('\n\n')
+```
+
+
 # Sample comparison  {.tabset}
 
 ```{r snp.dendrogram, results='asis', eval = include.section('SNP.dendrogram')}
 
-cat('## SNP dendrogram\n\n')
+cat('## Identity comparison (SNP dendrogram)\n\n')
 
 snp.distance.tb <-  read_excel(
     fix_rel_filepath(params$input$snv_analysis, config),

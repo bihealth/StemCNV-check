@@ -76,7 +76,11 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             qc_measure_list[[2]],
             SNPs_post_filter = NA_character_,
             SNP_distance_to_reference = apply_greq_th(SNP_distance_to_reference, 'SNP_distance_to_reference', config),
-            critical_snvs = apply_greq_th(critical_snvs, 'critical_snvs', config)
+            critical_snvs = ifelse(
+                is.na(SNP_distance_to_reference),
+                NA_character_,
+                apply_greq_th(critical_snvs, 'critical_snvs', config)
+            )
         ),
         # full_join(qc_measure_list[[3]],)
         qc_measure_list[[3]] %>%
