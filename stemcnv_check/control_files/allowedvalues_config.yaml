@@ -69,7 +69,7 @@ settings:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
         Position.duplicates: str_(keep|remove|highest-GenCall|highest-GenTrain)
-        pseudoautosomal: str_(keep|remove|remove-male)
+        Pseudoautosomal: str_(keep|remove|remove-male)
 
   default-filter-set: filtersetnodefault
 

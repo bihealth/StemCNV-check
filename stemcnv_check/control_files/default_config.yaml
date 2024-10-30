@@ -134,7 +134,7 @@ settings:
       GenTrainScore: 0.7
       GenCallScore:  0.7 # Anything above this should be a stable genotype call
       Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
-      pseudoautosomal: remove-male # keep|remove|remove-male
+      Pseudoautosomal: remove-male # keep|remove|remove-male
     ## Other filter settings we have tested:
     ## This is closest to other Illumina defaults, but susceptible to noise
     # basic:

@@ -177,8 +177,8 @@ get_dosage_sensivity_tb <- function(score_settings) {
     
     description_html_pattern <- str_replace_all(
         tb$description,
-        '([:,] ?)([^:,]+?)\\{([0-9]+)\\}(?=, ?|\\\\\\\\n|\\\\n|$)',
-        '\\1<a href="{a\\3}" target="_blank" rel="noopener noreferrer">\\2</a>'
+        'Source: Collins et al. 2022 \\{1\\}.',
+        str_glue('Source: <a href="{doi}" target="_blank" rel="noopener noreferrer">Collins et al. 2022</a>.')
     ) %>%
         str_replace_all('\\\\n', '&#013;') %>%
         str_replace_all('\\n', '&#013;')

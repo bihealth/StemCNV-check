@@ -169,11 +169,36 @@ test_that('parse inbuilt tables', {
         'pTriplo_threshold' = 0.94,
         'dosage_sensitive_gene' =  5
     )
+    expected_dosage_head <- tibble(
+        hotspot = c("CACNA1C", "CACNA1C", "ZNF462", "ZNF462", "CHD8"),
+        call_type = c('loss', 'gain', 'loss', 'gain', 'loss'),
+        list_name = 'Dosage-sensivity',
+        mapping = 'gene_name',
+        check_score = 5,
+        description = c(
+            "Gene with predicted dosage sensitivity (haploinsufficiency)\\nSource: Collins et al. 2022 {1}.\\npHaplo score: 0.999",
+            "Gene with predicted dosage sensitivity (triplosensitivity)\\nSource: Collins et al. 2022 {1}.\\npTriplo score: 1",
+            "Gene with predicted dosage sensitivity (haploinsufficiency)\\nSource: Collins et al. 2022 {1}.\\npHaplo score: 1",
+            "Gene with predicted dosage sensitivity (triplosensitivity)\\nSource: Collins et al. 2022 {1}.\\npTriplo score: 0.988",
+            "Gene with predicted dosage sensitivity (haploinsufficiency)\\nSource: Collins et al. 2022 {1}.\\npHaplo score: 0.992"
+        ),
+        description_doi = "10.1016/j.cell.2022.06.036",
+        description_htmllinks = c(
+            "Gene with predicted dosage sensitivity (haploinsufficiency)&#013;Source: <a href=\"10.1016/j.cell.2022.06.036\" target=\"_blank\" rel=\"noopener noreferrer\">Collins et al. 2022</a>.&#013;pHaplo score: 0.999",
+            "Gene with predicted dosage sensitivity (triplosensitivity)&#013;Source: <a href=\"10.1016/j.cell.2022.06.036\" target=\"_blank\" rel=\"noopener noreferrer\">Collins et al. 2022</a>.&#013;pTriplo score: 1",
+            "Gene with predicted dosage sensitivity (haploinsufficiency)&#013;Source: <a href=\"10.1016/j.cell.2022.06.036\" target=\"_blank\" rel=\"noopener noreferrer\">Collins et al. 2022</a>.&#013;pHaplo score: 1",
+            "Gene with predicted dosage sensitivity (triplosensitivity)&#013;Source: <a href=\"10.1016/j.cell.2022.06.036\" target=\"_blank\" rel=\"noopener noreferrer\">Collins et al. 2022</a>.&#013;pTriplo score: 0.988",
+            "Gene with predicted dosage sensitivity (haploinsufficiency)&#013;Source: <a href=\"10.1016/j.cell.2022.06.036\" target=\"_blank\" rel=\"noopener noreferrer\">Collins et al. 2022</a>.&#013;pHaplo score: 0.992"
+        )
+    )
 
     expect_no_error(parse_hotspot_table(stemcell_hotspot_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
-    expect_no_error(get_dosage_sensivity_tb(score_settings) %>% parse_hotspot_table(gr_genes, gr_info))
+    
+    dosage <- get_dosage_sensivity_tb(score_settings)
+    expect_no_error(parse_hotspot_table(dosage, gr_genes, gr_info))
+    expect_equal(head(dosage, 5), expected_dosage_head)
     # This one can not be parsed like the others (it's never used as a gr either)
     expect_no_error(load_hotspot_table(config, 'snv_hotspot'))
 })

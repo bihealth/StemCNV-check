@@ -689,177 +689,192 @@ cat('\n\n')
 
 ```{r snp.dendrogram, results='asis', eval = include.section('SNP.dendrogram')}
 
-cat('## Identity comparison (SNP dendrogram)\n\n')
+cat('## Identity comparison\n\n')
 
 snp.distance.tb <-  read_excel(
     fix_rel_filepath(params$input$snv_analysis, config),
     sheet = 'SNP_GT_distances'
 )
 
-#Build annotation table
-color_by <- report_config$SNP_comparison$dendrogram.color.by #%>% check_cols_exits()
-shape_by <- report_config$SNP_comparison$dendrogram.shape.by #%>% check_cols_exits()
-dend.format.df <- sampletable %>%
-    filter(Sample_ID %in% snp.distance.tb$sample_distance_to)
-
-if (length(color_by) == 1) {
-
-    if (nrow(unique(dend.format.df[, color_by])) > 10) {
-        warn_str <- str_glue('More than 10 colors are needed to use "{color_by}" for coloring. Consider using fewer unqiue entries.')
-        cat(warn_str, '\n\n')
-        warning(warn_str)
-    }
-
-    dend.format.df <- dend.format.df %>%
-        mutate(across(all_of(color_by), ~ factor(., levels = sort(unique(.))))	) %>%
-        arrange(!!sym(color_by)) %>%
-        mutate(col = viridis_pal(option='H')(length(unique(!!sym(color_by))))[match(!!sym(color_by), unique(!!sym(color_by)))],
-                     col = ifelse(is.na(!!sym(color_by)), 'grey90', col)
-                     )
-
-    col_map <- dend.format.df$col %>% unique()
-    names(col_map) <- levels(pull(dend.format.df, !!sym(color_by)))
-
-
+if (nrow(snp.distance.tb) == 1) {
+    
+    cat('No additional samples found for the comparison, no dendrogram can be built.\n\n')
+    
 } else {
-    warning('No matching column to use for coloring!')
-    cat('No matching column to use for coloring!\n')
-
-    dend.format.df <- dend.format.df %>%
-        mutate(col = 'black', `_dummy_color` = 'bar')
-
-    col_map  <- c('bar' = 'black')
-    color_by <- '_dummy_color'
-}
-
-if (length(shape_by) == 1) {
-
-    dend.format.df <- dend.format.df %>%
-        mutate(across(all_of(shape_by), ~ factor(., levels = sort(unique(.), na.last = T))),
-                     ) %>%
-        arrange(!!sym(shape_by))
-
-    if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 5) {
-        use.shapes <- 15:18
-        na.shape <- 1
-    } else if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 15) {
-        use.shapes <- 0:14
-        na.shape <- 16
+    
+    cat(
+        'Sample identities can be comparsed based on the dendrogram built on the SNP genotypes. ',
+        'The dendrogram is built using the manhattan distance between samples, counting both alleles. ',
+        'Accoringly, the distance between two samples is the sum of the absolute differences between the two ',
+        'alleles at each SNP (also shown in the table below). Samples that are very close together are likely ',
+        'identical or clonally related. ',
+        'Sample selection as well as color and shape lables are controlled by the config file.\n\n'
+    )
+    
+    #Build annotation table
+    color_by <- report_config$SNP_comparison$dendrogram.color.by #%>% check_cols_exits()
+    shape_by <- report_config$SNP_comparison$dendrogram.shape.by #%>% check_cols_exits()
+    dend.format.df <- sampletable %>%
+        filter(Sample_ID %in% snp.distance.tb$sample_distance_to)
+    
+    if (length(color_by) == 1) {
+    
+        if (nrow(unique(dend.format.df[, color_by])) > 10) {
+            warn_str <- str_glue('More than 10 colors are needed to use "{color_by}" for coloring. Consider using fewer unqiue entries.')
+            cat(warn_str, '\n\n')
+            warning(warn_str)
+        }
+    
+        dend.format.df <- dend.format.df %>%
+            mutate(across(all_of(color_by), ~ factor(., levels = sort(unique(.))))	) %>%
+            arrange(!!sym(color_by)) %>%
+            mutate(col = viridis_pal(option='H')(length(unique(!!sym(color_by))))[match(!!sym(color_by), unique(!!sym(color_by)))],
+                         col = ifelse(is.na(!!sym(color_by)), 'grey90', col)
+                         )
+    
+        col_map <- dend.format.df$col %>% unique()
+        names(col_map) <- levels(pull(dend.format.df, !!sym(color_by)))
+    
+    
     } else {
-        others <- dend.format.df[pull(dend.format.df, !!sym(shape_by)) %>% as.integer() > 15, shape_by] %>% na.omit() %>% unlist()
-        warn_str <- str_glue('Only 15 shapes are available, but "{shape_by}" would need {length(unique(pull(dend.format.df, !!sym(shape_by))))}. ',
-                             'Consider using fewer unqiue entries. These values are summarised as "Other": {paste(others, collapse = ", ")}')
-        cat(warn_str, '\n\n')
-        warning(warn_str)
-
-        use.shapes <- 0:14
-        na.shape <- 16
-
+        warning('No matching column to use for coloring!')
+        cat('No matching column to use for coloring!\n')
+    
+        dend.format.df <- dend.format.df %>%
+            mutate(col = 'black', `_dummy_color` = 'bar')
+    
+        col_map  <- c('bar' = 'black')
+        color_by <- '_dummy_color'
+    }
+    
+    if (length(shape_by) == 1) {
+    
+        dend.format.df <- dend.format.df %>%
+            mutate(across(all_of(shape_by), ~ factor(., levels = sort(unique(.), na.last = T))),
+                         ) %>%
+            arrange(!!sym(shape_by))
+    
+        if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 5) {
+            use.shapes <- 15:18
+            na.shape <- 1
+        } else if (nrow(na.omit(unique(dend.format.df[, shape_by]))) <= 15) {
+            use.shapes <- 0:14
+            na.shape <- 16
+        } else {
+            others <- dend.format.df[pull(dend.format.df, !!sym(shape_by)) %>% as.integer() > 15, shape_by] %>% na.omit() %>% unlist()
+            warn_str <- str_glue('Only 15 shapes are available, but "{shape_by}" would need {length(unique(pull(dend.format.df, !!sym(shape_by))))}. ',
+                                 'Consider using fewer unqiue entries. These values are summarised as "Other": {paste(others, collapse = ", ")}')
+            cat(warn_str, '\n\n')
+            warning(warn_str)
+    
+            use.shapes <- 0:14
+            na.shape <- 16
+    
+            dend.format.df <- dend.format.df %>%
+                mutate(
+                    across(all_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
+                    across(all_of(shape_by), ~ factor(., levels = unique(.)))
+                )
+        }
+    
         dend.format.df <- dend.format.df %>%
             mutate(
-                across(all_of(shape_by), ~ ifelse(as.integer(.) > 15, 'Other', as.character(.))),
-                across(all_of(shape_by), ~ factor(., levels = unique(.)))
+                shape = use.shapes[match(!!sym(shape_by), unique(!!sym(shape_by)))],
+                shape = ifelse(is.na(!!sym(shape_by)), na.shape, shape)
             )
+    
+        shape_map <- dend.format.df$shape %>% unique()
+        names(shape_map) <- levels(pull(dend.format.df, !!sym(shape_by)))    
+    } else {
+        warning('No matching column to use for shapes!')
+        cat('No matching column to use for shapes!\n\n')
+    
+        dend.format.df <- dend.format.df %>%
+            mutate(shape = 16, `_dummy_shape` = 'foo')
+    
+        shape_map <- c('foo' = 16)
+        shape_by <- '_dummy_shape'
+    
     }
 
-    dend.format.df <- dend.format.df %>%
-        mutate(
-            shape = use.shapes[match(!!sym(shape_by), unique(!!sym(shape_by)))],
-            shape = ifelse(is.na(!!sym(shape_by)), na.shape, shape)
+    SNP.genotype.distances <- snp.distance.tb %>% select(-sample_distance_to) %>% as.matrix()
+    
+    # Build dendrogram & sort annotation table by it
+    hc <- snp.distance.tb %>%
+        column_to_rownames('sample_distance_to') %>%
+        as.dist() %>%
+        hclust()
+    dd <- as.dendrogram(hc) 
+    dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$Sample_ID),]
+    
+    dend <- dd %>%
+        set('labels_col', dend.format.df$col) %>%
+        set('leaves_col', dend.format.df$col) %>%
+        set('leaves_pch', dend.format.df$shape) 
+    
+    gg1 <- dend %>%
+        raise.dendrogram (max(SNP.genotype.distances)/50) %>% 
+        set('labels_cex', .8) %>%
+        set('leaves_cex', 2) %>%
+        set('branches_lwd', .5) %>%
+        as.ggdend() %>%
+        ggplot(offset_labels = -max(SNP.genotype.distances)/25, theme = theme_classic()) +
+        scale_y_continuous(
+            name = 'SNP distance (manhattan method)',
+            breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
+            labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','),
+            limits = c(-max(SNP.genotype.distances)/2, NA),
+            expand = expansion()
+        ) +
+        scale_x_continuous(limits = c(0, NA), expand = expansion(add = c(0, .5))) +
+        geom_line(
+            data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
+            aes(x=x, y=y)
+        ) +
+        theme(
+            legend.position = "bottom",
+            axis.text.x = element_blank(),
+            axis.title.x = element_blank(),
+            axis.line.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.line.y = element_blank(),
+            axis.title.y = element_text(angle = 90, hjust = .75)
         )
+    
+    # make legend
+    gg2 <- dend.format.df %>%
+        #arrange(SampleGroup) %>%
+        ggplot(aes(x = Sample_ID, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) +
+        geom_point() + 
+        scale_color_manual(
+            values = col_map,
+            guide = ifelse(
+                color_by == '_dummy_color',
+                list('none'),
+                list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
+            )[[1]]
+        )  +
+        scale_shape_manual(
+            values = shape_map,
+            guide = ifelse(
+                shape_by == '_dummy_shape',
+                list('none'),
+                list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
+            )[[1]]
+        ) +
+        theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
+    
+    gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(5, 1))
+    
+    subchunkify(gg, 'snp.dendrogram.plot', 8, 10)
 
-    shape_map <- dend.format.df$shape %>% unique()
-    names(shape_map) <- levels(pull(dend.format.df, !!sym(shape_by)))
-
-
-} else {
-    warning('No matching column to use for shapes!')
-    cat('No matching column to use for shapes!\n\n')
-
-    dend.format.df <- dend.format.df %>%
-        mutate(shape = 16, `_dummy_shape` = 'foo')
-
-    shape_map <- c('foo' = 16)
-    shape_by <- '_dummy_shape'
+    snp.distance.tb %>%
+        filter(sample_distance_to == sample_id) %>%
+        dplyr::select(-sample_distance_to) %>%
+        select(all_of(labels(dd))) %>%
+        simple_table_output(params$out_format, paste0('Distances to "', sample_id, '"'))
 
 }
-
-SNP.genotype.distances <- snp.distance.tb %>% select(-sample_distance_to) %>% as.matrix()
-
-# Build dendrogram & sort annotation table by it
-hc <- snp.distance.tb %>%
-    column_to_rownames('sample_distance_to') %>%
-    as.dist() %>%
-    hclust()
-dd <- as.dendrogram(hc) 
-dend.format.df <- dend.format.df[match(labels(dd), dend.format.df$Sample_ID),]
-
-dend <- dd %>%
-    set('labels_col', dend.format.df$col) %>%
-    set('leaves_col', dend.format.df$col) %>%
-    set('leaves_pch', dend.format.df$shape) 
-
-gg1 <- dend %>%
-    raise.dendrogram (max(SNP.genotype.distances)/50) %>% 
-    set('labels_cex', .8) %>%
-    set('leaves_cex', 2) %>%
-    set('branches_lwd', .5) %>%
-    as.ggdend() %>%
-    ggplot(offset_labels = -max(SNP.genotype.distances)/25, theme = theme_classic()) +
-    scale_y_continuous(
-        name = 'SNP distance (manhattan method)',
-        breaks = function(limits) breaks_pretty()(c(max(limits[1], 0), limits[2]), 5) + max(SNP.genotype.distances)/50,
-        labels = function(breaks) number(breaks - max(SNP.genotype.distances)/50, big.mark = ','),
-        limits = c(-max(SNP.genotype.distances)/2, NA),
-        expand = expansion()
-    ) +
-    scale_x_continuous(limits = c(0, NA), expand = expansion(add = c(0, .5))) +
-    geom_line(
-        data = tibble(x = c(0, 0), y = max(SNP.genotype.distances) * c(1/50, 51/50)),
-        aes(x=x, y=y)
-    ) +
-    theme(
-        legend.position = "bottom",
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.line.y = element_blank(),
-        axis.title.y = element_text(angle = 90, hjust = .75)
-    )
-
-# make legend
-gg2 <- dend.format.df %>%
-    #arrange(SampleGroup) %>%
-    ggplot(aes(x = Sample_ID, y = 1, col = !!sym(color_by), shape = !!sym(shape_by))) +
-    geom_point() + 
-    scale_color_manual(
-        values = col_map,
-        guide = ifelse(
-            color_by == '_dummy_color',
-            list('none'),
-            list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
-        )[[1]]
-    )  +
-    scale_shape_manual(
-        values = shape_map,
-        guide = ifelse(
-            shape_by == '_dummy_shape',
-            list('none'),
-            list(guide_legend(direction = 'horizontal',title.position = 'top', ncol = 8, byrow=T))
-        )[[1]]
-    ) +
-    theme(legend.box = "vertical", legend.text = element_text(size = 10), legend.title = element_text(size = 12))
-
-gg <- gg1 + as_ggplot(get_legend(gg2)) + plot_layout(ncol = 1, heights = c(5, 1))
-
-subchunkify(gg, 'snp.dendrogram.plot', 8, 10)
-
-snp.distance.tb %>%
-    filter(sample_distance_to == sample_id) %>%
-    dplyr::select(-sample_distance_to) %>%
-    select(all_of(labels(dd))) %>%
-    simple_table_output(params$out_format, paste0('Distances to "', sample_id, '"'))
 
 ```
 
