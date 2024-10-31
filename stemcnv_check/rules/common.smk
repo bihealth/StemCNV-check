@@ -5,26 +5,12 @@ from stemcnv_check import STEM_CNV_CHECK, VEP_version
 from stemcnv_check.helpers import config_extract, get_global_file
 from stemcnv_check.exceptions import SampleConstraintError
 
-# Makestatic Data :
-# def fix_container_path(path_in, bound_to):
-#
-#         path_in = Path(path_in)
-#         if bound_to == 'static':
-#                 rel_path = path_in.name
-#         else:
-#                 local_target = {
-#                         'snakedir': Path(importlib.resources.files(STEM_CNV_CHECK)),
-#                         'tmp': Path(DOWNLOAD_DIR)
-#                 }[bound_to].absolute()
-#                 rel_path = path_in.absolute().relative_to(local_target)
-#
-#         return Path('/outside/') / bound_to / rel_path
-
 def get_sample_info(wildcards):
     return sample_data_df.loc[wildcards.sample_id].to_dict()
 
 
 def get_ref_id(wildcards, get_sex=False):
+    #FIXME: switch to using sample_data_df
     sample_id = wildcards.sample_id
     sex, ref_id = [(s, r) for sid, _, _, _, s, r in sample_data if sid == sample_id][0]
     sex = sex[0].lower()

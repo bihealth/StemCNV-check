@@ -108,13 +108,15 @@ def run_staticdata_workflow(args, array_name):
         logging.info('All static files are present')
         return 0
 
-    # Check if vcf file is present, generate one if none are
-    sample_data = read_sample_table(args.sample_table, args.column_remove_regex)
+    # Check if vcf file _for the selected array_ is present, generate one if none are
+    sample_data_df = read_sample_table(args.sample_table, args.column_remove_regex, return_type='dataframe')
+    sample_data_df = sample_data_df[sample_data_df['Array_Name'] == array_name]
     datapath = config['data_path']
     filter_settings = config['settings']['default-filter-set']
-    #FIXME (future): check if annotation is enabled/disabled
-    vcf_files = [os.path.join(datapath, f"{sample_id}", f"{sample_id}.annotated-SNP-data.{filter_settings}-filter.vcf.gz") for
-                 sample_id, _, _, _, _, _ in sample_data]
+    vcf_files = [
+        os.path.join(datapath, f"{sample_id}", f"{sample_id}.annotated-SNP-data.{filter_settings}-filter.vcf.gz")
+        for sample_id in sample_data_df['Sample_ID']
+    ]
     vcf_present = [vcf for vcf in vcf_files if os.path.exists(vcf)]
 
     if vcf_present:
