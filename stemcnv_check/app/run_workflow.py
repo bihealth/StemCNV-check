@@ -16,7 +16,7 @@ def run_stemcnv_check_workflow(args):
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
         "--printshellcmds", "--rerun-incomplete",
         "--sdm", "conda", "apptainer",
-        "--apptainer-args", make_apptainer_args(config, cache_path),
+        "--apptainer-args", make_apptainer_args(config, cache_path, extra_bind_args=args.bind_points),
         #"--conda-frontend", args.conda_frontend,
         ]
     if args.directory:

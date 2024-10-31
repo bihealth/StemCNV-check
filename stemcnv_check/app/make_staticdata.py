@@ -153,7 +153,9 @@ def run_staticdata_workflow(args, array_name):
                             deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
                             conda_prefix=cache_path,
                             apptainer_prefix=cache_path,
-                            apptainer_args=make_apptainer_args(config, cache_path, not_existing_ok=True),
+                            apptainer_args=make_apptainer_args(
+                                config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points
+                            ),
                         ),
                     )
                     .dag(
@@ -191,7 +193,9 @@ def run_staticdata_workflow(args, array_name):
                     deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
                     conda_prefix=cache_path,
                     apptainer_prefix=cache_path,
-                    apptainer_args=make_apptainer_args(config, cache_path, tmpdir=tmpdir, not_existing_ok=True),
+                    apptainer_args=make_apptainer_args(
+                        config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points
+                    ),
                 )
             )
             .dag(
