@@ -167,6 +167,9 @@ def test_make_singularity_args(mock_resource_files, fs):
     expected = get_expected(expected_extra + ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
     assert expected == helpers.make_apptainer_args(config, None)
 
+    # test with direct addition
+    assert expected+',/abcdef' == helpers.make_apptainer_args(config, None, extra_bind_args='/abcdef')
+
     # test with cache_path & auto-creation of global paths
     cache_path = '/path/to/cache'
     config['global_settings'] = {

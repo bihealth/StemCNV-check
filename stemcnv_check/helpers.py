@@ -67,7 +67,7 @@ def read_sample_table(filename, name_remove_regex=None, return_type='list'):
         return sample_tb.set_index('Sample_ID', drop=False)
 
 
-def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
+def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, extra_bind_args=None):
     """Collect all outside filepaths that need to be bound inside container"""
 
     bind_points = [
@@ -106,6 +106,12 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False):
 
     # Sort bind_points to make testing easier (loops over config_dict add them in a non-deterministic order)
     bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in sorted(bind_points, key=lambda x: x[1]))
+    # allow additional arguments to be passed
+    if extra_bind_args:
+        if isinstance(extra_bind_args, str):
+            extra_bind_args = [extra_bind_args]
+        bind_point_str = bind_point_str + ',' + ','.join(list(extra_bind_args))
+
     logging.debug("Binding points for apptainer: " + str(bind_point_str))
 
     return bind_point_str

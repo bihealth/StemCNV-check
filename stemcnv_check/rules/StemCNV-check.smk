@@ -64,7 +64,6 @@ localrules:
 
 sample_data = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']))
 sample_data_df = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='dataframe')
-sample_data_full = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='list_withopt')
 
 
 include: "common.smk"
@@ -79,7 +78,7 @@ include: "report_generation.smk"
 
 def get_target_files(target=TARGET):
     # Target options: ('report', 'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
-    all_samples = [sample_id for sample_id, _, _, _, _, _ in sample_data]
+    all_samples = sample_data_df['Sample_ID']
 
     # complete
     if target == "complete":

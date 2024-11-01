@@ -62,6 +62,10 @@ def setup_argparse():
     group_snake.add_argument('--no-cache', action='store_true',
                              help="Do not use a chache directory. The cache is used for workflow created metadata "
                              "(conda envs, singularity images, and VEP data). The default cache path is defined in the conifg file.")
+    group_snake.add_argument('--bind-points',
+                             help="Additional bind points for apptainer containers, intended for expter users. "
+                                  "Use i.e. '/path' to make it availbale in apptainer, useful in case local directory "
+                                  "contains symlinks that won't resolve in the container.")
 
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'collate-summary', 'summary-tables', 'collate-cnv-calls',

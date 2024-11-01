@@ -481,7 +481,7 @@ tools:
   SNV_analysis:
     threads: 2
     memory: 20000 # "2000MB"  
-    runtime: "1h"
+    runtime: "4h"
   knitr:
     memory: 10000 # "10000MB"
     runtime: "1h"
