@@ -117,7 +117,7 @@ run_snp_analysis(
     extra_snp_files = snakemake@input[['extra_snp_files']],
     config = snakemake@config,
     gtf_file = snakemake@params[['gtf_file']],
-    ginfo_file = snakemake@params[['gtf_file']]
+    ginfo_file = snakemake@params[['ginfo_file']]
 ) %>% 
     write_xlsx(snakemake@output[['xlsx']])
 
