@@ -238,7 +238,7 @@ rule run_process_CNV_calls:
         mem_mb=get_tool_resource("CNV.process", "memory"),
         partition=get_tool_resource("CNV.process", "partition"),
     params:
-        eval_settings=config["evaluation_settings"],
+        eval_settings=config["evaluation_settings"]["CNV_call_categorisation"],
         settings=config["settings"]["CNV_processing"],
         gtf_file=lambda wildcards: get_global_file(
             'gtf', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']

@@ -45,7 +45,7 @@ evaluation_settings:
     # List of threshold values between normal/abnormal and abnormal/problematic(critical)
     # The first values gives the maximum allowed for 'OK', the second for 'warning'
     call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
-    SNP_distance_to_reference: [2, 5]
+    SNP_pairwise_distance_to_reference: [2, 10]
     # SNP_distance_to_reference_span: undecided
     critical_snvs: [1, 1]
     call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters
@@ -60,7 +60,7 @@ evaluation_settings:
     last_level_critical:
       - call_rate
       - computed_gender
-      - SNP_distance_to_reference
+      - SNP_pairwise_distance_to_reference
       - critical_snvs
       - critical_calls_CNV
       - critical_calls_LOH

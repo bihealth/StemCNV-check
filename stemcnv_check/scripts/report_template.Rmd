@@ -704,10 +704,11 @@ if (nrow(snp.distance.tb) == 1) {
     
     cat(
         'Sample identities can be comparsed based on the dendrogram built on the SNP genotypes. ',
-        'The dendrogram is built using the manhattan distance between samples, counting both alleles. ',
+        'The dendrogram is built using the manhattan distance between samples, counting both alleles ',
+        'from Probes that are not quality in every included sample. ',
         'Accoringly, the distance between two samples is the sum of the absolute differences between the two ',
-        'alleles at each SNP (also shown in the table below). Samples that are very close together are likely ',
-        'identical or clonally related. ',
+        'alleles at each SNP (also shown in the table below) after QC filters. ',
+        'Samples that are very close together are likely identical or clonally related. ',
         'Sample selection as well as color and shape lables are controlled by the config file.\n\n'
     )
     

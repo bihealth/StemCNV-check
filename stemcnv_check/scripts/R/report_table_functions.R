@@ -82,10 +82,22 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
         )
 
         summary_row_help <- c(
-            "Call Rate" = 'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be determined.\\nLow values are strong indicator of sample quality issues that also impact make any further analysis including CNV calling.',
-            "Computed Gender" = 'The Illumina computed gender (sex) based on X and Y chromosome probes.\\nMismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.',
+            "Call Rate" = paste0(
+                'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be ',
+                'determined.\\nLow values are strong indicator of sample quality issues that also impact make any ',
+                'further analysis including CNV calling.'
+            ),
+            "Computed Gender" = paste0(
+                'The Illumina computed gender (sex) based on X and Y chromosome probes.\\n',
+                'Mismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.'
+            ),
             "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
-            "SNP Distance To Reference" = 'The number of probes with a different genotype than the reference sample.\\nIncreased values can indicate a sample swap or a considerable number of genomic mutations between sample and references.',
+            "SNP Pairwise Distance To Reference" = paste0(
+                'The number of probes with a different genotype than the reference sample.\\n',
+                'Calculated as pairwise difference, which may include more probes than used for sample clustering.\\n',
+                'Increased values can indicate a sample swap or a considerable number of genomic mutations between ',
+                'sample and references.'
+            ),
             "Critical SNVs" = 'The number of detected SNVs designated as "critical".',
             "Loss Gain Log2ratio" = paste0(
                 'The log2 transformed ratio of loss and gain CNV calls.\\n',

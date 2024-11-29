@@ -51,6 +51,8 @@ run_snp_analysis <- function(
             fix_CHROM_format(target_chrom_style)
     } else {
         ref_SNP_gr <- GRanges(
+            REF = character(),
+            ALT = character(),
             IGC = integer(),
             GT = character()
         )
@@ -88,6 +90,7 @@ run_snp_analysis <- function(
             GT = ifelse(is.na(GT), './.', GT)
         )
     
+    # use filter here, yes or no?
     SNV_table <- get_SNV_table(sample_SNV_tb, ref_SNP_gr, SNV_hotspot_table, config)
     
     # Calculate sample distance matrix
@@ -105,7 +108,10 @@ run_snp_analysis <- function(
         'SNV_table' = SNV_table,
         'SNV_hotspot_coverage' = get_SNV_hotspot_coverage(sample_SNV_tb, SNV_hotspot_table),
         'SNP_GT_distances' = SNP_GT_distances,
-        'SNP_QC_details' = get_SNV_QC_table(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table)
+        'SNP_QC_details' = get_SNV_QC_table(
+            sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, 
+            use_filter = config$settings$SNV_analysis$`filter-settings` != 'none'
+        )
     ))
     
 }

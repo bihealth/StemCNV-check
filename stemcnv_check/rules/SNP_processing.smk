@@ -66,6 +66,10 @@ rule mehari_annotate_snp_vcf:
         "--path-output-vcf {output} "
         "--transcripts {params.mehari_db_path} "
         "--genome-release {params.genomeversion} "
+        # need to select transcript pick order, for pick-mode to work
+        "--pick-transcript mane-select  "
+        "--pick-transcript mane-plus-clinical "
+        "--pick-transcript length "
         "--pick-transcript-mode first "
         "--report-most-severe-consequence-by allele "
         #"--hgnc <path> "

@@ -50,7 +50,7 @@ get_SNV_table <- function(
             ref_GenCall_Score = IGC,
             ref_GT = GT
         ) %>%
-        group_by(seqnames, start) %>%
+        group_by(seqnames, start, REF, ALT) %>%
         # Note: somehow slice_max is much slower than summarise ?
         # slice_max(ref_GenCall_Score, n=1, with_ties = FALSE) %>%
         reframe(
@@ -67,16 +67,16 @@ get_SNV_table <- function(
     
     if (any(ref_tb$n_distinct_ref_GT > 1)) {
         ref_tb <- ref_tb %>%
-            group_by(seqnames, start) %>% 
+            group_by(seqnames, start, REF, ALT) %>% 
             summarise(
                 ref_GT = paste(ref_GT, collapse = ' ; '),
                 ref_GenCall_Score = max(ref_GenCall_Score),
             )
         warning(paste(
             'Multiple different GT calls with the same GenCall score for the same position in the reference sample.',
-            'Collapsing to one GT call, they will not match the sample call:',
+            'Collapsing to one GT call, this will not match the sample call:',
             ref_tb %>% filter(str_detect(ref_GT, ';')) %>%
-                mutate(desc = str_glue('{seqnames}:{start} - {ref_GT}')) %>% pull(desc) %>% paste(collapse = '\n')
+                mutate(desc = str_glue('{seqnames}:{start}:{REF}>{ALT} - {ref_GT}')) %>% pull(desc) %>% paste(collapse = '\n')
         ))
     } else {
         ref_tb <- ref_tb %>% select(-n_distinct_ref_GT)
@@ -91,7 +91,7 @@ get_SNV_table <- function(
             Annotation_Impact %in% subconfig$variant_selection$Impact | 
                 str_detect(Annotation, subconfig$variant_selection$Annotation_regex)) %>%
         select(
-            seqnames, start, REF, ALT, ID, GT, GenTrain_Score, GenCall_Score, 
+            seqnames, start, REF, ALT, ID, FILTER, GT, GenTrain_Score, GenCall_Score, 
             Annotation, gene_name, Transcript_ID, Transcript_BioType, 
             HGVS.c, HGVS.p, ROI_hits
         ) %>%
@@ -104,7 +104,7 @@ get_SNV_table <- function(
         filter(str_detect(GT, '1')) %>%
         ungroup() %>%
         # add/merge in reference GT
-        left_join(ref_tb, by = c('seqnames', 'start')) %>%
+        left_join(ref_tb, by = c('seqnames', 'start', 'REF', 'ALT')) %>%
         # Assign critical labels
         mutate(
             critical_reason = case_when(
@@ -194,7 +194,7 @@ get_SNV_hotspot_coverage <- function(
 }
 
 
-get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table){
+get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, use_filter) {
     
     # Get SNV/SNP summary values
     if (length(ref_SNP_gr) > 0) {
@@ -208,20 +208,32 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table){
             paste0(round(size / oom_f), string[as.character(oom_f)])
         }
         
-        snc_qc_tb <- sample_SNV_tb %>%
+        snv_qc_tb <- sample_SNV_tb %>%
             left_join(
-                ref_SNP_gr %>% select(ID, GT) %>% as_tibble() %>% dplyr::rename(ref_GT = GT),
+                ref_SNP_gr %>%
+                    select(ID, FILTER, GT) %>%
+                    as_tibble() %>%
+                    dplyr::rename(ref_GT = GT, ref_FILTER = FILTER),
                 by = c('seqnames', 'start', 'end', 'width', 'strand', 'ID')
             ) %>%
-            filter(GT != ref_GT & !is.na(GT) & !is.na(ref_GT)) %>%
+            mutate(
+                numeric_GT = ifelse(GT == './.', NA, str_count(GT, '1')),
+                numeric_GT_ref = ifelse(ref_GT == './.', NA, str_count(ref_GT, '1')),
+                pw_filter_apply = !use_filter | (FILTER == 'PASS' & ref_FILTER == 'PASS')
+            ) %>%
+            filter(GT != ref_GT & !is.na(GT) & !is.na(ref_GT) & pw_filter_apply) %>%
             as_tibble() %>%
             group_by(sample_id, seqnames) %>%
             summarise(
+                GT_distance = sum(
+                    abs(numeric_GT - numeric_GT_ref),
+                    na.rm = TRUE
+                ),
                 n_probes = n(),
                 span = max(end) - min(start),
             ) %>%
             summarise(
-                SNP_distance_to_reference = sum(n_probes),
+                SNP_pairwise_distance_to_reference = sum(GT_distance),
                 chromosomes_with_changes = paste(seqnames, collapse = ';'),
                 # break with ties by taking the first value (i.e. first chr)
                 chromsome_with_most_changes = paste0(
@@ -236,9 +248,9 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table){
                 )
             )
     } else {
-        snc_qc_tb <- tibble(
+        snv_qc_tb <- tibble(
             sample_id = sample_id,            
-            SNP_distance_to_reference = NA_real_,
+            SNP_pairwise_distance_to_reference = NA_real_,
             chromosomes_with_changes = NA_character_,
             chromsome_with_most_changes = NA_character_,
             chromsome_with_shortest_span = NA_character_
@@ -246,15 +258,15 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table){
     }
     
     # number of critical SNVs
-    snc_qc_tb$critical_snvs <- SNV_table %>%
+    snv_qc_tb$critical_snvs <- SNV_table %>%
         filter(SNV_label == 'critical') %>%
         nrow()
     
     # post filter SNPs
     n_filter_passed <- sum(sample_SNV_tb$FILTER == 'PASS')
-    snc_qc_tb$SNPs_post_filter <- paste0(
+    snv_qc_tb$SNPs_post_filter <- paste0(
         round(n_filter_passed/nrow(sample_SNV_tb) * 100, 2), '% (', n_filter_passed, ' SNPs)'
     )
     
-    snc_qc_tb
+    snv_qc_tb
 }

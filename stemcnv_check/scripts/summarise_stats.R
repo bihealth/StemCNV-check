@@ -56,7 +56,7 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             dplyr::select(sample_id, call_rate, computed_gender) %>%
             mutate(call_rate = round(call_rate, 3)),
         snp_qc_details %>%
-            dplyr::select(sample_id, SNPs_post_filter, SNP_distance_to_reference, critical_snvs),
+            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs),
         get_call_stats(sample_CNV_data, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
     )
     
@@ -75,9 +75,9 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
         mutate(
             qc_measure_list[[2]],
             SNPs_post_filter = NA_character_,
-            SNP_distance_to_reference = apply_greq_th(SNP_distance_to_reference, 'SNP_distance_to_reference', config),
+            SNP_pairwise_distance_to_reference = apply_greq_th(SNP_pairwise_distance_to_reference, 'SNP_pairwise_distance_to_reference', config),
             critical_snvs = ifelse(
-                is.na(SNP_distance_to_reference),
+                is.na(SNP_pairwise_distance_to_reference),
                 NA_character_,
                 apply_greq_th(critical_snvs, 'critical_snvs', config)
             )

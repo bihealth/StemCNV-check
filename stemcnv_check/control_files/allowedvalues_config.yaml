@@ -42,7 +42,7 @@ evaluation_settings:
     last_level_critical: list__str
     call_rate: list_len2__float__le1__ge0
     loss_gain_log2ratio: list_len2__int
-    SNP_distance_to_reference: list_len2__int
+    SNP_pairwise_distance_to_reference: list_len2__int
     # SNP_distance_to_reference_span: str
     critical_snvs: list_len2__int
     call_count_excl_filters: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
