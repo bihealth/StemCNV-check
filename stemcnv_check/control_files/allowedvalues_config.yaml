@@ -190,23 +190,22 @@ settings:
 
 
 allowed_sections:
-     - sample.information
-     - QC.summary
-     - QC.GenCall
-     - QC.PennCNV
-     - QC.CBS
-     - QC.settings
-     - SNV.table
-     - SNV.hotspot.coverage
-     - SNV.QC.details
-     - denovo_calls.table
-     - denovo_calls.plots
-     - reference_gt_calls.table
-     - reference_gt_calls.plots
-     - regions.of.interest
-     - virtual.karyotype
-     #- circo.plot
-     - SNP.dendrogram
+  - sample.information
+  - QC.summary
+  - QC.GenCall
+  - QC.PennCNV
+  - QC.CBS
+  - QC.settings
+  - SNV.table
+  - SNV.hotspot.coverage
+  - SNV.QC.details
+  - denovo_calls.table
+  - denovo_calls.plots
+  - reference_gt_calls.table
+  - reference_gt_calls.plots
+  - regions.of.interest
+  - SNP.dendrogram
+  - genome.overview
 
 allowed_plotsections:
   - denovo
@@ -234,8 +233,10 @@ reports:
     SNP_comparison:
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet
-      
-    ideogram.exclude_filter: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
+    
+    genome_overview:
+      call.exclude_filter: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
+      show_reference: bool
 
 wildcard_constraints:
   sample_id: str

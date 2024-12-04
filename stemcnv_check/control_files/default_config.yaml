@@ -404,7 +404,7 @@ reports:
     #  - reference_gt_calls.plots
     #  - regions.of.interest
     #  - SNP.dendrogram
-    #  - virtual.karyotype
+    #  - genome.overview
 
     # List of columns from the sample_table that should be included in the "Sample Information section"
     sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
@@ -446,6 +446,10 @@ reports:
       
     # Calls with any of these Filters are excluded from the digital karyotype plot
     ideogram.exclude_filter: ['min_size', 'min_probes', 'min_density']
+    
+    genome_overview:
+        call.exclude_filter: ['min_size', 'min_probes', 'min_density']
+        show_reference: True
 
 ##!complete
 # These contraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid

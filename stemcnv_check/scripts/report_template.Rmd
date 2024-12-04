@@ -44,6 +44,29 @@ params:
   height: 40px;
   width: 250px;
 }
+# collapsible text boxes
+details {
+  user-select: none;
+}
+details>summary span.icon {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s;
+  margin-left: auto;
+}
+details[open] summary span.icon {
+  transform: rotate(180deg);
+}
+summary {
+  display: flex;
+  cursor: pointer;
+  background-color:#eee;
+  color: #444;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+
 </style>
 
 
@@ -72,21 +95,6 @@ source(file.path(config$snakedir, 'scripts/R/hotspot_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/report_table_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/report_plotting_functions.R'))
 source(file.path(config$snakedir, 'scripts/R/vcf_io_functions.R'))
-
-include.section <- function(section) {
-    include <- ifelse(
-        all(report_config$include_sections == '__all__'), 
-        T,
-        section %in% report_config$include_sections
-    )
-    exclude <- section %in% report_config$exclude_sections
-    # also exclude QC sections if they are not defined in settings
-    include <- include & !(
-        str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & 
-        str_remove(section, 'QC\\.') %!in% config$settings$CNV.calling.tools
-    )
-    include & !exclude
-}
 
 # General variables & settings
 
@@ -135,11 +143,6 @@ gr_genes <- load_gtf_data(params$gtf_file, config, target_chrom_style)
 gr_info  <- load_genomeInfo(params$ginfo_file, config, target_chrom_style)
 
 roi_gr <- get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
-include_roi_plots <-  include.section('regions.of.interest') & ifelse(
-    'Regions_of_Interest' %in% colnames(sampletable), 
-    length(roi_gr) > 0, 
-    FALSE
-)
 
 stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot')
 dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(config$settings$CNV_processing$Check_score_values)
@@ -161,6 +164,28 @@ tr_tibble <- function(tb) {
 
 ## Rmd related functions
 
+
+include.section <- function(section) {
+    include <- ifelse(
+        all(report_config$include_sections == '__all__'), 
+        T,
+        section %in% report_config$include_sections
+    )
+    exclude <- section %in% report_config$exclude_sections
+    # also exclude QC sections if they are not defined in settings
+    include <- include & !(
+        str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & 
+        str_remove(section, 'QC\\.') %!in% config$settings$CNV.calling.tools
+    )
+    include & !exclude
+}
+
+include_roi_plots <-  include.section('regions.of.interest') & ifelse(
+    'Regions_of_Interest' %in% colnames(sampletable), 
+    length(roi_gr) > 0, 
+    FALSE
+)
+
 CNV_ID_str <- function(ID, i, region_name = NULL, ...) {
     #ROIs might have user defined names
     if(!is.null(region_name)) id_str <- paste0('roi-', region_name)
@@ -180,8 +205,8 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
     for (i in call.table$i) {
         
         row <- call.table[i,]
-        res <- make_LRR_BAF_plots(
-            row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info,
+        res <- make_call_plot(
+            row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info, sample_headers,
             report_config$call.data.and.plots[[plotsection]]$plot.region.minsize,
             report_config$call.data.and.plots[[plotsection]]$plot.flanking.region.relative
         )
@@ -234,6 +259,18 @@ subchunkify <- function(g, id, fig_height=7, fig_width=7, options = '') {
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
 }
 
+collapsible_html_text <- function(text, header = 'Description' ) {
+    paste0(
+        '<details>\n\n<summary>\n\n', header, '\n\n',
+        '<span class="icon">⇩</span>\n\n',
+        '</summary>\n\n',
+        '<p>\n\n',
+        text,
+        '</p>\n\n',
+        '</details>\n\n'
+    ) %>% cat()
+}
+
 ```
 
 
@@ -283,28 +320,28 @@ snv_critical_desc <- list(
     'any-protein-changing' = ' - changes the protein sequence'
 )
 
-
-cat(paste(
+paste(
     'This summary table is meant to serve as a quick overview of the quality of an hPSC sample. ',
-    'Note that without a reference sample all detected variants are considered "de-novo", even if most are likely from the original donor germline.\n\n',
+    'Note that without a reference sample all detected variants are considered "de-novo", even if most are likely from ',
+    'the original donor germline.\n\n',
     'Coloring of all fields is based on (usually) two thresholds defined in the config file (under the evaluation_settings section),',
     'one for a signalling (yellow) level, and one for a more serious warning (orange) or even critical (red) level. ',
     'Only certain values are potentially considered critical and are marked by bold text in the table, ',
     'which values behave like this is also defined in the config.\n\n',
-    'For assigning SNVs (as determined by the Chip Array) as critical, the SNV genotype needs to differs from reference ',
-    'sample (if one is defined) and (by default preselection) it needs to change protein sequence. ',
+    'For assigning SNVs (as determined by the Chip Array) as critical, the SNV genotype needs to differs from the ',
+    'reference sample (if one is defined) and (by default preselection) it needs to change the protein sequence. ',
     'Additionally one of the following criteria needs to be met:\n\n',
     paste(sapply(config$settings$SNV_analysis$critical_SNV, \(x){snv_critical_desc[[x]]}), collapse = '\n\n'), '\n\n',
     'CNV Call designation takes into account minimum Check_Score thresholds for critical and (optionally) reportable level, ',
     'and for exclusion overlap with a reference call (these calls are not denovo and never criticcal or reportable) and ',
     'call filter flags (i.e. calls below minimum size, or having a probe coverage gap). ',
-    'If no reportable Check_Score threshold is defined the critical one is used (but the reportable exclusion filters).\n\n',
+    'If no reportable Check_Score threshold is defined the critical one is used (but with the reportable exclusion filters).\n\n',
     'The current thresholds and exclsuion filters are:\n\n',
     ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n\n',
     ' - Critical exclusion Filters:', crit_excl_filters, '\n\n',
     ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.reportable, '\n\n',
     ' - Reportable exclusion Filters: ', repo_excl_filters, '\n\n'
-))
+) %>% collapsible_html_text('Summary table explanations')
 
 read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
@@ -316,6 +353,11 @@ cat('\n\n')
 
 ```{r qc.gencall, eval = include.section('QC.GenCall'), results='asis'}
 cat('### GenCall\n\n')
+
+paste(
+    'This table displays the direct quality metrics from the GenCall software.\n\n'
+)
+
 read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'gencall_stats'
@@ -326,6 +368,11 @@ cat('\n\n')
 
 ```{r qc.penncnv, eval = include.section('QC.PennCNV'), results='asis'}
 cat('### PennCNV\n\n')
+paste(
+    'The first table displays quality metrics from the PennCNV algorythm. ',
+    'The second displays CNV call statistcs for only PennCNV\n\n'
+)
+
 read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'PennCNV_QC_info'
@@ -342,6 +389,10 @@ cat('\n\n')
 
 ```{r qc.CBS, eval = include.section('QC.CBS'), results='asis'}
 cat('### CBS\n\n')
+paste(
+    'This table displays CNV call statistcs for only CBS.\n\n'
+)
+
 read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'CBS_stats'
@@ -388,10 +439,10 @@ raw_LRR_BAF <- c(params$input$snp_vcf, params$input$ref_snp_vcf) %>%
     fix_CHROM_format(target_chrom_style) %>%
     as_tibble() %>%
     #FIXME / future: adapt this
-    dplyr::rename(Chr = seqnames, Position = start, Name = ID,
+    dplyr::rename(Chr = seqnames, Position = start,
                   `B Allele Freq` = BAF, `Log R Ratio` = LRR) %>%
     mutate(filter.passed = FILTER == 'PASS') %>%
-    dplyr::select(sample_id, Name, Chr, Position, filter.passed, `Log R Ratio`, `B Allele Freq`) 
+    dplyr::select(sample_id, ID, Chr, Position, filter.passed, `Log R Ratio`, `B Allele Freq`) 
 
 cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
     sapply(fix_rel_filepath, config=config) %>%
@@ -573,6 +624,15 @@ snc_qc_tb <- params$inputs$snv_analysis %>%
 ```{r SNV.table, eval = include.section('SNV.table'), results='asis'}
 cat('## Table of SNVs\n\n')
 
+paste(
+    'This table lists all SNVs/SNPs detected by the Chip Array which are different from the reference genome and',
+    'are annotated at least as protein changing. The "SNV label" further categorizes the SNVs into critical,',
+    'unreliable critical (due to missing reference or bad quality calls), protein changing, and reference genotype.',    
+    'The hidden "Critical reason" column has further details on why a SNV is considered critical. These are also',
+    'highlighted in the "ROI Hits", "Gene Name" (curated hotspots for stem cells) and "Annotation" (specific effect of',
+    'the SNP on the protein) columns.\n\n'
+) %>% collapsible_html_text('SNV table explanations')
+
 snv_annotation_tb <- tibble(
     list_name = 'critical_annotations',
     hotspot = config$settings$SNV_analysis$critical_annotations,
@@ -685,7 +745,60 @@ cat('\n\n')
 ```
 
 
-# Sample comparison  {.tabset}
+# Sample comparison
+
+```{r genome.overview, eval = include.section('genome.overview'), results='asis'}
+
+cat('## Genome Overview {.tabset}\n\n')
+
+paste(
+    'The following plots each show a whole chromosome overview of the sample, combing to a whole genome view.',
+    'CNV calls (filtered based on the config settings) are shown as colored background bars, with the color indicating the',
+    'type of call: green for gains, red for losses, and grey for LOH.',
+    'Additionally, if the sample has a reference, SNVs that are labelled critical or protein changing/unreliable',
+    'critical are also highlighted in red and orange, respectively.\n\n'
+) %>% collapsible_html_text('Genome overview explanations')
+
+if (!is.na(ref_id)) {
+    label_SNVs <- SNV_table %>%
+        filter(SNV_label != 'reference_GT') %>%
+        mutate(
+            sample_id = sample_id,
+            color = ifelse(SNV_label == 'critical', 'red', 'orange')
+        )
+} else {
+    label_SNVs <- SNV_table %>% mutate(color = 'red', sample_id = sample_id) %>% filter(SNV_label == 'dummy')
+}
+
+call_filter_regex <- ifelse(
+    is.null(report_config$genome_overview$call.exclude_filter),
+    'dummy',
+    report_config$genome_overview$call.exclude_filter %>% paste(collapse = '|')
+)
+filtered_calls <- cnv_calls %>%
+    filter(!str_detect(FILTER, call_filter_regex))
+
+for (chrom in levels(raw_LRR_BAF$Chr) %>% str_subset('M', T)) {
+    cat('### ', chrom, '\n\n')
+    
+    subchunkify(
+        make_chromsome_overview_plot(chrom, sample_headers[1], label_SNVs, raw_LRR_BAF, filtered_calls, gr_info),
+        paste0('chromosome_overview.', chrom), 5, 12
+    )
+    
+    if (!is.na(ref_id) & report_config$genome_overview$show_reference) {
+        subchunkify(
+            make_chromsome_overview_plot(chrom, sample_headers[2], label_SNVs, raw_LRR_BAF, filtered_calls, gr_info),
+            paste0('chromosome_overview.ref.', chrom), 5, 12
+        )
+    }
+    
+    cat('\n\n')
+}
+
+cat('\n\n')
+
+```
 
 ```{r snp.dendrogram, results='asis', eval = include.section('SNP.dendrogram')}
 
@@ -698,23 +811,23 @@ snp.distance.tb <-  read_excel(
 
 if (nrow(snp.distance.tb) == 1) {
     
-    cat('No additional samples found for the comparison, no dendrogram can be built.\n\n')
+    cat('No additional samples used for comparison, no dendrogram can be built.\n\n')
     
 } else {
     
-    cat(
-        'Sample identities can be comparsed based on the dendrogram built on the SNP genotypes. ',
-        'The dendrogram is built using the manhattan distance between samples, counting both alleles ',
-        'from Probes that are not quality in every included sample. ',
-        'Accoringly, the distance between two samples is the sum of the absolute differences between the two ',
-        'alleles at each SNP (also shown in the table below) after QC filters. ',
-        'Samples that are very close together are likely identical or clonally related. ',
+    paste(
+        'Sample identities can be comparsed based on the dendrogram built on the SNP genotypes.',
+        'The dendrogram is built using the manhattan distance between samples, counting both alleles',
+        'from Probes that are not quality in every included sample.',
+        'Accoringly, the distance between two samples is the sum of the absolute differences between the two',
+        'alleles at each SNP (also shown in the table below) after QC filters.',
+        'Samples that are very close together are likely identical or clonally related.',
         'Sample selection as well as color and shape lables are controlled by the config file.\n\n'
-    )
+    ) %>% collapsible_html_text('Dendrogram explanations')
     
     #Build annotation table
-    color_by <- report_config$SNP_comparison$dendrogram.color.by #%>% check_cols_exits()
-    shape_by <- report_config$SNP_comparison$dendrogram.shape.by #%>% check_cols_exits()
+    color_by <- report_config$SNP_comparison$dendrogram.color.by
+    shape_by <- report_config$SNP_comparison$dendrogram.shape.by
     dend.format.df <- sampletable %>%
         filter(Sample_ID %in% snp.distance.tb$sample_distance_to)
     
@@ -876,90 +989,5 @@ if (nrow(snp.distance.tb) == 1) {
         simple_table_output(params$out_format, paste0('Distances to "', sample_id, '"'))
 
 }
-
-```
-
-```{r virtual.karyotype, eval = include.section('virtual.karyotype'), results='asis'}
-
-cat('## Virtual Karyotype\n\n')
-
-if (!is.na(ref_id)) {
-    cat(str_glue('The first plot shows only this sample ({sample_name}), the second a side by side comparison  with the reference sample (left: {sample_name}; right: {ref_name}).\n\n'))
-}
-
-# Use prepared static data table (genome build specific, UCSC derived) instead of inbuilt RIdeogram
-# data(human_karyotype, package="RIdeogram")
-genome_data <- gr_info %>% 
-    filter(centromer) %>%
-    group_by(size) %>%
-    reduce_ranges() %>%
-    as.data.frame() %>%
-    dplyr::rename(Chr = seqnames, CE_start = start, CE_end = end, End = size) %>%
-    mutate(Start = 0, Chr = str_remove(Chr, 'chr')) %>%
-    select(Chr, Start, End, CE_start, CE_end)
-
-
-ideo_filter_regex <- ifelse(
-    is.null(report_config$ideogram.exclude_filter),
-    'dummy',
-    report_config$ideogram.exclude_filter %>% paste(collapse = '|')
-)
-sample.calls <- cnv_calls %>%
-    filter(!str_detect(FILTER, ideo_filter_regex)) %>%
-    dplyr::select(seqnames, start, end, CNV_type, sample_id) %>%
-    dplyr::rename(Chr = seqnames, Start = start, End = end) %>%
-    mutate(Value = ifelse(CNV_type %!in% c('gain', 'loss'), 0, 1),
-           Value = ifelse(CNV_type == 'loss', -1, Value),
-           Chr = str_remove(Chr, 'chr'))
-overlay.tb <- sample.calls %>%
-    filter(sample_id == !!sample_id) %>%
-    dplyr::select(Chr, Start, End, Value)
-
-#This should not be the case unless there are 0 calls that generated images
-if (!dir.exists(file.path(workdir, image_folder))) {
-    dir.create(file.path(workdir, image_folder))
-}
-
-svg_file1 <- tempfile(fileext = '.svg')
-#somehow 'convertSVG' can't deal with absolute paths
-png_file1 <- file.path(image_folder, 'virtualKaryotype_ideogram.png')
-
-ideogram(genome_data, overlaid = overlay.tb, colorset1 = c('red', 'grey50', 'green'), output = svg_file1)
-convertSVG(svg_file1, file = png_file1)
-
-if (params$out_format == 'html') {
-    cat(paste0('<img src="', png_file1, '" width="800" />'))
-} else {
-    #For reasons tiny-tex/latex executes from the directoy this template is located in (rather than the defined outdir), so relative paths don't work for pdf
-    include_graphics(file.path(workdir, png_file1) %>% normalizePath, rel_path = FALSE)
-}
-
-if (!is.na(ref_id)) {
-    refdata <- sample.calls %>%
-        filter(sample_id == ref_id) %>%
-        dplyr::select(Chr, Start, End, Value)
-
-    svg_file2 <- tempfile(fileext = '.svg')
-    png_file2 <- file.path(image_folder, 'virtualKaryotype_ideogram_vsRef.png')
-
-    ideogram(
-        genome_data,
-        overlaid = overlay.tb,
-        label = refdata,
-        label_type = 'heatmap',
-        colorset1 = c('red', 'grey50', 'green'),
-        colorset2 = c('red', 'grey50', 'green'), 
-        output = svg_file2
-    )
-    convertSVG(svg_file2, file = png_file2)
-
-    if (params$out_format == 'html') {
-        cat(paste0('<img src="', png_file2, '" width="800" />'))
-    } else {
-        include_graphics(file.path(workdir, png_file2) %>% normalizePath, rel_path = FALSE)
-    }
-}
-
-cat('\n\n')
 
 ```
