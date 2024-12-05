@@ -444,15 +444,13 @@ reports:
       dendrogram.color.by: 'Chip_Name'
       dendrogram.shape.by: 'Chip_Name'
       
-    # Calls with any of these Filters are excluded from the digital karyotype plot
-    ideogram.exclude_filter: ['min_size', 'min_probes', 'min_density']
-    
     genome_overview:
+        # Calls with any of these Filters are excluded from the overview plots
         call.exclude_filter: ['min_size', 'min_probes', 'min_density']
         show_reference: True
 
 ##!complete
-# These contraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid
+# These constraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid
 # Edit at your own risk!: if sample_ids to not match this constraint, they will not be run and errors might not be intuitive
 wildcard_constraints:
   sample_id: "[a-zA-Z0-9-_]+"
