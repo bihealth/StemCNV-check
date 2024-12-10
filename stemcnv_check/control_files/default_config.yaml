@@ -156,8 +156,8 @@ settings:
     call.merging:
       merge.gap.absolute: 500
       merge.gap.snps: 10
-      call.extension.percent: 20
-      maximum.gap.allowed: 100000
+      call.extension.percent: 60
+      maximum.gap.allowed: 500000
     # Prefiltering of calls is done (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5
@@ -176,8 +176,8 @@ settings:
     call.merging:
       merge.gap.absolute: 500
       merge.gap.snps: 10
-      call.extension.percent: 20
-      maximum.gap.allowed: 100000
+      call.extension.percent: 60
+      maximum.gap.allowed: 500000
     # Prefiltering of calls is done (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5
