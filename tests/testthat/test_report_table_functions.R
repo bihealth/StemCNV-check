@@ -16,6 +16,7 @@ source(test_path("../../stemcnv_check/scripts/R/report_table_functions.R"))
 # - [ ] CNV_table_output
 # - [ ] gene_table_output
 # - [x] hotspot_table_output
+# - [ ] SNV_table_output
 
 config <- list(
     'snakedir' = '',
@@ -109,8 +110,8 @@ test_that("hotspot_table_output", {
         ) %>%
         datatable(
             options = list(
-                dom = 'Bt', 
-                extensions = c('Buttons'),
+                dom = 't', 
+                #extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = 2,
                 columnDefs = list(list(targets = 5:6, visible = FALSE))
@@ -170,8 +171,8 @@ test_that("hotspot_table_output", {
         ) %>%
         datatable(
             options = list(
-                dom = 'Bt', 
-                extensions = c('Buttons'),
+                dom = 't', 
+                # extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = 3,
                 columnDefs = list(list(targets = 5:6, visible = FALSE))

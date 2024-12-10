@@ -230,6 +230,9 @@ reports:
         plot.flanking.region.relative: float_ge0
         plot.region.minsize: float_ge10000
 
+    SNV_analysis:
+      critical_reasons_with_red_highlight: list__str__(ROI-match|hotspot-match|hotspot-gene|critical_annotation|any-protein-changing)
+
     SNP_comparison:
       dendrogram.color.by: str_insamplesheet
       dendrogram.shape.by: str_insamplesheet

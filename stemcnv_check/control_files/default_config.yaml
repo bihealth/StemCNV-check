@@ -135,19 +135,6 @@ settings:
       GenCallScore:  0.7 # Anything above this should be a stable genotype call
       Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
       Pseudoautosomal: remove-male # keep|remove|remove-male
-    ## Other filter settings we have tested:
-    ## This is closest to other Illumina defaults, but susceptible to noise
-    # basic:
-    #   GenTrainScore: 0
-    #   GenCallScore:  0.2 # Illumina recommended minimum
-    #   Position.duplicates: keep # keep|remove|highest-GenCall|highest-GenTrain
-    #   pseudoautosomal: keep
-    # This filter results in somewhat higher precision, but lower recall
-    # full:
-    #   GenTrainScore: 0.8
-    #   GenCallScore:  0.8
-    #   Position.duplicates: remove # keep|remove|highest-GenCall|highest-GenTrain
-    #   pseudoautosomal: remove
 
   # Default filter set to use for all tools
   default-filter-set: extended
@@ -320,7 +307,7 @@ settings:
         HighSNPDensity: -0.1
   
   SNV_analysis:
-    filter-settings: 'none' # "_default_", Filterset name, or "none"
+    filter-settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even use chrY on female samples
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
     flag_GenCall_minimum: 0.2
     critical_SNV:
@@ -438,6 +425,11 @@ reports:
         <<: *default_plot_settings
       regions_of_interest:
         <<: *default_plot_settings
+
+    SNV_analysis:
+      critical_reasons_with_red_highlight:
+        - 'ROI-match'
+        - 'hotspot-match'
 
     SNP_comparison:
       # You can also use additional metadata columns from the sample table, i.e. "Sample_Group"

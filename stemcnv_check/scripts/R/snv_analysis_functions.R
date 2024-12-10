@@ -229,31 +229,36 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, us
                     abs(numeric_GT - numeric_GT_ref),
                     na.rm = TRUE
                 ),
-                n_probes = n(),
                 span = max(end) - min(start),
             ) %>%
-            summarise(
-                SNP_pairwise_distance_to_reference = sum(GT_distance),
-                chromosomes_with_changes = paste(seqnames, collapse = ';'),
-                # break with ties by taking the first value (i.e. first chr)
-                chromsome_with_most_changes = paste0(
-                    seqnames[n_probes == max(n_probes)][1], ': ',
-                    max(n_probes), ' SNPs (over ',
-                    format_size(span[n_probes == max(n_probes)][1]), ')'
-                ),
-                chromsome_with_shortest_span = paste0(
-                    seqnames[span == min(span)][1], ': ',
-                    n_probes[span == min(span)][1], ' SNPs (over ',
-                    format_size(min(span)), ')'
+            # Keep per chromsome info
+            mutate(
+                SNP_pairwise_distance_to_reference = sum(GT_distance),                
+                chromosome = paste0(
+                    case_when(
+                        GT_distance == max(GT_distance) & span == min(span) ~ '[Most changes, Shortest span] ',
+                        GT_distance == max(GT_distance) ~ '[Most changes] ',
+                        span == min(span) ~ '[Shortest span] ',
+                        TRUE ~ ''
+                    ),                    
+                    seqnames, ': ',
+                    GT_distance, ' SNPs (over ',
+                    format_size(span), ')'                    
                 )
+            ) %>%
+            select(
+                sample_id,
+                SNP_pairwise_distance_to_reference,
+                chromosome
             )
     } else {
         snv_qc_tb <- tibble(
             sample_id = sample_id,            
             SNP_pairwise_distance_to_reference = NA_real_,
-            chromosomes_with_changes = NA_character_,
-            chromsome_with_most_changes = NA_character_,
-            chromsome_with_shortest_span = NA_character_
+            chromosome = NA_character_
+            # chromosomes_with_changes = NA_character_,
+            # chromsome_with_most_changes = NA_character_,
+            # chromsome_with_shortest_span = NA_character_
         )
     }
     

@@ -47,7 +47,7 @@ apply_greq_th <- function(datacol, measure, config){
     )
 }
 
-get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV_data, config) {
+get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV_gr, config) {
     
     sample_id <- unique(gencall_stats$sample_id)
 
@@ -56,8 +56,9 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             dplyr::select(sample_id, call_rate, computed_gender) %>%
             mutate(call_rate = round(call_rate, 3)),
         snp_qc_details %>%
-            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs),
-        get_call_stats(sample_CNV_data, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
+            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs) %>%
+            unique(),
+        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
     )
     
     callrate_warnings <- config$evaluation_settings$summary_stat_warning_levels$call_rate
@@ -87,13 +88,18 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             mutate(across(where(is.numeric), ~apply_greq_th(., cur_column(), config)))
     )
     
-    full_join(        
+    tb <- full_join(        
         purrr::reduce(qc_measure_list, full_join, by = 'sample_id') %>%
             tr_sample_tb() %>%
             dplyr::rename(sample_value = Value), 
         purrr::reduce(qc_eval_list, full_join, by = 'sample_id') %>%
             tr_sample_tb() %>%
             dplyr::rename(sample_eval = Value)
+    )
+    # Sort the "critical" columns together
+    bind_rows(
+        tb %>% filter(Description != 'critical_snvs'),
+        tb %>% filter(Description == 'critical_snvs')
     )
 }
 

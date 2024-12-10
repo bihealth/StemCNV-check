@@ -22,9 +22,7 @@ format_column_names <- function(n) {
         str_replace('Cdna', 'cDNA') %>% 
         str_replace('Cds', 'CDS') %>% 
         str_replace('Aa', 'AA') %>% 
-        
-        
-        
+        str_replace('Hgvs', 'HGVS') %>%
         str_replace('Lrr', 'LRR') %>%
         str_replace('Roi', 'ROI') %>%
         str_replace('Id', 'ID')
@@ -98,7 +96,6 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
                 'Increased values can indicate a sample swap or a considerable number of genomic mutations between ',
                 'sample and references.'
             ),
-            "Critical SNVs" = 'The number of detected SNVs designated as "critical".',
             "Loss Gain Log2ratio" = paste0(
                 'The log2 transformed ratio of loss and gain CNV calls.\\n',
                 'Deviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
@@ -119,6 +116,10 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
                 "Critical Calls LOH" = 'The number of LOH calls designated as "critical".'
             )
         }
+        summary_row_help <- c(summary_row_help,
+            "Critical SNVs" = 'The number of detected SNVs designated as "critical".'
+        )
+        
         datatable(Combined.metrics,
             options = list(
                 dom = 't',
@@ -286,13 +287,14 @@ CNV_table_output <- function(
             'Number of the CNV call, sorted by descending Check_Score',
             paste0(
                 'Link to the plot of the CNV call\\nNote: For the Top',
-                paste(
-                    report_config$call.data.and.plots[[plotsection]]$min_number_plots, 
+                report_config$call.data.and.plots[[plotsection]]$min_number_plots, 
+                ' or  all ',
+                paste( 
                     always_include,
                     collapse = '/'
                 ),
                 ' CNVs clicking on the link will switch the active plot below. ',
-                'For other CNVs it will open the plot in a new browser tab.'
+                'For other CNVs it will open an externally saved plot in a new browser tab.'
             ),
             'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
             'Check_Score of the CNV call, calculated based on size, overlap with stemcell_hotspot, dosage_sensivity or cancer_gene list, or other genes',
@@ -302,7 +304,7 @@ CNV_table_output <- function(
             'Genome bands overlapping the CNV call',
             'Start position of the CNV call',
             'End position of the CNV call',
-            'Caller tools detecting this CNV call',
+            'CNV caller tools detecting this CNV call',
             'Stemcell hotspots overlapping with this CNV call',
             'Dosage sensitive genes overlapping with this CNV call',
             'Cancer genes overlapping with this CNV call',
@@ -310,10 +312,10 @@ CNV_table_output <- function(
             #FIXME (future): add a doi for precision benchmark once available
             'Precision estimate of the CNV call, based on internal benchmarking',
             paste0(
-                'Call has a gap in probe coverage\\nBased on percentage of call without probes and size of the call. ',
-                'See config min.perc.gap_area and gap_area.uniq_probes.rel for details'
+                'Call has a gap in probe coverage.\\nBased on percentage of call without probes and size of the call. ',
+                'Based on `min.perc.gap_area` and `gap_area.uniq_probes.rel` from config settings:CNV_processing:call_processing'
             ),
-            'Call has higher probe density than {density.quantile.cutoff} percent of the the array',
+            'Call has higher probe density than `density.quantile.cutoff` percent of the the array (from config settings:CNV_processing:call_processing)',
             '(Estimated) copy number of the CNV call',
             'Median Log R Ratio of the CNV call',
             'Number of SNP probes (post filtering) in the CNV call area',
@@ -456,8 +458,8 @@ hotspot_table_output <- function(
                 rename_with(format_column_names),
             caption = caption,
             options = list(
-                dom = 'Bt', 
-                extensions = c('Buttons'),
+                dom = 't', 
+                #extensions = c('Buttons'),
                 buttons = c('colvis', 'copy', 'print'),
                 pageLength = nrow(tb),
                 # DT cols are 0-indexed, 1 col removed
@@ -477,5 +479,141 @@ hotspot_table_output <- function(
                 caption = caption
             )
         )
+    }
+}
+
+
+SNV_table_output <- function (
+    SNV_table, 
+    roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
+    config, report_config, out_format = 'html', caption = NULL
+){
+
+    get_color <- function(crit_reason) {
+        ifelse(
+            crit_reason %in% report_config$SNV_analysis$critical_reasons_with_red_highlight,
+            'red',
+            'orange'
+        )
+    }
+    
+    tb <- SNV_table %>%
+        dplyr::rename(Chromosome = seqnames, Position = start) %>%
+        mutate(
+            SNV = paste0(Chromosome, ':', format(Position, big.mark='.', decimal.mark = ','), ':', REF, '>', ALT),
+        )
+
+    if (out_format == 'html') {
+        
+        column_help_text <- c(
+            'Chromosome of the SNV/SNP',
+            'Position of the SNV/SNP',
+            'SNV/SNP in the format "Chr:Pos:REF>ALT"',
+            'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
+            'Designation label for the SNV/SNP (critical, unrelaible critical, protein_changing, reference_genotype)',
+            'Reason for the critical designation label (see config:settings:SNV_analysis:critical_SNV)',
+            'Reference allele of the SNV/SNP',
+            'Alternative allele of the SNV/SNP',
+            'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
+            'Reference sample genotype of the SNV/SNP for 2 Allels (0 - allele, 1 - alternative allele)',
+            'Regions of interest overlapping with this SNV/SNP',
+            'Gene name affected by the SNV/SNP',
+            'Effect/Annotation of the SNV/SNP on the gene (from mehari)',
+            'Ensembl ID of the selected transcript for the affected gene',
+            'Description of the selected transcript.\\nNote: ManeSelect designates the (medically) primary transcript of a gene.',
+            'HGVS.c notation of the mutation/effect of the SNV/SNP on the transcript',
+            'HGVS.p notation of the mutation/effect of the SNV/SNP on the protein',
+            'GenTrain Score of the SNV/SNP',
+            'GenCall Score of the SNV/SNP',
+            'GenCall Score of the SNV/SNP in the reference sample'            
+        )
+        
+        dt <- tb %>%
+            mutate(
+                across(c(Chromosome, SNV_label, critical_reason), as.factor),
+                ROI_hits = ifelse(
+                    critical_reason == 'ROI-match' & !is.na(critical_reason),
+                    map_chr(
+                        ROI_hit,
+                        \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), get_color('ROI-match'))
+                    ),
+                    ROI_hits
+                ),
+                HGVS.p = ifelse(
+                    critical_reason == 'hotspot-match' & !is.na(critical_reason),
+                    map_chr(
+                        HGVS.p,
+                        \(x) format_hotspots_to_badge(x, 'any', mutation_snv_hotspots, get_color('hotspot-match'))
+                    ),
+                    HGVS.p
+                ),
+                gene_name = ifelse(
+                    critical_reason == 'hotspot-gene' & !is.na(critical_reason),
+                    map_chr(
+                        gene_name,
+                        \(x) format_hotspots_to_badge(x, 'any', gene_snv_hotspots, get_color('hotspot-gene'))
+                    ),
+                    gene_name
+                ),
+                Annotation = ifelse(
+                    critical_reason == 'critical_annotation' & !is.na(critical_reason),
+                    map_chr(
+                        str_replace_all(Annotation, '&', '|'), 
+                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical_annotation'))
+                    ),
+                    Annotation
+                ) %>%
+                    str_replace_all('\\|', ', ')
+            ) %>%
+            select(
+                # 0-5
+                Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
+                # 6-9
+                REF, ALT, GT, ref_GT,
+                # 10-16
+                ROI_hits, gene_name, Annotation, Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
+                # 17-19
+                GenTrain_Score, GenCall_Score, ref_GenCall_Score
+            ) %>%
+            rename_with(format_column_names) %>%
+            datatable(
+                rownames = FALSE,
+                escape = FALSE,
+                extensions = c('Buttons', 'Scroller'),
+                filter = 'top',
+                caption = caption,
+                options = list(
+                    scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
+                    dom = 'Bftilp',
+                    buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+                    #FIXME: column width restrictions don't work properly
+                    # autoWidth = TRUE, # necessary for columnDefs/width to work
+                    # fixedColumns = TRUE,
+                    columnDefs = list(
+                        #This uses 0-indexing vs the usual R 1-indexing
+                        list(targets = c(0:1,3,5:7,13:15,17,19), visible = FALSE)
+                        # list(targets = c(12), width = '300px'),
+                        # list(targets = c(15,16), width = '200px')
+                    )
+                ),
+                callback = JS(
+                    "var info_text = ", vector_to_js(column_help_text), ";",
+                    "header = table.columns().header();",
+                    "for (var i = 0; i < info_text.length; i++) {",
+                    "  $(header[i]).attr('title', info_text[i]);",
+                    "};"
+                )
+            ) %>%
+            formatRound(c('Position'), digits = 0, mark = '.')
+        return(dt)
+    } else {
+        tb <- tb %>%
+            select(
+                SNV, SNV_label, critical_reason, GT, ref_GT,
+                ROI_hits, gene_name, Annotation, HGVS.p,
+                GenCall_Score
+            ) %>%
+            rename_with(format_column_names)
+        return(kable(tb, caption = caption))
     }
 }

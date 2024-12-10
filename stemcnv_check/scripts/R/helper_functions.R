@@ -32,7 +32,12 @@ read_sampletable <- function(filename, col_remove_regex = NA) {
         tb <- read_csv(filename, comment = '#', show_col_types = F) 
     } else if (str_detect(filename, '\\.xlsx$')) {
         tb <- read_excel(filename) %>%
-            filter(!str_detect(pick(1), '^#'))
+            # read_excel doesn't support the 'comment' flag
+            # need to recreate that behaviour while properly handling (NA) an empty first column
+            filter(if_any(1, ~!str_detect(
+                ifelse(is.na(.), '', as.character(.)),
+                '^#')
+            ))
     } else stop(paste('Unsupported file format:', filename))
     
     # Optional removal/editing of columns with a regex

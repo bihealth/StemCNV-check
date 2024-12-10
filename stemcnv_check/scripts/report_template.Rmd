@@ -283,7 +283,7 @@ cat('## Sample Information\n\n')
 info.tb <- sampletable %>%
   filter(Sample_ID %in% c(sample_id, ref_id)) %>%
   dplyr::select(Sample_ID, Sex, Reference_Sample, Array_Name, any_of(report_config$sample.info.extra.cols)) %>%
-  mutate(`Analysis run date` = Sys.Date()) %>%
+  mutate(`Analysis run date` = Sys.Date()) %>% 
   tr_tibble() %>%
   dplyr::select(-starts_with('Reference ('))
 
@@ -354,7 +354,7 @@ cat('\n\n')
 ```{r qc.gencall, eval = include.section('QC.GenCall'), results='asis'}
 cat('### GenCall\n\n')
 
-paste(
+cat(
     'This table displays the direct quality metrics from the GenCall software.\n\n'
 )
 
@@ -368,7 +368,7 @@ cat('\n\n')
 
 ```{r qc.penncnv, eval = include.section('QC.PennCNV'), results='asis'}
 cat('### PennCNV\n\n')
-paste(
+cat(
     'The first table displays quality metrics from the PennCNV algorythm. ',
     'The second displays CNV call statistcs for only PennCNV\n\n'
 )
@@ -389,7 +389,7 @@ cat('\n\n')
 
 ```{r qc.CBS, eval = include.section('QC.CBS'), results='asis'}
 cat('### CBS\n\n')
-paste(
+cat(
     'This table displays CNV call statistcs for only CBS.\n\n'
 )
 
@@ -509,14 +509,21 @@ reference_calls.table <- cnv_calls %>%
 
 ```{r denovo_calls.header, eval = include.section('denovo_calls.table') | include.section('denovo_calls.plots'), results='asis'}
 cat('## de-novo CNV calls {.tabset .tabset-pills}\n\n')
-cat('This section describes all de-novo CNV calls, meaning calls without a match in the reference sample.\n\n')
+paste(
+    'This section describes all de-novo CNV calls, meaning calls without a match in the reference sample.',
+    'The table allows sorting and filtering the calls by various criteria, default is sorting by Check-Score.',
+    'Hovering over the column headers gives explanations for each column and the "Column visibility" button can be',
+    'used to change the default selection of visible columns.\n\n',
+    'The section immediately below the table contains details for each CNV call, including a plot of the CNV region,',
+    '(if relevant) a table of annotated genes and hotspots, and a table of all genes overlapping the CNV (or plot region).\n\n'
+) %>% collapsible_html_text('de-novo CNV calls table')
 ```
 
 ```{r denovo_calls.table, results='asis', eval = include.section('denovo_calls.table')}
 CNV_table_output(
     denovo_calls.table, 'denovo',
     stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
-    gr_info, report_config, caption = 'de-novo CNV calls'
+    gr_info, report_config#, caption = 'de-novo CNV calls'
 )
 cat('\n\n')
 ```
@@ -527,14 +534,22 @@ cat('\n\n')
 ```
 ```{r reference_gt_calls.header, eval = !is.na(ref_id) & (include.section('reference_gt_calls.table') | include.section('reference_gt_calls.plots')), results='asis'}
 cat('## Reference genotype CNV calls {.tabset .tabset-pills}\n\n')
-cat('This section describes all CNV calls that match the reference sample.\n\n')
+paste(
+    'This section describes all reference CNV calls, meaning calls for which a match in the reference sample was found.',
+    str_glue(
+        'Matching of CNV calls is based on a minimum of at least ',
+        '{config$settings$CNV_processing$call_processing$min.reciprocal.coverage.with.ref}% ',
+        'reciprocal overlap between sample and reference.\n\n'
+    ),
+    'Otherwise this section uses the same layout as to the de-novo calls section.\n\n'
+) %>% collapsible_html_text('reference genotype CNV calls table')
 ```
 
 ```{r reference_gt_calls.table, results='asis', eval = !is.na(ref_id) & include.section('reference_gt_calls.table')}
 CNV_table_output(
     reference_calls.table, 'reference_gt',
     stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
-    gr_info, report_config, caption = 'reference genotype CNV calls'
+    gr_info, report_config#, caption = 'reference genotype CNV calls'
 )
 cat('\n\n')
 ```
@@ -546,7 +561,10 @@ cat('\n\n')
 
 ```{r regions_of_interest, eval=include_roi_plots, results='asis'}
 cat('## Regions of Interest {.tabset .tabset-pills}\n\n')
-cat(str_glue('This section includes all regions of interest defined for {sample_name}. \n\n\n\n'))
+cat(str_glue(
+    'This section includes all regions of interest defined for {sample_name}. ',
+    'It uses the same layout as the other CNV call sections.\n\n\n\n'
+))
 
 roundup_oom <- function(x) {10^(ceiling(log10(x)))}
 
@@ -595,7 +613,7 @@ fake_call_tb <- roi_gr %>%
 CNV_table_output(
     fake_call_tb, 'regions_of_interest', 
     stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
-    gr_info, report_config, caption = 'Regions of Interest'
+    gr_info, report_config#, caption = 'Regions of Interest'
 )
 make_CNV_plot_section(fake_call_tb, 'regions_of_interest')
 
@@ -626,11 +644,17 @@ cat('## Table of SNVs\n\n')
 
 paste(
     'This table lists all SNVs/SNPs detected by the Chip Array which are different from the reference genome and',
-    'are annotated at least as protein changing. The "SNV label" further categorizes the SNVs into critical,',
-    'unreliable critical (due to missing reference or bad quality calls), protein changing, and reference genotype.',    
-    'The hidden "Critical reason" column has further details on why a SNV is considered critical. These are also',
-    'highlighted in the "ROI Hits", "Gene Name" (curated hotspots for stem cells) and "Annotation" (specific effect of',
-    'the SNP on the protein) columns.\n\n'
+    'are annotated as at least protein changing. The "SNV label" further categorizes the SNVs into critical,',
+    'unreliable critical (due to missing reference or bad quality calls), protein changing, and reference genotype.\n\n',
+    'The table allows sorting and filtering the SNPs by various criteria, default is sorting by the `SNV Label`.',
+    'Hovering over the column headers gives explanations for each column and the "Column visibility" button can be',
+    'used to show (or hide) columns.',    
+    'I.e. the "Critical reason" column, which contains a text label showing why an SNV is labelled critical.',
+    'This information is displayed by the color highlights of these columns:\n\n',
+    ' - "ROI Hits", displaying overlap with sample specific annotation\n\n',
+    ' - "Gene Name", hits in genes thta have known hotspots for stem cells, see also the next "SNV hotspot coverage" tab\n\n',
+    ' - "Annotation", specific effect of the SNP on the gene based on mehari\n\n',
+    ' - "HGVS.p", specific mutation in the proteion, which may overlap with a known stemcell hotspot (see also next tab)\n\n'
 ) %>% collapsible_html_text('SNV table explanations')
 
 snv_annotation_tb <- tibble(
@@ -647,70 +671,11 @@ gene_snv_hotspots <- snv_hotspot_tb %>%
 mutation_snv_hotspots <- snv_hotspot_tb %>%
     mutate(hotspot = HGVS.p)
 
-#FIXME: don't hardcode colors here, as config may change critical reasons order
-SNV_table %>%
-    dplyr::rename(Chromosome = seqnames, Position = start) %>%
-    mutate(
-        SNV = paste0(Chromosome, ':', format(Position, big.mark='.', decimal.mark = ','), ':', REF, '>', ALT),
-        across(c(Chromosome, SNV_label, critical_reason), as.factor),
-        ROI_hits = ifelse(
-            critical_reason == 'ROI-match' & !is.na(critical_reason),
-            map_chr(ROI_hit, \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), 'red')),
-            ROI_hits
-        ),
-        HGVS.p = ifelse(
-            critical_reason == 'hotspot-match' & !is.na(critical_reason),
-            map_chr(HGVS.p, \(x) format_hotspots_to_badge(x, 'any', mutation_snv_hotspots, 'red')),
-            HGVS.p
-        ),
-        gene_name = ifelse(
-            critical_reason == 'hotspot-gene' & !is.na(critical_reason),
-            map_chr(gene_name, \(x) format_hotspots_to_badge(x, 'any', gene_snv_hotspots, 'orange')),
-            gene_name
-        ),
-        Annotation = ifelse(
-            critical_reason == 'critical_annotation' & !is.na(critical_reason),
-            map_chr(
-                str_replace_all(Annotation, '&', '|'), 
-                \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, 'orange')
-            ),
-            Annotation
-        ) %>%
-            str_replace_all('\\|', ', '),
-    ) %>%
-    select(
-        # 0-5
-        Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
-        # 6-9
-        REF, ALT, GT, ref_GT,
-        # 10-16
-        ROI_hits, gene_name, Annotation, Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
-        # 17-19
-        GenTrain_Score, GenCall_Score, ref_GenCall_Score
-    ) %>%
-    rename_with(format_column_names) %>%
-    datatable(
-        rownames = FALSE,
-        escape = FALSE,
-        extensions = c('Buttons', 'Scroller'),
-        filter = 'top',
-        # caption = caption,
-        options = list(
-            scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
-            dom = 'Bftilp',
-            buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
-            #FIXME: column width restrictions don't work properly
-            # autoWidth = TRUE, # necessary for columnDefs/width to work
-            # fixedColumns = TRUE,
-            columnDefs = list(
-                #This uses 0-indexing vs the usual R 1-indexing
-                list(targets = c(0:1,3,5:7,13:15,17,19), visible = FALSE)
-                # list(targets = c(12), width = '300px'),
-                # list(targets = c(15,16), width = '200px')
-            )
-        )
-    ) %>%
-    formatRound(c('Position'), digits = 0, mark = '.')
+SNV_table_output(
+    SNV_table, 
+    roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
+    config, report_config, params$out_format #, caption
+)
     
 cat('\n\n')
 
@@ -718,8 +683,6 @@ cat('\n\n')
 
 ```{r SNV.hotspot.coverage, eval = include.section('SNV.hotspot.coverage'), results='asis'}
 cat('## SNV hotspot coverage\n\n')
-# TODO: line breaks
-# TODO: badges // description links from hotspot table
 
 full_join(
     snv_hotspot_tb %>% select(gene_name, description_htmllinks) %>% 
@@ -738,7 +701,15 @@ cat('\n\n')
 ```{r SNV.QC.details, eval = include.section('SNV.QC.details'), results='asis'}
 cat('## SNV QC details\n\n')
 snc_qc_tb %>%
-    rename_with(format_column_names) %>%
+    # Move the description of changes on each chromosome into separate columns,
+    # so that are displayed properly afetr transforming the table, Do no reformat those column names
+    mutate(
+        chrom_col_name = str_remove(chromosome, ':.*'),
+        chrom_col_val  = str_remove(chromosome, '.*:')
+    ) %>%
+    select(-chromosome) %>%
+    pivot_wider(names_from = chrom_col_name, values_from = chrom_col_val) %>%
+    rename_with(format_column_names, 1:4) %>%
     tr_tibble() %>%
     simple_table_output(params$out_format)
 cat('\n\n')
