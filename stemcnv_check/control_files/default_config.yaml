@@ -126,18 +126,24 @@ settings:
     # - pseudoautosomal: probes in the pseudo-autosomal regions of X and Y chromosomes, these are always (pseudo) diploid
     #                    which can cause issues on haploid male samples. They can also be generally more problematic.
     # Additionally SNPs on the Y chromosome are always (soft)filtered for female samples and SNPs without properly 
-    # defined REF & ALT alleles are hard-filtered (=removed from the vcf). The latter mainly occurs if the manifest 
+    # defined REF & ALT alleles are hard-filtered (i.e. removed from the vcf). The latter mainly occurs if the manifest 
     # csv is omitted, which causes Indel-probes to be improperly defined.
     #
     # We recommend to use these filter settings:
-    extended:
-      GenTrainScore: 0.7
-      GenCallScore:  0.7 # Anything above this should be a stable genotype call
+    recommended:
+      GenTrainScore: 0.2
+      GenCallScore:  0.2 # Anything above this should be a stable genotype call according to Illumina
       Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
       Pseudoautosomal: remove-male # keep|remove|remove-male
+    # These settings achieve higher precision at the cost of sensitivity
+    high_precision:
+      GenTrainScore: 0.8
+      GenCallScore:  0.8
+      Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
+      Pseudoautosomal: remove-male # keep|remove|remove-male  
 
   # Default filter set to use for all tools
-  default-filter-set: extended
+  default-filter-set: recommended
 
   PennCNV:
     # Specific filter setting for PennCNV, '_default_' uses `default-filter-set
