@@ -3,7 +3,8 @@ from loguru import logger
 from collections import defaultdict
 
 logger.remove()
-logger.add(snakemake.log['err'], level=["INFO", "DEBUG"][min(snakemake.config['verbose_level']-1, 2)])
+# use at least INFO level here
+logger.add(snakemake.log['err'], level=["WARNING", "INFO", "DEBUG"][min(snakemake.config['verbose_level']+1, 2)])
 logger.info(f"Reading in '{snakemake.input[0]}' and will write to '{snakemake.output[0]}'")
 
 
