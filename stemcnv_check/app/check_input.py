@@ -109,7 +109,7 @@ def check_sample_table(sample_table_file, config_file, column_remove_regex=None)
 
 
 @logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
-def check_config(config_file, sample_table_file, column_remove_regex=None, required_only=False):
+def check_config(config_file, sample_table_file, column_remove_regex=None, minimal_files_only=False):
 
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
@@ -129,21 +129,36 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, requi
     # Files: static-data/*
     for array in config['array_definition'].keys():
         for req in allowed_values['array_definition']['__array'].keys():          
-            # Optional
-            if req == 'csv_manifest_file':
-                continue
             if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
-                infostr = "\nYou can create it by running `StemCNV-check make-staticdata` [--genome hg38|hg19] [--snp-array-name <name>]"
+                infostr = "\nYou can create it by running `StemCNV-check make-staticdata`"
+                minimal_file = False
             else:
                 infostr = ""
+                minimal_file = True
 
+            # csv is optional, skip if not defined or empty
+            if req == 'csv_manifest_file' and not config['array_definition'][array].get(req):
+                logging.warning(
+                    f"Optional config entry is not used: array_definition:{array}:{req}. "
+                    f"This will cause some probes to be unusable."
+                )
+                continue
+            # All other array definition fields need to be defined
             if req not in config['array_definition'][array] or not config['array_definition'][array][req]:
                 raise ConfigValueError(f"Required config entry is missing: array_definition:{array}:{req}")
-
-            if req != 'genome_version' and not required_only and not os.path.isfile(config['array_definition'][array][req]):
-                raise FileNotFoundError(f"array definition file '{array}:{req}' does not exist." + infostr)
+            # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing  
+            if (req != 'genome_version' and
+                    (minimal_file if minimal_files_only else True) and
+                    not os.path.isfile(config['array_definition'][array][req])):
+                raise FileNotFoundError(
+                    f"Array definition file for '{array}:{req}' does not exist: "
+                    f"{config['array_definition'][array][req]}." + infostr
+                )
             elif req == 'genome_version' and config['array_definition'][array][req] not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
-                raise ConfigValueError(f"Genome version '{config['array_definition'][array][req]}' for array '{array}' is not supported. Use 'hg38' or 'hg19'.")
+                raise ConfigValueError(
+                    f"Genome version '{config['array_definition'][array][req]}' for "
+                    f"array '{array}' is not supported. Use 'hg38' or 'hg19'."
+                )
 
     # Folders: log, data, raw-input
     # and other settings
@@ -158,7 +173,7 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, requi
         except KeyError:
             raise ConfigValueError(f"Required config entry is missing: {req}")
 
-    if required_only:
+    if minimal_files_only:
         return None
 
     # Other settings: reports/*/filetype

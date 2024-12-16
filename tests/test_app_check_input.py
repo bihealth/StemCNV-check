@@ -16,6 +16,11 @@ def minimal_config_block():
                 'genome_version': 'hg38',
                 'bpm_manifest_file': 'static/manifest.bpm',
                 'egt_cluster_file': 'static/cluster.egt',
+                'csv_manifest_file': '',
+                'penncnv_pfb_file': 'dummy',
+                'penncnv_GCmodel_file': 'dummy',
+                'array_density_file': 'dummy',
+                'array_gaps_file': 'dummy',
             }
         },
         'raw_data_folder': 'rawdata',
@@ -25,7 +30,7 @@ def minimal_config_block():
 
 @pytest.fixture
 def full_config_block(minimal_config_block):
-    block = minimal_config_block
+    block = deepcopy(minimal_config_block)
     block['array_definition']['default'].update({
         'csv_manifest_file': 'static/manifest.csv',
         'penncnv_pfb_file': 'static/chip.pfb',
@@ -45,11 +50,13 @@ def prepare_fakefs_config(default_config, update_block, fs):
     with open('config.yaml', 'w') as f:
         yaml.dump(default_config, f)
     # Create the fake files:
-    fs.create_dir('static')
+    if not fs.isdir('static'):
+        fs.create_dir('static')
     for k, file in update_block['array_definition']['default'].items():
-        if file == 'genome_version':
+        if not file or file == 'genome_version' or file == 'dummy':
             continue
-        fs.create_file(file)
+        if not fs.isfile(file):
+            fs.create_file(file)
 
 
 def test_check_sample_table(minimal_config_block, fs):
@@ -135,16 +142,22 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     def update_config(testconfig):
         with open('config.yaml', 'w') as f:
             yaml.dump(testconfig, f)
-
-    # Error on missing config file
-    with pytest.raises(FileNotFoundError):
-        check_config('non_existent_config.yaml', 'non_existent_sample_table.txt')
-
-    # Check minimal config block with req_only works (entries need to exist, but not the files)
-    # Also check that warnings are raised for missing folders and that they are created
-    assert not fs.isdir('data') and not fs.isdir('logs') and not fs.isdir('rawdata')
     update_config(testconfig)
-    check_config('config.yaml', 'sample_table.tsv', required_only=True)
+
+    # Error on missing config or sampletable file
+    with pytest.raises(FileNotFoundError) as error:
+        check_config('non_existent_config.yaml', 'sample_table.tsv')
+    assert 'non_existent_config.yaml' in str(error.value)
+    with pytest.raises(FileNotFoundError) as error:
+        check_config('config.yaml', 'non_existent_sample_table.tsv')
+    assert 'non_existent_sample_table.tsv' in str(error.value)
+
+    # Check that the minimal config block works as long as only the required entries are checked
+    # > bpm & egt files need to exist, other entries need to exist (except csv which can always be empty)
+    prepare_fakefs_config(default_config, minimal_config_block, fs)
+    assert not fs.isdir('data') and not fs.isdir('logs') and not fs.isdir('rawdata')
+    check_config('config.yaml', 'sample_table.tsv', minimal_files_only=True)
+    # Also check that warnings are raised for missing folders and that they are created
     logrecords = caplog.records[-3:]
     assert [rec.levelname for rec in logrecords] == ['WARNING'] * 3
     assert [rec.message for rec in logrecords] == [
@@ -153,23 +166,35 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     ]
     assert fs.isdir('data') and fs.isdir('logs') and fs.isdir('rawdata')
 
-    # Check for fail on missing required files
-    testconfig['array_definition']['default']['egt_cluster_file'] = 'missing.bpm'
-    update_config(testconfig)
-    with pytest.raises(FileNotFoundError):
-        check_config('config.yaml', 'sample_table.tsv')
-
     # Check for fail on missing required entries
     del testconfig['array_definition']['default']['egt_cluster_file']
     update_config(testconfig)
     with pytest.raises(ConfigValueError):
-        check_config('config.yaml', 'sample_table.tsv', required_only=True)
+        check_config('config.yaml', 'sample_table.tsv', minimal_files_only=True)
 
-    # Check without req_only all static files need to exist
-    with pytest.raises(FileNotFoundError):
+    # Check for fail on missing required file
+    testconfig['array_definition']['default']['egt_cluster_file'] = 'missing.egt'
+    update_config(testconfig)
+    with pytest.raises(FileNotFoundError) as error:
         check_config('config.yaml', 'sample_table.tsv')
+    assert 'missing.egt' in str(error.value) and 'egt_cluster_file' in str(error.value)
 
-    # With files existing, the check should pass
+    # csv file needs to exist even with minimal_files_only, if it is defined
+    testconfig = deepcopy(minimal_config_block)
+    testconfig['array_definition']['default']['csv_manifest_file'] = 'static/manifest.csv'
+    update_config(testconfig)
+    with pytest.raises(FileNotFoundError)as error:
+        check_config('config.yaml', 'sample_table.tsv', minimal_files_only=True)
+    assert 'manifest.csv' in str(error.value) and 'csv_manifest_file' in str(error.value)
+
+    # Check that without minimal_files_only all static files need to exist
+    testconfig = deepcopy(minimal_config_block)
+    update_config(testconfig)
+    with pytest.raises(FileNotFoundError) as error:
+        check_config('config.yaml', 'sample_table.tsv')
+    assert 'dummy' in str(error.value)
+
+    # With all files existing, the check should pass
     prepare_fakefs_config(default_config, full_config_block, fs)
     check_config('config.yaml', 'sample_table.tsv')
 

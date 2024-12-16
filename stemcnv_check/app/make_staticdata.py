@@ -15,7 +15,7 @@ import importlib.resources
 
 def create_missing_staticdata(args):
 
-    check_config(args.config, args.sample_table, args.column_remove_regex, required_only=True)
+    check_config(args.config, args.sample_table, args.column_remove_regex, minimal_files_only=True)
     config = load_config(args.config)
 
     for array_name in config['array_definition']:
