@@ -11,7 +11,7 @@ rule prep_PennCNV_sexfile:
     output:
         temp(os.path.join(DATAPATH, "{sample_id}", "{sample_id}.penncnv.sexfile.txt")),
     params:
-        sex_info=lambda wildcards: get_ref_id(wildcards, True),
+        sample_sex=lambda wildcards: get_sample_info(wildcards)['Sex'],
         sample_docker_path=lambda wildcards: fix_container_path(
             os.path.join(
                 DATAPATH,
@@ -21,9 +21,7 @@ rule prep_PennCNV_sexfile:
             "data",
         ),
     shell:
-        'echo -e "{params.sample_docker_path}\t{params.sex_info[2]}" > {output}; '
-        # This can add reference sex, which is however not needed at the moment
-        # 'if [[ "{sex_info[1]}" != "" ]]; then echo -e "{DATAPATH}/{sex_info[1]}/{sex_info[1]}.penncnv.input.tsv}\t{sex_info[3]}" >> {output}; fi'
+        'echo -e "{params.sample_docker_path}\t{params.sample_sex}" > {output}; '
 
 
 # - extract tsv SNP file from vcf
@@ -76,7 +74,7 @@ rule run_PennCNV:
             ""
             if (
                 (wildcards.chr != "auto"
-                and get_ref_id(wildcards, True)[2] == "m")
+                and get_sample_info(wildcards)['Sex'] == "m")
                 or not config["settings"]["PennCNV"]["enable_LOH_calls"]
             )
             else "-loh"
@@ -155,7 +153,7 @@ rule run_PennCNV:
 
 
 def get_penncnv_output(wildcards, files="tsv"):
-    _, _, sex, _ = get_ref_id(wildcards, True)
+    sex = get_sample_info(wildcards)['Sex']
     chrs = ["auto", "chrx"]
     if sex == "m":
         chrs.append("chry")

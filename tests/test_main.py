@@ -24,8 +24,8 @@ def test_main_run(mock_check, mock_run_workflow, mock_logging, fs):
 
     fs.create_file(
         'sample_table.tsv',
-        contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\n'
-                 'default\tSample1\t123456789000\tR01C03\tM\t\n'
+        contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'
+                 'default\tSample1\t123456789000\tR01C03\tM\t\t\t\n'
     )
     fs.create_file('config.yaml', contents='array_definition: {"default" : {}}\n')
     fs.create_dir('rundirectory')

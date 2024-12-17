@@ -37,7 +37,7 @@ def check_sample_table(sample_table_file, config_file, column_remove_regex=None)
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
 
-    sample_data_df = read_sample_table(sample_table_file, column_remove_regex, return_type='dataframe')
+    sample_data_df = read_sample_table(sample_table_file, column_remove_regex)
     yaml = ruamel_yaml.YAML(typ='safe')
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
@@ -78,10 +78,10 @@ def check_sample_table(sample_table_file, config_file, column_remove_regex=None)
         yaml = ruamel_yaml.YAML(typ='safe')
         config = yaml.load(f)
 
-    sample_data = read_sample_table(sample_table_file, column_remove_regex)
+    sample_data = read_sample_table(sample_table_file, column_remove_regex, return_type='list')
     for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
         pattern = config_extract(['wildcard_constraints', constraint], config, default_config)
-        mismatch = [sid for sid, n, p, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val)) and eval(val)]
+        mismatch = [sid for sid, n, p, _, _, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val)) and eval(val)]
         if mismatch:
             raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
 

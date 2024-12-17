@@ -186,7 +186,11 @@ settings:
     variant_selection:
       Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
       Annotation_regex: str
-    SNP_clustering_extra_samples: list__insamplesheet
+    SNP_clustering:
+        sample_ids: list__str # sample_id
+        id_columns: list__insamplesheet
+        match_columns: list__insamplesheet
+        max_number_samples: int_ge1
 
 
 allowed_sections:

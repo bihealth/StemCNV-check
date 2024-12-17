@@ -8,33 +8,6 @@ from stemcnv_check.exceptions import SampleConstraintError
 def get_sample_info(wildcards):
     return sample_data_df.loc[wildcards.sample_id].to_dict()
 
-
-def get_ref_id(wildcards, get_sex=False):
-    #FIXME: switch to using sample_data_df
-    sample_id = wildcards.sample_id
-    sex, ref_id = [(s, r) for sid, _, _, _, s, r in sample_data if sid == sample_id][0]
-    sex = sex[0].lower()
-
-    if ref_id:
-        try:
-            # Assume existing match -> wrapper should have done a check
-            ref_sex = [s for sid, _, _, _, s, _ in sample_data if sid == ref_id][0]
-            ref_sex = ref_sex[0].lower()
-        except IndexError:
-            # Somehow no match
-            raise SampleConstraintError(
-                f"Listed reference sample can not be found in sample-table: '{ref_id}'"
-            )
-    else:
-        ref_id = False
-        ref_sex = False
-
-    if get_sex:
-        return sample_id, ref_id, sex, ref_sex
-    else:
-        return sample_id, ref_id
-
-
 def fix_container_path(path_in, bound_to):
     path_in = Path(path_in)
 
@@ -142,7 +115,8 @@ def get_ref_input_function(input_file_type):
     else:
         get_file_pattern = lambda wildcards: os.path.join(DATAPATH, "{sample_id}", f"{{sample_id}}.{input_file_type}")
     def input_function(wildcards):
-        sample_id, ref_id = get_ref_id(wildcards)
+        sample_id = get_sample_info(wildcards)['Sample_ID']
+        ref_id = get_sample_info(wildcards)['Reference_Sample']
         if ref_id:
             return expand(get_file_pattern(wildcards), sample_id = ref_id)
         else:

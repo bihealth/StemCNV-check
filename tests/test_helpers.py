@@ -13,9 +13,9 @@ from collections import defaultdict, OrderedDict
 def sample_table_minimal():
     return textwrap.dedent(
         """\
-        Array_Name\tChip_Name\tChip_Pos\tSample_ID\tSex\tReference_Sample
-        ExampleArray\t123456789000\tR01C01\tCellline-A-MB\tFemale\t
-        ExampleArray\t123456789001\tR01C01\tCellline-A-WB\tFemale\tCellline-A-MB
+        Array_Name\tChip_Name\tChip_Pos\tSample_ID\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group
+        ExampleArray\t123456789000\tR01C01\tCellline-A-MB\tFemale\t\tExample1|chr1:100000-200000\tExampleCellines
+        ExampleArray\t123456789001\tR01C01\tCellline-A-WB\tFemale\tCellline-A-MB\tExample1|chr1:100000-200000;chr11:60000-70000\tExampleCellines
         """
     )
 
@@ -23,9 +23,9 @@ def sample_table_minimal():
 def sample_table_missing():
     return textwrap.dedent(
         """\
-        Array_Name\tChip_Name\tSample_ID\tSex\tReference_Sample
-        ExampleArray\t123456789000\tCellline-A-MB\tFemale\t
-        ExampleArray\t123456789001\tCellline-A-WB\tFemale\tCellline-A-MB
+        Array_Name\tChip_Name\tSample_ID\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group
+        ExampleArray\t123456789000\tCellline-A-MB\tFemale\t\tExample1|chr1:100000-200000\tExampleCellines
+        ExampleArray\t123456789001\tCellline-A-WB\tFemale\tCellline-A-MB\tExample1|chr1:100000-200000;chr11:60000-70000\tExampleCellines
         """
     )
 
@@ -44,18 +44,23 @@ def sample_table_extra_cols():
 
 
 def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_table_extra_cols, fs):
-    expected = [["Cellline-A-MB", "123456789000", "R01C01", "ExampleArray", "Female", ""],
-                ["Cellline-A-WB", "123456789001", "R01C01", "ExampleArray", "Female", "Cellline-A-MB"]]
+    expected = [
+        ["Cellline-A-MB", "123456789000", "R01C01", "ExampleArray", "Female", "", "Example1|chr1:100000-200000", "ExampleCellines"],
+        ["Cellline-A-WB", "123456789001", "R01C01", "ExampleArray", "Female", "Cellline-A-MB", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"]
+    ]
 
     fs.create_file('sample_table_minimal.tsv', contents=sample_table_minimal)
     fs.create_file('sample_table_missing.tsv', contents=sample_table_missing)
     fs.create_file('sample_table_extra_cols.tsv', contents=sample_table_extra_cols)
 
     # test minimal sample table
-    assert expected == helpers.read_sample_table("sample_table_minimal.tsv")
+    assert expected == helpers.read_sample_table("sample_table_minimal.tsv", return_type='list')
 
     # test minimal with dict output
-    cols = ['Sample_ID', 'Chip_Name', 'Chip_Pos', 'Array_Name', 'Sex', 'Reference_Sample']
+    cols = [
+        'Sample_ID', 'Chip_Name', 'Chip_Pos', 'Array_Name', 'Sex',
+        'Reference_Sample', 'Regions_of_Interest', 'Sample_Group'
+    ]
     expected_dict = [OrderedDict((k, v) for k, v in zip(cols, data_row)) for data_row in expected]
     assert expected_dict == helpers.read_sample_table("sample_table_minimal.tsv", return_type='list_withopt')
 
@@ -64,11 +69,11 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         helpers.read_sample_table("sample_table_missing.tsv")
 
     # test that column name removal with regex works
-    assert expected == helpers.read_sample_table("sample_table_minimal.tsv", name_remove_regex=' .*')
+    assert expected == helpers.read_sample_table("sample_table_minimal.tsv", name_remove_regex=' .*', return_type='list')
     file_content = ('\t'.join([col + ' dummytext' for col in cols]) + '\n' +
                     '\n'.join(['\t'.join(line) for line in expected]) + '\n')
     fs.create_file('sample_table_colwithspaces.tsv', contents=file_content)
-    assert expected == helpers.read_sample_table("sample_table_colwithspaces.tsv", name_remove_regex=' .*')
+    assert expected == helpers.read_sample_table("sample_table_colwithspaces.tsv", name_remove_regex=' .*', return_type='list')
 
     # Test dataframe output
     import pandas as pd
@@ -76,22 +81,24 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         data=expected,
         columns=cols
     ).set_index('Sample_ID', drop=False)
-    actual_df = helpers.read_sample_table("sample_table_minimal.tsv", return_type='dataframe')
+    actual_df = helpers.read_sample_table("sample_table_minimal.tsv")
     assert expected_df.equals(actual_df)
 
     # test extended default without dict output
-    expected += [["Cellline-B-MB", "123456789000", "R01C02", "ExampleArray", "Male", ""],
-                 ["Cellline-B-1-cl1", "123456789001", "R01C02", "ExampleArray", "Male", "Cellline-B-MB"]]
-    assert expected == helpers.read_sample_table("sample_table_extra_cols.tsv")
+    expected += [
+        ["Cellline-B-MB", "123456789000", "R01C02", "ExampleArray", "Male", "", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"],
+        ["Cellline-B-1-cl1", "123456789001", "R01C02", "ExampleArray", "Male", "Cellline-B-MB", "", "ExampleCellines"]
+    ]
+    assert expected == helpers.read_sample_table("sample_table_extra_cols.tsv", return_type='list')
 
     # test extended example without dict output
     extra_expected = [
-        ["Cellline-A MasterBank", "Cellline-A-WB,Cellline-B-MB", "Example1|chr1:100000-200000", "ExampleCellines"],
-        ["Cellline-A WorkingBank", "Cellline-B-MB", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"],
-        ["Cellline-B MasterBank", "0", "Example1|chr1:100000-200000;chr11:60000-70000", "ExampleCellines"],
-        ["Cellline-B-1 clone1", "", "", "ExampleCellines"]
+        ["Cellline-A MasterBank", "Cellline-A-WB,Cellline-B-MB"],
+        ["Cellline-A WorkingBank", "Cellline-B-MB"],
+        ["Cellline-B MasterBank", "0"],
+        ["Cellline-B-1 clone1", ""]
     ]
-    cols_extra = cols + ["Sample_Name", "Test_col", "Regions_of_Interest", "Sample_Group"]
+    cols_extra = cols + ["Sample_Name", "Test_col"]
     expected_dict = [OrderedDict((k, v) for k, v in zip(cols_extra, data_row+extra_row))
                      for data_row, extra_row in zip(expected, extra_expected)]
     assert expected_dict == helpers.read_sample_table("sample_table_extra_cols.tsv", return_type='list_withopt')
@@ -105,8 +112,7 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
         read_only=True
     )
-    cols_extra = cols + ["Sample_Name", "Regions_of_Interest", "Sample_Group"]
-    expected_dict = [OrderedDict((k, v) for k, v in zip(cols_extra, data_row+[extra_row[0]]+extra_row[2:]))
+    expected_dict = [OrderedDict((k, v) for k, v in zip(cols, data_row+[extra_row[0]]+extra_row[2:]))
                      for data_row, extra_row in zip(expected, extra_expected)]
     assert expected_dict == helpers.read_sample_table(
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
@@ -275,38 +281,94 @@ def test_config_extract(caplog):
 
 def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
     sampletable = fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
-    sample_data_df = helpers.read_sample_table('sample_table.tsv', return_type='dataframe')
+    sample_data_df = helpers.read_sample_table('sample_table.tsv')
 
     all_ids = ['Cellline-A-MB', 'Cellline-A-WB', 'Cellline-B-MB', 'Cellline-B-1-cl1']
 
-    ""
-
-    # Test finding sample_ids based on machting entries in given column
-    # The search sample ID itself is *never* included in the result
-    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_df)
-    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Chip_Pos'], sample_data_df)
+    # Test finding sample_ids based on matching entries in given column
+    # The search sample ID itself is *never* included in the result, the reference sample always is
+    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': ['Sample_Group'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
+    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-WB',
+        {'match_columns': ['Chip_Pos'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df)
     with pytest.raises(ConfigValueError):
-        helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__NonExisting'], sample_data_df)
+        helpers.collect_SNP_cluster_ids(
+            'Cellline-A-MB',
+            {'match_columns': ['NonExisting'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+            sample_data_df
+        )
+    # Find only reference sample
+    assert {all_ids[0]} == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-WB',
+        {'match_columns': [], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
     # also needs work when no other samples are matching
-    assert set() == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['__Sample_Name'], sample_data_df)
+    assert set() == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': ['Sample_Name'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
     # Test finding sample_ids based on values in given column
-    assert set(all_ids[1:3]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['_Test_col'], sample_data_df)
-    assert {all_ids[2]} == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col'], sample_data_df)
+    assert set(all_ids[1:3]) == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
+    # reference & ID column
+    assert {all_ids[0], all_ids[2]} == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-WB',
+        {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
     with pytest.raises(ConfigValueError):
-        helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Testcol'], sample_data_df)
+        helpers.collect_SNP_cluster_ids(
+            'Cellline-A-WB',
+            {'match_columns': [], 'id_columns': ['Testcol'], 'sample_ids': [], 'max_number_samples': 20},
+            sample_data_df
+        )
     # test no/empty entry in given column
-    assert set() == helpers.collect_SNP_cluster_ids('Cellline-B-1-cl1', ['_Test_col'], sample_data_df)
-    # Test using sample_ids directly
-    assert set(all_ids[2:]) == helpers.collect_SNP_cluster_ids('Cellline-A-WB', ['_Test_col', 'Cellline-B-1-cl1'], sample_data_df)
+    assert set() == helpers.collect_SNP_cluster_ids(
+        'Cellline-B-MB',
+        {'match_columns': [], 'id_columns': ['Reference_Sample'], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
+    # Test using sample_ids directly (+ ref sample)
+    assert set([all_ids[0]] + all_ids[2:]) == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-WB',
+        {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': ['Cellline-B-1-cl1'], 'max_number_samples': 20},
+        sample_data_df
+    )
     # fail on any extracted entries that contain non_existing samples
     with pytest.raises(SampleConstraintError):
-        helpers.collect_SNP_cluster_ids('Cellline-B-MB', ['_Test_col'], sample_data_df)
+        helpers.collect_SNP_cluster_ids(
+            'Cellline-B-MB',
+            {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': [], 'max_number_samples': 20},
+            sample_data_df
+        )
+    #FIXME: add checks for log messages to the next 2 tests
+
     # Test exclusion of samples from a different array
     sampletable.set_contents(
         sample_table_extra_cols +
         "DifferentArray\tCellline-X-MB\t0\tMale\tCellline-X\t\tExampleCellines\t773456789000\tR01C03\tCellline-X-MB"
     )
-    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids('Cellline-A-MB', ['__Sample_Group'], sample_data_df)
+    assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': ['Sample_Group'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
+    # test with max_number_samples
+    assert {all_ids[3], all_ids[1]} == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': ['Cellline-B-1-cl1'], 'max_number_samples': 2},
+        sample_data_df
+    )
 
 
 

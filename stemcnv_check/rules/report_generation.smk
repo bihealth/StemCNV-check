@@ -7,19 +7,21 @@ from stemcnv_check.helpers import load_config, collect_SNP_cluster_ids, get_glob
 from stemcnv_check import __version__, STEM_CNV_CHECK
 
 def get_penncnv_log_input(wildcards):
-    sample_id, ref_id, sex, ref_sex = get_ref_id(wildcards, True)
+    sample_id = get_sample_info(wildcards)['Sample_ID']
+    sex = get_sample_info(wildcards)['Sex']
     return expand(
         os.path.join(DATAPATH, sample_id, "extra_files", "PennCNV.{chrs}.error.log"),
         chrs=["auto", "chrx"] + (["chry"] if sex == "m" else []),
     )
 
 def get_extra_snp_input_files(wildcards):
-    extra_sample_def = config['settings']['SNV_analysis']['SNP_clustering_extra_samples']
-    sample_id, ref_id = get_ref_id(wildcards)
+    clustering_config = config['settings']['SNV_analysis']['SNP_clustering']
+    sample_id = get_sample_info(wildcards)['Sample_ID']
+    # ref_id = get_sample_info(wildcards)['Reference_Sample']
 
-    ids = set(collect_SNP_cluster_ids(sample_id, extra_sample_def, sample_data_df))
-    if ref_id:
-        ids.add(ref_id)
+    ids = set(collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df))
+    # if ref_id:
+    #     ids.add(ref_id)
 
     return expand(
         [

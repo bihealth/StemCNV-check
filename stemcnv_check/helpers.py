@@ -13,10 +13,10 @@ from collections import OrderedDict
 from loguru import logger as logging
 
 
-def read_sample_table(filename, name_remove_regex=None, return_type='list'):
+def read_sample_table(filename, name_remove_regex=None, return_type='dataframe'):
     """Read sample table from file, return either a list of the required col entires,
     a list with Ordereddict of all rows (colnames as keys) or a pandas dataframe"""
-    
+
     if return_type not in ('list', 'list_withopt', 'dataframe'):
         raise ValueError('Invalid return_type: ' + return_type)
 
@@ -29,7 +29,10 @@ def read_sample_table(filename, name_remove_regex=None, return_type='list'):
     else:
         raise ValueError('Unknown file format for sample table: ' + filename)
 
-    req_cols = ['Sample_ID', 'Chip_Name', 'Chip_Pos', 'Array_Name', 'Sex', 'Reference_Sample']
+    req_cols = [
+        'Sample_ID', 'Chip_Name', 'Chip_Pos', 'Array_Name', 'Sex',
+        'Reference_Sample', 'Regions_of_Interest', 'Sample_Group'
+    ]
 
     if name_remove_regex:
         logging.debug(f'Removing regex from column names: "{name_remove_regex}"')
@@ -117,43 +120,65 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
     return bind_point_str
 
 
-def collect_SNP_cluster_ids(sample_id, config_extra_samples, sample_data_df):
+def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
+    # max_number_samples = None
+
+    def check_collected_ids(add_ids, max_n=clustering_config['max_number_samples']):
+        # remove the original sample_id
+        if sample_id in add_ids:
+            add_ids.remove(sample_id)
+        # If any collected ids don't exist, fail
+        if not set(add_ids).issubset(sample_data_df.index):
+            not_found = set(add_ids) - set(sample_data_df.index)
+            raise SampleConstraintError(
+                "Some of the extracted sample_id's SNP clustering do not exist in the sample_table: " + ', '.join(not_found)
+            )
+        # Check that all samples belong to the same array, remove all that don't match
+        sample_array = sample_data_df['Array_Name'].loc[sample_id]
+        wrong_array = set()
+        for id in add_ids:
+            if sample_data_df['Array_Name'].loc[id] != sample_array:
+                wrong_array.add(id)
+        if wrong_array:
+            logging.warning(
+                f"Samples {', '.join(wrong_array)} do not belong to the same array as {sample_id}. "
+                f"They will be excluded from the SNP clustering."
+            )
+            add_ids = [id for id in add_ids if id not in wrong_array]
+
+        n_current_ids = len(ids)
+        n_new_ids = len(add_ids)
+        if max_n and (n_current_ids + n_new_ids) > max_n:
+            logging.warning(
+                f"Too many samples for SNP clustering ({len(add_ids)}), only the first {max_n} will be used."
+            )
+            add_ids = add_ids[:(max_n - n_current_ids)]
+
+        return add_ids
+
     ids = set()
-    # '__[column]' entries: take all sample_ids with the same value in '[column]'
-    col_val_match = [sampledef[2:] for sampledef in config_extra_samples if sampledef[:2] == '__']
-    for col in col_val_match:
+    # Add reference sample if it exists
+    if sample_data_df['Reference_Sample'].loc[sample_id]:
+        ids.add(sample_data_df['Reference_Sample'].loc[sample_id])
+
+    # sample_ids as is
+    checked_ids = check_collected_ids(clustering_config['sample_ids'])
+    ids.update(checked_ids)
+
+    # 'id_columns' entry: take all sample_ids from '[column]'
+    for col in clustering_config['id_columns']:
+        if col not in sample_data_df.columns:
+            raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
+        checked_ids = check_collected_ids([id for id in sample_data_df[col].loc[sample_id].split(',') if id])
+        ids.update(checked_ids)
+
+    # 'match_columns' entries: take all sample_ids with the same value in '[column]'
+    for col in clustering_config['match_columns']:
         if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
         match_val = sample_data_df[col].loc[sample_id]
-        ids.update(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]])
-    # '_[column]' entry: take all sample_ids from '[column]'
-    id_cols = [sampledef[1:] for sampledef in config_extra_samples if sampledef[0] == '_' and sampledef[:2] != '__']
-    for col in id_cols:
-        if col not in sample_data_df.columns:
-            raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        ids.update([id for id in sample_data_df[col].loc[sample_id].split(',') if id])
-    # other entries: assume they are sample_ids & use them as is
-    ids.update([sampledef for sampledef in config_extra_samples if sampledef[0] != '_'])
-    # remove the original sample_id
-    if sample_id in ids:
-        ids.remove(sample_id)
-
-    # If any collected ids don't exist, fail
-    if not ids.issubset(sample_data_df.index):
-        raise SampleConstraintError(
-            "Some of the extracted sample_id's SNP clustering do not exist in the sample_table."
-        )
-
-    # Check that all samples belong to the same array,
-    # remove all that don't match
-    sample_array = sample_data_df['Array_Name'].loc[sample_id]
-    wrong_array = set()
-    for id in ids:
-        if sample_data_df['Array_Name'].loc[id] != sample_array:
-            wrong_array.add(id)
-    if wrong_array:
-        logging.warning(f"Samples {', '.join(wrong_array)} do not belong to the same array as {sample_id}. They will be excluded from the SNP clustering.")
-        ids -= wrong_array
+        checked_ids = check_collected_ids(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]].to_list())
+        ids.update(checked_ids)
 
     return ids
 

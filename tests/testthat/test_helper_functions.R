@@ -26,7 +26,6 @@ test_that("read_sampletable", {
         Array_Name = rep('ExampleArray', 4),
         Sex = c("Female", "Female", "Male", "Male"),
         Reference_Sample = c(NA, "Cellline-A-MB", NA, "Cellline-B-MB"),
-        Sample_Name = c("Cellline-A MasterBank", "Cellline-A WorkingBank", "Cellline-B MasterBank", "Cellline-B-1 clone1"),
         Regions_of_Interest = c(
                 "Example1|chr1:100000-200000", 
                 "Example1|chr1:100000-200000;chr11:60000-70000", 

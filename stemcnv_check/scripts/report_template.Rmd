@@ -119,21 +119,12 @@ array <- sampletable %>%
     filter(Sample_ID == sample_id) %>%
     pull(Array_Name)
 
-#Sample_Name is an optional column in the sampletable
-if ('Sample_Name' %in% colnames(sampletable)) {
-    sample_name <- sampletable[sampletable$Sample_ID == sample_id, ]$Sample_Name
-    ref_name <- ifelse(is.na(ref_id), NA, sampletable[sampletable$Sample_ID == ref_id, ]$Sample_Name)
-} else {
-    sample_name <- sample_id
-    ref_name <- ifelse(is.na(ref_id), NA, ref_id)
-}
-
 if (!is.na(ref_id)) {
-    sample_headers <- c(sample_name, paste0('Reference (', ref_name, ')'))
+    sample_headers <- c(sample_id, paste0('Reference (', ref_id, ')'))
     names(sample_headers) <- c(sample_id, ref_id)
     use_ids <- c(sample_id, ref_id)
 } else {
-    sample_headers <- sample_name
+    sample_headers <- sample_id
     names(sample_headers) <- sample_id
     use_ids <- sample_id
 }
@@ -154,7 +145,7 @@ snv_hotspot_tb <- load_hotspot_table(config, 'snv_hotspot')
 tr_tibble <- function(tb) {
     tr <- t(tb )
     if (nrow(tb) == 1) {
-        colnames(tr) <- sample_name
+        colnames(tr) <- sample_id
     } else {
         colnames(tr) <- sample_headers[tr[1,]]
     }
@@ -562,7 +553,7 @@ cat('\n\n')
 ```{r regions_of_interest, eval=include_roi_plots, results='asis'}
 cat('## Regions of Interest {.tabset .tabset-pills}\n\n')
 cat(str_glue(
-    'This section includes all regions of interest defined for {sample_name}. ',
+    'This section includes all regions of interest defined for {sample_id}. ',
     'It uses the same layout as the other CNV call sections.\n\n\n\n'
 ))
 
