@@ -14,7 +14,7 @@ def minimal_config_block():
         'array_definition': {
             'default': {
                 'genome_version': 'hg38',
-                'bpm_manifest_file': 'static/manifest.bpm',
+                'bpm_manifest_file': 'static/manifest_A2.bpm',
                 'egt_cluster_file': 'static/cluster.egt',
                 'csv_manifest_file': '',
                 'penncnv_pfb_file': 'dummy',
@@ -32,7 +32,7 @@ def minimal_config_block():
 def full_config_block(minimal_config_block):
     block = deepcopy(minimal_config_block)
     block['array_definition']['default'].update({
-        'csv_manifest_file': 'static/manifest.csv',
+        'csv_manifest_file': 'static/manifest_A2.csv',
         'penncnv_pfb_file': 'static/chip.pfb',
         'penncnv_GCmodel_file': 'static/chip.gcmodel',
         'array_density_file': 'static/density.bed',
@@ -181,11 +181,23 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
 
     # csv file needs to exist even with minimal_files_only, if it is defined
     testconfig = deepcopy(minimal_config_block)
-    testconfig['array_definition']['default']['csv_manifest_file'] = 'static/manifest.csv'
+    testconfig['array_definition']['default']['csv_manifest_file'] = 'static/manifest_A2.csv'
     update_config(testconfig)
     with pytest.raises(FileNotFoundError)as error:
         check_config('config.yaml', 'sample_table.tsv', minimal_files_only=True)
-    assert 'manifest.csv' in str(error.value) and 'csv_manifest_file' in str(error.value)
+    assert 'manifest_A2.csv' in str(error.value) and 'csv_manifest_file' in str(error.value)
+
+    # check that warning for A1/A2 <> genome version is raised
+    testconfig['array_definition']['default']['csv_manifest_file'] = 'static/manifest_A1.csv'
+    fs.create_file('static/manifest_A1.csv')
+    update_config(testconfig)
+    check_config('config.yaml', 'sample_table.tsv', minimal_files_only=True)
+    logrecord = caplog.records[-1]
+    assert logrecord.levelname == 'WARNING'
+    assert logrecord.message == (
+        "Manifest file 'static/manifest_A1.csv' does not match the expected pattern "
+        "for 'hg38' genome.\nIllumina manifest files for hg38 should end in 'A2'."
+    )
 
     # Check that without minimal_files_only all static files need to exist
     testconfig = deepcopy(minimal_config_block)

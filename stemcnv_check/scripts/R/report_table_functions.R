@@ -325,18 +325,28 @@ CNV_table_output <- function(
             'For calls with multiple CNV callers: percentage overlap of each caller with the combined call area',
             'Percentage of the CNV call area with a gap probe coverage'
         )
+        # 
+        # paste0(
+        #     '<script type="text/javascript">',
+        #     
+        #     
+        #     sep = '\n\n'
+        #     
+        # )
 
         dt <- datatable(
             tb %>% rename_with(format_column_names),
             rownames = FALSE,
             escape = FALSE,
-            extensions = c('Buttons', 'Scroller'),
+            extensions = c('Buttons', 'Scroller', 'FixedColumns', 'Select'),
             filter = 'top',
             caption = caption,
             options = list(
                 scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
                 dom = 'Bftilp',
                 buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+                fixedColumns = list(leftColumns = 2),
+                select = list(style = 'single', items = 'row', selector = 'td:first-child', togglebale = FALSE, rows = ''),
                 columnDefs = list(
                     #This uses 0-indexing vs the usual R 1-indexing
                     list(targets = c(0:2,10:11,20:(ncol(tb)-1)), visible = FALSE)
@@ -348,7 +358,8 @@ CNV_table_output <- function(
                 "for (var i = 0; i < info_text.length; i++) {",
                 "  $(header[i]).attr('title', info_text[i]);",
                 "};"
-            )
+            ),
+            selection = 'none'
         ) %>%
         formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
         formatRound(c('Check Score', 'Gap Percent'), digits = 2)

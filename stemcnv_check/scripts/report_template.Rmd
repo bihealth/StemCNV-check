@@ -429,7 +429,7 @@ cat('### R session info\n\n')
 session_info()
 ```
 
-# CNV calling
+# CNV calling {.tabset}
 
 ```{r CNV.call.plot.data}
 raw_LRR_BAF <- c(params$input$snp_vcf, params$input$ref_snp_vcf) %>%
@@ -683,6 +683,15 @@ cat('\n\n')
 
 ```{r SNV.hotspot.coverage, eval = include.section('SNV.hotspot.coverage'), results='asis'}
 cat('## SNV hotspot coverage\n\n')
+
+paste(
+    'This table lists all genes that have known point mutation hotspots for stem cells, a source for the hotspots,',
+    'the selected primary transcript for each gene, as well as the coverage of the genes on cDNA, CDS and protein level',
+    '(percent coverage of bases/amino acids, as well as absolute numbers).',
+    'The coverage is based on all probes contained on the utilised array.\n\n',
+    'The "Hotspots" column, lists the specific annotated protein changes for each gene and whether or not any probe on',
+    'the array covers each of the specific mutations.'
+) %>% collapsible_html_text('SNV hotspot coverage explanations')
 
 full_join(
     snv_hotspot_tb %>% select(gene_name, description_htmllinks) %>% 

@@ -159,6 +159,17 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
                     f"Genome version '{config['array_definition'][array][req]}' for "
                     f"array '{array}' is not supported. Use 'hg38' or 'hg19'."
                 )
+        # Check that genome versions match Illumina syntax for manifest files
+        # Can not be sure, this is a hard rule so only raise a warning
+        expected_pattern = 'A1\\.(csv|bpm)$' if config['array_definition'][array]['genome_version'] in ('hg19', 'GRCh37') else 'A2\\.(csv|bpm)$'
+        for manifest in ('csv_manifest_file', 'bpm_manifest_file'):
+            if not re.search(expected_pattern, os.path.basename(config['array_definition'][array][manifest])):
+                genome_version = config['array_definition'][array]['genome_version']
+                logging.warning(
+                    f"Manifest file '{config['array_definition'][array][manifest]}' does not match the expected pattern "
+                    f"for '{genome_version}' genome.\n"
+                    f"Illumina manifest files for {genome_version} should end in '{expected_pattern[0:2]}'."
+                )
 
     # Folders: log, data, raw-input
     # and other settings
