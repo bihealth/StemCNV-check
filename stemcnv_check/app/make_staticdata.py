@@ -109,7 +109,7 @@ def run_staticdata_workflow(args, array_name):
         return 0
 
     # Check if vcf file _for the selected array_ is present, generate one if none are
-    sample_data_df = read_sample_table(args.sample_table, args.column_remove_regex, return_type='dataframe')
+    sample_data_df = read_sample_table(args.sample_table, args.column_remove_regex)
     sample_data_df = sample_data_df[sample_data_df['Array_Name'] == array_name]
     datapath = config['data_path']
     filter_settings = config['settings']['default-filter-set']

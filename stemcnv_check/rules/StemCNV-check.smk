@@ -62,8 +62,8 @@ wildcard_constraints:
 localrules:
     all,
 
-sample_data = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']))
-sample_data_df = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='dataframe')
+# sample_data = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='list')
+sample_data_df = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']))
 
 
 include: "common.smk"
@@ -208,7 +208,7 @@ rule run_CBS:
     params:
         # Ensure rerun on changes to settings or sample meta data
         settings=config["settings"]["CBS"],
-        sex_info=lambda wildcards: get_ref_id(wildcards,True),
+        sample_sex=lambda wildcards: get_sample_info(wildcards)['Sex'],
     log:
         err=os.path.join(LOGPATH, "CBS", "{sample_id}", "error.log"),
         out=os.path.join(LOGPATH, "CBS", "{sample_id}", "out.log"),

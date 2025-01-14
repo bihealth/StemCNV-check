@@ -53,10 +53,8 @@ rule run_gencall:
 def get_chip(wildcards, outtype="dir_path"):
     """Get the chip name from a sample_id
     Values for outtype: 'dirpath' | 'file'"""
-    #FIXME: switch to using sample_data_df
-    chip_name, chip_pos = [
-        (n, p) for sid, n, p, _, _, _ in sample_data if sid == wildcards.sample_id
-    ][0]
+    chip_name = get_sample_info(wildcards)['Chip_Name']
+    chip_pos = get_sample_info(wildcards)['Chip_Pos']
     if outtype == "dir_path":
         return os.path.join(DATAPATH, "gtc", chip_name)
     elif outtype == "file":

@@ -4,7 +4,7 @@ library(ggrepel)
 
 add_CNV_plot_styling <- function (gg, panel_space_val = unit(5, units = 'mm')) {
     gg +
-        facet_wrap(~Sample_Name, nrow = 1) +
+        facet_wrap(~Sample_ID, nrow = 1) +
         theme(
             strip.background = element_blank(),
             strip.text.x = element_blank(),
@@ -38,9 +38,9 @@ make_BAF_panel <- function(
         ) 
     if (!is.null(highlight.tb)) {
         highlight.plotdata <- left_join(
-            highlight.tb %>% select(Sample_Name, ID, color),
-            plot.data %>% select(ID, Position, `B Allele Freq`, Sample_Name),
-            by = c('Sample_Name', 'ID')
+            highlight.tb %>% select(Sample_ID, ID, color),
+            plot.data %>% select(Sample_ID, ID, Position, `B Allele Freq`),
+            by = c('Sample_ID', 'ID')
         )        
         gg <- gg + geom_point(
             data = highlight.plotdata,
@@ -86,9 +86,9 @@ make_LRR_panel <- function(
         ) 
     if (!is.null(highlight.tb)) {
         highlight.plotdata <- left_join(
-            highlight.tb %>% select(Sample_Name, ID, color),
-            plot.data %>% select(ID, Position, `Log R Ratio`, Sample_Name),
-            by = c('Sample_Name', 'ID')
+            highlight.tb %>% select(Sample_ID, ID, color),
+            plot.data %>% select(Sample_ID, ID, Position, `Log R Ratio`),
+            by = c('Sample_ID', 'ID')
         )        
         gg <- gg + geom_point(
             data = highlight.plotdata,
@@ -107,7 +107,7 @@ make_LRR_panel <- function(
         ) +
         scale_y_continuous(expand = expansion(), limits = c(-1.5, 1.5), oob = oob_squish) +
         labs(y = 'Log R Ratio', x = paste0('Position (', chr, ')')) +
-        facet_wrap(~Sample_Name, nrow = 1)
+        facet_wrap(~Sample_ID, nrow = 1)
 }
 
 make_CNV_panel <- function(
@@ -157,17 +157,17 @@ make_gene_data <- function(
         mutate(
             x_pos = (end + start) / 2,
             y_pos = ifelse(strand == '+', 1, 0),
-            Sample_Name = paste(sample_headers, collapse = '---'),
+            Sample_ID = paste(sample_headers, collapse = '---'),
             direct_hit = gene_id %in% direct_genes$gene_id,
             stemcell_hotspot = gene_name %in% stemcell_hotspot_list,
             dosage_sensitive_gene = gene_name %in% dosage_sensitive_gene_list,
             cancer_gene = gene_name %in% cancer_gene_list,
         ) %>%
-        separate_rows(Sample_Name, sep = '---') %>%
+        separate_rows(Sample_ID, sep = '---') %>%
         # Need to ensure table contains all samples (reference) so everything is properly facet_wrapped
         bind_rows(
             tibble(
-                Sample_Name = factor(sample_headers, levels = sample_headers),
+                Sample_ID = factor(sample_headers, levels = sample_headers),
                 x_pos = NA_integer_, y_pos = NA_integer_
             )
         )
@@ -215,7 +215,7 @@ make_header_data <- function(
         mutate(
             x_pos = (end + start) / 2,
             y_pos = 0,
-            Sample_Name = paste(sample_headers, collapse = '---'),
+            Sample_ID = paste(sample_headers, collapse = '---'),
             color = case_when(
                 str_detect(section_name, paste(stemcell_hotspot_list, collapse = '|')) ~ 'red',
                 # Onlt the stemcell list contains gbands
@@ -228,12 +228,12 @@ make_header_data <- function(
             ),
             textcolor = ifelse(color %in% c('black', 'grey30'), 'white', 'black')
         ) %>%
-        separate_rows(Sample_Name, sep = '---') %>%
-        mutate(Sample_Name = factor(Sample_Name, levels = sample_headers)) %>%
+        separate_rows(Sample_ID, sep = '---') %>%
+        mutate(Sample_ID = factor(Sample_ID, levels = sample_headers)) %>%
         # Need to ensure table contains reference so everything is properly facet_wrapped
         bind_rows(
             tibble(
-                Sample_Name = factor(sample_headers, levels = sample_headers),
+                Sample_ID = factor(sample_headers, levels = sample_headers),
                 x_pos = NA_integer_, y_pos = NA_integer_
             )
         )  # +
@@ -285,7 +285,7 @@ make_call_plot <- function(
     
     chr <- call.row$chrom
     area_tb <- tibble(
-        Sample_Name = factor(sample_headers, levels = sample_headers),
+        Sample_ID = factor(sample_headers, levels = sample_headers),
         start = call.row$start, end = call.row$end, color = 'grey70'        
     )
     
@@ -313,7 +313,7 @@ make_call_plot <- function(
     plot.data <- raw_LRR_BAF %>%
         # Assume all samples in sample_headers have been loaded
         filter(sample_id %in% names(sample_headers) & Chr == chr & Position >= win_start & Position <= win_end) %>%
-        mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
+        mutate(Sample_ID = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
     
     if (nrow(plot.data)==0){
         warn_msg <- str_glue('No SNP probes found in primary plot area: {chr}:{win_start}-{win_end}')
@@ -343,13 +343,13 @@ make_call_plot <- function(
                 CNV_type == 'loss' ~ '#f46d43',
                 CNV_type == 'LOH'  ~ 'grey50'
             ),
-            Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers),
+            Sample_ID = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers),
             call_label = str_glue('{CNV_caller}: {CNV_type}')
         ) %>%
         # Need to ensure table contains reference so everything is properly facet_wrapped
         bind_rows(
             tibble(
-                Sample_Name = factor(sample_headers, levels = sample_headers),
+                Sample_ID = factor(sample_headers, levels = sample_headers),
                 x_pos = NA_integer_, y_pos = NA_integer_
             )
         )
@@ -369,7 +369,7 @@ make_call_plot <- function(
     )
         
     header <- make_header_panel(chr, win_start, win_end, header.data) +
-        facet_wrap(~Sample_Name, nrow = 1)
+        facet_wrap(~Sample_ID, nrow = 1)
     cnv_track <- make_CNV_panel(chr, win_start, win_end, calls) %>% 
         add_CNV_plot_styling(panel_space_val)
     lrr <- make_LRR_panel(
@@ -411,7 +411,7 @@ make_chromsome_overview_plot <- function(
 ) {
     plot.data <- raw_LRR_BAF %>%
         filter(sample_id %in% names(sample_headers) & Chr == chr ) %>%
-        mutate(Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
+        mutate(Sample_ID = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers))
     
     area_tb <- cnv_calls %>%
         filter(sample_id %in% names(sample_headers) & seqnames == chr) %>%
@@ -421,24 +421,24 @@ make_chromsome_overview_plot <- function(
                 CNV_type == 'loss' ~ '#f46d43',
                 CNV_type == 'LOH'  ~ 'grey50'
             ),
-            Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
+            Sample_ID = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers)
         ) %>%
         # Need to ensure table contains reference so everything is properly facet_wrapped
         bind_rows(
             tibble(
-                Sample_Name = factor(sample_headers, levels = sample_headers)
+                Sample_ID = factor(sample_headers, levels = sample_headers)
             )
         )
     
     SNV_label_data <- label_SNVs %>%
         filter(sample_id %in% names(sample_headers) & seqnames == chr) %>%
         mutate(
-            Sample_Name = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers),
+            Sample_ID = factor(sapply(sample_id, function(x) sample_headers[x]), levels = sample_headers),
         ) %>%
         # Need to ensure table contains reference so everything is properly facet_wrapped
         bind_rows(
             tibble(
-                Sample_Name = factor(sample_headers, levels = sample_headers),
+                Sample_ID = factor(sample_headers, levels = sample_headers),
             )
         )
     
@@ -453,7 +453,7 @@ make_chromsome_overview_plot <- function(
     panel_space_val <- unit(5, units = 'mm')
     
     header <- make_header_panel(chr, 0, chr_end, header.data, 'dummy_label')  +
-        facet_wrap(~Sample_Name, nrow = 1)
+        facet_wrap(~Sample_ID, nrow = 1)
     lrr <- make_LRR_panel(chr, 0, chr_end, plot.data, SNV_label_data, area_tb, 0.7) %>% 
         add_CNV_plot_styling(panel_space_val)
     baf <- make_BAF_panel(chr, 0, chr_end, plot.data, SNV_label_data, area_tb, 0.7) %>%

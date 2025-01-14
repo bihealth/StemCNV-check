@@ -25,7 +25,7 @@ def setup_control_files(args):
                     break
         with pd.ExcelWriter(args.sample_table) as writer:
             pd.DataFrame(comment_lines).to_excel(writer, index=False, header=False)
-            read_sample_table(source_file, return_type='dataframe').to_excel(writer, index=False)
+            read_sample_table(source_file).to_excel(writer, index=False)
 
     if os.path.exists(args.config) and not args.overwrite:
         logging.info(f"Config file already exists: {args.config}. Use --overwrite to replace it.")

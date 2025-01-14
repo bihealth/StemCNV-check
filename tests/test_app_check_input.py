@@ -65,9 +65,9 @@ def test_check_sample_table(minimal_config_block, fs):
     fs.add_real_file(default_config, read_only=True)
 
     base_sample_table = textwrap.dedent("""\
-        Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample
-        default\tSample1\t123456789000\tR01C01\tM\t\n
-        default\tSample2\t123456789000\tR01C03\tM\tSample1\n
+        Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group
+        default\tSample1\t123456789000\tR01C01\tM\t\t\t\n
+        default\tSample2\t123456789000\tR01C03\tM\tSample1\t\t\n
         """)
 
     testconfig = deepcopy(minimal_config_block)
@@ -85,37 +85,37 @@ def test_check_sample_table(minimal_config_block, fs):
     check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - dup ID
-    sampletable.set_contents(base_sample_table + 'default\tSample1\t123456789000\tR01C01\tM\t\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample1\t123456789000\tR01C01\tM\t\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - missing sex
-    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\t\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\t\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - sex mis-format
-    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\twoman\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\twoman\tSample1\t\t\n')
     with pytest.raises(SampleFormattingError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - unknown ref
-    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample0\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample0\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - ref sex mismatch
-    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - wildcard constraint (mis)match
-    sampletable.set_contents(base_sample_table + 'default\tSample3\tChipName\tR01C03\tm\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default\tSample3\tChipName\tR01C03\tm\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
     # - array name not in config
-    sampletable.set_contents(base_sample_table + 'undefined\tSample3\tChipName\tR01C03\tm\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'undefined\tSample3\tChipName\tR01C03\tm\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
@@ -123,7 +123,7 @@ def test_check_sample_table(minimal_config_block, fs):
     testconfig['array_definition']['default2'] = dict()
     with open('config.yaml', 'w') as f:
         yaml.dump(testconfig, f)
-    sampletable.set_contents(base_sample_table + 'default2\tSample3\t123456789000\tR01C05\tm\tSample1\n')
+    sampletable.set_contents(base_sample_table + 'default2\tSample3\t123456789000\tR01C05\tm\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table('sample_table.tsv', 'config.yaml')
 
@@ -134,8 +134,11 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
-    fs.create_file('sample_table.tsv',
-                   contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\ndefault\nSample1\tChip1\t1\tM\tSample2\n')
+    fs.create_file(
+        'sample_table.tsv',
+        contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'
+                 'default\nSample1\tChip1\t1\tM\tSample2\t\t\n'
+    )
 
     yaml = ruamel_yaml.YAML()
     testconfig = deepcopy(minimal_config_block)

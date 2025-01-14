@@ -343,7 +343,11 @@ settings:
     # enries with __[column] will use all other samples with the same value in [column]
     # entries with _[column] expect a column that contains additional (, separated) sample_ids
     # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
-    SNP_clustering_extra_samples: ['__Chip_Name']
+    SNP_clustering:
+        sample_ids: []
+        id_columns: []
+        match_columns: ['Chip_Name', 'Sample_Group']
+        max_number_samples: 20
 
   vcf_output:
     # Which chromosome style to use in the vcf file ("1" vs "chr1")  
