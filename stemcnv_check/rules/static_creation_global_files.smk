@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from loguru import logger as logging
+from stemcnv_check import ENSEMBL_RELEASE
 from stemcnv_check.helpers import get_global_file
 
 GENOME = config["genome"]
@@ -19,35 +20,30 @@ rule download_gencode_gtf_v45:
     shell:
         "wget {params.ftp_base}/{params.release_path} -O {output} 2> /dev/null"
 
+rule download_ensmble_fasta:
+    output:
+        get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False).removesuffix(".gz")
+    params:
+        species="homo_sapiens",
+        datatype="dna",
+        release=ENSEMBL_RELEASE,
+        build='GRCh37' if GENOME in ('hg19', 'GRCh37') else 'GRCh38',
+    cache: "omit-software"  # save space and time with between workflow caching (see docs)
+    wrapper:
+        "v5.5.0/bio/reference/ensembl-sequence"
 
-# def get_fasta_path():
-#     filename = (
-#         "Homo_sapiens.{genome}.dna.toplevel.fa.gz"
-#         if GENOME == 'hg38' 
-#         else 
-#        'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz'
-#     )
-#     return os.path.join(config["fasta_path"],
-#         "homo_sapiens",
-#         f"{VEP_version}_{{genome}}",
-#         filename
-#     )
-
-rule download_vep_fasta:
+rule bgzip_fasta:
+    input:
+        get_global_file('fasta',GENOME,config['global_settings'],config['cache_path'],False).removesuffix(".gz")
     output:
         get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False)
-    conda:
-        "../envs/snp-annotation.yaml"
-    params:
-        fasta_path=os.path.join(config["cache_path"], 'fasta')
-    shell:
-        "vep_install -n -a f -s homo_sapiens -y {wildcards.genome} -c {params.fasta_path}"
+    wrapper:
+        "v5.5.0/bio/bgzip"
 
 
 rule download_mehari_ensembl_db:
     output:
         get_global_file('mehari_txdb', GENOME, config['global_settings'],config['cache_path'], False)
-        # os.path.join(config["mehari_db_path"], "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst"),
     wildcard_constraints: 
         genome = 'GRCh37|GRCh38',
         mehari_db_version = '[0-9]\\.[0-9]\\.[0-9]'
@@ -113,3 +109,10 @@ write_tsv(chrominfo, "{output}")
 EOF
         """
 
+rule download_dosage_sensivity_data:
+    output: 
+        get_global_file('dosage_scores', GENOME, config['global_settings'], config['cache_path'], False)
+    shell:
+        """
+        wget 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz' -O {output} 2> /dev/null
+        """

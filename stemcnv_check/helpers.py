@@ -7,7 +7,7 @@ import re
 import ruamel.yaml as ruamel_yaml
 from pathlib import Path
 from pydantic.v1.utils import deep_update
-from . import STEM_CNV_CHECK, mehari_db_version, VEP_version
+from . import STEM_CNV_CHECK, mehari_db_version, ENSEMBL_RELEASE
 from .exceptions import SampleConstraintError, ConfigValueError, CacheUnavailableError
 from collections import OrderedDict
 from loguru import logger as logging
@@ -79,7 +79,7 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
 
     # When apptainer is used these should always be present
     used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items())
-    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         for genome_version in used_genomes:
             static_file = get_global_file(global_file, genome_version, config['global_settings'], cache_path)
             # if not os.path.isfile(static_file):
@@ -239,7 +239,7 @@ def get_cache_dir(args, config):
     return None
 
 
-def get_global_file(type, genome_version, global_settings, cache_path, fill_wildcards = True):
+def get_global_file(type, genome_version, global_settings, cache_path, fill_wildcards=True):
     """Get path to files defined in the global settings. All of these have an internally defined default.
     Supported types are: fasta, gtf, genome_info, mehari_txdb"""
 
@@ -248,19 +248,17 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
 
     if type == 'fasta':
         config_entry = global_settings[f"{genome}_genome_fasta"]
-        if config_entry != '__use-vep__':
+        if config_entry != '__default-ensemble__':
             outfname = config_entry
         elif not cache_path:
-            raise CacheUnavailableError('No cache path defined, but VEP fasta files should be used.')
+            raise CacheUnavailableError('No cache path defined, but default ensembl fasta files should be used.')
         else:
-            base_args = (cache_path, 'fasta', 'homo_sapiens', f'{VEP_version}_{{genome}}')
+            base_args = (cache_path, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}')
+            outfname = os.path.join(*base_args, 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz')
             if genome == 'hg38':
                 wildcards['genome'] = 'GRCh38'
-                outfname = os.path.join(*base_args, 'Homo_sapiens.{genome}.dna.toplevel.fa.gz')
             else:
                 wildcards['genome'] = 'GRCh37'
-                outfname = os.path.join(*base_args, 'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz')
-
     elif type == 'gtf':
         config_entry = global_settings[f"{genome}_gtf_file"]
         if config_entry != '__default-gencode__':
@@ -290,6 +288,17 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
                 cache_path,
                 'mehari-db',
                 "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst"
+            )
+    elif type == 'dosage_scores':
+        config_entry = global_settings['dosage_sensitivity_scores']
+        if config_entry != '__cache-default__':
+            outfname = config_entry
+        elif not cache_path:
+            raise CacheUnavailableError('No StemCNV-check cache defined, but dosage_sensivity_data is set to use cache path.')
+        else:
+            outfname = os.path.join(
+                cache_path,
+                "Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz"
             )
     else:
         raise ValueError('Unknown global file type: ' + type)

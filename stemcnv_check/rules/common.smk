@@ -1,7 +1,7 @@
 import importlib.resources
 import os
 from pathlib import Path
-from stemcnv_check import STEM_CNV_CHECK, VEP_version
+from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import config_extract, get_global_file
 from stemcnv_check.exceptions import SampleConstraintError
 

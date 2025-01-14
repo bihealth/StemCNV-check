@@ -3,7 +3,7 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from stemcnv_check import STEM_CNV_CHECK, VEP_version, mehari_db_version
+from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, mehari_db_version
 
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]

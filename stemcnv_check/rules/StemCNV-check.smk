@@ -246,6 +246,9 @@ rule run_process_CNV_calls:
         ginfo_file=lambda wildcards: get_global_file(
             'genome_info', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
         ),
+        dosage_file= lambda wildcards: get_global_file(
+            'dosage_scores',get_static_input('genome_version')(wildcards),config['global_settings'],config['cache_path']
+        ),
     log:
         err=os.path.join(LOGPATH, "CNV_process", "{sample_id}", "error.log"),
     conda:

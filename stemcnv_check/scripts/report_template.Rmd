@@ -20,6 +20,7 @@ params:
   basedir: ''
   gtf_file: ''
   ginfo_file: ''
+  dosage_file: ''
   version: 'unversioned'
 ---
 
@@ -145,7 +146,10 @@ gr_info  <- load_genomeInfo(params$ginfo_file, config, target_chrom_style)
 roi_gr <- get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
 
 stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot')
-dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(config$settings$CNV_processing$Check_score_values)
+dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(
+    snakemake@params$dosage_file,
+    config$settings$CNV_processing$Check_score_values
+)
 cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
 snv_hotspot_tb <- load_hotspot_table(config, 'snv_hotspot')
 
@@ -732,7 +736,7 @@ cat('\n\n')
 cat('## Genome Overview {.tabset}\n\n')
 
 paste(
-    'The following plots each show a whole chromosome overview of the sample, combing to a whole genome view.',
+    'The following plots each show a whole chromosome overview of the sample, combining to a whole genome view.',
     'CNV calls (filtered based on the config settings) are shown as colored background bars, with the color indicating the',
     'type of call: green for gains, red for losses, and grey for LOH.',
     'Additionally, if the sample has a reference, SNVs that are labelled critical or protein changing/unreliable',
@@ -799,7 +803,7 @@ if (nrow(snp.distance.tb) == 1) {
         'Sample identities can be comparsed based on the dendrogram built on the SNP genotypes.',
         'The dendrogram is built using the manhattan distance between samples, counting both alleles',
         'from Probes that are not quality in every included sample.',
-        'Accoringly, the distance between two samples is the sum of the absolute differences between the two',
+        'Accordingly, the distance between two samples is the sum of the absolute differences between the two',
         'alleles at each SNP (also shown in the table below) after QC filters.',
         'Samples that are very close together are likely identical or clonally related.',
         'Sample selection as well as color and shape lables are controlled by the config file.\n\n'

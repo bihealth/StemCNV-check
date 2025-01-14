@@ -127,6 +127,7 @@ def test_make_singularity_args(mock_resource_files, fs):
             'hg19_gtf_file': 'relative/gtf.gtf',
             'hg19_genomeInfo_file': 'relative/genome.info',
             'mehari_transcript_db': 'relative/mehari_db',
+            'dosage_sensitivity_scores': 'relative/dosage_sensitivity_scores.tsv',
         },
         'array_definition': {
             'ExampleArray': {
@@ -147,9 +148,11 @@ def test_make_singularity_args(mock_resource_files, fs):
         "'relative/genome.fasta':'/outside/static/genome.fasta'",
         "'relative/genome.info':'/outside/static/genome.info'",
         "'relative/gtf.gtf':'/outside/static/gtf.gtf'",
-        "'relative/mehari_db':'/outside/static/mehari_db'"
+        "'relative/mehari_db':'/outside/static/mehari_db'",
+        "'relative/dosage_sensitivity_scores.tsv':'/outside/static/dosage_sensitivity_scores.tsv'"
     ]
-    def get_expected(extra=[]):
+
+    def get_expected(extra):
         return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
 
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, None, not_existing_ok=True)
@@ -173,13 +176,14 @@ def test_make_singularity_args(mock_resource_files, fs):
     # test with cache_path & auto-creation of global paths
     cache_path = '/path/to/cache'
     config['global_settings'] = {
-        'hg19_genome_fasta': '__use-vep__',
+        'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
         'hg19_genomeInfo_file': '__default-UCSC__',
         'mehari_transcript_db': '__cache-default__',
+        'dosage_sensitivity_scores': '__cache-default__',
     }
     expected_extra = []
-    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
     expected_extra += ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
@@ -187,7 +191,7 @@ def test_make_singularity_args(mock_resource_files, fs):
 
     # test with multiple arrays/genome versions
     config['global_settings'] .update({
-        'hg38_genome_fasta': '__use-vep__',
+        'hg38_genome_fasta': '__default-ensemble__',
         'hg38_gtf_file': '__default-gencode__',
         'hg38_genomeInfo_file': '__default-UCSC__',
     })
@@ -195,7 +199,7 @@ def test_make_singularity_args(mock_resource_files, fs):
         'ExampleArray2': {'genome_version': 'hg38'}
     })
     expected_extra = []
-    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         static_file = helpers.get_global_file(global_file, 'hg38', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
@@ -355,7 +359,7 @@ def test_get_cache_dir(caplog, fs):
 
 
 def test_get_global_file(fs):
-    from stemcnv_check import VEP_version, mehari_db_version
+    from stemcnv_check import ENSEMBL_RELEASE, mehari_db_version
 
     # Test with pre-defined files
     global_settings = OrderedDict({
@@ -369,10 +373,10 @@ def test_get_global_file(fs):
 
     # Test default cache paths
     global_settings = {
-        'hg19_genome_fasta': '__use-vep__',
+        'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
         'hg19_genomeInfo_file': '__default-UCSC__',
-        'hg38_genome_fasta': '__use-vep__',
+        'hg38_genome_fasta': '__default-ensemble__',
         'hg38_gtf_file': '__default-gencode__',
         'hg38_genomeInfo_file': '__default-UCSC__',
         'mehari_transcript_db': '__cache-default__',
@@ -387,7 +391,7 @@ def test_get_global_file(fs):
     fs.create_dir(cache)
 
     expected = {
-        'fasta': os.path.join(cache, 'fasta', 'homo_sapiens', f'{VEP_version}_{{genome}}', 'Homo_sapiens.{genome}.dna.toplevel.fa.gz'),
+        'fasta': os.path.join(cache, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}', 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz'),
         'gtf': os.path.join(cache, 'static-data', 'gencode.{genome}.v45.gtf.gz'),
         'genome_info': os.path.join(cache, 'static-data', 'UCSC_{genome}_chromosome-info.tsv'),
         'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst")
@@ -400,8 +404,7 @@ def test_get_global_file(fs):
     )
 
     for genome in ('hg38', 'hg19'):
-        if genome == 'hg19':
-            expected['fasta'] = os.path.join(cache, 'fasta', 'homo_sapiens', f'{VEP_version}_{{genome}}', 'Homo_sapiens.{genome}.75.dna.primary_assembly.fa.gz')
+        expected['fasta'] = os.path.join(cache, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}', 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz')
         for gtype in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
             assert helpers.get_global_file(gtype, genome, global_settings, cache, fill_wildcards=False) == expected[gtype]
             assert helpers.get_global_file(gtype, genome, global_settings, cache) == expected[gtype].format(

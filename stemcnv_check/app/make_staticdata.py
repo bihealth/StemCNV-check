@@ -41,7 +41,7 @@ def run_staticdata_workflow(args, array_name):
 
     # Collect missing global files
     global_files = set()
-    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb'):
+    for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         filename = get_global_file(global_file, genome_build, config['global_settings'], cache_path)
         if not os.path.isfile(filename):
             if global_file == 'mehari_txdb':

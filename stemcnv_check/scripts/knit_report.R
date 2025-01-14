@@ -44,6 +44,7 @@ rmarkdown::render(
         basedir = config$basedir,
         gtf_file = snakemake@params$gtf_file,
         ginfo_file = snakemake@params$ginfo_file,
+        dosage_file = snakemake@params$dosage_file,
         version = snakemake@params$version
     )
 )

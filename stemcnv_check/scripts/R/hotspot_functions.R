@@ -143,12 +143,12 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info, target_chrom_style=NA) {
 }
 
 
-get_dosage_sensivity_tb <- function(score_settings) {
+get_dosage_sensivity_tb <- function(dosage_data_file, score_settings) {
     
-    dosage_data <- 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz'
+    # dosage_data_file <- 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz'
     doi <- '10.1016/j.cell.2022.06.036'
     
-    tb <- read_tsv(dosage_data, show_col_types = F) %>%
+    tb <- read_tsv(dosage_data_file, show_col_types = F) %>%
         rename_with(
             ~str_replace(., '#gene', 'hotspot') %>%
                 str_replace('pHaplo', 'loss') %>%

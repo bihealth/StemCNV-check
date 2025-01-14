@@ -161,7 +161,9 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
                 )
         # Check that genome versions match Illumina syntax for manifest files
         # Can not be sure, this is a hard rule so only raise a warning
-        expected_pattern = 'A1\\.(csv|bpm)$' if config['array_definition'][array]['genome_version'] in ('hg19', 'GRCh37') else 'A2\\.(csv|bpm)$'
+        expected_pattern = 'A1\\.(csv(.gz)?|bpm)$' \
+            if config['array_definition'][array]['genome_version'] in ('hg19', 'GRCh37') \
+            else 'A2\\.(csv(.gz)?|bpm)$'
         for manifest in ('csv_manifest_file', 'bpm_manifest_file'):
             if not re.search(expected_pattern, os.path.basename(config['array_definition'][array][manifest])):
                 genome_version = config['array_definition'][array]['genome_version']

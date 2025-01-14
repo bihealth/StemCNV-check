@@ -93,11 +93,14 @@ global_settings:
   cache_dir: '~/.cache/stemcnv-check'
   # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
   mehari_transcript_db: '__cache-default__' 
-  # Fasta file for the genome sequence, either '__use-vep__' or a path to the genome fasta file
-  # '__use-vep__' will download the genome fasta file via vep-ensembl
+  # Dosage sensitivity predicitions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
+  # Either '__cache-default__' or a path to the dosage sensitivity data file
+  dosage_sensitivity_scores: '__cache-default__'
+  # Fasta file for the genome sequence, either '__default-ensemble__' or a path to the genome fasta file
+  # '__default-ensemble__' will download the genome fasta file from ensembl ftp servers
   # Note: fasta files can be compressed, but *only* with bgzip!
-  hg19_genome_fasta: '__use-vep__'
-  hg38_genome_fasta: '__use-vep__'
+  hg19_genome_fasta: '__default-ensemble__'
+  hg38_genome_fasta: '__default-ensemble__'
   # Gene annotation of the genome in gtf format, either '__default-gencode__' or a path to the gtf file
   # The default is to download GenCode v45 files
   hg19_gtf_file: '__default-gencode__'

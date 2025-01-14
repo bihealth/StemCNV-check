@@ -127,6 +127,9 @@ rule knit_report:
         ginfo_file=lambda wildcards: get_global_file(
             'genome_info', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
         ),
+        dosage_file=lambda wildcards: get_global_file(
+            'dosage_scores', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
+        ),
     resources:
         runtime=get_tool_resource("knitr", "runtime"),
         mem_mb=get_tool_resource("knitr", "memory"),

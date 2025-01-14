@@ -87,7 +87,10 @@ stemcell_hotspots_gr <- load_hotspot_table(config, 'stemcell_hotspot') %>%
     parse_hotspot_table(gr_genes, gr_info)
 cancer_genes_gr <- load_hotspot_table(config, 'cancer_gene') %>%
     parse_hotspot_table(gr_genes, gr_info)
-dosage_sensitive_gene_gr <- get_dosage_sensivity_tb(config$settings$CNV_processing$Check_score_values) %>%
+dosage_sensitive_gene_gr <- get_dosage_sensivity_tb(
+    snakemake@params$dosage_file,
+    config$settings$CNV_processing$Check_score_values
+) %>%
     parse_hotspot_table(gr_genes, gr_info)
 
 array <- sampletable %>%

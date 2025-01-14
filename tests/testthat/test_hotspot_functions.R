@@ -157,6 +157,7 @@ test_that('parse inbuilt tables', {
     )
     gtf_file <- config$global_settings$hg19_gtf_file
     ginfo_file <- config$global_settings$hg19_genomeInfo_file
+    dosage_data_file <- 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz'
 
     stemcell_hotspot_tb <- load_hotspot_table(config)
     cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
@@ -196,7 +197,7 @@ test_that('parse inbuilt tables', {
     expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
     
-    dosage <- get_dosage_sensivity_tb(score_settings)
+    dosage <- get_dosage_sensivity_tb(dosage_data_file, score_settings)
     expect_no_error(parse_hotspot_table(dosage, gr_genes, gr_info))
     expect_equal(head(dosage, 5), expected_dosage_head)
     # This one can not be parsed like the others (it's never used as a gr either)
