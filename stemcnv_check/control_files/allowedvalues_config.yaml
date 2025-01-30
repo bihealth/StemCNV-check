@@ -40,7 +40,7 @@ evaluation_settings:
     filters.exclude.reportable: list__str__(probe_gap|high_probe_dens|min_size|min_probes|min_density)
 
   summary_stat_warning_levels:   
-    last_level_critical: list__str
+    last_level_red: list__str
     call_rate: list_len2__float__le1__ge0
     loss_gain_log2ratio: list_len2__int
     SNP_pairwise_distance_to_reference: list_len2__int

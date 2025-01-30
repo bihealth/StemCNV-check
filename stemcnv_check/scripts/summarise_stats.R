@@ -31,8 +31,8 @@ get_gencall_stats <- function(gencall_stat_file) {
 # Additonally the last level can eb set to 'critical' instead of 'warning'  
 # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
 get_last_level <- function(s, config) ifelse(
-    s %in% config$evaluation_settings$summary_stat_warning_levels$last_level_critical,
-    'critical',
+    s %in% config$evaluation_settings$summary_stat_warning_levels$last_level_red,
+    'high concern',
     'warning'
 )
 

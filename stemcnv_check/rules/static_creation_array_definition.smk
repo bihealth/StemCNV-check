@@ -7,14 +7,14 @@ from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, mehari_db_version
 
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]
-
+ARRAY = config["array_name"]
 # ================================================================
 
 
 def fix_container_path(path_in, bound_to):
     path_in = Path(path_in)
 
-    if bound_to == "static":
+    if bound_to in ("static", ARRAY):
         rel_path = path_in.name
     else:
         local_target = {
@@ -81,6 +81,8 @@ rule create_gcmodel_file:
         config["penncnv_GCmodel_file"],
     params:
         download_path=fix_container_path(DOWNLOAD_DIR, "tmp"),
+        input_path=fix_container_path(config["penncnv_pfb_file"], ARRAY),
+        output_path=fix_container_path(config["penncnv_GCmodel_file"], ARRAY)
     container:
         "docker://genomicslab/penncnv"
     shell:
@@ -90,7 +92,7 @@ rule create_gcmodel_file:
         else
             gunzip -c /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 
         fi
-        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {input} -out {output}
+        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {params.input_path} -out {params.output_path}
         """
 
 

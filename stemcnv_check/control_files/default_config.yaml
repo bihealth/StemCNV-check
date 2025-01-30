@@ -1,8 +1,18 @@
 ##!minimal
-# Multiple arrays can be defined here, each array needs all required entries.
-# The entries auto-generatable files are created by the `stemcnv-check make-staticdata` command, which will also update 
-# this config file accordingly (unless --no-edit-inplace is used).
-array_definition: [] ###!strip:4
+# Multiple arrays can be defined here, but arrays defined in global config saved in the cache are also available.
+#   This file will take precedence over the global config, unless the file names here can not be used.
+# Each array needs all required entries, but the `stemcnv-check make-staticdata` command will generate files 
+#   marked as auto-generatable. By default both the files and an update to a global array definition file will be
+#   written into the cache directory (unless --no-cache is used). By default this file is at 
+#   ~/.cache/stemcnv-check/global_array_definitions.yaml
+# Once the array definitions are in the global file, you need to either delete the 'array_definition' block here 
+#   or also update it with the information written out by `stemcnv-check make-staticdata` (which is the same as the 
+#   entry written into the global array definition config), since this config takes precedence over the global file.
+# If no global config was used during the `make-staticdata` run, i.e. due to the --no-cache flag the array definitions 
+#   will instead be written to a local file, i.e. 'ExampleArray_config.yaml' in the current working directory. 
+#   In this case you will need to copy the contents of that file into this one, or alternatively into a global array 
+#   definition file, that can still be created.
+array_definition: {} ###!strip:4
 #!  # This 'ExampleArray' *should* to be renamed to the actual array name
 #!  ExampleArray:  
 #!    genome_version: hg38      #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
@@ -11,16 +21,16 @@ array_definition: [] ###!strip:4
 #!    bpm_manifest_file: ''     #REQUIRED
 #!    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
 #!    egt_cluster_file: ''      #REQUIRED
-#!    # manifest file (.cvs) from Illumina, matching the SNP array used and the genome version
+#!    # manifest file (.csv) from Illumina, matching the SNP array used and the genome version
 #!    csv_manifest_file: ''     #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
 #!    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
-#!    penncnv_pfb_file: static-data/{array_name}/PennCNV-PFB_{genome}.pfb              #REQUIRED, Auto-generatable
+#!    penncnv_pfb_file: '{cache}/array_definitions/{array_name}/PennCNV-PFB_{genome}.pfb'              #REQUIRED, Auto-generatable
 #!    # PennCNV GC model file, containing GC content values, calculated by PennCNV
-#!    penncnv_GCmodel_file: static-data/{array_name}/PennCNV-GCmodel_{genome}.gcmodel  #REQUIRED, Auto-generatable
+#!    penncnv_GCmodel_file: '{cache}/array_definitions/{array_name}/PennCNV-GCmodel_{genome}.gcmodel'  #REQUIRED, Auto-generatable
 #!    # bed file with windows of very high array density, calculated by stemcnv-check
-#!    array_density_file: static-data/{array_name}/density_{genome}.bed                #REQUIRED, Auto-generatable
+#!    array_density_file: '{cache}/array_definitions/{array_name}/density_{genome}.bed'                #REQUIRED, Auto-generatable
 #!    # bed file with windows of probes gaps on the array
-#!    array_gaps_file: static-data/{array_name}/gaps_{genome}.bed                      #REQUIRED, Auto-generatable
+#!    array_gaps_file: '{cache}/array_definitions/{array_name}/gaps_{genome}.bed'                      #REQUIRED, Auto-generatable
 
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
@@ -31,6 +41,7 @@ data_path: data     #REQUIRED
 log_path: logs      #REQUIRED
 
 
+##!medium
 evaluation_settings:
   CNV_call_categorisation:
     check_score.critical: 55
@@ -39,14 +50,16 @@ evaluation_settings:
     filters.exclude.reportable: ['min_size', 'min_probes'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
   
   # Each measure used for QC is categorised as 'OK', 'unusual', or 'warning'
-  # Additonally the last level can eb set to 'critical' instead of 'warning'  
+  # Additionally the last level can be set to 'high concern' instead of 'warning'  
   # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
   summary_stat_warning_levels:   
     # List of threshold values between normal/abnormal and abnormal/problematic(critical)
     # The first values gives the maximum allowed for 'OK', the second for 'warning'
     call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
-    SNP_pairwise_distance_to_reference: [2, 10]
-    # SNP_distance_to_reference_span: undecided
+    # This is the absolute GT distance between a sample and it's reference
+    # Note that the expected baseline difference strongly depends on the array platform
+    # and may need to be adjusted. These values are based on the GSA array (~700k probes)
+    SNP_pairwise_distance_to_reference: [500, 5000]
     critical_snvs: [1, 1]
     call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters
     loss_gain_log2ratio: [2, 4]
@@ -56,8 +69,9 @@ evaluation_settings:
     reportable_calls_LOH: [5, 10]
     critical_calls_CNV: [1, 1]
     critical_calls_LOH: [1, 1]
-    # These measures use 'critical' (red) instead of 'warning' (orange), they are also bold in the html summary table
-    last_level_critical:
+    # These measures use red highlighting ('high concern') instead of orange ('warning'),
+    # they are also bolded in the html summary table
+    last_level_red:
       - call_rate
       - computed_gender
       - SNP_pairwise_distance_to_reference
@@ -86,7 +100,6 @@ evaluation_settings:
       min_check_score: 0  
 
 
-##!medium
 global_settings:
   # By default all conda environments and apptainer images are stored to a common cache
   # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
@@ -149,7 +162,7 @@ settings:
   default-filter-set: recommended
 
   PennCNV:
-    # Specific filter setting for PennCNV, '_default_' uses `default-filter-set
+    # Specific probe filter set for PennCNV, '_default_' uses `default-filter-set
     filter-settings: '_default_'
     enable_LOH_calls: True
     # Neighbouring CNVs of the same state that are merged if
@@ -161,14 +174,14 @@ settings:
       merge.gap.snps: 10
       call.extension.percent: 60
       maximum.gap.allowed: 500000
-    # Prefiltering of calls is done (after merging of nearby calls) as follows:
+    # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5
     filter.minlength: 1000
     filter.mindensity.Mb: 10 #snps per Mb
 
   CBS:
-    # Specific filter setting for CBS, '_default_' uses `default-filter-set
+    # Specific probe filter set for CBS, '_default_' uses `default-filter-set
     filter-settings: '_default_'
     # undo.SD split value for CBS
     undo.SD.val: 1
@@ -181,7 +194,7 @@ settings:
       merge.gap.snps: 10
       call.extension.percent: 60
       maximum.gap.allowed: 500000
-    # Prefiltering of calls is done (after merging of nearby calls) as follows:
+    # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
     # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
     filter.minprobes: 5
     filter.minlength: 1000
@@ -192,7 +205,7 @@ settings:
     LRR.loss.large: -1.1 #CN0
     LRR.gain: 0.2        #CN3
     LRR.gain.large: 0.75 #CN4+
-    # plus specifics for sex chromosomes
+    # LRR thresholds for sex chromosomes
     LRR.male.XorY.loss:      -0.5   #CN0
     LRR.male.XorY.gain:       0.28  #CN2
     LRR.male.XorY.gain.large: 0.75  #CN3+
@@ -203,7 +216,7 @@ settings:
 
   # Values used by `stemcnv-check make-staticdata` to generate density and gap bed files
   array_attribute_summary:
-    density.windows: 100000     #window size for probe density calculation (0.5Mb)
+    density.windows: 100000    #window size for probe density calculation (100kb)
     min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
 
   CNV_processing:
@@ -212,12 +225,12 @@ settings:
       # therefore a single filter-settings needs to be used as reference here
       filter-settings: '_default_'
       # Prefiltering of calls is done (after merging of nearby calls) as follows:
-      # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+      # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
       filter.minprobes: 5
       filter.minlength: 1000
       filter.mindensity.Mb: 10 #snps per Mb
       
-      ## Calls from multiple tools are combined and combined if they match
+      ## Calls from multiple tools are combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
       # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
       tool.overlap.greatest.call.min.perc: 50
@@ -264,13 +277,13 @@ settings:
       # contribute the higher of the two annotated scores. 
       
       # Dosage sensivity predicition is a based on Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
-      # CNV loss alls overlapping a gene with pHaplos score >= threshold are scored with the 'dosage_sensitive_gene' score
+      # CNV loss calls overlapping a gene with pHaplo score >= threshold are scored with the 'dosage_sensitive_gene' score
       # CNV gain calls are respectively scored for the pTriplo score
       pHaplo_threshold: 0.86
       pTriplo_threshold: 0.94
       dosage_sensitive_gene:  5
-      # Genes without any score from the hotspot lists of dosage sensivity are scored as 'any_other_gene'
-      any_other_gene:         0.2
+      # Genes without any score from the hotspot lists or dosage sensivity are scored as 'any_other_gene'
+      any_other_gene:        0.2
       # Calls overlapping any sample defined ROI get this one-time score
       any_roi_hit:           50
       # CNVs with a large CN (<1 or >3) have their size contribution multiplied by this factor
@@ -339,14 +352,16 @@ settings:
       Impact: [HIGH]
       Annotation_regex: 'missense_variant|inframe'
     
-    #Can add sample_ids here, but not generally recommended to do so, instead use columns from the sample_table
-    # enries with __[column] will use all other samples with the same value in [column]
-    # entries with _[column] expect a column that contains additional (, separated) sample_ids
-    # Examples: extra_samples: ['__Chip_Name', '__Sample_Group']
+    # These settings determine which samples are used for the SNP clustering & dendrogram
     SNP_clustering:
+        # Sample-IDs from the sample table, these will be added to the clustering of every sample
         sample_ids: []
+        # Column names of the sample table, these are assumed to contain (comma separated) Sample-IDs
         id_columns: []
+        # Column names of the sample table, Samples are used for clustering if they have the same value in any of these columns
         match_columns: ['Chip_Name', 'Sample_Group']
+        # Maximum number of samples to include in the dendrogram. Note: calculation of clustering (done per sample)
+        # takes more time for each additional sample included
         max_number_samples: 20
 
   vcf_output:
@@ -474,6 +489,12 @@ tools:
     memory: 8000 # "8000MB"
     runtime: "4h"
 #   gtc2vcf:
+#     memory: 1000 # "2000MB"
+#     runtime: "1h"
+#   filter_snp_vcf:
+#     memory: 1000 # "2000MB"
+#     runtime: "1h"
+#   mehari:
 #     memory: 1000 # "2000MB"
 #     runtime: "1h"
   CBS:

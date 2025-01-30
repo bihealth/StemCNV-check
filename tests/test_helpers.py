@@ -138,7 +138,7 @@ def test_make_singularity_args(mock_resource_files, fs):
         'array_definition': {
             'ExampleArray': {
                 'genome_version': 'hg19',
-                'bpm_manifest': 'relative/bpm_manifest.bpm',
+                'bpm_manifest': 'relative_array/bpm_manifest.bpm',
             }
         }
     }
@@ -161,19 +161,19 @@ def test_make_singularity_args(mock_resource_files, fs):
     def get_expected(extra):
         return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
 
-    assert get_expected(expected_extra) == helpers.make_apptainer_args(config, None, not_existing_ok=True)
+    assert (get_expected(expected_extra+["'relative_array':'/outside/ExampleArray'"]) ==
+            helpers.make_apptainer_args(config, None, not_existing_ok=True))
 
     # Fail if some defined paths do not exist
     with pytest.raises(FileNotFoundError):
         helpers.make_apptainer_args(config, None)
 
     # Test with tmpdir
-    assert get_expected(expected_extra + ["'/tmp/tmpdir':'/outside/tmp'"]) == helpers.make_apptainer_args(
-        config, None, tmpdir='/tmp/tmpdir', not_existing_ok=True
-    )
+    assert (get_expected(expected_extra + ["'relative_array':'/outside/ExampleArray'", "'/tmp/tmpdir':'/outside/tmp'"])
+            == helpers.make_apptainer_args(config, None, tmpdir='/tmp/tmpdir', not_existing_ok=True))
     # test after file creation
-    fs.create_file('relative/bpm_manifest.bpm')
-    expected = get_expected(expected_extra + ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
+    fs.create_file('relative_array/bpm_manifest.bpm')
+    expected = get_expected(expected_extra + ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
     assert expected == helpers.make_apptainer_args(config, None)
 
     # test with direct addition
@@ -192,7 +192,7 @@ def test_make_singularity_args(mock_resource_files, fs):
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
     # test with multiple arrays/genome versions
@@ -210,7 +210,7 @@ def test_make_singularity_args(mock_resource_files, fs):
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'relative/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
 @pytest.fixture
@@ -238,14 +238,27 @@ def default_config():
         """
     )
 
+@pytest.fixture
+def array_config():
+    return textwrap.dedent(
+        """\
+        array_definition:
+            ExampleArray:
+                key: value
+                key_file: filepath
+        """
+    )
 
-def test_load_config(user_config, default_config, fs):
+
+def test_load_config(user_config, default_config, array_config, fs):
 
     fs.create_file('config.yaml', contents=user_config)
     fs.create_file(
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
         contents=default_config
     )
+
+    fake_args = MagicMock(config='config.yaml', no_cache=False, cache_path='/path/to/cache')
 
     config_dict = {
         'data_path': '/path/to/data',
@@ -257,9 +270,21 @@ def test_load_config(user_config, default_config, fs):
                 'nested': {'key': 'value2',
                            'key2': 'val3'}}}
 
-    assert config_dict == helpers.load_config('config.yaml', False)
-    assert config_from_defaults == helpers.load_config('config.yaml', True)
+    assert config_dict == helpers.load_config(fake_args, inbuilt_defaults=False)
+    assert config_from_defaults == helpers.load_config(fake_args)
 
+    # Test loading of array definition from present global config
+    fs.create_file('/path/to/cache/global_array_definitions.yaml', contents=array_config)
+    array_block = {'array_definition': {'ExampleArray': {'key': 'value', 'key_file': 'filepath'}}}
+    config_from_defaults.update(array_block)
+    assert config_from_defaults == helpers.load_config(fake_args)
+    # # test overwrite of non-resolved file paths in user config with values from global config
+    # fs.create_file(
+    #     'config2.yaml',
+    #     contents=user_config + '\n' + array_config.replace('filepath', 'non-existing-file')
+    # )
+    # fake_args.config = 'config2.yaml'
+    # assert config_from_defaults == helpers.load_config(fake_args)
 
 def test_config_extract(caplog):
     config_dict   = {'data_path': '/path/to/data',
@@ -386,11 +411,15 @@ def test_get_cache_dir(caplog, fs):
         no_cache=True,
         cache_path=None
     )
+    fs.add_real_file(
+        importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml'),
+    )
+    
     # Test with args.no_cache
     assert helpers.get_cache_dir(args, config) is None
 
     args.no_cache = False
-    # test if cache is not accessible
+    # test if set cache_path is not accessible
     args.cache_path = '/unwritable/cache'
     fs.create_dir('/unwritable/cache', perm_bits=444)
     assert helpers.get_cache_dir(args, config) is None
@@ -398,13 +427,13 @@ def test_get_cache_dir(caplog, fs):
     assert "Failed to create or access cache in: /unwritable/cache" == caplog.records[-3].message
     assert "Could not use cache directory '/unwritable/cache'" == caplog.records[-2].message
 
-    # Test with usable value from args
+    # Test with usable ste cache_path from args
     args.cache_path = '/writable/cache'
     assert helpers.get_cache_dir(args, config) == Path('/writable/cache')
     assert fs.get_object('/writable/cache') is not None
 
-    args.cache_path = None
-    # Test with value from config
+    # Test without set cache_path = fallback to config value
+    args.cache_path = ''
     assert helpers.get_cache_dir(args, config) == Path('/tmp/stemcnv_cache')
     assert fs.get_object('/tmp/stemcnv_cache') is not None
 
@@ -414,10 +443,14 @@ def test_get_cache_dir(caplog, fs):
     actual = helpers.get_cache_dir(args, config)
     assert actual == Path('~/.cache/stemcnv-check').expanduser()
     assert fs.get_object(Path('~/.cache/stemcnv-check').expanduser()) is not None
-    assert [log.levelname for log in caplog.records[-2:]] == ['DEBUG', 'DEBUG']
+    assert [log.levelname for log in caplog.records[-3:]] == ['DEBUG', 'WARNING', 'DEBUG']
     assert "Cache path exists but is not accessible: /tmp/stemcnv_cache" == caplog.records[-3].message
     assert "Could not use cache directory '/tmp/stemcnv_cache'" == caplog.records[-2].message
     assert f"Created cache directory: {actual}" == caplog.records[-1].message
+
+    # Test fallback top default cache path if config has no entry
+    config = {}
+    assert helpers.get_cache_dir(args, config) == Path('~/.cache/stemcnv-check').expanduser()
 
 
 def test_get_global_file(fs):

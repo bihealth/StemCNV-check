@@ -4,19 +4,20 @@ import tempfile
 import ruamel.yaml as ruamel_yaml
 from pathlib import Path
 
+from deepdiff import DeepDiff
+from pydantic.v1.utils import deep_update
 from snakemake.api import SnakemakeApi
 from snakemake.settings.types import ResourceSettings, ConfigSettings, DeploymentSettings, DAGSettings, OutputSettings, DeploymentMethod
 from .check_input import check_config
-from .. import STEM_CNV_CHECK
-from ..helpers import make_apptainer_args, read_sample_table, get_cache_dir, load_config, get_global_file
+from stemcnv_check import STEM_CNV_CHECK, helpers
 from loguru import logger as logging
 
 import importlib.resources
 
 def create_missing_staticdata(args):
 
-    check_config(args.config, args.sample_table, args.column_remove_regex, minimal_files_only=True)
-    config = load_config(args.config)
+    check_config(args, minimal_entries_only=True)
+    config = helpers.load_config(args)
 
     for array_name in config['array_definition']:
         run_staticdata_workflow(args, array_name)
@@ -33,8 +34,8 @@ def run_staticdata_workflow(args, array_name):
     """
     logging.info(f'Starting to check for missing static data files for array "{array_name}" ...')
     # bpm & egt files are needed
-    config = load_config(args.config)
-    cache_path = get_cache_dir(args, config)
+    config = helpers.load_config(args)
+    cache_path = helpers.get_cache_dir(args, config)
 
     genome_build = config['array_definition'][array_name]['genome_version']
     genome_build = 'hg38' if genome_build in ('hg38', 'GRCh38') else 'hg19'
@@ -42,7 +43,7 @@ def run_staticdata_workflow(args, array_name):
     # Collect missing global files
     global_files = set()
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
-        filename = get_global_file(global_file, genome_build, config['global_settings'], cache_path)
+        filename = helpers.get_global_file(global_file, genome_build, config['global_settings'], cache_path)
         if not os.path.isfile(filename):
             if global_file == 'mehari_txdb':
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -72,7 +73,7 @@ def run_staticdata_workflow(args, array_name):
                     ),
                     deployment_settings=DeploymentSettings(
                         deployment_method=DeploymentMethod.parse_choices_set(['conda']),
-                        #apptainer_args=make_apptainer_args(config, cache_path, not_existing_ok=True),
+                        #apptainer_args=helpers.make_apptainer_args(config, cache_path, not_existing_ok=True),
                         conda_prefix=cache_path,
                         #apptainer_prefix=cache_path,
                     ),
@@ -94,14 +95,18 @@ def run_staticdata_workflow(args, array_name):
     # Required auto-generatbale array definition files
     static_files = {'penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'}
     # Update static_snake_config with existing and target file paths
-    existing_files = {file for file in static_files
-                      if file in config['array_definition'][array_name] and os.path.isfile(config['array_definition'][array_name][file])}
+    existing_files = {
+        file for file in static_files if file in config['array_definition'][array_name] and
+        os.path.isfile(config['array_definition'][array_name][file])
+    }
     missing_files = static_files - existing_files
     static_snake_config.update({
         file: config['array_definition'][array_name][file] for file in existing_files
     })
     static_snake_config.update({
-        file: config['array_definition'][array_name][file].format(genome=genome_build, array_name=array_name) for file in missing_files
+        file: config['array_definition'][array_name][file].format(
+            genome=genome_build, array_name=array_name, cache=cache_path
+        ) for file in missing_files
     })
 
     if not missing_files:
@@ -109,7 +114,7 @@ def run_staticdata_workflow(args, array_name):
         return 0
 
     # Check if vcf file _for the selected array_ is present, generate one if none are
-    sample_data_df = read_sample_table(args.sample_table, args.column_remove_regex)
+    sample_data_df = helpers.read_sample_table(args.sample_table, args.column_remove_regex)
     sample_data_df = sample_data_df[sample_data_df['Array_Name'] == array_name]
     datapath = config['data_path']
     filter_settings = config['settings']['default-filter-set']
@@ -153,7 +158,7 @@ def run_staticdata_workflow(args, array_name):
                             deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
                             conda_prefix=cache_path,
                             apptainer_prefix=cache_path,
-                            apptainer_args=make_apptainer_args(
+                            apptainer_args=helpers.make_apptainer_args(
                                 config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points
                             ),
                         ),
@@ -185,7 +190,8 @@ def run_staticdata_workflow(args, array_name):
                         **{
                             'TMPDIR': tmpdir,
                             'vcf_input_file': use_vcf,
-                            'genomeInfo': get_global_file('genome_info', genome_build, config['global_settings'], cache_path),
+                            'array_name': array_name,
+                            'genomeInfo': helpers.get_global_file('genome_info', genome_build, config['global_settings'], cache_path),
                         }
                     )
                 ),
@@ -193,7 +199,7 @@ def run_staticdata_workflow(args, array_name):
                     deployment_method=DeploymentMethod.parse_choices_set(['conda', 'apptainer']),
                     conda_prefix=cache_path,
                     apptainer_prefix=cache_path,
-                    apptainer_args=make_apptainer_args(
+                    apptainer_args=helpers.make_apptainer_args(
                         config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points
                     ),
                 )
@@ -205,23 +211,81 @@ def run_staticdata_workflow(args, array_name):
             .execute_workflow()
         )
 
-    update_str = '\n'.join([f"    {entry}: {file}" for entry, file in static_snake_config.items()
-                            if entry in missing_files and
-                            entry in config['array_definition'][array_name] and file != config['array_definition'][array_name][entry]])
-
-    if not args.no_edit_inplace and update_str:
-        logging.info('Missing static files generated. Updating config file with array definiton data entries:\n' + update_str)
-        user_config = load_config(args.config, False)
-        for file in missing_files:
-            user_config['array_definition'][array_name][file] = static_snake_config[file]
-        yaml = ruamel_yaml.YAML()
-        with open(args.config, 'w') as f:
-            yaml.dump(user_config, f)
-    elif update_str:
-        logging.info(f"Missing static files generated, please use the following lines to update the array_definition "
-                     f"for '{array_name}' in your config file (written to stdout):")
-        sys.stdout.write(update_str + '\n')
-    else:
+    # The missing files may have been specified with directly usable paths, that do not need to be updated
+    update_str = '\n'.join([
+        f"    {entry}: {file}" for entry, file in static_snake_config.items() if entry in missing_files and
+        entry in config['array_definition'][array_name] and file != config['array_definition'][array_name][entry]
+    ])
+    if not update_str:
         logging.info("Missing static files generated.")
+        return 0
 
-    return True
+    # Determine where to write config updates
+    # 1) if cache is in use, check if
+    #    a) global config already exists, if not write to it
+    #    b) check if the array definition already exists there, if not update global config
+    #    c) if a (conflicting) array definition already exists, ask user if they want to overwrite
+    # 2) if no cache is used, write to a local array specific config (with only that entry)
+    #    Give an example for how to refer to this file in the main config file
+    config_out = {'array_definition': {array_name: config['array_definition'][array_name]}}
+    for file in missing_files:
+        config_out['array_definition'][array_name][file] = static_snake_config[file]
+    # In all cases the file paths should be absolute, otherwise reusing that config part from another path would break
+    config_out['array_definition'][array_name] = {
+        entry: os.path.abspath(value) if entry.endswith('_file') else value
+        for entry, value in config_out['array_definition'][array_name].items()
+    }
+    yaml = ruamel_yaml.YAML()
+
+    base_config = {}
+    array_name_sanitized = "".join(x if x.isalnum() or x in '_-.' else '_' for x in array_name)
+    if cache_path:
+        global_config_path = helpers.get_cache_array_definition(cache_path)
+        if global_config_path:
+            with open(global_config_path) as f:
+                base_config = yaml.load(f)
+            yaml_write_path = global_config_path
+        else:
+            yaml_write_path = os.path.join(cache_path, 'global_array_definitions.yaml')
+    else:
+        yaml_write_path = array_name_sanitized + '_config.yaml'
+
+    if base_config and 'array_definition' in base_config and array_name in base_config['array_definition']:
+        if base_config['array_definition'][array_name] == config_out['array_definition'][array_name]:
+            logging.error("No changes to array definition detected, this should not happen after creating new files!")
+            return 1
+        # delta = DeepDiff(
+        #     base_config['array_definition'][array_name],
+        #     config_out['array_definition'][array_name],
+        #     verbose_level=2
+        # ).to_dict()
+        logging.warning(
+            f'Global config already contains array definition for "{array_name}".'
+            # f' Differences:\n'
+            # + '\n'.join([f"    {key}: {value}" for key, value in delta.items()])
+        )
+        answer = ''
+        while not answer or answer[0] not in ('y', 'n'):
+            answer = input(
+                f'Do you want to overwrite the array definition for "{array_name}" in the gloabl config? (y/n): '
+            ).lower()
+        if answer == 'n':
+            yaml_write_path = array_name_sanitized + '_config.yaml'
+        else:
+            config_out = deep_update(base_config, config_out)
+    else:
+        config_out = deep_update(base_config, config_out)
+
+    info_str = (
+        f'local file "{yaml_write_path}"' if (yaml_write_path == array_name_sanitized + '_config.yaml') else
+        f'global config. You either need to update the following entries in your main config ({args.config}) or remove '
+        f'the "{array_name}" array definition there, so that the global config can be used instead'
+    )
+    logging.info(
+        f'Missing static files generated. Writing array definiton data entries to ' +
+        info_str + ':\n' + update_str
+    )
+    with open(yaml_write_path, 'w') as f:
+        yaml.dump(config_out, f)
+
+    return 0

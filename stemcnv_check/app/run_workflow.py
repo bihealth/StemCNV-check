@@ -4,12 +4,12 @@ import ruamel.yaml as ruamel_yaml
 
 from snakemake.cli import main
 from loguru import logger as logging
-from .. import STEM_CNV_CHECK
-from ..helpers import load_config, make_apptainer_args, get_cache_dir
+from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check.helpers import load_config, make_apptainer_args, get_cache_dir, get_cache_array_definition
 
 def run_stemcnv_check_workflow(args):
 
-    config = load_config(args.config)
+    config = load_config(args)
     cache_path = get_cache_dir(args, config)
 
     argv = [
@@ -35,11 +35,11 @@ def run_stemcnv_check_workflow(args):
     # --cleanup-containers
     # --conda-cleanup-envs
 
-
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
         args.config,
+        get_cache_array_definition(cache_path) if os.path.isfile(get_cache_array_definition(cache_path)) else '',
         '--config',
         f'sample_table={args.sample_table}',
         f"column_remove_regex={args.column_remove_regex}",

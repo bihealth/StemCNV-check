@@ -7,9 +7,9 @@ from collections import defaultdict
 from collections.abc import MutableMapping
 from loguru import logger as logging
 
-from .. import STEM_CNV_CHECK
-from ..helpers import config_extract, read_sample_table
-from ..exceptions import SampleFormattingError, SampleConstraintError, ConfigValueError
+from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check.helpers import config_extract, read_sample_table, load_config
+from stemcnv_check.exceptions import SampleFormattingError, SampleConstraintError, ConfigValueError
 
 
 def flatten(dictionary, parent_key='', separator=':'):
@@ -29,15 +29,18 @@ def flatten(dictionary, parent_key='', separator=':'):
 
 
 ### Sanity checks ###
-@logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError), reraise=True)
-def check_sample_table(sample_table_file, config_file, column_remove_regex=None):
+@logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError, ConfigValueError), reraise=True)
+def check_sample_table(args):
+
+    sample_table_file = args.sample_table
+    config_file = args.config
 
     if not os.path.isfile(sample_table_file):
         raise FileNotFoundError(f"Sample table file '{sample_table_file}' does not exist.")
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
 
-    sample_data_df = read_sample_table(sample_table_file, column_remove_regex)
+    sample_data_df = read_sample_table(sample_table_file, args.column_remove_regex)
     yaml = ruamel_yaml.YAML(typ='safe')
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
@@ -74,11 +77,12 @@ def check_sample_table(sample_table_file, config_file, column_remove_regex=None)
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 
     # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex (& aren't empty!)
-    with open(config_file) as f:
-        yaml = ruamel_yaml.YAML(typ='safe')
-        config = yaml.load(f)
+    config = load_config(args, inbuilt_defaults=False)
+    # check that the array_definition block is loaded
+    if 'array_definition' not in config:
+        raise ConfigValueError("The 'array_definition' block is missing from the config file.")
 
-    sample_data = read_sample_table(sample_table_file, column_remove_regex, return_type='list')
+    sample_data = read_sample_table(sample_table_file, args.column_remove_regex, return_type='list')
     for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
         pattern = config_extract(['wildcard_constraints', constraint], config, default_config)
         mismatch = [sid for sid, n, p, _, _, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val)) and eval(val)]
@@ -109,16 +113,18 @@ def check_sample_table(sample_table_file, config_file, column_remove_regex=None)
 
 
 @logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
-def check_config(config_file, sample_table_file, column_remove_regex=None, minimal_files_only=False):
+def check_config(args, minimal_entries_only=False):
+
+    config_file = args.config
+    sample_table_file = args.sample_table
 
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
     if not os.path.isfile(sample_table_file):
         raise FileNotFoundError(f"Sample table file '{sample_table_file}' does not exist.")
 
+    config = load_config(args, inbuilt_defaults=False)
     yaml = ruamel_yaml.YAML(typ='safe')
-    with open(config_file) as f:
-        config = yaml.load(f)
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('allowedvalues_config.yaml').open() as f:
@@ -128,7 +134,7 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
 
     # Files: static-data/*
     for array in config['array_definition'].keys():
-        for req in allowed_values['array_definition']['__array'].keys():          
+        for req in allowed_values['array_definition']['__array'].keys():
             if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
                 infostr = "\nYou can create it by running `StemCNV-check make-staticdata`"
                 minimal_file = False
@@ -148,7 +154,7 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
                 raise ConfigValueError(f"Required config entry is missing: array_definition:{array}:{req}")
             # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing  
             if (req != 'genome_version' and
-                    (minimal_file if minimal_files_only else True) and
+                    (minimal_file if minimal_entries_only else True) and
                     not os.path.isfile(config['array_definition'][array][req])):
                 raise FileNotFoundError(
                     f"Array definition file for '{array}:{req}' does not exist: "
@@ -186,7 +192,7 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
         except KeyError:
             raise ConfigValueError(f"Required config entry is missing: {req}")
 
-    if minimal_files_only:
+    if minimal_entries_only:
         return None
 
     # Other settings: reports/*/filetype
@@ -201,7 +207,7 @@ def check_config(config_file, sample_table_file, column_remove_regex=None, minim
                 raise ConfigValueError(f"Required config entry is missing: reports:{rep}:file_type")
 
     ## Check value ranges
-    sample_data = read_sample_table(sample_table_file, column_remove_regex, return_type='list_withopt')
+    sample_data = read_sample_table(sample_table_file, args.column_remove_regex, return_type='list_withopt')
 
     def parse_scientific(n):
         if isinstance(n, (int, float)):

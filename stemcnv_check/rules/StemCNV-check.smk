@@ -11,30 +11,7 @@ from stemcnv_check.helpers import read_sample_table, get_global_file
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
 
 SNAKEDIR = str(importlib.resources.files(STEM_CNV_CHECK))
-
-# Configuration ================================================================
-if not config:
-    # This should not happen unless the snakefile is invoked directly from cmd-line
-    # try to load a baseline config file
-    CONFIGFILE = "config.yaml"
-    configfile: CONFIGFILE
-    removetempconfig = False
-else:
-    # This a manual workaround around for passing the config as a snakemake object to R & python scripts
-    # Save config to tempfile & use that instead, this ensures the combined default + user configs are used
-    # It also archives all options passed by command line and allows them all to be displayed in report
-    f, CONFIGFILE = tempfile.mkstemp(suffix=".yaml", text=True)
-    os.close(f)
-    removetempconfig = True
-
-
 config["snakedir"] = SNAKEDIR
-# config["genome_version"] = config["genome_version"][-2:]
-
-yaml = ruamel_yaml.YAML(typ="safe")
-with open(CONFIGFILE, "w") as yamlout:
-    yaml.dump(config, yamlout)
-
 
 SAMPLETABLE = (
     config["sample_table"] if "sample_table" in config else "sample_table.tsv"
@@ -62,9 +39,7 @@ wildcard_constraints:
 localrules:
     all,
 
-# sample_data = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']), return_type='list')
 sample_data_df = read_sample_table(SAMPLETABLE, str(config['column_remove_regex']))
-
 
 include: "common.smk"
 include: "illumina_raw_processing.smk"
@@ -161,10 +136,6 @@ def get_target_files(target=TARGET):
 rule all:
     input:
         get_target_files(),
-    run:
-        if removetempconfig:
-            os.remove(CONFIGFILE)
-
 
 
 rule run_SNV_analysis:
@@ -194,6 +165,7 @@ rule run_SNV_analysis:
         "../envs/general-R.yaml"
     script:
         "../scripts/SNV_analysis.R"
+
 
 rule run_CBS:
     input:
@@ -285,6 +257,7 @@ rule collate_cnv_calls:
         "../envs/general-R.yaml"
     script:
         "../scripts/collate_cnv_calls.R"
+
 
 rule collate_summary_overview:
     input:

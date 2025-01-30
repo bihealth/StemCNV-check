@@ -85,23 +85,40 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         for genome_version in used_genomes:
             static_file = get_global_file(global_file, genome_version, config['global_settings'], cache_path)
-            # if not os.path.isfile(static_file):
-            #     if not_existing_ok or not static_file:
-            #         continue
-            #     else:
-            #         raise FileNotFoundError(f"Static data file '{static_file}' does not exist.")
             bind_points.append((static_file, '/outside/static/' + os.path.basename(static_file)))
 
     if tmpdir is not None:
         bind_points.append((tmpdir, '/outside/tmp'))
 
+    # Apptainer is needed to create some of these, in these cases "not_existing_ok" should be set to True
+    # However, the directory in which the files should be created still need to be linked
+    array_base_dirs = {}
     for array in config['array_definition'].keys():
         for name, file in config['array_definition'][array].items():
             if name == 'genome_version':
                 continue
-            # Can only mount existing files
+            # Can only directly mount existing files
             if not os.path.isfile(file):
                 if not_existing_ok or not file:
+                    # Try to bind a base directory, if it exists
+                    # Note: If multiple files from one array have different base directories, this will fail
+                    if not os.path.isdir(os.path.dirname(file)):
+                        logging.info(f"Creating base directory for array static-data '{array}': {os.path.dirname(file)}")
+                        os.makedirs(os.path.dirname(file))
+                    dir_mount = (
+                        os.path.dirname(file).format(cache=cache_path, array_name=array),
+                        f'/outside/{array}'
+                    )
+                    if array in array_base_dirs:
+                        if array_base_dirs[array] != os.path.dirname(file):
+                            logging.error(
+                                f"Multiple base directories found for static data files of array '{array}': "
+                                f"{array_base_dirs[array]} and {os.path.dirname(file)}. Static-data workflow "
+                                f"will likely to fail writing to the intended file paths."
+                            )
+                    else:
+                        array_base_dirs[array] = os.path.dirname(file)
+                        bind_points.append(dir_mount)
                     continue
                 else:
                     raise FileNotFoundError(f"Static data file '{file}' does not exist.")
@@ -207,18 +224,51 @@ def config_extract(entry_kws, config, def_config):
     return subconfig
 
 
-def load_config(configfile, defaults=True):
+def load_config(args, inbuilt_defaults=True):
     yaml = ruamel_yaml.YAML(typ='safe')
-    with open(configfile) as f:
+    with open(args.config) as f:
         config = yaml.load(f)
 
-    if defaults:
+    # Use the global array definition block, if it exists: update with user-defined values
+    if not args.no_cache:
+        # check whether a global array definition file exists in the cache and load it
+        # if it doesn't exist or doesn't contain the array definition block, return the config as is
+        cache_array_defs = get_cache_array_definition(get_cache_dir(args, config))
+        if cache_array_defs:
+            with open(cache_array_defs, 'r') as f:
+                global_array_config = yaml.load(f)
+
+            if 'array_definition' not in global_array_config:
+                pass
+            # Merge the configs, with the user-defined values taking precedence
+            elif 'array_definition' not in config or not config['array_definition']:
+                config['array_definition'] = global_array_config['array_definition']
+            else:
+                config['array_definition'] = deep_update(global_array_config['array_definition'], config['array_definition'])
+            # # Now overwrite in the merged array_definition all empty or non_file_resolving entries if they can be
+            # # replaced with a value from the global config
+            # for array_name, array_def in config['array_definition'].items():
+            #     if array_name not in global_array_config['array_definition']:
+            #         continue
+            #     for config_key, value in array_def.items():
+            #         if (not value or (config_key.endswith('_file') and not os.path.isfile(value)) and
+            #                 config_key in global_array_config['array_definition'][array_name]):
+            #             array_def[config_key] = global_array_config['array_definition'][array_name][config_key]
+
+    # Update inbuilt default config with all previously defined values
+    if inbuilt_defaults:
         config_def_file = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
         with config_def_file.open() as f:
             default_config = yaml.load(f)
-        return deep_update(default_config, config)
-    else:
-        return config
+        config = deep_update(default_config, config)
+
+    return config
+
+def get_default_cache_path():
+    yaml = ruamel_yaml.YAML(typ='safe')
+    with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
+        default_config = yaml.load(f)
+    return Path(default_config['global_settings']['cache_dir']).expanduser()
 
 
 def get_cache_dir(args, config):
@@ -247,21 +297,29 @@ def get_cache_dir(args, config):
         else:
             logging.debug(f"Could not use cache directory '{args.cache_path}'")
     else:
-        auto_paths = [
-            ('config-defined', Path(config['global_settings']['cache_dir']).expanduser()),
-            #('install-dir', importlib.resources.files(STEM_CNV_CHECK).joinpath('.stemcnv-check-cache')),
-            ('home', Path('~/.cache/stemcnv-check').expanduser())
-        ]
+        auto_paths = []
+        if 'global_settings' in config and 'cache_dir' in config['global_settings']:
+            auto_paths.append(('config', Path(config['global_settings']['cache_dir']).expanduser()))
+        auto_paths.append(('home', get_default_cache_path()))
+
         for name, path in auto_paths:
             cache_path = check_path_usable(path)
             if cache_path:
                 return cache_path
             else:
-                logging.debug(f"Could not use cache directory '{path}'")
+                logging.warning(f"Could not use cache directory '{path}'")
 
     # Nothing worked, return None & don't use specific cache
     logging.warning("Cache directory is not usable! Trying to run without cache. Conda and docker images will be stored in snakemake project directory")
     return None
+
+def get_cache_array_definition(cache_path, config_file='global_array_definitions.yaml'):
+    """Get config file with global array definitions from cache path if it exists"""
+    if cache_path:
+        global_config = os.path.join(cache_path, config_file)
+        if os.path.isfile(global_config):
+            return global_config
+    return ''
 
 
 def get_global_file(type, genome_version, global_settings, cache_path, fill_wildcards=True):

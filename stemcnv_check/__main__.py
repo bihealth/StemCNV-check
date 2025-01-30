@@ -10,11 +10,11 @@ import sys
 
 from loguru import logger as logging
 
-from . import __version__
-from .app.check_input import check_config, check_sample_table
-from .app.run_workflow import run_stemcnv_check_workflow
-from .app.make_staticdata import create_missing_staticdata
-from .app.setup_files import setup_control_files
+from stemcnv_check import __version__
+from stemcnv_check.app.check_input import check_config, check_sample_table
+from stemcnv_check.app.run_workflow import run_stemcnv_check_workflow
+from stemcnv_check.app.make_staticdata import create_missing_staticdata
+from stemcnv_check.app.setup_files import setup_control_files
 
 def setup_argparse():
 
@@ -31,17 +31,19 @@ def setup_argparse():
 
     group_basic = parser.add_argument_group("General", "General pipeline arguments")
 
-    group_basic.add_argument('--config', '-c', default='config.yaml', help="Filename of config file. Default: %(default)s")
+    group_basic.add_argument('--config', '-c', default='config.yaml',
+                             help="Filename of config file. Default: %(default)s\n"
+                                  "Note: if a global config exists in the cache path, it will also be used by default")
     group_basic.add_argument('--sample-table', '-s', default=None,
                              help="Filename of sample table, can be tsv or xlsx format (1st sheet is read). "
                                   "Default: sample_table.tsv or sample_table.xlsx")
     group_basic.add_argument('--column-remove-regex', nargs='?', const=r'\s.*', type=str,
                              help="Regex to remove text from sample table column names (before looking for required columns)."
                                   " Not used by default, default if not regex given ' .*' (remove spaces and everything following a space)")
-    # group_basic.add_argument('--required-col-indices', default=None, nargs=6,
-    #                             help="Indexes of the required columns in the sample table. "
-    #                                  "Required columns are: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample. "
-    #                                  "This will set the corresponding names to the specified columns")
+    group_basic.add_argument('--no-cache', action='store_true',
+                             help="Do not use a cache directory for workflow created metadata."
+                                  "(cache includes: global array definition config, conda envs, singularity images, "
+                                  "and reference data). The default cache path is defined in the conifg file.")
     group_basic.add_argument('--directory', '-d', default=None,
                              help="Directory to run pipeline in. Default: current directory")
     group_basic.add_argument('--verbose', '-v', action='count', default=0,
@@ -52,19 +54,14 @@ def setup_argparse():
     group_setupfiles.add_argument('--sampletable-format', default='tsv', choices=('tsv', 'xlsx'), help="Format of the sample table. Default: %(default)s")
     group_setupfiles.add_argument('--overwrite', action='store_true', help="Allow overwriting of existing files")
 
-    group_static = parser.add_argument_group("make-staticdata", "Details and file naming for make-staticdata")
-    group_static.add_argument('--no-edit-inplace', action='store_true', help = "Do not edit the config file in place with updated static-data entries")
-
     group_snake = parser.add_argument_group("Snakemake Settings", "Arguments for Snakemake (also affects make-staticdata)")
     group_snake.add_argument('--cache-path', default=None,
                              help="Override auto-selection of the cache path to a specific directory. The default cache path is defined in the conifg file."
                              )
-    group_snake.add_argument('--no-cache', action='store_true',
-                             help="Do not use a chache directory. The cache is used for workflow created metadata "
-                             "(conda envs, singularity images, and VEP data). The default cache path is defined in the conifg file.")
+
     group_snake.add_argument('--bind-points',
                              help="Additional bind points for apptainer containers, intended for expter users. "
-                                  "Use i.e. '/path' to make it availbale in apptainer, useful in case local directory "
+                                  "Use i.e. '/path' to make it available in apptainer, useful in case local directory "
                                   "contains symlinks that won't resolve in the container.")
 
     group_snake.add_argument('--target', '-t', default='complete',
@@ -74,7 +71,7 @@ def setup_argparse():
     group_snake.add_argument('--collate-date', nargs='?', const=datetime.date.today().strftime("%Y-%m-%d"),
                              default=None, help="Add a date to the collate output files. Default without argument: today's date")
 
-    group_snake.add_argument('--cluster-profile', '-p', help="Use snakemake profile for job submission to cluster. Default if used: %(const)s")
+    group_snake.add_argument('--cluster-profile', '-p', help="Use snakemake profile for job submission to cluster.")
     group_snake.add_argument('-jobs', '-j', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
     group_snake.add_argument('--local-cores', '-n', default=4, help="Number of cores for local submission. Default: %(default)s")
     group_snake.add_argument('snake_options', nargs='*', #argparse.REMAINDER,
@@ -108,8 +105,8 @@ def main(argv=None):
             raise FileNotFoundError("No sample table found")
 
     if args.action == 'run':
-        check_sample_table(args.sample_table, args.config, args.column_remove_regex)
-        check_config(args.config, args.sample_table, args.column_remove_regex)
+        check_sample_table(args)
+        check_config(args)
         if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
         ret = run_stemcnv_check_workflow(args)

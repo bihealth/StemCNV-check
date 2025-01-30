@@ -150,7 +150,7 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
         formatStyle(
             1, 
             fontWeight = styleEqual(
-                unlist(config$evaluation_settings$summary_stat_warning_levels$last_level_critical) %>% format_column_names(), 
+                unlist(config$evaluation_settings$summary_stat_warning_levels$last_level_red) %>% format_column_names(), 
                 'bold'
             )
         )

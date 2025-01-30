@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+import ruamel.yaml as ruamel_yaml
 from loguru import logger as logging
 from deepdiff import DeepDiff
 from pydantic.v1.utils import deep_update
@@ -86,10 +87,10 @@ EOF
 
 
 def get_config_delta(wildcards, compare_on=('evaluation_settings', 'settings', 'report_settings')):
-    default_config = load_config(
-        importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files','default_config.yaml'),
-        defaults=False
-    )
+    default_config_path = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files','default_config.yaml')
+    yaml = ruamel_yaml.YAML(typ='safe')
+    with open(default_config_path) as f:
+        default_config = yaml.load(f)
     # Check if report name exists in default!
     default_config['report_settings'] = deep_update(
         default_config['reports']['_default_'],
