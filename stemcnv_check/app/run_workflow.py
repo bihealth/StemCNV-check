@@ -38,8 +38,8 @@ def run_stemcnv_check_workflow(args):
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
-        args.config,
         get_cache_array_definition(cache_path) if os.path.isfile(get_cache_array_definition(cache_path)) else '',
+        args.config,
         '--config',
         f'sample_table={args.sample_table}',
         f"column_remove_regex={args.column_remove_regex}",

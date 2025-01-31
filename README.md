@@ -47,7 +47,12 @@ Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.t
 
 Automatic generation of the additional array & genome-build specific static files can only be done if sample data for 
 that array is available.  
-*Note*: unless specified directly in the config this will also include download of fasta and gtf file for the reference genome build.
+*Notes*:  
+
+- unless specified directly in the config this will also include download of fasta and gtf file for the reference genome build.
+- Array specific files and an updated array_definition block for the config will be written into the cache directory 
+  (default: '~/.cache/stemcnv-check'). However, you still need to update or remove the array_definition from your 
+  config.yaml file, otherwise the cached definitions and files will not be used.
 
 `stemcnv-check make-staticdata [-s <sample_table>] [-c <config_file>]`
 
