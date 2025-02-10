@@ -307,11 +307,21 @@ settings:
       any_other_gene:        0.2
       # Calls overlapping any sample defined ROI get this one-time score
       any_roi_hit:           50
-      # CNVs with a large CN (<1 or >3) have their size contribution multiplied by this factor
-      large_CN_size_modifier: 1.5
+##!advanced
+      # These values determine how the base Check-Score is calculated from size & CN.
+      # The formula used is: copy_factor * log(size) * log(size) - flat_decrease
+      # The copy_factor changes based on the CN of the call (number of lost/gained copies)
+      # copy_factor for CN 1 and 3
+      single_copy_factor: 0.333
+      # copy_factor for CN 0 and 4
+      double_copy_factor: 0.5
+      # copy_factor for CN 2 (LOH)
+      neutral_copy_factor: 0.275
+      flat_decrease: 15      
+      # Note: male sex chromosomes have different baseline CNs, and generally use the 1-copy factor unless CN>2
+
       
 
-##!advanced
     Precision:
       size_categories:
         # Lower bound size thresholds / categories for estimating CNV call precision

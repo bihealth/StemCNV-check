@@ -144,7 +144,10 @@ settings:
       dosage_sensitive_gene: float_ge0  
       any_roi_hit: float_ge0
       any_other_gene: float_ge0
-      large_CN_size_modifier: float_ge1
+      single_copy_factor: float_ge0
+      double_copy_factor: float_ge0
+      neutral_copy_factor: float_ge0
+      flat_decrease: float
 
     Precision:
       size_categories:

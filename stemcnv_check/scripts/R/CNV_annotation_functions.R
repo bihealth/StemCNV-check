@@ -141,53 +141,59 @@ annotate_gene_overlaps <- function(gr, gr_genes) {
 }
 
 
-annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores) {
+annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores, sample_sex) {
 
-	tb %>%
-	  rowwise() %>%
-	  mutate(
-		  Check_Score =
-			ifelse(
-                #Note: adapt this if CNV is used for CN >= 4
-                CNV_type %in% c('gain', 'loss'),
-				1/3 * log(width) * log(width) - 15,
-				0.275 * log(width) * log(width) - 15
-			) * 
-            # Size modifier for large copynumbers
-            ifelse(
-                CN < 1 | CN > 3,
-                check_scores$large_CN_size_modifier,
-                1
-            ) +
-			# Base score for any ROI hit
-			ifelse(!is.na(ROI_hits), check_scores$any_roi_hit, 0) +
-            # Scores for each hotspot hit/dosage gene/cancer gene (cumulative, even if its the same gene)
-			(stemcell_hotspots_gr %>% as_tibble() %>%
-				filter(hotspot %in% unlist(str_split(stemcell_hotspot, '\\|'))) %>%
-				pull(check_score) %>%	sum()) + 
-            # dosage_sensitive & cancer lists should only have genes, but are included anyway
-            (dosage_sensitive_gene_gr %>% as_tibble() %>%
-				filter(hotspot %in% unlist(str_split(dosage_sensitive_gene, '\\|'))) %>%
-				pull(check_score) %>%	sum()) +    
-			(cancer_genes_gr %>% as_tibble() %>%
-				filter(hotspot %in% unlist(str_split(cancer_gene, '\\|'))) %>%
-				pull(check_score) %>%	sum()) +
-			# Score all remaining (not hotpsot/dosage/cancer and not ROI)
-			# dplyr will generate a bunch of warnings for calls without any genes
-            str_split(overlapping_genes, '\\|') %>% unlist() %>%
-                as_tibble() %>% dplyr::rename(gene_name = value) %>%
-                filter(
-                    gene_name %!in% c(
-                        unlist(str_split(stemcell_hotspot, '\\|')),
-                        unlist(str_split(dosage_sensitive_gene, '\\|')),
-                        unlist(str_split(cancer_gene, '\\|')),
-                        unlist(str_split(ROI_hits, '\\|'))
-                    )
-                ) %>%
-                mutate(check_score = check_scores$any_other_gene) %>%
-                pull(check_score) %>% sum()
-	  ) %>%
-	  ungroup() 
+    cn1_3 <- check_scores$single_copy_factor
+    cn0_4 <- check_scores$double_copy_factor
+    cn2   <- check_scores$neutral_copy_factor
+    flat  <- check_scores$flat_decrease  
+    
+	tb %>% 
+        rowwise() %>% 
+        mutate(
+            Check_Score =
+                case_when(
+                    # Male sex chromosomes can not have LOH, and should always be treated a single copy CNVs (unless double gain)
+                    sample_sex == 'm' & str_detect(seqnames, 'X|Y')
+                        & CN <= 2                                         ~ cn1_3 * log(width) * log(width) - flat,
+                    sample_sex == 'm' & str_detect(seqnames, 'X|Y') 
+                        & CN > 2                                          ~ cn0_4 * log(width) * log(width) - flat,
+                    # large CN (0/4)
+                    CNV_type %in% c('gain', 'loss') & (CN == 0 | CN == 4) ~ cn0_4 * log(width) * log(width) - flat,
+                    # single gain/loss CN (1/3)
+                    CNV_type %in% c('gain', 'loss')                       ~ cn1_3 * log(width) * log(width) - flat,
+                    # LOH == CN2
+                    CNV_type == 'LOH'                                     ~   cn2 * log(width) * log(width) - flat
+                ) + 
+                # Base score for any ROI hit
+                ifelse(!is.na(ROI_hits), check_scores$any_roi_hit, 0) +
+                # Scores for each hotspot hit/dosage gene/cancer gene (cumulative, even if its the same gene)
+                (stemcell_hotspots_gr %>% as_tibble() %>%
+                    filter(hotspot %in% unlist(str_split(stemcell_hotspot, '\\|'))) %>%
+                    pull(check_score) %>%	sum()) + 
+                # dosage_sensitive & cancer lists should only have genes, but are included anyway
+                (dosage_sensitive_gene_gr %>% as_tibble() %>%
+                    filter(hotspot %in% unlist(str_split(dosage_sensitive_gene, '\\|'))) %>%
+                    pull(check_score) %>%	sum()) +    
+                (cancer_genes_gr %>% as_tibble() %>%
+                    filter(hotspot %in% unlist(str_split(cancer_gene, '\\|'))) %>%
+                    pull(check_score) %>%	sum()) +
+                # Score all remaining (not hotpsot/dosage/cancer and not ROI)
+                # dplyr will generate a bunch of warnings for calls without any genes
+                str_split(overlapping_genes, '\\|') %>% unlist() %>%
+                    as_tibble() %>% dplyr::rename(gene_name = value) %>%
+                    filter(
+                        gene_name %!in% c(
+                            unlist(str_split(stemcell_hotspot, '\\|')),
+                            unlist(str_split(dosage_sensitive_gene, '\\|')),
+                            unlist(str_split(cancer_gene, '\\|')),
+                            unlist(str_split(ROI_hits, '\\|'))
+                        )
+                    ) %>%
+                    mutate(check_score = check_scores$any_other_gene) %>%
+                    pull(check_score) %>% sum()
+	    ) %>%
+	    ungroup() 
 }
 
 

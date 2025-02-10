@@ -23,6 +23,7 @@ snakemake@source('R/hotspot_functions.R')
 config <- snakemake@config
 sample_id <- snakemake@wildcards$sample_id
 sampletable <- read_sampletable(config$sample_table, config$column_remove_regex)
+sample_sex <- get_sample_info(sample_id, 'sex', config, sampletable)
 
 # Load data & set CHROM Style
 processing_config <- config$settings$CNV_processing$call_processing
@@ -119,7 +120,7 @@ cnvs <- cnvs %>%
     ) %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
-	annotate_cnv.check.score(stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores) %>%
+	annotate_cnv.check.score(stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores, sample_sex) %>%
 	annotate_precision.estimates(size_categories, precision_estimates) %>%
     annotate_call.label(config$evaluation_settings$CNV_call_labels)
 
