@@ -67,7 +67,7 @@ parse_cnv_vcf <- function(vcf,
 
 
 # CNV vcf writing
-static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = TRUE, FORMAT = TRUE, FILTER = TRUE) {
+static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = TRUE, FORMAT = TRUE, FILTER = TRUE, fullconfig = NULL) {
 
     info <- c(
         '##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the longest variant described in this record">',
@@ -79,18 +79,24 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         '##INFO=<ID=PROBE_DENS,Number=1,Type=Float,Description="Density of Probes in segment (Probes / 10Mb)">'
     )
     if (extra_annotation) {
-    info <- c(
-        info,
-        '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
-        '##INFO=<ID=Precision_Estimate,Number=1,Type=Float,Description="Estimated precision for this call">',
-        '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on refrence overlap, Check-Score and Filters (Critical|Reportable|Reference genotype)">',
-        '##INFO=<ID=stemcell_hotspot,Number=1,Type=String,Description="Overlapping stemcell hotspot sites (StemCNV-check defined)">',
-        '##INFO=<ID=dosage_sensitive_gene,Number=1,Type=String,Description="Overlapping dosage sensitive genes (Collins et al. 2022)">',
-        '##INFO=<ID=cancer_gene,Number=1,Type=String,Description="Overlapping cancer genes">',
-        '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
-        '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
-        '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes, sepearted by | character">'
-    )
+        stopifnot(!is.null(fullconfig))
+        info <- c(
+            info,
+            '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
+            '##INFO=<ID=Precision_Estimate,Number=1,Type=Float,Description="Estimated precision for this call">',
+            paste0(
+                '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on reference ',
+                'overlap, Check-Score and Filters (',
+                paste(names(fullconfig$evaluation_settings$CNV_call_labels), collapse = ', '),
+                ')">'
+            ),
+            '##INFO=<ID=stemcell_hotspot,Number=1,Type=String,Description="Overlapping stemcell hotspot sites (StemCNV-check defined)">',
+            '##INFO=<ID=dosage_sensitive_gene,Number=1,Type=String,Description="Overlapping dosage sensitive genes (Collins et al. 2022)">',
+            '##INFO=<ID=cancer_gene,Number=1,Type=String,Description="Overlapping cancer genes (Intogen cancer drivers)">',
+            '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
+            '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
+            '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes">'
+        )
     }
     
     format <- c(
@@ -102,15 +108,16 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         # '##FORMAT=<ID=BAF,Number=1,Typeq=Foat,Description="Segment me(di)an B Allele Frequency">',
     )
     if (extra_annotation) {
-    min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref * 100 %>% round(1)
-    format <- c(
-        format,
-        paste0(
-            '##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call ',
-            str_glue(' in reference sample (min {min.ref.ov}% reciprocal overlap)">')
+        min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref * 100 %>% round(1)
+        format <- c(
+            format,
+            paste0(
+                '##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call ',
+                str_glue(' in reference sample (min {min.ref.ov}% reciprocal overlap)">')
+            )
         )
-    )
     }
+    # See also label_name_definitions.yaml for all filters defined in the workflow 
     filter.minsize <- toolconfig$filter.minsize
     filter.minprobes <- toolconfig$filter.minprobes
     filter.mindensity.Mb <- toolconfig$filter.mindensity
@@ -285,12 +292,6 @@ get_gt_section <- function(tb, sample_sex){
         unnest(cols = unique(tb$sample_id)) %>%
         as.matrix()
 }
-
-
-# Open question for writing combined CNV vcf:
-# - how/which format to write back after CNV_processing
-# - yes/no keep 'non-overlapped' calls
-#    >> also ask Harald & Vale what they think here?
 
 # Include ref sample in VCF?
 # ##PEDIGREE=<ID=DerivedID,Original=OriginalID>

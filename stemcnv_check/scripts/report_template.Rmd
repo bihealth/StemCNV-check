@@ -169,15 +169,15 @@ include.section <- function(section) {
     exclude <- section %in% report_config$exclude_sections
     # also exclude QC sections if they are not defined in settings
     include <- include & !(
-        str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') & 
+        str_detect(section, '^QC\\.(?!(summary|GenCall|settings))') &
         str_remove(section, 'QC\\.') %!in% config$settings$CNV.calling.tools
     )
     include & !exclude
 }
 
 include_roi_plots <-  include.section('regions.of.interest') & ifelse(
-    'Regions_of_Interest' %in% colnames(sampletable), 
-    length(roi_gr) > 0, 
+    'Regions_of_Interest' %in% colnames(sampletable),
+    length(roi_gr) > 0,
     FALSE
 )
 
@@ -186,7 +186,6 @@ CNV_ID_str <- function(ID, i, region_name = NULL, ...) {
     if(!is.null(region_name)) id_str <- paste0('roi-', region_name)
     # All other calls
     else id_str <- str_glue('nr{i}-{ID}')
-    
     str_to_lower(id_str) %>%
         str_replace_all('[:]', '')
 }
@@ -198,7 +197,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
     }
     always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
     for (i in call.table$i) {
-        
+
         row <- call.table[i,]
         res <- make_call_plot(
             row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info, sample_headers,
@@ -219,8 +218,8 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
             if (report_config$call.data.and.plots[[plotsection]]$include.hotspot.table & length(res$hotspots)>0) {
                 res$hotspots %>%
                     hotspot_table_output(
-                        as.character(row$CNV_type), plotsection, 
-                        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, 
+                        as.character(row$CNV_type), plotsection,
+                        stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb,
                         report_config, params$out_format
                     ) %>%
                     subchunkify(str_glue('CNV_call.{plotsection}.nr{i}.hotspots'))
@@ -235,7 +234,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
         } else if (typeof(res$gg) != 'character') {
             ggsave(
                 file.path(image_folder, str_glue('CNV_call.{plotsection}.nr{i}.plot-1.png')),
-                res$gg, 
+                res$gg,
                 width = 20, height = 10, dpi=200
             )
         }
@@ -278,7 +277,7 @@ cat('## Sample Information\n\n')
 info.tb <- sampletable %>%
   filter(Sample_ID %in% c(sample_id, ref_id)) %>%
   dplyr::select(Sample_ID, Sex, Reference_Sample, Array_Name, any_of(report_config$sample.info.extra.cols)) %>%
-  mutate(`Analysis run date` = Sys.Date()) %>% 
+  mutate(`Analysis run date` = Sys.Date()) %>%
   tr_tibble() %>%
   dplyr::select(-starts_with('Reference ('))
 
@@ -308,7 +307,7 @@ snv_critical_desc <- list(
     'ROI-match' = ' - overlaps with a sample specific region of interest',
     'hotspot-match' = ' - overlaps with a known stemcell hotspot SNV',
     'hotspot-gene' = ' - overlaps with a gene that has known stemcell SNV hotspots',
-    'critical_annotation' = paste(
+    'critical-annotation' = paste(
         ' - has an annotation set as critical:',
         paste(config$settings$SNV_analysis$critical_annotations, collapse = ', ')
     ),
@@ -736,7 +735,7 @@ paste(
 
 if (!is.na(ref_id)) {
     label_SNVs <- SNV_table %>%
-        filter(SNV_label != 'reference_GT') %>%
+        filter(SNV_label != 'reference genotype') %>%
         mutate(
             sample_id = sample_id,
             color = ifelse(SNV_label == 'critical', 'red', 'orange')

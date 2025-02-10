@@ -2,6 +2,12 @@ library(tidyverse)
 library(DT)
 library(knitr)
 
+# Helper function, could be defined elsewhere?
+get_defined_labels <- function(config) {
+    label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
+    return(yaml.load(label_def_file))
+}
+
 vector_to_js <- function(v) {
     if (is.null(names(v))) {
         return(paste0("['", paste(v, collapse = "','"), "']"))
@@ -52,20 +58,18 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
         mutate(Description = format_column_names(Description)) %>%
         set_names(c(' ', sample_headers))
     
-    green_color <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
+    sample_levels <- get_defined_labels(config)$sample_levels
+    
+    # R/html default green is very neon, use a nicer shade
+    green_replace <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
     Combined.colors <- summary_stat_table %>%
         filter(Description != 'sample_id') %>%
         select(ends_with('eval')) %>%
         mutate(
             across(
                 everything(),
-                ~ case_when(
-                    . == 'critical' ~ 'red',
-                    . == 'warning' ~ 'orange',
-                    . == 'unusual' ~ 'yellow',
-                    . == 'OK' ~ green_color,
-                    TRUE ~ 'white'
-                )
+                ~ ifelse(. %in% names(sample_levels), sample_levels[[.]], 'white') %>%
+                    str_replace('green', green_replace)
             )
         ) %>%
         set_names(sample_headers)
@@ -146,11 +150,11 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
             backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), 
             textAlign = 'center'
         ) %>%
-        # Make all critical (= potentially red) rows have bold text
+        # Make all last level (= potentially red) rows have bold text
         formatStyle(
             1, 
             fontWeight = styleEqual(
-                unlist(config$evaluation_settings$summary_stat_warning_levels$last_level_red) %>% format_column_names(), 
+                unlist(config$evaluation_settings$summary_stat_warning_levels$use_last_level) %>% format_column_names(), 
                 'bold'
             )
         )
@@ -296,7 +300,11 @@ CNV_table_output <- function(
                 ' CNVs clicking on the link will switch the active plot below. ',
                 'For other CNVs it will open an externally saved plot in a new browser tab.'
             ),
-            'Designation label for the CNV call, (Critical, Reportable, Reference genotype, ROI)',
+            paste0(
+                'Designation label for the CNV call, (',
+                paste(names(config$evaluation_settings$CNV_call_labels), collapse = ', '),
+                ')'
+            ),
             'Check_Score of the CNV call, calculated based on size, overlap with stemcell_hotspot, dosage_sensivity or cancer_gene list, or other genes',
             'Type of CNV call (gain, loss, LOH)',
             'Chromosome of the CNV call',
@@ -315,7 +323,10 @@ CNV_table_output <- function(
                 'Call has a gap in probe coverage.\\nBased on percentage of call without probes and size of the call. ',
                 'Based on `min.perc.gap_area` and `gap_area.uniq_probes.rel` from config settings:CNV_processing:call_processing'
             ),
-            'Call has higher probe density than `density.quantile.cutoff` percent of the the array (from config settings:CNV_processing:call_processing)',
+            str_glue(
+                'Call has higher probe density than {100*config$settings$CNV_processing$call_processing$density.quantile.cutoff}',
+                ' percent of the the array (from config settings:CNV_processing:call_processing)'
+            ),
             '(Estimated) copy number of the CNV call',
             'Median Log R Ratio of the CNV call',
             'Number of SNP probes (post filtering) in the CNV call area',
@@ -521,7 +532,8 @@ SNV_table_output <- function (
             'Position of the SNV/SNP',
             'SNV/SNP in the format "Chr:Pos:REF>ALT"',
             'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
-            'Designation label for the SNV/SNP (critical, unrelaible critical, protein_changing, reference_genotype)',
+            #FIXME: pull from label_name_definitions.yaml
+            'Designation label for the SNV/SNP (critical, unrelaible critical, protein changing, reference_genotype)',
             'Reason for the critical designation label (see config:settings:SNV_analysis:critical_SNV)',
             'Reference allele of the SNV/SNP',
             'Alternative allele of the SNV/SNP',
@@ -567,10 +579,10 @@ SNV_table_output <- function (
                     gene_name
                 ),
                 Annotation = ifelse(
-                    critical_reason == 'critical_annotation' & !is.na(critical_reason),
+                    critical_reason == 'critical-annotation' & !is.na(critical_reason),
                     map_chr(
                         str_replace_all(Annotation, '&', '|'), 
-                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical_annotation'))
+                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical-annotation'))
                     ),
                     Annotation
                 ) %>%

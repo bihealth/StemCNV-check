@@ -195,7 +195,7 @@ def check_config(args, minimal_entries_only=False):
     if minimal_entries_only:
         return None
 
-    # Other settings: reports/*/filetype
+    # Other required settings: reports/*/filetype
     if 'reports' in config:
         for rep in config['reports']:
             if rep == '_default_':
@@ -206,9 +206,7 @@ def check_config(args, minimal_entries_only=False):
             except KeyError:
                 raise ConfigValueError(f"Required config entry is missing: reports:{rep}:file_type")
 
-    ## Check value ranges
-    sample_data = read_sample_table(sample_table_file, args.column_remove_regex, return_type='list_withopt')
-
+    ## Full check of all other entries, specifically check value ranges
     def parse_scientific(n):
         if isinstance(n, (int, float)):
             return n
@@ -219,8 +217,17 @@ def check_config(args, minimal_entries_only=False):
         else:
             ValueError(f"{n} can not be coerced to a number")
 
+    with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('label_name_definitions.yaml').open() as f:
+        defined_label_names = yaml.load(f)
     defined_filtersets = set(config_extract(['settings', 'probe-filter-sets'], config, default_config).keys())
+    defined_CNV_categories = set(
+        config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
+    )
+    defined_sampletable_cols = read_sample_table(sample_table_file, args.column_remove_regex).columns
+
     check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
+    check_functions['labels'] = lambda x, v: x in defined_label_names[v]
+
     def_functions = {
         'list': lambda x, v: type(x) == list,
         'str': lambda x, v: type(x) == str,
@@ -233,10 +240,10 @@ def check_config(args, minimal_entries_only=False):
         'ge': lambda x, v: parse_scientific(x) >= v,
         'filterset': lambda x, v: x in defined_filtersets or x == '_default_',
         'filtersetnodefault': lambda x, v: x in defined_filtersets,
-        'filtersetplusnone': lambda x, v: x in defined_filtersets  or x == '_default_' or x == 'none',
-        'sections': lambda x, v: x in allowed_values['allowed_sections'],
-        'sectionsall': lambda x, v: x == '__all__' or (len(x) > 1 and all(i in allowed_values['allowed_sections'] for i in x)),
-        'insamplesheet': lambda x, v: re.sub('^_+', '', x) in sample_data[0].keys()
+        'filtersetplusnone': lambda x, v: x in defined_filtersets or x == '_default_' or x == 'none',
+        'cnvcallcategories': lambda x, v: x in defined_CNV_categories,
+        'insamplesheet': lambda x, v: re.sub('^_+', '', x) in defined_sampletable_cols,
+        'sectionsorall': lambda x, v: x == '__all__' or (len(x) > 1 and all(i in defined_label_names['report_sections'] for i in x)),
     }
     check_functions.update(def_functions)
 
@@ -245,18 +252,22 @@ def check_config(args, minimal_entries_only=False):
         strpart = s.rstrip('0123456789')
         if strpart in def_functions:
             numpart = int(s[len(strpart):]) if s[len(strpart):] else None
+        elif strpart.startswith('labels:'):
+            strpart = 'labels'
+            numpart = s[len('labels:'):]
         else: # regex function
             numpart = strpart
         return strpart, numpart
 
     # Check all config entries
     errors = defaultdict(list)
-    allowed_plotsections = allowed_values['allowed_plotsections'] + ['_default_']
+    allowed_plotsections = defined_label_names['report_plotsections'] + ['_default_']
     for flatkey, config_value in flatten(config).items():
         # Need to change the key for variable config sections
         flatkey_ = re.sub('array_definition:[^:]+', 'array_definition:__array', flatkey)
         flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey_)
         flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
+        flatkey_ = re.sub('evaluation_settings:CNV_call_labels:[^:]+', 'evaluation_settings:CNV_call_labels:__category', flatkey_)
         flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
         flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),
                           'reports:__report:call.data.and.plots:__plotsection', flatkey_)
@@ -268,8 +279,8 @@ def check_config(args, minimal_entries_only=False):
         funcs, *list_funcs = funcs.split('__')
         for func_key in funcs.split('_'):
             func_key, func_value = formatfunc(func_key)
-            check = check_functions[func_key](config_value, func_value)
-            if not check:
+            if not check_functions[func_key](config_value, func_value):
+                #import pdb; pdb.set_trace()
                 if isinstance(config_value, list):
                     config_value = tuple(config_value)
                 errors[(flatkey, config_value)].append((func_key, func_value))
@@ -282,6 +293,7 @@ def check_config(args, minimal_entries_only=False):
                 errors[(flatkey, config_value)].append((func_key, func_value))
 
     help_strings = defaultdict(lambda: lambda v: "matching this regex: " + v)
+    help_strings['labels'] = lambda v: f"one of the defined labels for '{v}': " + ', '.join(defined_label_names[v])
     help_strings.update({
         'list': lambda v: 'in a list',
         'str': lambda v: 'characters (add quotes for numbers or similar)',
@@ -295,9 +307,9 @@ def check_config(args, minimal_entries_only=False):
         'filterset': lambda v: "the defined filtersets ({}) or _default_".format(', '.join(defined_filtersets)),
         'filtersetnodefault': lambda v: "only the defined filtersets ({}) but not '_default_'".format(', '.join(defined_filtersets)),
         'filtersetplusnone': lambda v: "the defined filtersets ({}), '_default_' or 'none'".format(', '.join(defined_filtersets)),
-        'sections': lambda v: "the defined report sections: " + ', '.join(allowed_values['allowed_sections']),
-        'sectionsall': lambda v: "either '__all__' or a list with of defined report sections: " + ', '.join(allowed_values['allowed_sections']),
-        'insamplesheet': lambda v: "column names of the samplesheet: " + ', '.join(sample_data[0].keys())
+        'cnvcallcategories': lambda v: "the defined CNV call categories: " + ', '.join(defined_CNV_categories),
+        'sectionsorall': lambda v: "either '__all__' or a list with of defined report sections: " + ', '.join(defined_label_names['allowed_sections']),
+        'insamplesheet': lambda v: "column names of the samplesheet: " + ', '.join(defined_sampletable_cols)
     })
     if errors:
         for (flatkey, config_value), func_list in errors.items():

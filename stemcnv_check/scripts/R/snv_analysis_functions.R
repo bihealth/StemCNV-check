@@ -1,4 +1,11 @@
 suppressMessages(library(tidyverse))
+suppressMessages(library(yaml))
+
+# Helper function, could be defined elsewhere?
+get_defined_labels <- function(config) {
+    label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
+    return(yaml.load(label_def_file))
+}
 
 sample_GT_distances <- function(sample_SNP_gr, ref_SNP_gr, extra_snp_files, ref_SNP_vcf_file, target_chrom_style, use_filter=TRUE) {
     
@@ -105,28 +112,28 @@ get_SNV_table <- function(
         ungroup() %>%
         # add/merge in reference GT
         left_join(ref_tb, by = c('seqnames', 'start', 'REF', 'ALT')) %>%
-        # Assign critical labels
+        # Assign critical labels (see also: label_name_definitions.yaml)
         mutate(
             critical_reason = case_when(
                 !is.na(ROI_hits) & 'ROI-match' %in% subconfig$critical_SNV ~ 'ROI-match',
                 paste0(gene_name, '::', HGVS.p) %in% SNV_hotspot_table$hotspot & 'hotspot-match' %in% subconfig$critical_SNV      ~ 'hotspot-match',
                 gene_name %in% SNV_hotspot_table$gene_name & 'hotspot-gene' %in% subconfig$critical_SNV ~ 'hotspot-gene',
-                str_detect(Annotation, critical_annotation_regex) & 'critical_annotation' %in% subconfig$critical_SNV ~ 'critical_annotation',
+                str_detect(Annotation, critical_annotation_regex) & 'critical-annotation' %in% subconfig$critical_SNV ~ 'critical-annotation',
                 'any-protein-changing' %in% subconfig$critical_SNV ~ 'any-protein-changing',
                 TRUE ~ NA_character_
             ) %>%
                 factor(levels = subconfig$critical_SNV),
             
             SNV_label = case_when(
-                GT == ref_GT                        ~ 'reference_GT',
+                GT == ref_GT                        ~ 'reference genotype',
                 !is.na(critical_reason) & (
                     GenCall_Score < subconfig$flag_GenCall_minimum | 
                     ref_GenCall_Score < subconfig$flag_GenCall_minimum
                 )                                   ~ 'unreliable critical',
                 !is.na(critical_reason)             ~ 'critical',
-                TRUE                                ~ 'protein_changing'
+                TRUE                                ~ 'protein changing'
             ) %>%
-                 factor(levels = c('critical', 'unreliable critical', 'protein_changing', 'reference_GT')),
+                 factor(levels = get_defined_labels(config)$SNV_lables),
 
             
         ) %>%

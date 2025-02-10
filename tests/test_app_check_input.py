@@ -136,8 +136,10 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
 
     allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
+    defined_labels = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'label_name_definitions.yaml')
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
+    fs.add_real_file(defined_labels, read_only=True)
     fs.create_file(
         'sample_table.tsv',
         contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'
@@ -257,7 +259,8 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
 
     #FIXME: future tests
     # - Check for matching/mismatching sample_table columns
-    # - Special other fields: filterset, filtersetdefault, section, sectionsall
+    # - labels:... functions
+    # - Special other fields: filterset, filtersetdefault, sectionorsall
     # - check that all the smaller functions (len, ge, le, ...) work as expected
 
 
@@ -265,9 +268,11 @@ def test_default_config(full_config_block, caplog, fs):
     """Check that the actual default config passes the check_config function"""
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
+    defined_labels = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'label_name_definitions.yaml')
     sample_table = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv')
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
+    fs.add_real_file(defined_labels, read_only=True)
     fs.add_real_file(sample_table, read_only=True)
 
     prepare_fakefs_config(default_config, full_config_block, fs)

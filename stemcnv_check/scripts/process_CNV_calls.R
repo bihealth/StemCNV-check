@@ -121,7 +121,7 @@ cnvs <- cnvs %>%
     as_tibble() %>%
 	annotate_cnv.check.score(stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores) %>%
 	annotate_precision.estimates(size_categories, precision_estimates) %>%
-    annotate_call.label(config$evaluation_settings$CNV_call_categorisation)
+    annotate_call.label(config$evaluation_settings$CNV_call_labels)
 
 
 # Also directly write out a cnv vcf

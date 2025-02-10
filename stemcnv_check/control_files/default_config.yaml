@@ -43,25 +43,45 @@ log_path: logs      #REQUIRED
 
 ##!medium
 evaluation_settings:
-  CNV_call_categorisation:
-    check_score.critical: 55
-    filters.exclude.critical: ['probe_gap', 'min_size', 'min_probes', 'min_density'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
-    check_score.reportable: null 
-    filters.exclude.reportable: ['min_size', 'min_probes'] # high_probe_dens, probe_gap, (min_size, min_probes, min_density)
+  # All CNV calls are given a label based on their check score, filters and reference match.
+  # The labels described here are always available, but can be changed or new labels can be added
+  # If not other category fits, the last defined label will always be assigned (Note: newly defined labels may be last?!)
+  # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters}
+  CNV_call_labels:
+    Critical de-novo:
+      minimum_check_score: 55
+      not_allowed_vcf_filters: ['high_probe_dens', 'probe_gap', 'min_size', 'min_probes', 'min_density']
+      reference_match: FALSE
+    Reportable de-novo:
+      minimum_check_score: 55
+      not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
+      reference_match: FALSE
+    de-novo call:
+      minimum_check_score: 0
+      not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
+      reference_match: FALSE
+    Reference genotype:
+      minimum_check_score: 0
+      not_allowed_vcf_filters: []
+      reference_match: TRUE
+    Excluded call:
+      minimum_check_score: 0
+      not_allowed_vcf_filters: []
+      reference_match: FALSE
   
-  # Each measure used for QC is categorised as 'OK', 'unusual', or 'warning'
-  # Additionally the last level can be set to 'high concern' instead of 'warning'  
-  # The report color codes 'OK' as green, 'unusual' as yellow, 'warning' as orange, and 'critical' as red
+  # Each sample QC measure defined in StemCNV-check is categorised as one of: {sample_labels_names}
+  # The last two categories are mutually exclusive, and the last one is only used for specific measures (defined by the 'use_last_level' list).
+  # In the report the color codes for the categories are: {sample_labels_values}
+  # For each of the sample QC measures, two thresholds for maximum values are defined:
+  # These determine the transition from the 1st to 2nd, or the 2nd to 3rd/last category.
+  # If both thresholds are the same value, the 2nd category is skipped and the 1st and 3rd/last are directly adjacent.
   summary_stat_warning_levels:   
-    # List of threshold values between normal/abnormal and abnormal/problematic(critical)
-    # The first values gives the maximum allowed for 'OK', the second for 'warning'
     call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
-    # This is the absolute GT distance between a sample and it's reference
+    # SNP_pairwise_distance_to_reference is the absolute GT distance between a sample and it's reference
     # Note that the expected baseline difference strongly depends on the array platform
     # and may need to be adjusted. These values are based on the GSA array (~700k probes)
     SNP_pairwise_distance_to_reference: [500, 5000]
     critical_snvs: [1, 1]
-    call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters
     loss_gain_log2ratio: [2, 4]
     total_calls_CNV: [10, 50]
     total_calls_LOH: [30, 75]
@@ -69,9 +89,10 @@ evaluation_settings:
     reportable_calls_LOH: [5, 10]
     critical_calls_CNV: [1, 1]
     critical_calls_LOH: [1, 1]
-    # These measures use red highlighting ('high concern') instead of orange ('warning'),
-    # they are also bolded in the html summary table
-    last_level_red:
+    # Only CNVs/LOHs without any of these post calling filters are counted for QC measures
+    call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters 
+    # These measures use last QC category and are also bolded in the html summary table
+    use_last_level:
       - call_rate
       - computed_gender
       - SNP_pairwise_distance_to_reference
@@ -88,10 +109,10 @@ evaluation_settings:
     # Different filter criteria for the collated table of all CNV calls 
     call_table_filters:
       # Only include CNV calls with one of these Call_labels
-      # Allowed values: 'Critical', 'Reportable', 'Reference genotype'
+      # Allowed values: CNV call categories defined in 'CNV_call_labels'
       include_call_label: []
       # Exclude calls with one of these filter flags
-      # Allowed values: 'min_probes', 'min_size', 'min_density', 'high_probe_dens', 'probe_gap'
+      # Allowed values: {vcf_filters}
       exclude_filter_flags:
         - min_probes
         - min_size
@@ -247,7 +268,7 @@ settings:
       gap_area.uniq_probes.rel: [-12, 12.5] # slope, intercept
       min.perc.gap_area: 0.33
       ## HighDensity flagging of calls
-      # Calls that have a probe density which is higher than the top {density.quantile.cutoff} [%] of the array windows
+      # Calls that have a probe density which is higher than the top {{density.quantile.cutoff}} [%] of the array windows
       # (calculated from array attribute summary) are flagged as having "high SNP density"
       density.quantile.cutoff: 0.99
 
@@ -332,12 +353,16 @@ settings:
     filter-settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even use chrY on female samples
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
     flag_GenCall_minimum: 0.2
+    # List of SNV categories that are considered critical.
+    # Allowed values: {SNV_critical_labels}
     critical_SNV:
       - 'ROI-match'
       - 'hotspot-match'
       - 'hotspot-gene'
-      - 'critical_annotation'
+      - 'critical-annotation'
       # - 'any-protein-changing'
+    # SNV annotations considered 'Critical', summarised as "critical-annotation"
+    # these are derived from mehari, or more specifically the terms defined by http://www.sequenceontology.org 
     critical_annotations:
       - stop_gained
       - start_lost
@@ -345,8 +370,8 @@ settings:
       - frameshift_variant
       - splice_acceptor_variant
       - splice_donor_variant   
-    # Only variants matching one of the following criteria are considered for the SNV tabel
-    # The 'HIGH' impact category contains all annotations listed under critical
+    # Only variants matching one of the following criteria are part of outout in the SNV_analysis table & report
+    # The 'HIGH' impact category contains all annotations listed by default under critical_annotations
     # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODEARTE' impact category
     variant_selection:
       Impact: [HIGH]
@@ -437,8 +462,8 @@ reports:
         # How many plots to show at least
         min_number_plots: 20
         always_include: #[]
-          - 'Critical'
-          - 'Reportable'
+          - 'Critical de-novo'
+          - 'Reportable de-novo'
         # Include plots, table of individual calls and table of genes
         include.plot: True
         include.hotspot.table: True

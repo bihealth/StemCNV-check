@@ -316,40 +316,58 @@ test_that("Annotate call label", {
     # - critical score [5]
     # - reportable score [4]
     # - critical score, but crit. excl list (-> reportable)  [6]
-    # - reportable score, but excl list (-> NA) [added, 9]
-    # - NA [7]
+    # - reportable score, but excl list (-> basic) [added, 9]
+    # - basic [7]
     call_cat_config <- list(
-        check_score.critical = 53,
-        filters.exclude.critical = c('probe_gap'),
-        check_score.reportable = 50,
-        filters.exclude.reportable = c('test-dummy')
-    )  
+        Critical = list(
+            minimum_check_score = 53,
+            not_allowed_vcf_filters = list('probe_gap'),
+            reference_match = FALSE
+        ),
+        Reportable = list(
+            minimum_check_score = 50,
+            not_allowed_vcf_filters = list('test-dummy'),
+            reference_match = FALSE
+        ),
+        `de-novo` = list(
+            minimum_check_score = 0,
+            not_allowed_vcf_filters = list(),
+            reference_match = FALSE
+        ),
+        `Reference genotype` = list(
+            minimum_check_score = 0,
+            not_allowed_vcf_filters = list(),
+            reference_match = TRUE
+        )
+    )
     
     input_tb <- expected_final_tb %>%
         mutate(
             Check_Score = c(53.03098, 12.93180, 50.27740, 52.06978, 66.18200, 53.47740, 42.88782, 23.37815)
         ) %>%
         bind_rows(
-           expected_final_tb[6,] %>% mutate(FILTER = 'test-dummy')
+           expected_final_tb[6,] %>% mutate(FILTER = 'test-dummy', Check_Score = 49.9)
         )
     
     expected_tb <- input_tb %>%
         mutate(
-            Call_label = c('Reference genotype', 'Reference genotype', 'Reportable', 'Reportable', 'Critical', 'Reportable', NA, 'Reference genotype', NA)
+            Call_label = c(
+                'Reference genotype', 'Reference genotype', 'Reportable', 'Reportable', 'Critical', 
+                'Reportable', 'de-novo', 'Reference genotype', 'de-novo'
+            )
         ) 
     expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
     
-    # No reportable defined, only 'downgraded' critical becomes reportable
-    call_cat_config <- list(
-        check_score.critical = 55,
-        filters.exclude.critical = c('probe_gap'),
-        check_score.reportable = NULL,
-        filters.exclude.reportable = c()
-    )  
+    # Same Check_Score, but different vcf filters allowed for Critical & Reportable
+    # > values between 50 and 53 should be assigned to basic now
+    call_cat_config$Reportable$minimum_check_score <- 53
     
     expected_tb <- input_tb %>%
         mutate(
-            Call_label = c('Reference genotype', 'Reference genotype', NA, NA, 'Critical', NA, NA, 'Reference genotype', NA)
+            Call_label = c(
+                'Reference genotype', 'Reference genotype', 'de-novo', 'de-novo', 'Critical',
+                'Reportable', 'de-novo', 'Reference genotype', 'de-novo'
+            )
         ) 
     expect_equal(annotate_call.label(input_tb, call_cat_config), expected_tb)
 })

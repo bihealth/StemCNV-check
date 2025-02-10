@@ -1,0 +1,74 @@
+# Specification of labels (and their report colors) assigned to sample level QC
+# names used
+#TBD: colors in report
+sample_labels:
+    OK: green
+    unusual: yellow
+    warning: orange
+    high concern: red
+
+
+# possible labels for SNVs
+# Note: the corresponding CNV labels are (user) configurable, ergo not defined here
+SNV_labels:
+    - critical
+    - unreliable critical
+    - protein changing
+    - reference genotype
+
+## These lists are primarily used by the check_config functions
+
+# Possible/Defined FILTERs applied to CNV calls (vcf style)
+# FIXME: create vcf headers from this list?
+vcf_filters:
+    - probe_gap
+    - high_probe_dens 
+    - min_size 
+    - min_probes
+    - min_density
+
+# Possible/Defined "reasons" a SNV can be labelled critical
+SNV_critical_labels:
+    - ROI-match
+    - hotspot-match
+    - hotspot-gene
+    - critical-annotation
+    - any-protein-changing
+
+# Possible/Defined QC measures on sample level
+sample_qc_measures:
+    - call_rate
+    - SNP_pairwise_distance_to_reference
+    - critical_snvs
+    - loss_gain_log2ratio
+    - total_calls_CNV
+    - total_calls_LOH
+    - reportable_calls_CNV
+    - reportable_calls_LOH
+    - critical_calls_CNV
+    - critical_calls_LOH
+  
+# Possible/Defined report sections
+report_sections:
+  - sample.information
+  - QC.summary
+  - QC.GenCall
+  - QC.PennCNV
+  - QC.CBS
+  - QC.settings
+  - SNV.table
+  - SNV.hotspot.coverage
+  - SNV.QC.details
+  - denovo_calls.table
+  - denovo_calls.plots
+  - reference_gt_calls.table
+  - reference_gt_calls.plots
+  - regions.of.interest
+  - SNP.dendrogram
+  - genome.overview
+
+# Possible/Defined subsections in the CNV plot sections
+report_plotsections:
+  - denovo
+  - reference_gt
+  - regions_of_interest
