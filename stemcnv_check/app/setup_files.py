@@ -4,7 +4,7 @@ import re
 import shutil
 import ruamel.yaml as ruamel_yaml
 from loguru import logger as logging
-from stemcnv_check import STEM_CNV_CHECK
+from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, MEHARI_DB_VERSION
 from stemcnv_check.helpers import read_sample_table
 
 def setup_control_files(args):
@@ -46,6 +46,8 @@ def setup_control_files(args):
         comment_format.update({
             k+'_values': ', '.join(v.values()) for k, v in defined_label_names.items() if isinstance(v, dict)
         })
+        comment_format['ensembl_release'] = ENSEMBL_RELEASE
+        comment_format['mehari_db_version'] = MEHARI_DB_VERSION
 
         with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml').open() as fin, \
                 open(args.config, 'w') as fout:

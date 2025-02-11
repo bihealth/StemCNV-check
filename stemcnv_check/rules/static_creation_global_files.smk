@@ -46,9 +46,9 @@ rule download_mehari_ensembl_db:
         get_global_file('mehari_txdb', GENOME, config['global_settings'],config['cache_path'], False)
     wildcard_constraints: 
         genome = 'GRCh37|GRCh38',
-        mehari_db_version = '[0-9]\\.[0-9]\\.[0-9]'
+        MEHARI_DB_VERSION = '[0-9]\\.[0-9]\\.[0-9]'
     shell:
-        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.mehari_db_version}/$(basename {output}) -O {output}"
+        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.MEHARI_DB_VERSION}/$(basename {output}) -O {output}"
 
 
 rule ucsc_goldenpath_download:

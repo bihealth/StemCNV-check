@@ -9,7 +9,7 @@ rule run_gencall:
         egt=get_static_input("egt_cluster_file"),
         idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}"),
     output:
-        os.path.join(DATAPATH, "gtc", "{sentrix_name}", "_done"),
+        os.path.join(DATAPATH, "gtc_{genome}", "{sentrix_name}", "_done"),
     threads: get_tool_resource("GenCall", "threads")
     resources:
         runtime=get_tool_resource("GenCall", "runtime"),
@@ -18,7 +18,7 @@ rule run_gencall:
     params:
         options='--gender-estimate-call-rate-threshold -0.1',
         outpath=lambda wildcards: fix_container_path(
-            os.path.join(DATAPATH, "gtc", wildcards.sentrix_name), "data"
+            os.path.join(DATAPATH, f"gtc_{wildcards.genome}", wildcards.sentrix_name), "data"
         ),
         bpm=lambda wildcards: fix_container_path(
             get_static_input("bpm_manifest_file")(wildcards),
@@ -33,20 +33,28 @@ rule run_gencall:
             os.path.join(IDAT_INPUT, wildcards.sentrix_name), "rawdata"
         ),
         logerr=lambda wildcards: fix_container_path(
-            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, "error.log"),
+            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.error.log"),
             "logs",
         ),
         logout=lambda wildcards: fix_container_path(
-            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, "out.log"), "logs"
+            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.out.log"), "logs"
         ),
     log:
-        err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "error.log"),
-        out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "out.log"),
+        err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.error.log"),
+        out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.out.log"),
     container:
         # Not sure if we need to use a specific version here
         "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
     shell:
-        '/usr/gitc/iaap/iaap-cli/iaap-cli gencall "{params.bpm}" "{params.egt}" "{params.outpath}" --idat-folder "{params.idat_path}" --output-gtc {params.options} -t {threads} > {params.logout} 2> {params.logerr} && [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] && touch {params.outpath}/_done || exit 1'
+        '/usr/gitc/iaap/iaap-cli/iaap-cli gencall '
+        '"{params.bpm}" "{params.egt}" "{params.outpath}" '
+        '--idat-folder "{params.idat_path}" '
+        '--output-gtc {params.options} '
+        '-t {threads} '
+        '> {params.logout} '
+        '2> {params.logerr} '
+        '&& [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] '
+        '&& touch {params.outpath}/_done || exit 1'
 
 
 # The iaap-cli will *always* generate filenames derived from the sentrix name & pos
@@ -55,8 +63,9 @@ def get_chip(wildcards, outtype="dir_path"):
     Values for outtype: 'dirpath' | 'file'"""
     chip_name = get_sample_info(wildcards)['Chip_Name']
     chip_pos = get_sample_info(wildcards)['Chip_Pos']
+    genome = get_static_input("genome_version")(wildcards)
     if outtype == "dir_path":
-        return os.path.join(DATAPATH, "gtc", chip_name)
+        return os.path.join(DATAPATH, f"gtc_{genome}", chip_name)
     elif outtype == "file":
         return os.path.join(chip_name, chip_name + "_" + chip_pos + ".gtc")
 
@@ -68,22 +77,23 @@ rule relink_gencall:
     input:
         lambda wildcards: os.path.join(get_chip(wildcards), "_done"),
     output:
-        os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
+        os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.{genome}.gtc"),
     params:
         gtc_link_path=lambda wildcards: os.path.join(
-            "..", "gtc", get_chip(wildcards, outtype="file")
+            "..", f"gtc_{wildcards.genome}", get_chip(wildcards, outtype="file")
         ),
     shell:
         'ln -s "{params.gtc_link_path}" "{output}"'
 
 
-# FIXME (future): input functions to get correct fasta (& later correct manifest files)
 rule run_gtc2vcf_vcf:
     input:
         bpm=get_static_input("bpm_manifest_file"),
         egt=get_static_input("egt_cluster_file"),
         genome=get_static_input('fasta'),
-        gtc=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.gtc"),
+        gtc=lambda wildcards: os.path.join(
+            DATAPATH, f"{wildcards.sample_id}", f"{wildcards.sample_id}.gencall.{get_static_input("genome_version")(wildcards)}.gtc"
+        ),
     output:
         vcf = pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
         stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt")

@@ -15,23 +15,27 @@
 array_definition: {} ###!strip:4
 #!  # This 'ExampleArray' *should* to be renamed to the actual array name
 #!  ExampleArray:  
-#!    genome_version: hg38      #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
+#!    genome_version: hg38               #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
 #!    # beadpool manifest file (.bpm) from Illumina, needs to match both the SNP array used and 
 #!    # the desired genome version (usually filenames end with 'A1.bpm' for hg19 and 'A2.bpm' for hg38)
-#!    bpm_manifest_file: ''     #REQUIRED
+#!    bpm_manifest_file: ''              #REQUIRED
 #!    # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
-#!    egt_cluster_file: ''      #REQUIRED
-#!    # manifest file (.csv) from Illumina, matching the SNP array used and the genome version
-#!    csv_manifest_file: ''     #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
+#!    egt_cluster_file: ''               #REQUIRED
+#!    # manifest file (.csv) from Illumina, matching the SNP array used and the genome version as .bpm
+#!    csv_manifest_file: ''              #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
 #!    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
-#!    penncnv_pfb_file: '{cache}/array_definitions/{array_name}/PennCNV-PFB_{genome}.pfb'              #REQUIRED, Auto-generatable
+#!    # defaults to: '{cache}/array_definitions/{array_name}/PennCNV-PFB_{genome}.pfb'
+#!    penncnv_pfb_file: '__cache-default__'      #REQUIRED, Auto-generatable
 #!    # PennCNV GC model file, containing GC content values, calculated by PennCNV
-#!    penncnv_GCmodel_file: '{cache}/array_definitions/{array_name}/PennCNV-GCmodel_{genome}.gcmodel'  #REQUIRED, Auto-generatable
+#!    # defaults to: '{cache}/array_definitions/{array_name}/PennCNV-GCmodel_{genome}.gcmodel'
+#!    penncnv_GCmodel_file: '__cache-default__'  #REQUIRED, Auto-generatable
 #!    # bed file with windows of very high array density, calculated by stemcnv-check
-#!    array_density_file: '{cache}/array_definitions/{array_name}/density_{genome}.bed'                #REQUIRED, Auto-generatable
+#!    # defaults to: '{cache}/array_definitions/{array_name}/density_{genome}.bed'
+#!    array_density_file: '__cache-default__'    #REQUIRED, Auto-generatable
 #!    # bed file with windows of probes gaps on the array
-#!    array_gaps_file: '{cache}/array_definitions/{array_name}/gaps_{genome}.bed'                      #REQUIRED, Auto-generatable
-
+#!    # defaults to: '{cache}/array_definitions/{array_name}/gaps_{genome}.bed'
+#!    array_gaps_file: '__cache-default__'       #REQUIRED, Auto-generatable
+    
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
 raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
@@ -45,7 +49,7 @@ log_path: logs      #REQUIRED
 evaluation_settings:
   # All CNV calls are given a label based on their check score, filters and reference match.
   # The labels described here are always available, but can be changed or new labels can be added
-  # If not other category fits, the last defined label will always be assigned (Note: newly defined labels may be last?!)
+  # If not other category fits (which should not occur with default settings), the last defined label will always be assigned
   # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters}
   CNV_call_labels:
     Critical de-novo:
@@ -65,7 +69,7 @@ evaluation_settings:
       not_allowed_vcf_filters: []
       reference_match: TRUE
     Excluded call:
-      minimum_check_score: 0
+      minimum_check_score: ~
       not_allowed_vcf_filters: []
       reference_match: FALSE
   
@@ -126,20 +130,24 @@ global_settings:
   # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
   cache_dir: '~/.cache/stemcnv-check'
   # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
+  # defaults to "{{cache_dir}}/mehari-db/mehari-data-txs-{{genome}}-ensembl-{mehari_db_version}.bin.zst
   mehari_transcript_db: '__cache-default__' 
   # Dosage sensitivity predicitions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
   # Either '__cache-default__' or a path to the dosage sensitivity data file
+  # defaults to "{{cache_dir}}/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz"
   dosage_sensitivity_scores: '__cache-default__'
   # Fasta file for the genome sequence, either '__default-ensemble__' or a path to the genome fasta file
   # '__default-ensemble__' will download the genome fasta file from ensembl ftp servers
   # Note: fasta files can be compressed, but *only* with bgzip!
+  # defaults to "{{cache_dir}}/fasta/homo_sapiens/{ensembl_release}_{{genome}}/Homo_sapiens.{{genome}}.dna.primary_assembly.fa.gz"
   hg19_genome_fasta: '__default-ensemble__'
   hg38_genome_fasta: '__default-ensemble__'
-  # Gene annotation of the genome in gtf format, either '__default-gencode__' or a path to the gtf file
-  # The default is to download GenCode v45 files
+  # Gene annotation of the genome in gtf format, either '__default-gencode__' (Gencode v45 files) or a path to the gtf file
+  # defaults to "{{cache_dir}}/static-data/gencode.{{genome}}.v45.gtf.gz"
   hg19_gtf_file: '__default-gencode__'
   hg38_gtf_file: '__default-gencode__'
-  # tabular files with chromosome and gband details, derived from UCSC information
+  # tabular files with chromosome and gband details, derived from UCSC information via make-staticdata
+  # defaults to "{{cache_dir}}/static-data/UCSC_{{genome}}_chromosome-info.tsv"
   hg19_genomeInfo_file: '__default-UCSC__'
   hg38_genomeInfo_file: '__default-UCSC__'
 

@@ -142,8 +142,9 @@ def test_make_singularity_args(mock_resource_files, fs):
             }
         }
     }
-    # These are always expected to exist (no check outside apptainer though, since it's a mix of files & dirs)
-    # output will be sorted by second path
+    # 'make_singularity_args' expects to-be-bound paths to exist
+    # output will be sorted by second path and include only absolute paths (with resolved links)
+    # the fake fs puts everything in an empty root directory
     expected_base = [
         "'/path/to/data':'/outside/data'",
         "'/path/to/logs':'/outside/logs'",
@@ -151,17 +152,20 @@ def test_make_singularity_args(mock_resource_files, fs):
         "'/fake/snakedir':'/outside/snakedir'"
     ]
     expected_extra = [
-        "'relative/genome.fasta':'/outside/static/genome.fasta'",
-        "'relative/genome.info':'/outside/static/genome.info'",
-        "'relative/gtf.gtf':'/outside/static/gtf.gtf'",
-        "'relative/mehari_db':'/outside/static/mehari_db'",
-        "'relative/dosage_sensitivity_scores.tsv':'/outside/static/dosage_sensitivity_scores.tsv'"
+        "'/relative/genome.fasta':'/outside/static/genome.fasta'",
+        "'/relative/genome.info':'/outside/static/genome.info'",
+        "'/relative/gtf.gtf':'/outside/static/gtf.gtf'",
+        "'/relative/mehari_db':'/outside/static/mehari_db'",
+        "'/relative/dosage_sensitivity_scores.tsv':'/outside/static/dosage_sensitivity_scores.tsv'"
     ]
+    for file in expected_base + expected_extra:
+        fs.create_file(file.split(':')[0].rstrip("'").lstrip("'"))
+    fs.create_dir('relative_array')
 
     def get_expected(extra):
         return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
 
-    assert (get_expected(expected_extra+["'relative_array':'/outside/ExampleArray'"]) ==
+    assert (get_expected(expected_extra+["'/relative_array':'/outside/writearray/ExampleArray'"]) ==
             helpers.make_apptainer_args(config, None, not_existing_ok=True))
 
     # Fail if some defined paths do not exist
@@ -169,18 +173,27 @@ def test_make_singularity_args(mock_resource_files, fs):
         helpers.make_apptainer_args(config, None)
 
     # Test with tmpdir
-    assert (get_expected(expected_extra + ["'relative_array':'/outside/ExampleArray'", "'/tmp/tmpdir':'/outside/tmp'"])
+    fs.create_dir('/tmp/tmpdir')
+    assert (get_expected(expected_extra + ["'/relative_array':'/outside/writearray/ExampleArray'", "'/tmp/tmpdir':'/outside/tmp'"])
             == helpers.make_apptainer_args(config, None, tmpdir='/tmp/tmpdir', not_existing_ok=True))
+
     # test after file creation
     fs.create_file('relative_array/bpm_manifest.bpm')
-    expected = get_expected(expected_extra + ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
+    expected = get_expected(expected_extra + ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
     assert expected == helpers.make_apptainer_args(config, None)
 
-    # test with direct addition
+    # test with direct addition, these are NOT checked for existence
     assert expected+',/abcdef' == helpers.make_apptainer_args(config, None, extra_bind_args='/abcdef')
+
+    # test that links are resolved to actual file paths
+    config['global_settings']['hg19_genome_fasta'] = '/somewhere/else/genome.fasta'
+    fs.create_symlink('/somewhere/else/genome.fasta', '/relative/genome.fasta')
+    assert expected == helpers.make_apptainer_args(config, None)
 
     # test with cache_path & auto-creation of global paths
     cache_path = '/path/to/cache'
+    fs.create_dir(cache_path)
+
     config['global_settings'] = {
         'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
@@ -191,8 +204,9 @@ def test_make_singularity_args(mock_resource_files, fs):
     expected_extra = []
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
+        fs.create_file(static_file)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
     # test with multiple arrays/genome versions
@@ -207,10 +221,12 @@ def test_make_singularity_args(mock_resource_files, fs):
     expected_extra = []
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         static_file = helpers.get_global_file(global_file, 'hg38', config['global_settings'], cache_path)
+        if not os.path.exists(static_file):
+            fs.create_file(static_file)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
 @pytest.fixture
@@ -454,7 +470,7 @@ def test_get_cache_dir(caplog, fs):
 
 
 def test_get_global_file(fs):
-    from stemcnv_check import ENSEMBL_RELEASE, mehari_db_version
+    from stemcnv_check import ENSEMBL_RELEASE, MEHARI_DB_VERSION
 
     # Test with pre-defined files
     global_settings = OrderedDict({
@@ -489,7 +505,7 @@ def test_get_global_file(fs):
         'fasta': os.path.join(cache, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}', 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz'),
         'gtf': os.path.join(cache, 'static-data', 'gencode.{genome}.v45.gtf.gz'),
         'genome_info': os.path.join(cache, 'static-data', 'UCSC_{genome}_chromosome-info.tsv'),
-        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst")
+        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst")
     }
     # fasta and mehari need specific format versions!
     genome_format = defaultdict(
@@ -504,5 +520,5 @@ def test_get_global_file(fs):
             assert helpers.get_global_file(gtype, genome, global_settings, cache, fill_wildcards=False) == expected[gtype]
             assert helpers.get_global_file(gtype, genome, global_settings, cache) == expected[gtype].format(
                 genome=genome_format[gtype][genome],
-                mehari_db_version=mehari_db_version
+                MEHARI_DB_VERSION=MEHARI_DB_VERSION
             )

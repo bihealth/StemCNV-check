@@ -7,7 +7,7 @@ import re
 import ruamel.yaml as ruamel_yaml
 from pathlib import Path
 from pydantic.v1.utils import deep_update
-from . import STEM_CNV_CHECK, mehari_db_version, ENSEMBL_RELEASE
+from . import STEM_CNV_CHECK, MEHARI_DB_VERSION, ENSEMBL_RELEASE
 from .exceptions import SampleConstraintError, ConfigValueError, CacheUnavailableError
 from collections import OrderedDict
 from loguru import logger as logging
@@ -107,7 +107,7 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
                         os.makedirs(os.path.dirname(file))
                     dir_mount = (
                         os.path.dirname(file).format(cache=cache_path, array_name=array),
-                        f'/outside/{array}'
+                        f'/outside/writearray/{array}'
                     )
                     if array in array_base_dirs:
                         if array_base_dirs[array] != os.path.dirname(file):
@@ -125,7 +125,18 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
             bind_points.append((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
 
     # Sort bind_points to make testing easier (loops over config_dict add them in a non-deterministic order)
-    bind_point_str = "-B " + ','.join(f"'{host}':'{cont}'" for host, cont in sorted(bind_points, key=lambda x: x[1]))
+    # Also convert them to Path objects and resolve and links (which might not work once inside the container)
+    bind_point_str_list = []
+    for host, cont in sorted(bind_points, key=lambda x: x[1]):
+        host = Path(host).resolve()
+        # Double check that all to-be-mounted files exist
+        if not host.exists():
+            raise FileNotFoundError(
+                f"File or directory '{host}' does not exist, but was supposed to be mounted for use with apptainer."
+            )
+        bind_point_str_list.append(f"'{host}':'{cont}'")
+    bind_point_str = "-B " + ','.join(bind_point_str_list)
+
     # allow additional arguments to be passed
     if extra_bind_args:
         if isinstance(extra_bind_args, str):
@@ -361,7 +372,7 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
     elif type == 'mehari_txdb':
         config_entry = global_settings['mehari_transcript_db']
         wildcards['genome'] = 'GRCh38' if genome == 'hg38' else 'GRCh37'
-        wildcards['mehari_db_version'] = mehari_db_version
+        wildcards['MEHARI_DB_VERSION'] = MEHARI_DB_VERSION
         if config_entry != '__cache-default__':
             outfname = config_entry
         elif not cache_path:
@@ -370,7 +381,7 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
             outfname = os.path.join(
                 cache_path,
                 'mehari-db',
-                "mehari-data-txs-{genome}-ensembl-{mehari_db_version}.bin.zst"
+                "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst"
             )
     elif type == 'dosage_scores':
         config_entry = global_settings['dosage_sensitivity_scores']
@@ -390,3 +401,32 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
         return outfname.format(**wildcards)
     else:
         return outfname
+
+
+def get_array_file(filekey, array_name, config, cache_path):
+    """Get file path from array definition config, using default cache paths where needed."""
+
+    if filekey not in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
+        raise ValueError('Unknown array file key: ' + filekey)
+
+    genome_build = config['array_definition'][array_name]['genome_version']
+    genome_build = 'hg38' if genome_build in ('hg38', 'GRCh38') else 'hg19'
+
+    config_entry = config['array_definition'][array_name][filekey]
+
+    if config_entry == '__cache-default__':
+        if not cache_path:
+            raise CacheUnavailableError('No cache path defined, but default cache array definition files should be used.')
+        base_args = (cache_path, 'array_definitions', array_name)
+        if filekey == 'penncnv_pfb_file':
+            outfname = os.path.join(*base_args, f'PennCNV-PFB_{genome_build}.pfb')
+        elif filekey == 'penncnv_GCmodel_file':
+            outfname = os.path.join(*base_args, f'PennCNV-GCmodel_{genome_build}.gcmodel')
+        elif filekey == 'array_density_file':
+            outfname = os.path.join(*base_args, f'density_{genome_build}.bed')
+        elif filekey == 'array_gaps_file':
+            outfname = os.path.join(*base_args, f'gaps_{genome_build}.bed')
+    else:
+        outfname = config_entry
+
+    return outfname

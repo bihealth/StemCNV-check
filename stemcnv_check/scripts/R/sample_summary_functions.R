@@ -4,7 +4,7 @@ suppressMessages(library(yaml))
 # Helper function, could be defined elsewhere?
 get_defined_labels <- function(config) {
     label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
-    return(yaml.load(label_def_file))
+    return(yaml.load_file(label_def_file))
 }
 
 tr_sample_tb <- function(tb) {
@@ -18,7 +18,7 @@ get_gencall_stats <- function(gencall_stat_file) {
              col_types = cols(computed_gender = col_character(), sentrix_barcode = col_character())
     ) %>%
         dplyr::select(-(5:7)) %>%
-        mutate(gtc = str_remove(gtc, '.gencall.gtc')) %>%
+        mutate(gtc = str_remove(gtc, '.gencall.[a-zA-Z0-9]+.gtc')) %>%
         dplyr::rename(sample_id = gtc)
 }
 
@@ -30,11 +30,11 @@ apply_measure_th <- function(
     datacol, measure, sample_levels, config, comp = 'greater_equal', th_override = NULL
 ){
     stopifnot(comp %in% c('greater_equal', 'smaller', 'not_equal'))
-    comp_f <- case_when(
-        comp == 'greater_equal' ~ function(x,y) {x >= y},
-        comp == 'smaller'       ~ function(x,y) {x < y},
-        comp == 'not_equal'     ~ function(x,y) {x != y}
-    ) 
+    comp_f <- list(
+        'greater_equal' = function(x,y) {x >= y},
+        'smaller'       = function(x,y) {x < y},
+        'not_equal'     = function(x,y) {x != y}
+    ) [[comp]]
     
     #FIXME (future): Error or default for what happens when not defined?
     measure_thresholds <- config$evaluation_settings$summary_stat_warning_levels[[measure]]
@@ -65,10 +65,10 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
         snp_qc_details %>%
             dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs) %>%
             unique(),
-        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_categorisation$call_count_excl_filters)
+        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_labels$call_count_excl_filters)
     )
     
-    sample_levels <- names(get_defined_labels(config)$sampel_labels)    
+    sample_levels <- names(get_defined_labels(config)$sample_labels)    
     sample_sex <- get_sample_info(sample_id, 'sex', config)
     
     qc_eval_list <- list(

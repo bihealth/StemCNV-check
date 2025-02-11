@@ -4,4 +4,4 @@ from stemcnv_check.version import __version__
 
 STEM_CNV_CHECK = 'stemcnv_check'
 ENSEMBL_RELEASE = '113'
-mehari_db_version = '0.7.5'
+MEHARI_DB_VERSION = '0.7.5'

@@ -293,14 +293,14 @@ cat('\n\n')
 cat('### Summary\n\n')
 
 crit_excl_filters <- ifelse(
-    is.null(config$evaluation_settings$CNV_call_categorisation$filters.exclude.critical),
+    is.null(config$evaluation_settings$CNV_call_labels$filters.exclude.critical),
     '<none>',
-    config$evaluation_settings$CNV_call_categorisation$filters.exclude.critical %>% paste(collapse = ', ')
+    config$evaluation_settings$CNV_call_labels$filters.exclude.critical %>% paste(collapse = ', ')
 )
 repo_excl_filters <- ifelse(
-    is.null(config$evaluation_settings$CNV_call_categorisation$filters.exclude.reportable),
+    is.null(config$evaluation_settings$CNV_call_labels$filters.exclude.reportable),
     '<none>',
-    config$evaluation_settings$CNV_call_categorisation$filters.exclude.reportable %>% paste(collapse = ', ')
+    config$evaluation_settings$CNV_call_labels$filters.exclude.reportable %>% paste(collapse = ', ')
 )
 
 snv_critical_desc <- list(
@@ -331,9 +331,9 @@ paste(
     'call filter flags (i.e. calls below minimum size, or having a probe coverage gap). ',
     'If no reportable Check_Score threshold is defined the critical one is used (but with the reportable exclusion filters).\n\n',
     'The current thresholds and exclsuion filters are:\n\n',
-    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.critical, '\n\n',
+    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_labels$check_score.critical, '\n\n',
     ' - Critical exclusion Filters:', crit_excl_filters, '\n\n',
-    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_categorisation$check_score.reportable, '\n\n',
+    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_labels$check_score.reportable, '\n\n',
     ' - Reportable exclusion Filters: ', repo_excl_filters, '\n\n'
 ) %>% collapsible_html_text('Summary table explanations')
 

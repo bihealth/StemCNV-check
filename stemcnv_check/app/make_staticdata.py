@@ -30,7 +30,7 @@ def run_staticdata_workflow(args, array_name):
     For generation of array defnition files, the workflow runs the first steps of the main StemCNV-check 
     workflow to generate a vcf file if none are present. From this vcf file full information about GT
     (background) counts from the egt clusterfile can be extracted, that can be used to make the pfb file for PennCNV.
-    Further array summary info is take from UCSC genome info file and the probes locations from the vcf/PFB file.
+    Further array summary info is taken from UCSC genome info file and the probes locations from the vcf/PFB file.
     """
     logging.info(f'Starting to check for missing static data files for array "{array_name}" ...')
     # bpm & egt files are needed
@@ -40,16 +40,20 @@ def run_staticdata_workflow(args, array_name):
     genome_build = config['array_definition'][array_name]['genome_version']
     genome_build = 'hg38' if genome_build in ('hg38', 'GRCh38') else 'hg19'
 
+    #short helper function for array files
+    def array_file(filekey):
+        return helpers.get_array_file(filekey, array_name, config, cache_path)
+
     # Collect missing global files
-    global_files = set()
+    missing_global_files = set()
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         filename = helpers.get_global_file(global_file, genome_build, config['global_settings'], cache_path)
         if not os.path.isfile(filename):
             if global_file == 'mehari_txdb':
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
-            global_files.add(filename)
+            missing_global_files.add(filename)
 
-    if global_files:
+    if missing_global_files:
         logging.info(f'Setting up genome wide static files {genome_build}')
         # This is now a separated workflow, with doesn't need apptainer (and makes the basic files always bound to apptainer)
         with (SnakemakeApi(output_settings=OutputSettings(printshellcmds=True)) as api,
@@ -79,7 +83,7 @@ def run_staticdata_workflow(args, array_name):
                     ),
                 )
                 .dag(
-                    DAGSettings(targets=global_files,
+                    DAGSettings(targets=missing_global_files,
                                 force_incomplete=True)
                 )
                 .execute_workflow()
@@ -93,21 +97,22 @@ def run_staticdata_workflow(args, array_name):
         'min_gap_size': config['settings']['array_attribute_summary']['min.gap.size'],
     }
     # Required auto-generatbale array definition files
-    static_files = {'penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'}
+    static_file_keys = {'penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'}
     # Update static_snake_config with existing and target file paths
     existing_files = {
-        file for file in static_files if file in config['array_definition'][array_name] and
-        os.path.isfile(config['array_definition'][array_name][file])
+        file for file in static_file_keys if file in config['array_definition'][array_name] and
+        os.path.isfile(array_file(file))
     }
-    missing_files = static_files - existing_files
+    missing_files = static_file_keys - existing_files
     static_snake_config.update({
-        file: config['array_definition'][array_name][file] for file in existing_files
+        file: array_file(file) for file in existing_files
     })
     static_snake_config.update({
-        file: config['array_definition'][array_name][file].format(
+        file: array_file(file).format(
             genome=genome_build, array_name=array_name, cache=cache_path
         ) for file in missing_files
     })
+    static_snake_config['generate_missing'] = list(missing_files)
 
     if not missing_files:
         logging.info('All static files are present')
@@ -211,14 +216,32 @@ def run_staticdata_workflow(args, array_name):
             .execute_workflow()
         )
 
-    # The missing files may have been specified with directly usable paths, that do not need to be updated
+    # The missing files may have been specified with directly usable paths in the main config
+    # If either format-strings or '__default-case__' was used the main config will differ from static_snake_config
     update_str = '\n'.join([
-        f"    {entry}: {file}" for entry, file in static_snake_config.items() if entry in missing_files and
-        entry in config['array_definition'][array_name] and file != config['array_definition'][array_name][entry]
+        f"    {entry}: {file}" for entry, file in static_snake_config.items() if
+        entry in missing_files and
+        entry in config['array_definition'][array_name] and
+        file not in config['array_definition'][array_name][entry]
     ])
     if not update_str:
-        logging.info("Missing static files generated.")
+        logging.info(
+            "Missing static files generated. The files have been written to the specified file paths and will not "
+            "be written to a global array definition config."
+        )
         return 0
+
+    # Build full array config to write out: start from defined config
+    # Then update all non-required static files, which may had format strings or '__default-case__' in the main config
+    config_out = {'array_definition': {array_name: config['array_definition'][array_name]}}
+    for file in static_file_keys:
+        config_out['array_definition'][array_name][file] = static_snake_config[file]
+    # In all cases the file paths should be absolute,
+    # otherwise reusing that global config part from another path would break
+    config_out['array_definition'][array_name] = {
+        entry: os.path.abspath(value) if entry.endswith('_file') else value
+        for entry, value in config_out['array_definition'][array_name].items()
+    }
 
     # Determine where to write config updates
     # 1) if cache is in use, check if
@@ -227,16 +250,7 @@ def run_staticdata_workflow(args, array_name):
     #    c) if a (conflicting) array definition already exists, ask user if they want to overwrite
     # 2) if no cache is used, write to a local array specific config (with only that entry)
     #    Give an example for how to refer to this file in the main config file
-    config_out = {'array_definition': {array_name: config['array_definition'][array_name]}}
-    for file in missing_files:
-        config_out['array_definition'][array_name][file] = static_snake_config[file]
-    # In all cases the file paths should be absolute, otherwise reusing that config part from another path would break
-    config_out['array_definition'][array_name] = {
-        entry: os.path.abspath(value) if entry.endswith('_file') else value
-        for entry, value in config_out['array_definition'][array_name].items()
-    }
     yaml = ruamel_yaml.YAML()
-
     base_config = {}
     array_name_sanitized = "".join(x if x.isalnum() or x in '_-.' else '_' for x in array_name)
     if cache_path:

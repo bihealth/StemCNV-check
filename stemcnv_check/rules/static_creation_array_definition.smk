@@ -3,7 +3,7 @@ import importlib.resources
 import os
 from pathlib import Path
 import tempfile
-from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, mehari_db_version
+from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, MEHARI_DB_VERSION
 
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]
@@ -11,9 +11,16 @@ ARRAY = config["array_name"]
 # ================================================================
 
 
-def fix_container_path(path_in, bound_to):
+def fix_container_path(path_in, bound_to, write_check=None):
     path_in = Path(path_in)
 
+    if write_check:
+        write_static = write_check in config['generate_missing']
+    else:
+        write_static = False
+
+    if write_static and bound_to == ARRAY:
+        return Path("/outside/") / 'writearray' / ARRAY / path_in.name
     if bound_to in ("static", ARRAY):
         rel_path = path_in.name
     else:
@@ -81,8 +88,8 @@ rule create_gcmodel_file:
         config["penncnv_GCmodel_file"],
     params:
         download_path=fix_container_path(DOWNLOAD_DIR, "tmp"),
-        input_path=fix_container_path(config["penncnv_pfb_file"], ARRAY),
-        output_path=fix_container_path(config["penncnv_GCmodel_file"], ARRAY)
+        input_path=fix_container_path(config["penncnv_pfb_file"], ARRAY, "penncnv_pfb_file"),
+        output_path=fix_container_path(config["penncnv_GCmodel_file"], ARRAY, "penncnv_GCmodel_file"),
     container:
         "docker://genomicslab/penncnv"
     shell:

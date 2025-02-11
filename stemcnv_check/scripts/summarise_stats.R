@@ -93,7 +93,7 @@ collect_summary_stats <- function(
         split(.$CNV_caller) %>%
         imap(function (gr, name) {
             tb1 <- gr %>%
-                annotate_call.label(config$evaluation_settings$CNV_call_categorisation) %>%
+                annotate_call.label(config$evaluation_settings$CNV_call_labels) %>%
                 get_call_stats(config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters)
             tb2 <- tb1 %>%
                  mutate(across(2:(ncol(tb1)-1), ~apply_greq_th(., cur_column(), config)))

@@ -2,7 +2,7 @@ import importlib.resources
 import os
 from pathlib import Path
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import config_extract, get_global_file
+from stemcnv_check.helpers import config_extract, get_global_file, get_array_file
 from stemcnv_check.exceptions import SampleConstraintError
 
 def get_sample_info(wildcards):
@@ -93,7 +93,15 @@ def get_static_input(type):
             file_type: get_global_file(file_type, genome, config['global_settings'], config['cache_path'])
             for file_type in ('fasta', 'gtf', 'genome_info', 'mehari_txdb')
         }
-        res_dict.update(config['array_definition'][array])
+        res_dict.update({
+            k: v for k, v in config['array_definition'][array].items()
+            if not k.startswith('array') and not k.startswith('penncnv')
+        })
+        res_dict.update({
+            key: get_array_file(key, array, config, config['cache_path'])
+            for key in config['array_definition'][array].keys()
+            if key.startswith('array') or key.startswith('penncnv')
+        })
         
         return res_dict[type]
     
