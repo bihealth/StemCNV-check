@@ -57,16 +57,16 @@ run_snp_analysis <- function(
             GT = character()
         )
     }
-
-    if ('Regions_of_Interest' %!in% colnames(sampletable)) {
-        # Small speed up
-        gr_genes <- GRanges(); gr_info <- GRanges()
-    } else {
-        gr_genes <- load_gtf_data(gtf_file, config, target_chrom_style)
-        gr_info  <- load_genomeInfo(ginfo_file, config, target_chrom_style)
-    }    
-        
+    
     SNV_hotspot_table <- load_hotspot_table(config, 'snv_hotspot')
+    
+    roi_tb <- get_roi_tb(sample_id, sampletable, config)
+    hotspot_genes <- c(
+        roi_tb %>% filter(mapping == 'gene_name') %>% pull(hotspot),
+        SNV_hotspot_table$gene_name
+    ) %>% unique()
+    gr_genes <- load_gtf_data(gtf_file, config, target_chrom_style, include_hotspot_genes = hotspot_genes)
+    gr_info  <- load_genomeInfo(ginfo_file, config, target_chrom_style)
     
     # Sort, filter & Label annotated SNVs
     
@@ -79,7 +79,7 @@ run_snp_analysis <- function(
         'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
     )
     sample_SNV_tb <- sample_SNP_gr %>%
-        annotate_roi(sample_id, sampletable, gr_genes, gr_info, config) %>%
+        annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
         as_tibble() %>%
         separate(ANN, sep = '\\|', into = meahri_ann_header) %>%
         dplyr::rename(

@@ -20,6 +20,7 @@ config <- list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
                 'include_only_these_gene_types' = c(), # c('lncRNA', 'miRNA', 'protein_coding'),
+                'whitelist_hotspot_genes' = FALSE,
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv')
             )
         ),
@@ -86,16 +87,16 @@ test_that('annotate_roi', {
 
     expected_gr <- sample_cnvs %>%
         mutate(ROI_hits = c(NA, 'chr1:10000-20000', '1p35', '1p35', NA, 'chr1:5000000-5500000', '1p35'))
+    roi_tb <- get_roi_tb('test_sample', sample_tb, config)
     
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
+    expect_equal(annotate_roi(sample_cnvs, roi_tb, gr_genes, gr_info, config), expected_gr)
     
-    # test empty roi
+    # test empty roi definition
     expected_gr <- sample_cnvs %>%
         mutate(ROI_hits = NA_character_)
     sample_tb$Regions_of_Interest <- ''
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
-    sample_tb <- tibble(Sample_ID = 'test_sample')
-    expect_equal(annotate_roi(sample_cnvs, 'test_sample', sample_tb, gr_genes, gr_info, config), expected_gr)
+    roi_tb <- get_roi_tb('test_sample', sample_tb, config)
+    expect_equal(annotate_roi(sample_cnvs, roi_tb, gr_genes, gr_info, config), expected_gr)
 })
 
 

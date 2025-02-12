@@ -286,6 +286,7 @@ settings:
       exclude_gene_type_regex: []
       # Example: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
       include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
+      whitelist_hotspot_genes: True
       # These genelists are used to mark genes with high impact
       # Gene lists files are tabular (tsv) and need the following columns:
       # list_name, hotspot, mapping, call_type, check_score, description, description_doi
@@ -310,11 +311,11 @@ settings:
       # CNV gain calls are respectively scored for the pTriplo score
       pHaplo_threshold: 0.86
       pTriplo_threshold: 0.94
-      dosage_sensitive_gene:  5
+      dosage_sensitive_gene: 5
       # Genes without any score from the hotspot lists or dosage sensivity are scored as 'any_other_gene'
-      any_other_gene:        0.2
+      any_other_gene: 0.2
       # Calls overlapping any sample defined ROI get this one-time score
-      any_roi_hit:           50
+      any_roi_hit: 50
 ##!advanced
       # These values determine how the base Check-Score is calculated from size & CN.
       # The formula used is: copy_factor * log(size) * log(size) - flat_decrease
@@ -326,7 +327,7 @@ settings:
       # copy_factor for CN 2 (LOH)
       neutral_copy_factor: 0.275
       flat_decrease: 15      
-      # Note: male sex chromosomes have different baseline CNs, and generally use the 1-copy factor unless CN>2
+      # Note: male sex chromosomes have baseline CN=1, and generally use the 1-copy factor unless CN>2
 
       
 

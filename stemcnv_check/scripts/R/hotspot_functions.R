@@ -252,10 +252,21 @@ load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
     tb
 }
 
+get_roi_gr <- function(roi_tb, gr_genes, gr_info, target_chrom_style) {
+    out <- roi_tb %>%
+		parse_hotspot_table(gr_genes, gr_info) %>%
+        fix_CHROM_format(target_chrom_style) 
+    # Order is only retained if the output isn't empty
+    if (length(out) > 0) {
+        return(out %>% arrange(order) %>% select(-order))
+    } else {
+        return(out)
+    }
+}
 
-get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) {
+get_roi_tb <- function(sample_id, sampletable, config) {
     
-    empty_res <- GRanges(
+    empty_res <- tibble(
         list_name = character(),
         hotspot = character(),
         mapping = character(),
@@ -263,11 +274,9 @@ get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target
         check_score = numeric(),
         description = character(),
         description_doi = character(),
-        description_htmllinks = character()
+        description_htmllinks = character(),
+        order = numeric()
     )
-    if ('Regions_of_Interest' %!in% colnames(sampletable)) {
-        return(empty_res)
-    }
     
     roi_regions <- sampletable %>% 
         filter(Sample_ID == sample_id) %>% 
@@ -280,7 +289,6 @@ get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target
         
     tibble(
         list_name = 'ROI',
-        description = str_extract(roi_regions, '^[^|]+\\|') %>% str_remove('\\|'),
         hotspot = str_remove(roi_regions, '^[^|]+\\|'),
         mapping = case_when(
             str_detect(hotspot, '^(chr)?[0-9XY]{1,2}[pq][0-9.]+') ~ 'gband',
@@ -289,6 +297,7 @@ get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target
         ),
         call_type = 'any',
         check_score = config$settings$CNV_processing$Check_score_values$any_roi_hit,
+        description = str_extract(roi_regions, '^[^|]+\\|') %>% str_remove('\\|'),
         description_doi = NA_character_,
     ) %>%
         mutate(
@@ -301,10 +310,7 @@ get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target
                     ''
                 )
             ),
+            description_htmllinks = description,
             order = row_number(),
-            description_htmllinks = description
-        ) %>%
-		parse_hotspot_table(gr_genes, gr_info) %>%
-        fix_CHROM_format(target_chrom_style) %>%
-        arrange(order) %>% select(-order)
+        )
 }

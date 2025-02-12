@@ -81,18 +81,29 @@ check_scores <- config$settings$CNV_processing$Check_score_values
 size_categories <- config$settings$CNV_processing$Precision$size_categories
 precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
 
-gr_genes <- load_gtf_data(snakemake@params$gtf_file, config, target_chrom_style)
-gr_info  <- load_genomeInfo(snakemake@params$ginfo_file, config, target_chrom_style)
-
-stemcell_hotspots_gr <- load_hotspot_table(config, 'stemcell_hotspot') %>%
-    parse_hotspot_table(gr_genes, gr_info)
-cancer_genes_gr <- load_hotspot_table(config, 'cancer_gene') %>%
-    parse_hotspot_table(gr_genes, gr_info)
-dosage_sensitive_gene_gr <- get_dosage_sensivity_tb(
+stemcell_hotspots_tb <- load_hotspot_table(config, 'stemcell_hotspot')
+cancer_genes_tb <- load_hotspot_table(config, 'cancer_gene')
+dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(
     snakemake@params$dosage_file,
     config$settings$CNV_processing$Check_score_values
+)
+roi_tb <- get_roi_tb(sample_id, sampletable, config)
+hotspot_genes <- bind_rows(
+    stemcell_hotspots_tb,
+    cancer_genes_tb,
+    dosage_sensitive_gene_tb,
+    roi_tb
 ) %>%
-    parse_hotspot_table(gr_genes, gr_info)
+    filter(mapping == 'gene_name') %>%
+    pull(hotspot) %>%
+    unique()
+
+gr_genes <- load_gtf_data(snakemake@params$gtf_file, config, target_chrom_style, include_hotspot_genes = hotspot_genes)
+gr_info  <- load_genomeInfo(snakemake@params$ginfo_file, config, target_chrom_style)
+
+stemcell_hotspots_gr <- parse_hotspot_table(stemcell_hotspots_tb, gr_genes, gr_info)
+cancer_genes_gr <- parse_hotspot_table(cancer_genes_tb, gr_genes, gr_info)
+dosage_sensitive_gene_gr <- parse_hotspot_table(dosage_sensitive_gene_tb, gr_genes, gr_info)
 
 array <- sampletable %>%
     filter(Sample_ID == sample_id) %>%
@@ -106,7 +117,7 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(stemcell_hotspots_gr, 'stemcell_hotspot') %>%
     annotate_impact_lists(dosage_sensitive_gene_gr, 'dosage_sensitive_gene') %>%
 	annotate_impact_lists(cancer_genes_gr, 'cancer_gene') %>%
-	annotate_roi(sample_id, sampletable, gr_genes, gr_info, config) %>%
+	annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
 	annotate_gaps(
         gap_file,
         processing_config$min.perc.gap_area, 

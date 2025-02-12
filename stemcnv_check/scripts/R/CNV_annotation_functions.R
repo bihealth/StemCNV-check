@@ -18,20 +18,12 @@ annotate_impact_lists <- function(gr, hotspot_gr, list_name) {
 	return(gr)
 }
 
-
-annotate_roi <- function(gr, sample_id, sampletable, gr_genes, gr_info, config) {
-	if (! 'Regions_of_Interest' %in% colnames(sampletable)) {
-		return(gr %>% mutate(ROI_hits = NA_character_))
-	}
+#FIXME: this could probably be replaced/refactored into annotate_impact_lists
+annotate_roi <- function(gr, roi_tb, gr_genes, gr_info, config) {
 	message('Annotating calls with ROI')
 
-	roi <- sampletable[sampletable$Sample_ID == sample_id, ]$Regions_of_Interest
-	if (is.na(roi) | is.null(roi) | roi == '') {
-		return(gr %>% mutate(ROI_hits = NA_character_))
-	}
-
     target_chrom_style <- get_target_chrom_style(config, gr)
-	roi_gr <- get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
+	roi_gr <- get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style)
 
 	gr$ROI_hits <- NA_character_
 	ov <- group_by_overlaps(gr, roi_gr)

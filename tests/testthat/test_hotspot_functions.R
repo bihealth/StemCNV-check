@@ -18,6 +18,7 @@ config <- list(
             'gene_overlap' = list(
                 'exclude_gene_type_regex' = c(),
                 'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+                'whitelist_hotspot_genes' = FALSE,
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
                 'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
             ),
@@ -146,6 +147,7 @@ test_that('parse inbuilt tables', {
                 'gene_overlap' = list(
                     'exclude_gene_type_regex' = c(),
                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+                    'whitelist_hotspot_genes' = TRUE,
                     'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv',
                     'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
                 )
@@ -163,8 +165,17 @@ test_that('parse inbuilt tables', {
     cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
     config$settings$CNV_processing$gene_overlap$cancer_gene_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
     cancer_gene_tb2 <- load_hotspot_table(config, 'cancer_gene')
+    hotspot_genes <- bind_rows(
+        stemcell_hotspot_tb,
+        cancer_gene_tb,
+        cancer_gene_tb2
+    ) %>%
+        filter(mapping == 'gene_name') %>%
+        pull(hotspot) %>%
+        unique()
     gr_info <- load_genomeInfo(ginfo_file, config)
-    gr_genes <- load_gtf_data(gtf_file, config)
+    # SLC35E2A is a transcribed_unprocessed_pseudogene from the dosage list
+    gr_genes <- load_gtf_data(gtf_file, config, include_hotspot_genes = c(hotspot_genes, 'SLC35E2A'))
     score_settings <- list(
         'pHaplo_threshold' = 0.86,
         'pTriplo_threshold' = 0.94,
@@ -196,7 +207,7 @@ test_that('parse inbuilt tables', {
     expect_no_error(parse_hotspot_table(stemcell_hotspot_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
-    
+    # Note: this requires the table to be present in cache (like the gtf & genome info files)
     dosage <- get_dosage_sensivity_tb(dosage_data_file, score_settings)
     expect_no_error(parse_hotspot_table(dosage, gr_genes, gr_info))
     expect_equal(head(dosage, 5), expected_dosage_head)
@@ -212,15 +223,63 @@ test_that('load_hotspot_table', {
         .[] %>% expect_equal(minimal_probes)
 })
 
-# get_roi_gr <- function(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
-test_that('get_roi_gr', {
+# get_roi_tb <- function(sample_id, sampletable, config)
+test_that('get_roi_tb', {
     
     sample_id <- 'testsample'
     sampletable <- tibble(
         Sample_ID = 'testsample',
         Regions_of_Interest = 'DDX11L1;important|1q21.1;edit site|1:1000-2000;mygene|dummyC'
     )
+    
+    expected <- tibble(
+        list_name = 'ROI',
+        hotspot = c('DDX11L1', '1q21.1', '1:1000-2000', 'dummyC'),
+        mapping = c('gene_name', 'gband', 'position', 'gene_name'),
+        call_type = 'any',
+        check_score = 50,
+        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description_doi = NA_character_,
+        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'), 
+        order = 1:4,
+    )
+    
+    get_roi_tb(sample_id, sampletable, config) %>%
+        expect_equal(expected)
+    
+    sampletable$Regions_of_Interest <- NA_character_
+    empty <- tibble(
+        list_name = character(),
+        hotspot = character(),
+        mapping = character(),
+        call_type = character(),
+        check_score = numeric(),
+        description = character(),
+        description_doi = character(),
+        description_htmllinks = character(),
+        order = numeric()
+    )
+    get_roi_tb(sample_id, sampletable, config) %>%
+        expect_equal(empty)
+})
+
+
+#TODO: doesn't catch everyhting
+# get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style)
+test_that('get_roi_gr', {
     target_chrom_style <- get_target_chrom_style(config, gr_genes)
+    
+    roi_tb <- tibble(
+        list_name = 'ROI',
+        hotspot = c('DDX11L1', '1q21.1', '1:1000-2000', 'dummyC'),
+        mapping = c('gene_name', 'gband', 'position', 'gene_name'),
+        call_type = 'any',
+        check_score = 50,
+        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description_doi = NA_character_,
+        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'), 
+        order = 1:4,
+    )
     
     expected <- GRanges(
         seqnames = c('chr1', 'chr1', 'chr1', 'chr1'),
@@ -239,20 +298,5 @@ test_that('get_roi_gr', {
         description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene')
     )
     
-    get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) %>%
-        expect_equal(expected)
-    
-    sampletable$Regions_of_Interest <- NA_character_
-    empty <- GRanges(
-        list_name = character(),
-        hotspot = character(),
-        mapping = character(),
-        call_type = character(),
-        check_score = numeric(),
-        description = character(),
-        description_doi = character(),
-        description_htmllinks = character()
-    )
-    get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style) %>%
-        expect_equal(empty)
+    expect_equal(get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style), expected)
 })

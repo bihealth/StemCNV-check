@@ -131,11 +131,8 @@ if (!is.na(ref_id)) {
 }
 
 target_chrom_style <- get_target_chrom_style(config, parse_cnv_vcf(params$input$cnv_vcf))
-gr_genes <- load_gtf_data(params$gtf_file, config, target_chrom_style)
-gr_info  <- load_genomeInfo(params$ginfo_file, config, target_chrom_style)
 
-roi_gr <- get_roi_gr(sample_id, sampletable, config, gr_genes, gr_info, target_chrom_style)
-
+roi_tb <- get_roi_tb(sample_id, sampletable, config)
 stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot')
 dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(
     snakemake@params$dosage_file,
@@ -143,6 +140,24 @@ dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(
 )
 cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
 snv_hotspot_tb <- load_hotspot_table(config, 'snv_hotspot')
+
+hotspot_genes <- bind_rows(
+    stemcell_hotspot_tb,
+    cancer_gene_tb,
+    dosage_sensitive_gene_tb,
+    roi_tb
+) %>%
+    filter(mapping == 'gene_name') %>%
+    pull(hotspot)
+hotspot_genes <- c(
+    hotspot_genes,
+    snv_hotspot_tb$gene_name
+) %>% unique()
+
+gr_genes <- load_gtf_data(params$gtf_file, config, target_chrom_style, include_hotspot_genes = hotspot_genes)
+gr_info  <- load_genomeInfo(params$ginfo_file, config, target_chrom_style)
+
+roi_gr <- get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style)
 
 ## general functions
 

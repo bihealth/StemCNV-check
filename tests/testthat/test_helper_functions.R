@@ -120,7 +120,8 @@ test_that("load_gtf_data", {
             'CNV_processing' = list(
                 'gene_overlap' = list(
                     'exclude_gene_type_regex' = c(),
-                    'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding')
+                    'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
+                    'whitelist_hotspot_genes' = FALSE
                 )
             ),
             'vcf_output' = list(
@@ -141,17 +142,38 @@ test_that("load_gtf_data", {
         gene_name = c("dummyA", 'DDX11L1', 'dummyB', 'dummyC', 'dummyD')
     )
 
-    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type %!in% c("unprocessed_pseudogene", 'something_else'))))
-    config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c('lncRNA', 'miRNA', 'protein_coding', 'something_else')
+    # Test default gene selection ('lncRNA', 'miRNA', 'protein_coding')
+    expect_equal(
+        load_gtf_data(gtf_file, config),
+        as_granges(expected_tb %>% filter(gene_type %!in% c("unprocessed_pseudogene", 'something_else')))
+    )
+    # Test additional gene type included, and another one excluded
+    config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c(
+        'lncRNA', 'miRNA', 'protein_coding', 'something_else'
+    )
     config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c('lncRNA')
-    expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type %!in% c('lncRNA', 'unprocessed_pseudogene'))))
+    expect_equal(
+        load_gtf_data(gtf_file, config),
+        as_granges(expected_tb %>% filter(gene_type %!in% c('lncRNA', 'unprocessed_pseudogene')))
+    )
+    # Test selection only by exclusion, no specific included types
     config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c()
-    config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c('lncRNA', 'something_else', 'unprocessed_pseudogene')
+    config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c(
+        'lncRNA', 'something_else', 'unprocessed_pseudogene'
+    )
     expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb %>% filter(gene_type == 'protein_coding')))
+    # Test no gene type filtering
     config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c()
     config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex <- c()
     expect_equal(load_gtf_data(gtf_file, config), as_granges(expected_tb))
-} )
+    # Test inclusion of specific gene_names
+    config$settings$CNV_processing$gene_overlap$whitelist_hotspot_genes <- TRUE
+    config$settings$CNV_processing$gene_overlap$include_only_these_gene_types <- c('lncRNA', 'miRNA', 'protein_coding')
+    expect_equal(
+        load_gtf_data(gtf_file, config, include_hotspot_genes = c('dummyB')),
+        as_granges(expected_tb %>% filter(gene_type %!in% c("unprocessed_pseudogene")))
+    )    
+})
 
 test_that('load_genomeInfo', {
     config <- list(

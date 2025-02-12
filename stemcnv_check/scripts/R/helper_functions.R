@@ -99,10 +99,17 @@ fix_rel_filepath <- function(path, config){
 	else stop(paste('Could not find file path:', path))
 }
 
-load_gtf_data <- function(gtf_file, config, target_style='UCSC') {
+load_gtf_data <- function(gtf_file, config, target_style='UCSC', include_hotspot_genes=c()) {
 	exclude_regexes <- config$settings$CNV_processing$gene_overlap$exclude_gene_type_regex %>%
 			paste(collapse = '|')
 	gene_type_whitelist <- config$settings$CNV_processing$gene_overlap$include_only_these_gene_types
+    
+    whitelist_hotspots <- config$settings$CNV_processing$gene_overlap$whitelist_hotspot_genes
+    if (whitelist_hotspots & length(include_hotspot_genes) == 0) {
+        warning('No hotspot genes provided, ne genes will be whitelisted!')
+    } else if (!whitelist_hotspots) {
+        include_hotspot_genes <- c()   
+    }
 
 	gr_genes  <- read_gff(
         fix_rel_filepath(gtf_file, config),
@@ -113,10 +120,10 @@ load_gtf_data <- function(gtf_file, config, target_style='UCSC') {
         fix_CHROM_format(target_style)
     
 	if (exclude_regexes != ''){
-		gr_genes <- filter(gr_genes, !str_detect(gene_type, exclude_regexes))
+		gr_genes <- filter(gr_genes, !str_detect(gene_type, exclude_regexes) | gene_name %in% include_hotspot_genes)
 	}
 	if (is.character(gene_type_whitelist) & length(gene_type_whitelist) > 0){
-		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist)
+		gr_genes <- filter(gr_genes, gene_type %in% gene_type_whitelist | gene_name %in% include_hotspot_genes)
 	}
 	gr_genes
 }

@@ -135,6 +135,7 @@ settings:
     gene_overlap:
       exclude_gene_type_regex: list__str
       include_only_these_gene_types: list__str
+      whitelist_hotspot_genes: bool
       stemcell_hotspot_list: str
       cancer_gene_list: str
 
