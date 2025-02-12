@@ -88,15 +88,20 @@ collect_summary_stats <- function(
                 by = 'Description'
             )
     }
-        
+    
+    min.ref.coverage <- config$settings$CNV_processing$call_processing$min.reciprocal.coverage.with.ref
+    sample_levels <- names(get_defined_labels(config)$sample_labels) 
     tool_stats <- unsplit_merged_CNV_callers(sample_CNV_gr) %>%
         split(.$CNV_caller) %>%
         imap(function (gr, name) {
             tb1 <- gr %>%
+                mutate(reference_overlap = ifelse(
+                    is.na(reference_coverage), FALSE, reference_coverage >= min.ref.coverage
+                )) %>%
                 annotate_call.label(config$evaluation_settings$CNV_call_labels) %>%
                 get_call_stats(config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters)
             tb2 <- tb1 %>%
-                 mutate(across(2:(ncol(tb1)-1), ~apply_greq_th(., cur_column(), config)))
+                 mutate(across(2:(ncol(tb1)-1), ~apply_measure_th(., cur_column(), sample_levels, config)))
             
             out <- full_join(
                 tb1 %>%

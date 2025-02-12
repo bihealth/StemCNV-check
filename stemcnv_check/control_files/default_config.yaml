@@ -65,7 +65,7 @@ evaluation_settings:
       not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
       reference_match: FALSE
     Reference genotype:
-      minimum_check_score: 0
+      minimum_check_score: ~
       not_allowed_vcf_filters: []
       reference_match: TRUE
     Excluded call:

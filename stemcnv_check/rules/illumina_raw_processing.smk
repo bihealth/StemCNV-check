@@ -119,5 +119,7 @@ rule run_gtc2vcf_vcf:
         '--bpm "{input.bpm}" {params.csv} --egt "{input.egt}" '
         '--fasta-ref "{input.genome}" --extra {output.stats} '
         '{input.gtc} 2> {log.vcf} | '
+        # ensure that the expected sample_id is used
+        'bcftools reheader -s <(echo -e "{wildcards.sample_id}\n") 2>> {log.sort} | '
         'bcftools sort 2> {log.sort} | '
         'bcftools norm -m- --multi-overlaps . -o {output.vcf} 2> {log.norm}'

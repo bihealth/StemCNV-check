@@ -4,7 +4,7 @@ suppressMessages(library(yaml))
 # Helper function, could be defined elsewhere?
 get_defined_labels <- function(config) {
     label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
-    return(yaml.load(label_def_file))
+    return(yaml.load_file(label_def_file))
 }
 
 sample_GT_distances <- function(sample_SNP_gr, ref_SNP_gr, extra_snp_files, ref_SNP_vcf_file, target_chrom_style, use_filter=TRUE) {
@@ -133,7 +133,7 @@ get_SNV_table <- function(
                 !is.na(critical_reason)             ~ 'critical',
                 TRUE                                ~ 'protein changing'
             ) %>%
-                 factor(levels = get_defined_labels(config)$SNV_lables),
+                 factor(levels = get_defined_labels(config)$SNV_labels),
 
             
         ) %>%

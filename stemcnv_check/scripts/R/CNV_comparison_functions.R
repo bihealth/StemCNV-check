@@ -149,6 +149,7 @@ annotate_reference_overlap <- function(gr_in, gr_ref, min.reciprocal.coverage.wi
 			summarise(
                 across(ends_with('.x'), ~ unique(.)),
 				reference_overlap = TRUE,
+                # there might be more than one reference call overlapping the sample
 				reference_coverage = sum(reference_coverage),
 				reference_caller = paste(unique(unlist(reference_caller)), collapse = ';'),
 			) %>%

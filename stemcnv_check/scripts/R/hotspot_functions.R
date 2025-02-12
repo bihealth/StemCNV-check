@@ -119,7 +119,7 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info, target_chrom_style=NA) {
 		#message('parsed gene names')
         unmatched_genes <- setdiff(sub_tb_name$hotspot, gr_name$hotspot)
         if (length(unmatched_genes) > 0) {
-            message('The following gene names could not be identified in the gtf file (they are likely alternave names):', paste(unmatched_genes, collapse = ', '))
+            message('The following gene names could not be identified in the gtf file (they are likely alternative names): ', paste(unmatched_genes, collapse = ', '))
         }
         
 	} else {

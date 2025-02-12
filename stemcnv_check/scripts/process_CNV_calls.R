@@ -144,7 +144,7 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
 
     header <- c(
         fix_header_lines(vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
-        static_cnv_vcf_header(processing_config, extra_annotation = TRUE),
+        static_cnv_vcf_header(processing_config, extra_annotation = TRUE, fullconfig = config),
         '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
         #FIXME (future): maybe also keep the PennCNV & CBS lines? (doesn't seem to be 100% standard though)
         str_glue(

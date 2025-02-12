@@ -22,7 +22,6 @@ parse_snp_vcf <- function(vcf,
     # AND are (fully) open [= start & end are included]
     vcf <- vcf %>%
         vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
-        mutate(sample_id = str_remove(sample_id, '\\.gencall')) %>%
         as_granges(seqnames = CHROM, start = POS, width = 1)
     if (apply_filter) {
         vcf <- vcf %>% filter(FILTER == 'PASS')

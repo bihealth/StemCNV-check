@@ -5,7 +5,7 @@ library(knitr)
 # Helper function, could be defined elsewhere?
 get_defined_labels <- function(config) {
     label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
-    return(yaml.load(label_def_file))
+    return(yaml.load_file(label_def_file))
 }
 
 vector_to_js <- function(v) {

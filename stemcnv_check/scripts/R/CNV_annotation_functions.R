@@ -230,12 +230,19 @@ annotate_call.label <- function(gr.or.tb, call_cat_config) {
     
     # local function that can refer to call_cat_config
     assign_single_call_label <- function(reference_overlap, check_score, FILTER) {
+        # Split single string into list of filters
         filters <- str_split(FILTER, ';') %>% unlist()
-        
+
         for (cat in names(call_cat_config)) {
+            # Allow minimum_check_score to be unset (NULL), in which case it is set to -inf
+            min_check_score <- ifelse(
+                is.null(call_cat_config[[cat]]$minimum_check_score),
+                -Inf,
+                call_cat_config[[cat]]$minimum_check_score
+            )
             # check if the call matches the category
             if (
-                check_score >= call_cat_config[[cat]]$minimum_check_score & 
+                check_score >= min_check_score & 
                 !any(filters %in% call_cat_config[[cat]]$not_allowed_vcf_filters) & 
                 reference_overlap == call_cat_config[[cat]]$reference_match
             ) {
@@ -243,8 +250,8 @@ annotate_call.label <- function(gr.or.tb, call_cat_config) {
             }
         }
         message(
-            'No category found for call with reference_coverage: ', ref_cov, 'Check_Score = ', check_score, 
-            ' and FILTERs: ', FILTER, '. Falling back to last defined category:', cat
+            'No category found for call with reference_coverage: ', reference_overlap, ', Check_Score = ', check_score, 
+            ', and FILTERs: ', FILTER, '. Falling back to last defined category: ', cat
         )
         return(cat)
     }
