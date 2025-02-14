@@ -381,16 +381,18 @@ settings:
       - 'critical-annotation'
       # - 'any-protein-changing'
     # SNV annotations considered 'Critical', summarised as "critical-annotation"
-    # these are derived from mehari, or more specifically the terms defined by http://www.sequenceontology.org 
+    # these are derived from mehari, annotations are specifically derived from the terms defined by http://www.sequenceontology.org 
     critical_annotations:
-      - stop_gained
-      - start_lost
-      # - stop_lost
-      - frameshift_variant
-      - splice_acceptor_variant
-      - splice_donor_variant   
+      Impact: ['HIGH']
+      Annotation: []
+      # The 'HIGH' impact category generally contains these annotations:      
+      #   - stop_gained
+      #   - start_lost
+      #   - stop_lost
+      #   - frameshift_variant
+      #   - splice_acceptor_variant
+      #   - splice_donor_variant   
     # Only variants matching one of the following criteria are part of outout in the SNV_analysis table & report
-    # The 'HIGH' impact category contains all annotations listed by default under critical_annotations
     # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODEARTE' impact category
     variant_selection:
       Impact: [HIGH]

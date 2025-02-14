@@ -649,7 +649,7 @@ snc_qc_tb <- params$inputs$snv_analysis %>%
 ```
 
 ```{r SNV.table, eval = include.section('SNV.table'), results='asis'}
-cat('## Table of SNVs\n\n')
+cat('## Table of de-novo SNVs\n\n')
 
 paste(
     'This table lists all SNVs/SNPs detected by the Chip Array which are different from the reference genome and',
@@ -662,13 +662,16 @@ paste(
     'This information is displayed by the color highlights of these columns:\n\n',
     ' - "ROI Hits", displaying overlap with sample specific annotation\n\n',
     ' - "Gene Name", hits in genes thta have known hotspots for stem cells, see also the next "SNV hotspot coverage" tab\n\n',
-    ' - "Annotation", specific effect of the SNP on the gene based on mehari\n\n',
+    ' - "Annotation" and "Impact", specific effect of the SNP on the gene based on mehari\n\n',
     ' - "HGVS.p", specific mutation in the proteion, which may overlap with a known stemcell hotspot (see also next tab)\n\n'
 ) %>% collapsible_html_text('SNV table explanations')
 
 snv_annotation_tb <- tibble(
     list_name = 'critical_annotations',
-    hotspot = config$settings$SNV_analysis$critical_annotations,
+    hotspot = c(
+        config$settings$SNV_analysis$critical_annotations$Impact,
+        config$settings$SNV_analysis$critical_annotations$Annotation
+    ),
     description = NA_character_,
     call_type = 'any',
     check_score = NA_real_
@@ -680,11 +683,31 @@ gene_snv_hotspots <- snv_hotspot_tb %>%
 mutation_snv_hotspots <- snv_hotspot_tb %>%
     mutate(hotspot = HGVS.p)
 
+if (is.na(ref_id)) {
+    cat(
+        'No reference sample is defined therefore all SNVs are labelled included in the "de-novo" table. ',
+        'Howeever, the vast majority of SNVs is likely derived from the originating sample/germline.\n\n'
+    )
+}
+
 SNV_table_output(
-    SNV_table, 
+    SNV_table %>% filter(SNV_label != 'reference genotype'), 
     roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
     config, report_config, params$out_format #, caption
 )
+
+ref_snv <- SNV_table %>% filter(SNV_label == 'reference genotype')
+
+if (nrow(ref_snv) > 0) {
+    cat('## Table of reference SNVs\n\n')
+    
+    SNV_table_output(
+        ref_snv, 
+        roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
+        config, report_config, params$out_format #, caption
+    )
+}
+
     
 cat('\n\n')
 

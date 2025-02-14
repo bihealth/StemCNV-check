@@ -214,12 +214,22 @@ format_hotspots_to_badge <- function(
                     str_glue('>{hotspot}</span>')
                 ),
                 hotspot
-            )
+            ),
         ) %>%
         group_by(id) %>%
+        mutate(
+            sep = case_when(
+                # No sep at the end
+                row_number() == dplyr::n() ~ "",
+                # No sep after badge
+                str_detect(out_str, '^<') ~ "",
+                # TODO: no sep _before_ badge?
+                str_detect(out_str[row_number()+1], '^<') ~ "",
+                TRUE ~ "; "
+            )
+        ) %>%
         summarise(
-            sep = ifelse(all(str_detect(out_str, '^<')), "", ', '),
-            hotspot = base::paste(out_str, collapse='')
+            hotspot = base::paste0(out_str, sep) %>% base::paste(collapse = '')
         ) %>%
         mutate(hotspot = ifelse(hotspot %in% c('', 'NA'), '-', hotspot))
 
@@ -542,6 +552,7 @@ SNV_table_output <- function (
             'Regions of interest overlapping with this SNV/SNP',
             'Gene name affected by the SNV/SNP',
             'Effect/Annotation of the SNV/SNP on the gene (from mehari)',
+            'Impact annotation of the SNV/SNP on the gene (from mehari)',
             'Ensembl ID of the selected transcript for the affected gene',
             'Description of the selected transcript.\\nNote: ManeSelect designates the (medically) primary transcript of a gene.',
             'HGVS.c notation of the mutation/effect of the SNV/SNP on the transcript',
@@ -586,6 +597,15 @@ SNV_table_output <- function (
                     ),
                     Annotation
                 ) %>%
+                    str_replace_all('\\|', ', '),
+                Impact = ifelse(
+                    critical_reason == 'critical-annotation' & !is.na(critical_reason),
+                    map_chr(
+                        str_replace_all(Impact, '&', '|'), 
+                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical-annotation'))
+                    ),
+                    Impact
+                ) %>%
                     str_replace_all('\\|', ', ')
             ) %>%
             select(
@@ -593,9 +613,10 @@ SNV_table_output <- function (
                 Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
                 # 6-9
                 REF, ALT, GT, ref_GT,
-                # 10-16
-                ROI_hits, gene_name, Annotation, Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
-                # 17-19
+                # 10-17
+                ROI_hits, gene_name, Impact, Annotation,  
+                Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
+                # 18-20
                 GenTrain_Score, GenCall_Score, ref_GenCall_Score
             ) %>%
             rename_with(format_column_names) %>%
@@ -614,7 +635,7 @@ SNV_table_output <- function (
                     # fixedColumns = TRUE,
                     columnDefs = list(
                         #This uses 0-indexing vs the usual R 1-indexing
-                        list(targets = c(0:1,3,5:7,13:15,17,19), visible = FALSE)
+                        list(targets = c(0:1,3,5:7,14:16,18,20), visible = FALSE)
                         # list(targets = c(12), width = '300px'),
                         # list(targets = c(15,16), width = '200px')
                     )
@@ -633,7 +654,7 @@ SNV_table_output <- function (
         tb <- tb %>%
             select(
                 SNV, SNV_label, critical_reason, GT, ref_GT,
-                ROI_hits, gene_name, Annotation, HGVS.p,
+                ROI_hits, gene_name, Impact, Annotation, HGVS.p,
                 GenCall_Score
             ) %>%
             rename_with(format_column_names)

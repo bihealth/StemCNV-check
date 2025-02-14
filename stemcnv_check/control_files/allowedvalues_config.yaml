@@ -187,7 +187,9 @@ settings:
     snv_hotspot_table: str # Path|File|exists
     flag_GenCall_minimum: float_ge0_le1
     critical_SNV: list__str__labels:SNV_critical_labels
-    critical_annotations: list__str #technically mehari/ontology derived
+    critical_annotations:
+      Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
+      Annotation: list__str #technically mehari/ontology derived, but used as regex anyway
     variant_selection:
       Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
       Annotation_regex: str

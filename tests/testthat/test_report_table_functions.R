@@ -34,8 +34,8 @@ config <- list(
 # format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, color = 'red')
 test_that("format_hotspots_to_badge", {
     testthat::local_edition(3)
-    hotspot_vec <- c("", "1q21", "1q21", "dummyC", "1p36|DDX11L1", "1p36|DDX11L1")
-    CNVtype_vec <- c("gain", "gain", "LOH", "gain", "loss", "gain")
+    hotspot_vec <- c("", "1q21", "1q21", "dummyC", "1p36|DDX11L1", "1p36|DDX11L1", 'A|B|C')
+    CNVtype_vec <- c("gain", "gain", "LOH", "gain", "loss", "gain", 'gain')
     # 1 - empty
     # 2 - gband hit, matching CNV (gain)
     # 3 - gband hit, not matching CNV (Note: this case should never occur; warning needed?)
@@ -56,7 +56,8 @@ test_that("format_hotspots_to_badge", {
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;',
             'Sources: dummy">DDX11L1</span>'
         ),
-        '1p36<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>'
+        '1p36<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>',
+        'A; B; C'
     )
     expect_equal(
         format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'red'),
@@ -70,7 +71,8 @@ test_that("format_hotspots_to_badge", {
         '1q21', 
         '<span class="badge badge-orange">dummyC</span>', 
         '<span class="badge badge-orange">1p36</span><span class="badge badge-orange">DDX11L1</span>', 
-        '1p36<span class="badge badge-orange">DDX11L1</span>'
+        '1p36<span class="badge badge-orange">DDX11L1</span>',
+        'A; B; C'
     )
     expect_equal(
         format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'orange', FALSE),

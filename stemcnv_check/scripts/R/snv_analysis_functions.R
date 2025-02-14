@@ -99,9 +99,10 @@ get_SNV_table <- function(
                 str_detect(Annotation, subconfig$variant_selection$Annotation_regex)) %>%
         select(
             seqnames, start, REF, ALT, ID, FILTER, GT, GenTrain_Score, GenCall_Score, 
-            Annotation, gene_name, Transcript_ID, Transcript_BioType, 
+            Annotation, Annotation_Impact, gene_name, Transcript_ID, Transcript_BioType, 
             HGVS.c, HGVS.p, ROI_hits
         ) %>%
+        dplyr::rename(Impact = Annotation_Impact) %>%
         # Collapse information from probes with non-unique positions
         # could also do a majroity vote here, but highest score should be enough
         group_by(pick(1:4)) %>%
@@ -118,7 +119,8 @@ get_SNV_table <- function(
                 !is.na(ROI_hits) & 'ROI-match' %in% subconfig$critical_SNV ~ 'ROI-match',
                 paste0(gene_name, '::', HGVS.p) %in% SNV_hotspot_table$hotspot & 'hotspot-match' %in% subconfig$critical_SNV      ~ 'hotspot-match',
                 gene_name %in% SNV_hotspot_table$gene_name & 'hotspot-gene' %in% subconfig$critical_SNV ~ 'hotspot-gene',
-                str_detect(Annotation, critical_annotation_regex) & 'critical-annotation' %in% subconfig$critical_SNV ~ 'critical-annotation',
+                (str_detect(Annotation, critical_annotation_regex) | Impact %in% subconfig$critical_annotations$Impact) &
+                    'critical-annotation' %in% subconfig$critical_SNV ~ 'critical-annotation',
                 'any-protein-changing' %in% subconfig$critical_SNV ~ 'any-protein-changing',
                 TRUE ~ NA_character_
             ) %>%
