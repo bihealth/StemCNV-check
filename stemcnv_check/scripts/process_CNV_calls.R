@@ -27,7 +27,7 @@ sample_sex <- get_sample_info(sample_id, 'sex', config, sampletable)
 
 # Load data & set CHROM Style
 processing_config <- config$settings$CNV_processing$call_processing
-
+defined_labels <- get_defined_labels(config)
 
 ## <- function() {
 
@@ -43,7 +43,7 @@ gr <- load_cnv_callers(snakemake@input$cnv_calls) %>%
     fix_CHROM_format(target_chrom_style)
 
 # Tool overlapping
-combined_tools_sample <- combine_CNV_callers(gr, processing_config, snp_vcf_gr) 
+combined_tools_sample <- combine_CNV_callers(gr, processing_config, snp_vcf_gr, defined_labels) 
 ## }
 
 ## <- function() {
@@ -148,9 +148,9 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
             FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
         )
     
-    filtersettings <- processing_config$`filter-settings`
+    filtersettings <- processing_config$`probe_filter_settings`
     if (filtersettings == '_default_') {
-        filtersettings <- config$settings$`default-filter-settings`
+        filtersettings <- config$settings$default_probe_filter_set
     }    
 
     header <- c(

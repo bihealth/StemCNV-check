@@ -90,8 +90,8 @@ run_snp_analysis <- function(
             GT = ifelse(is.na(GT), './.', GT)
         )
     
-    # use filter here, yes or no?
-    SNV_table <- get_SNV_table(sample_SNV_tb, ref_SNP_gr, SNV_hotspot_table, config)
+    defined_labels <- get_defined_labels(config)
+    SNV_table <- get_SNV_table(sample_SNV_tb, ref_SNP_gr, SNV_hotspot_table, config, defined_labels)
     
     # Calculate sample distance matrix
     SNP_GT_distances <- sample_GT_distances(
@@ -100,7 +100,7 @@ run_snp_analysis <- function(
         extra_snp_files,
         ref_SNP_vcf_file,
         target_chrom_style,
-        use_filter = config$settings$SNV_analysis$`filter-settings` != 'none'
+        use_filter = config$settings$SNV_analysis$`probe_filter_settings` != 'none'
     )
     
     # Collect output tables for xlsx file
@@ -110,7 +110,7 @@ run_snp_analysis <- function(
         'SNP_GT_distances' = SNP_GT_distances,
         'SNP_QC_details' = get_SNV_QC_table(
             sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, 
-            use_filter = config$settings$SNV_analysis$`filter-settings` != 'none'
+            use_filter = config$settings$SNV_analysis$`probe_filter_settings` != 'none'
         )
     ))
     

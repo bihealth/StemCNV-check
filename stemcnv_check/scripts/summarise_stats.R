@@ -99,7 +99,7 @@ collect_summary_stats <- function(
                     is.na(reference_coverage), FALSE, reference_coverage >= min.ref.coverage
                 )) %>%
                 annotate_call.label(config$evaluation_settings$CNV_call_labels) %>%
-                get_call_stats(config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters)
+                get_call_stats(config$evaluation_settings$summary_stat_warning_levels$call_count_excl_labels)
             tb2 <- tb1 %>%
                  mutate(across(2:(ncol(tb1)-1), ~apply_measure_th(., cur_column(), sample_levels, config)))
             

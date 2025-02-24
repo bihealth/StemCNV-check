@@ -1,6 +1,7 @@
 import importlib.resources
 import os
 from pathlib import Path
+import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import config_extract, get_global_file, get_array_file
 from stemcnv_check.exceptions import SampleConstraintError
@@ -33,18 +34,18 @@ def get_tool_filter_settings(tool):
     if tool.split(":")[0] == "report":
         report_settings = config["reports"][tool.split(":")[1]]
         out = config_extract(
-            (tool.split(":")[2], "filter-settings"),
+            (tool.split(":")[2], "probe_filter_settings"),
             report_settings,
             config["reports"]["_default_"],
         )
     elif tool.count(":") == 2 and tool.split(":")[1] == "CNV_processing":
-        out = config["settings"]["CNV_processing"]["call_processing"]["filter-settings"]
+        out = config["settings"]["CNV_processing"]["call_processing"]["probe_filter_settings"]
     else:
-        out = config["settings"][tool]["filter-settings"]
+        out = config["settings"][tool]["probe_filter_settings"]
         if tool == 'SNV_analysis':
             out = out if out != "none" else '_default_'
     if out == "_default_":
-        out = config["settings"]["default-filter-set"]
+        out = config["settings"]["default_probe_filter_set"]
     return out
 
 
@@ -130,3 +131,14 @@ def get_ref_input_function(input_file_type):
         else:
             return []
     return input_function
+
+def fix_call_label_order(call_labels):
+    """Fix the order of the call labels, so that defaults from label_name_definitions.yaml file come last"""
+    yaml = ruamel_yaml.YAML(typ='safe')
+    with open(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files','label_name_definitions.yaml')) as f:
+        defined_call_labels = yaml.load(f)['CNV_labels']
+
+    labels_ordered = {k: v for k, v in call_labels.items() if k not in defined_call_labels}
+    labels_ordered.update(call_labels)
+
+    return labels_ordered

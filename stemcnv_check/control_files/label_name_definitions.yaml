@@ -1,23 +1,31 @@
-# Specification of labels (and their report colors) assigned to sample level QC
-# names used
-#TBD: colors in report
+# Specification of labels (and their report colors) assigned to sample level QC measures
 sample_labels:
     OK: green
     unusual: yellow
     warning: orange
     high concern: red
 
+# Default labels for CNVs (more can be added by users)
+CNV_labels:
+    # This is used to count critical CNVs & LOHs
+    - Critical de-novo
+    # This is used to count reportable CNVs & LOHs
+    - Reportable de-novo
+    - de-novo call
+    - Reference genotype
+    - Excluded call
 
 # possible labels for SNVs
-# Note: the corresponding CNV labels are (user) configurable, ergo not defined here
 SNV_labels:
     - critical
     - unreliable critical
     - protein changing
     - reference genotype
 
-## These lists are primarily used by the check_config functions
+# Label for CNVs merged from multiple callers
+combined_cnvs: 'combined-call'
 
+## The following lists are primarily used by the check_config functions
 # Possible/Defined FILTERs applied to CNV calls (vcf style)
 # FIXME: create vcf headers from this list?
 vcf_filters:
@@ -39,7 +47,6 @@ SNV_critical_labels:
 sample_qc_measures:
     - call_rate
     - SNP_pairwise_distance_to_reference
-    - critical_snvs
     - loss_gain_log2ratio
     - total_calls_CNV
     - total_calls_LOH
@@ -47,6 +54,7 @@ sample_qc_measures:
     - reportable_calls_LOH
     - critical_calls_CNV
     - critical_calls_LOH
+    - critical_snvs
   
 # Possible/Defined report sections
 report_sections:

@@ -7,8 +7,10 @@ load_cnv_callers <- function(input_vcf_files) {
 }
 
 
-combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
+combine_CNV_callers <- function(gr, processing_config, snp_vcf, defined_labels) {
 	message('Combining calls from multiple callers')
+    
+    combined_call_name <- defined_labels$combined_cnvs
 
 	ov_test <- gr %>%
 		group_by(sample_id, CNV_type) %>%
@@ -25,7 +27,8 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                 n_initial_calls = plyranges::n(),
             ) %>%
 			as_tibble() %>%
-			mutate(group.ID = paste('StemCNV-check', CNV_type, seqnames, start, end, sep='_')) %>%
+            # combined-call
+			mutate(group.ID = paste(combined_call_name, CNV_type, seqnames, start, end, sep='_')) %>%
 			dplyr::select(-strand) %>%
 			rename_with(~paste0('group.', .), 1:4) %>%
 			unnest(ID) %>%
@@ -76,7 +79,7 @@ combine_CNV_callers <- function(gr, processing_config, snp_vcf) {
                     ), 
                     collapse = '|'
                 ),
-                CNV_caller = 'StemCNV-check',
+                CNV_caller = combined_call_name,
                 CN = median(CN),
 			) %>%
             rename_with(~str_remove(., '^group\\.')) %>%

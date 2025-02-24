@@ -11,7 +11,7 @@ logger.info(f"Reading in '{snakemake.input[0]}' and will write to '{snakemake.ou
 def get_filter_settings(filtersetname, config, sample_sex):
 
     filterset = vcfpy.OrderedDict()
-    config_filterset = config['settings']['probe-filter-sets'].get(filtersetname)
+    config_filterset = config['settings']['probe_filter_sets'].get(filtersetname)
     if not config_filterset:
         raise ValueError(f"Filter set {filtersetname} not found in config file.")
 

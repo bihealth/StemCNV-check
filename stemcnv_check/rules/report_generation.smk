@@ -37,7 +37,7 @@ def get_extra_snp_input_files(wildcards):
 rule make_summary_table:
     input:
         gencall_stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt"), 
-        cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
+        cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.combined-annotated.vcf.gz"),
         penncnv_logs = get_penncnv_log_input,
         snv_analysis = os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
         summary_excel_ref = get_ref_input_function('summary-stats.xlsx'),
@@ -107,13 +107,13 @@ def get_config_delta(wildcards, compare_on=('evaluation_settings', 'settings', '
 rule knit_report:
     input:
         snp_vcf = snp_vcf_input_function("settings:CNV_processing:call_processing"),
-        cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
+        cnv_vcf = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.combined-annotated.vcf.gz"),
         summary_xlsx = os.path.join(DATAPATH, "{sample_id}", "{sample_id}.summary-stats.xlsx"),
         snv_analysis = os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
         ref_snp_vcf = get_ref_input_function(
             f"annotated-SNP-data.{get_tool_filter_settings('settings:CNV_processing:call_processing')}-filter.vcf.gz"
             ),
-        ref_cnv_vcf = get_ref_input_function('combined-cnv-calls.vcf.gz'),
+        ref_cnv_vcf = get_ref_input_function('CNV_calls.combined-annotated.vcf.gz'),
     output:
         report=os.path.join(DATAPATH, "{sample_id}", "{sample_id}.{report}.{ext}"),
         plots=directory(os.path.join(DATAPATH, "{sample_id}", "{report}-{ext}_images"))

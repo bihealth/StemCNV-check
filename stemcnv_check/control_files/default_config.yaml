@@ -49,7 +49,8 @@ log_path: logs      #REQUIRED
 evaluation_settings:
   # All CNV calls are given a label based on their check score, filters and reference match.
   # The labels described here are always available, but can be changed or new labels can be added
-  # If not other category fits (which should not occur with default settings), the last defined label will always be assigned
+  # If not other category fits (which should not occur with default settings), 
+  #  then the last defined "Exclude call" label will always be assigned
   # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters}
   CNV_call_labels:
     Critical de-novo:
@@ -65,11 +66,11 @@ evaluation_settings:
       not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
       reference_match: FALSE
     Reference genotype:
-      minimum_check_score: ~
+      minimum_check_score: 0
       not_allowed_vcf_filters: []
       reference_match: TRUE
     Excluded call:
-      minimum_check_score: ~
+      minimum_check_score: 0
       not_allowed_vcf_filters: []
       reference_match: FALSE
   
@@ -85,7 +86,6 @@ evaluation_settings:
     # Note that the expected baseline difference strongly depends on the array platform
     # and may need to be adjusted. These values are based on the GSA array (~700k probes)
     SNP_pairwise_distance_to_reference: [500, 5000]
-    critical_snvs: [1, 1]
     loss_gain_log2ratio: [2, 4]
     total_calls_CNV: [10, 50]
     total_calls_LOH: [30, 75]
@@ -93,8 +93,11 @@ evaluation_settings:
     reportable_calls_LOH: [5, 10]
     critical_calls_CNV: [1, 1]
     critical_calls_LOH: [1, 1]
-    # Only CNVs/LOHs without any of these post calling filters are counted for QC measures
-    call_count_excl_filters: ['min_size', 'min_probes', 'min_density'] # Fully ignore calls with any of these filters 
+    critical_snvs: [1, 1]
+    # CNVs/LOHs gievn one these labels are not counted for QC measures
+    # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+    # Default labels: {CNV_labels}
+    call_count_excl_labels: ['Excluded call'] # Fully ignore calls with any of these labels 
     # These measures use last QC category and are also bolded in the html summary table
     use_last_level:
       - call_rate
@@ -110,19 +113,15 @@ evaluation_settings:
     # These columns from the sampletable will be included in the collated summary overview table
     summary_extra_sampletable_cols: 
       - Reference_Sample
-    # Different filter criteria for the collated table of all CNV calls 
-    call_table_filters:
-      # Only include CNV calls with one of these Call_labels
-      # Allowed values: CNV call categories defined in 'CNV_call_labels'
-      include_call_label: []
-      # Exclude calls with one of these filter flags
-      # Allowed values: {vcf_filters}
-      exclude_filter_flags:
-        - min_probes
-        - min_size
-        - min_density
-      # Only include calls with a minimum Check_Score
-      min_check_score: 0  
+    # Selection of CNVs for the summary table based on call labels
+    cnv_collate_call_selection:
+      # If defined, only CNVs with one of the "whitelist" call labels will be included
+      # If defined, no CNVs with one of the "blacklist" call labels will be included
+      # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+      # Default labels: {CNV_labels}
+      whitelist_call_label: []
+      blacklist_call_label:
+          - Excluded call
 
 
 global_settings:
@@ -159,7 +158,7 @@ settings:
     - PennCNV
     - CBS
 ##!advanced
-  probe-filter-sets:
+  probe_filter_sets:
     # Each section here defines a set of SNP probe filters
     # each set can be applied to individual or all steps of the pipeline, but using only one set is recommended
     # SNP probes filters are applied as (soft) filters to the SNP vcf file.
@@ -175,7 +174,7 @@ settings:
     # csv is omitted, which causes Indel-probes to be improperly defined.
     #
     # We recommend to use these filter settings:
-    recommended:
+    standard:
       GenTrainScore: 0.2
       GenCallScore:  0.2 # Anything above this should be a stable genotype call according to Illumina
       Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
@@ -188,11 +187,11 @@ settings:
       Pseudoautosomal: remove-male # keep|remove|remove-male  
 
   # Default filter set to use for all tools
-  default-filter-set: recommended
+  default_probe_filter_set: standard
 
   PennCNV:
-    # Specific probe filter set for PennCNV, '_default_' uses `default-filter-set
-    filter-settings: '_default_'
+    # Specific probe filter set for PennCNV, '_default_' uses `default_probe_filter_set
+    probe_filter_settings: '_default_'
     enable_LOH_calls: True
     # Neighbouring CNVs of the same state that are merged if
     # a) the gap between them is <= 'merge.gap.absolute' [bp] or <= 'merge.gap.snps' [SNPs] or if 
@@ -210,8 +209,8 @@ settings:
     filter.mindensity.Mb: 10 #snps per Mb
 
   CBS:
-    # Specific probe filter set for CBS, '_default_' uses `default-filter-set
-    filter-settings: '_default_'
+    # Specific probe filter set for CBS, '_default_' uses `default_probe_filter_set
+    probe_filter_settings: '_default_'
     # undo.SD split value for CBS
     undo.SD.val: 1
     # Neighbouring CNVs of the same state that are merged if
@@ -251,8 +250,8 @@ settings:
   CNV_processing:
     call_processing:
       # SNP probe counts may change with merging of calls from different tools
-      # therefore a single filter-settings needs to be used as reference here
-      filter-settings: '_default_'
+      # therefore a single probe_filter_settings needs to be used as reference here
+      probe_filter_settings: '_default_'
       # Prefiltering of calls is done (after merging of nearby calls) as follows:
       # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
       filter.minprobes: 5
@@ -369,7 +368,7 @@ settings:
         HighSNPDensity: -0.1
   
   SNV_analysis:
-    filter-settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even use chrY on female samples
+    probe_filter_settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even include chrY on female samples
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
     flag_GenCall_minimum: 0.2
     # List of SNV categories that are considered critical.
@@ -449,42 +448,32 @@ reports:
     # Default is special '__all__' for include, but a list of specific sections can also be used
     include_sections: '__all__'
     exclude_sections: []
-    #Availbale sections (Note that tool specific ones also depend on pipeline settings)
-    #  - sample.information
-    #  - QC.summary
-    #  - QC.GenCall
-    #  - QC.PennCNV
-    #  - QC.CBS
-    #  - QC.settings
-    #  - SNV.table
-    #  - SNV.hotspot.coverage
-    #  - SNV.QC.details
-    #  - denovo_calls.table
-    #  - denovo_calls.plots
-    #  - reference_gt_calls.table
-    #  - reference_gt_calls.plots
-    #  - regions.of.interest
-    #  - SNP.dendrogram
-    #  - genome.overview
+    # Availbale sections (Note that tool specific ones also depend on pipeline settings):
+    # {report_sections}
 
-    # List of columns from the sample_table that should be included in the "Sample Information section"
+    # (Additional) List of columns from the sample_table that are included in the "Sample Information" table
     sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
+    
+    # CNV calls can, based on the assigned call label, be:
+    # - fully removed from the report, incl all tables and plots (this option)
+    # - selected for the de-novo & reference genotype CNV tables (following section)
+    # - selected for the genome_overview plots (last section)
+    # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+    # Default labels: {CNV_labels}
+    # Call labels for the 'de-novo CNV calls' table
+    CNV_call_labels_removed: 
+      - 'Excluded call'
       
     call.data.and.plots:
-      #Specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
+      # Default and specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
+      # The specific sections inherit from the default, but can overwrite all or individual values
       _default_: &default_plot_settings
-        # Calls with any of these filters are excluded from the table of CNV calls
-        # Note: if they overlap any other plot area, they are still included there!
-        exclude_filter: 
-          - min_probes
-          - min_size
-          - min_density
-            # high_probe_dens, probe_gap, (min_size, min_probes, min_density)  
-        # How many plots to show at least
+        # How many plots to fully incorporate into the report at minimum
+        # Note: Plots are still generated for all CNV calls, but any exceeding this number will only be saved
+        # separate from the html report and linked from there. Increasing this number increases the report file size.
         min_number_plots: 20
-        always_include: #[]
-          - 'Critical de-novo'
-          - 'Reportable de-novo'
+        # Calls with one of these call lables will be included regardless of the minimum number
+        always_include_CNVs: []
         # Include plots, table of individual calls and table of genes
         include.plot: True
         include.hotspot.table: True
@@ -495,24 +484,45 @@ reports:
         plot.region.minsize: 2000000
       denovo:
         <<: *default_plot_settings
+        # Call labels for the 'de-novo CNV calls' table
+        call_labels_include:
+          - 'Critical de-novo'
+          - 'Reportable de-novo'
+          - 'de-novo call'
+        always_include_CNVs:
+          - 'Critical de-novo'
+          - 'Reportable de-novo' 
       reference_gt:
         <<: *default_plot_settings
+        # Call labels for the 'Reference genotype CNV calls' table
+        call_labels_include:
+          - Reference genotype
       regions_of_interest:
         <<: *default_plot_settings
+        plot.region.minsize: 100000
 
+    # Report settings for the SNV analysis block
     SNV_analysis:
+      # Which critical SNV reasons should use red (instead of orange) highlights  
       critical_reasons_with_red_highlight:
         - 'ROI-match'
         - 'hotspot-match'
 
+    # Settings for the Sample comparison / SNP dendrogram sections
     SNP_comparison:
-      # You can also use additional metadata columns from the sample table, i.e. "Sample_Group"
+      # Selection of sample table columns, to determine shape and color of the samples in the dendrogram.
+      # Note: You can also use any column from the sample table, incl optional ones you added yourself
       dendrogram.color.by: 'Chip_Name'
-      dendrogram.shape.by: 'Chip_Name'
+      dendrogram.shape.by: 'Sample_Group'
       
     genome_overview:
-        # Calls with any of these Filters are excluded from the overview plots
-        call.exclude_filter: ['min_size', 'min_probes', 'min_density']
+        # Call labels for the overview plots
+        call_labels_overview:
+          - 'Critical de-novo'
+          - 'Reportable de-novo'
+          - 'de-novo call'
+          - 'Reference genotype'
+        # Include the reference sample in the genome overview plots
         show_reference: True
 
 ##!complete

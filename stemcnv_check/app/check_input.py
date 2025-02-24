@@ -219,7 +219,7 @@ def check_config(args, minimal_entries_only=False):
 
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('label_name_definitions.yaml').open() as f:
         defined_label_names = yaml.load(f)
-    defined_filtersets = set(config_extract(['settings', 'probe-filter-sets'], config, default_config).keys())
+    defined_filtersets = set(config_extract(['settings', 'probe_filter_sets'], config, default_config).keys())
     defined_CNV_categories = set(
         config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
     )
@@ -268,7 +268,7 @@ def check_config(args, minimal_entries_only=False):
         flatkey_ = re.sub('reports:[^:]+', 'reports:__report', flatkey_)
         flatkey_ = re.sub('tools:[^:]+', 'tools:__tool', flatkey_)
         flatkey_ = re.sub('evaluation_settings:CNV_call_labels:[^:]+', 'evaluation_settings:CNV_call_labels:__category', flatkey_)
-        flatkey_ = re.sub('settings:probe-filter-sets:[^:]+', 'settings:probe-filter-sets:__filterset', flatkey_)
+        flatkey_ = re.sub('settings:probe_filter_sets:[^:]+', 'settings:probe_filter_sets:__filterset', flatkey_)
         flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),
                           'reports:__report:call.data.and.plots:__plotsection', flatkey_)
         funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)

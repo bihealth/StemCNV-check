@@ -83,9 +83,9 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         get_median_LRR(snp_vcf_gr) %>%
         as_tibble()       
     
-    filtersettings <- tool_config$`filter-settings`
+    filtersettings <- tool_config$`probe_filter_settings`
     if (filtersettings == '_default_') {
-        filtersettings <- config$settings$`default-filter-settings`
+        filtersettings <- config$settings$default_probe_filter_set
     }    
     enable_LOH_calls <- tool_config$enable_LOH_calls
     header <- c(

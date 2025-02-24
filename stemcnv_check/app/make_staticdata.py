@@ -122,7 +122,7 @@ def run_staticdata_workflow(args, array_name):
     sample_data_df = helpers.read_sample_table(args.sample_table, args.column_remove_regex)
     sample_data_df = sample_data_df[sample_data_df['Array_Name'] == array_name]
     datapath = config['data_path']
-    filter_settings = config['settings']['default-filter-set']
+    filter_settings = config['settings']['default_probe_filter_set']
     vcf_files = [
         os.path.join(datapath, f"{sample_id}", f"{sample_id}.annotated-SNP-data.{filter_settings}-filter.vcf.gz")
         for sample_id in sample_data_df['Sample_ID']

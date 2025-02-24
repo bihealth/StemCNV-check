@@ -5,6 +5,12 @@ suppressMessages(require(readxl))
 suppressMessages(require(plyranges))
 `%!in%` <- Negate(`%in%`)
 
+get_defined_labels <- function(config) {
+    label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
+    return(yaml.load_file(label_def_file))
+}
+
+
 fix_CHROM_format <- function(gr, target_style) {
     seqlevelsStyle(gr) <- target_style
     return(sortSeqlevels(gr))

@@ -2,12 +2,15 @@ library(testthat)
 
 library(tidyverse)
 library(plyranges)
+library(yaml)
 
 
 source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/CNV_preprocess_functions.R'))
 source(test_path('../../stemcnv_check/scripts/R/CNV_comparison_functions.R'))
+
+defined_labels <- yaml.load_file(test_path('../../stemcnv_check/control_files/label_name_definitions.yaml'))
 
 # Example calls (toolA and toolB):
 
@@ -67,14 +70,14 @@ combined_tools <- bind_ranges(
         end   = c(140000, 20e5, 5500) %>% as.integer(),
         sample_id = 'test_sample',
         CNV_type = c('DEL', 'DEL', 'DUP'),
-        ID = paste('StemCNV-check', CNV_type, seqnames, start, end, sep='_'),
+        ID = paste(defined_labels$combined_cnvs, CNV_type, seqnames, start, end, sep='_'),
         n_initial_calls = c(2, 3, 2),
         initial_call_details = c(
             "toolA_120000-140000_CN1_cov100_PASS|toolB_120000-140000_CN0_cov100_PASS",
             "toolA_1500000-1700000_CN1_cov40_PASS|toolA_1800000-2000000_CN1_cov40_PASS|toolB_1500000-2000000_CN1_cov100_PASS",
             "toolA_4000-5500_CN3_cov100_Test&Test2|toolB_4000-5500_CN3_cov100_PASS"
         ),       
-        CNV_caller = 'StemCNV-check',
+        CNV_caller = defined_labels$combined_cnvs,
         CN = c(0.5, 1, 3),
         # overlap_merged_call = NA_real_,
         # Recalculated based on vcf file; indiv call will keep whatever (fake) number they had before
@@ -116,7 +119,7 @@ test_that("combine 2 CNV callers", {
         'toolB' = as_granges(toolB)
     ) %>%
         bind_ranges() %>%
-        combine_CNV_callers(processing_config, snp_vcf) %>% 
+        combine_CNV_callers(processing_config, snp_vcf, defined_labels) %>% 
         expect_equal(combined_tools)        
 } )
 
@@ -136,7 +139,7 @@ test_that("No calls from 1 CNV caller", {
         'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
     ) %>%
         bind_ranges() %>%
-        combine_CNV_callers(processing_config, snp_vcf) %>%
+        combine_CNV_callers(processing_config, snp_vcf, defined_labels) %>%
         expect_equal(
             as_granges(toolA) %>%
                 mutate(
@@ -162,7 +165,7 @@ test_that("No calls at all", {
         'toolB' = as_granges(toolB) %>% filter(sample_id == 'non_existent_sample')
     ) %>%
         bind_ranges() %>%
-        combine_CNV_callers(processing_config, snp_vcf) 
+        combine_CNV_callers(processing_config, snp_vcf, defined_labels) 
     
     empty_gr <- as_granges(toolA) %>%
         arrange(CNV_type, CNV_caller, start) %>%
@@ -193,7 +196,7 @@ sample_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('DUP', 'DUP', 'DEL', 'DEL', 'DEL', 'DEL'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB'),
+  CNV_caller = c(defined_labels$combined_cnvs, 'toolA', defined_labels$combined_cnvs, defined_labels$combined_cnvs, 'toolA', 'toolB'),
   n_probes = c(15, 5, 15, 25, 5, 5),
   CN = c(3, 3, 0, 1, 1, 1), 
 )
@@ -205,7 +208,7 @@ ref_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('DUP', 'DUP', 'DUP', 'DEL', 'DEL', 'DEL'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = c('StemCNV-check', 'faketool', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB'),
+  CNV_caller = c(defined_labels$combined_cnvs, 'faketool', defined_labels$combined_cnvs, defined_labels$combined_cnvs, 'toolA', 'toolB'),
   n_probes = c(15, 20, 15, 25, 5, 5),
   CN = c(3, 4, 3, 1, 1, 1),
 ) %>%
@@ -218,7 +221,7 @@ test_that("annotate_reference_overlap", {
     mutate(
         reference_overlap = c(T, T, F, F, F, F),
         reference_coverage = c(100, 85.01, NA_real_, NA_real_, NA_real_, NA_real_),
-        reference_caller = c('StemCNV-check', 'faketool', NA_character_, NA_character_,NA_character_,NA_character_)
+        reference_caller = c(defined_labels$combined_cnvs, 'faketool', NA_character_, NA_character_,NA_character_,NA_character_)
     ) %>%
     as_granges()
   

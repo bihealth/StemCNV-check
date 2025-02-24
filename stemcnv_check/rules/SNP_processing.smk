@@ -22,7 +22,7 @@ rule filter_snp_vcf:
         err=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.error.log"),
         #out=os.path.join(LOGPATH, "filter_snp_vcf", "{sample_id}", "{filter}.out.log")
     params:
-        filter=lambda wildcards: config['settings']['probe-filter-sets'][wildcards.filter],
+        filter=lambda wildcards: config['settings']['probe_filter_sets'][wildcards.filter],
         sample_sex=lambda wildcards: get_sample_info(wildcards)['Sex'],
         genome_version=lambda wildcards: get_static_input('genome_version')(wildcards)
     conda:

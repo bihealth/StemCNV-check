@@ -2,12 +2,6 @@ library(tidyverse)
 library(DT)
 library(knitr)
 
-# Helper function, could be defined elsewhere?
-get_defined_labels <- function(config) {
-    label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
-    return(yaml.load_file(label_def_file))
-}
-
 vector_to_js <- function(v) {
     if (is.null(names(v))) {
         return(paste0("['", paste(v, collapse = "','"), "']"))
@@ -50,7 +44,7 @@ simple_table_output <- function(tb, out_format='html', caption=NULL, escape=TRUE
     }
 }
 
-summary_table <- function(summary_stat_table, sample_headers, config) {
+summary_table <- function(summary_stat_table, sample_headers, config, defined_labels, out_format='html') {
     
     Combined.metrics <- summary_stat_table %>%
         select(-ends_with('eval')) %>%
@@ -58,29 +52,29 @@ summary_table <- function(summary_stat_table, sample_headers, config) {
         mutate(Description = format_column_names(Description)) %>%
         set_names(c(' ', sample_headers))
     
-    sample_levels <- get_defined_labels(config)$sample_levels
+    sample_labels <- defined_labels$sample_labels
     
     # R/html default green is very neon, use a nicer shade
-    green_replace <- ifelse(params$out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
+    green_replace <- ifelse(out_format == 'html', 'rgb(146,208,80)', 'green') #rgb(146,208,80) // lightgreen
     Combined.colors <- summary_stat_table %>%
         filter(Description != 'sample_id') %>%
         select(ends_with('eval')) %>%
         mutate(
             across(
                 everything(),
-                ~ ifelse(. %in% names(sample_levels), sample_levels[[.]], 'white') %>%
+                ~ ifelse(. %in% names(sample_labels), sample_labels[.], 'white') %>%
                     str_replace('green', green_replace)
             )
         ) %>%
         set_names(sample_headers)
         
-    if (params$out_format == 'html') {
+    if (out_format == 'html') {
     
-        call_count_excl_filters <- config$evaluation_settings$summary_stat_warning_levels$call_count_excl_filters
+        call_count_excl_labels <- config$evaluation_settings$summary_stat_warning_levels$call_count_excl_labels
         ignored_calls <- ifelse(
-            is.null(call_count_excl_filters) || length(call_count_excl_filters) == 0,
+            is.null(call_count_excl_labels) || length(call_count_excl_labels) == 0,
             '',
-            paste0('\\nCalls with any of these Filters are not counted: ', call_count_excl_filters %>% paste(collapse = '|'))
+            paste0('\\nCalls with one of these Labels are not counted: ', call_count_excl_labels %>% paste(collapse = '|'))
         )
 
         summary_row_help <- c(

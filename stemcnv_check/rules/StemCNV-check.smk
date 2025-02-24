@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 from loguru import logger as logging
 import tempfile
-import ruamel.yaml as ruamel_yaml
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import read_sample_table, get_global_file
 from stemcnv_check.exceptions import SampleConstraintError, ConfigValueError
@@ -46,6 +45,10 @@ include: "illumina_raw_processing.smk"
 include: "SNP_processing.smk"
 include: "penncnv.smk"
 include: "report_generation.smk"
+
+# The Call Label section of the config can have user defined labels on top of the default ones
+# The default ones should always come last, but this does not happen automatically
+config["evaluation_settings"]["CNV_call_labels"] = fix_call_label_order(config["evaluation_settings"]["CNV_call_labels"])
 
 
 # Rule function,s move to common? ========================================================================
@@ -97,7 +100,7 @@ def get_target_files(target=TARGET):
     # Target Processed-calls
     elif target == "combined-cnv-calls":
         out = expand(
-            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"),
+            os.path.join(DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.combined-annotated.vcf.gz"),
             sample_id=all_samples,
         )
     # Target PennCNV
@@ -121,7 +124,7 @@ def get_target_files(target=TARGET):
                 "{sample_id}.annotated-SNP-data.{filter}-filter.vcf.gz",
             ),
             sample_id=all_samples,
-            filter=config["settings"]["default-filter-set"],
+            filter=config["settings"]["default_probe_filter_set"],
         )
         
     else:
@@ -198,11 +201,11 @@ rule run_process_CNV_calls:
             ),
             caller=config["settings"]["CNV.calling.tools"],
         ),
-        ref_data=get_ref_input_function('combined-cnv-calls.vcf.gz'),
+        ref_data=get_ref_input_function('CNV_calls.combined-annotated.vcf.gz'),
         snp_vcf=snp_vcf_input_function("settings:CNV_processing:call_processing"),
     output:
         vcf=os.path.join(
-            DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
+            DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.combined-annotated.vcf.gz"
         ),
     threads: get_tool_resource("CNV.process", "threads")
     resources:
@@ -233,7 +236,7 @@ rule collate_cnv_calls:
     input:
         cnv_calls=expand(
             os.path.join(
-                DATAPATH, "{sample_id}", "{sample_id}.combined-cnv-calls.vcf.gz"
+                DATAPATH, "{sample_id}", "{sample_id}.CNV_calls.combined-annotated.vcf.gz"
             ),
             sample_id=sample_data_df['Sample_ID']
         ),
@@ -251,7 +254,7 @@ rule collate_cnv_calls:
     log:
         err=os.path.join(LOGPATH, "collate-cnv-calls", "error.log"),
     params:
-        output_filters = config['evaluation_settings']['collate_output']['call_table_filters'],
+        output_filters = config['evaluation_settings']['collate_output']['cnv_collate_call_selection'],
         output_format = config['evaluation_settings']['collate_output']['file_format'],
     conda:
         "../envs/general-R.yaml"

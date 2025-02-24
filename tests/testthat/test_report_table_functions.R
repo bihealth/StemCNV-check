@@ -7,11 +7,13 @@ library(testthat)
 source(test_path("../../stemcnv_check/scripts/R/helper_functions.R"))
 source(test_path("../../stemcnv_check/scripts/R/report_table_functions.R"))
 
+defined_labels <- yaml.load_file(test_path('../../stemcnv_check/control_files/label_name_definitions.yaml'))
+
 # Functions to test:
 # - [ ] vector_to_js
 # - [ ] format_column_names
 # - [ ] simple_table_output
-# - [ ] summary_table
+# - [x] summary_table
 # - [x] format_hotspots_to_badge
 # - [ ] CNV_table_output
 # - [ ] gene_table_output
@@ -26,6 +28,12 @@ config <- list(
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
                 'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
             )
+        )
+    ),
+    'evaluation_settings' = list(
+        'summary_stat_warning_levels' = list(
+            'call_count_excl_labels' = list('Excluded'),
+            'use_last_level' = list('call_rate', 'computed_gender', 'SNP_pairwise_distance_to_reference')
         )
     )
 )
@@ -203,4 +211,164 @@ test_that("hotspot_table_output", {
     ) %>%
         expect_equal(expected)
     
+})
+
+#summary_table(summary_stat_table, sample_headers, config, defined_labels)
+test_that("summary_table", {
+    
+    summary_stat_table <- tibble(
+        Description = c(
+            'sample_id', 'call_rate', 'computed_gender', 'SNP_pairwise_distance_to_reference',
+            'SNPs_post_filter', defined_labels$sample_qc_measures[3:10]
+        ),
+        sample_value = c(
+            'SampleID', '0.991', 'M', '60% (123 SNPs)', '123456', '-0.5', '50', '30', '15', '7', '0', '0', '0'
+        ),
+        sample_eval = c(
+            'SampleID', 'OK', 'OK', NA, 'high concern', 'OK', 'warning', 'unusual', 'warning', 'unusual', 'OK', 'OK', 'OK'
+        ),
+        reference_value = c(
+            'SampleID2', '0.995', 'M', '61% (135 SNPs)', NA, '0.3', '40', '20', NA, NA, NA, NA, NA
+        ),
+        reference_eval = c(
+            'SampleID2', 'OK', 'OK', NA, NA, 'OK', 'unusual', 'OK', NA, NA, NA, NA, NA
+        ),
+    )
+    
+    sample_headers <- set_names(
+        c('SampleID', 'Reference (SampleID2)'),
+        c('SampleID', 'SampleID2')
+    )
+    
+    expected_tb <- summary_stat_table %>%
+        filter(Description != 'sample_id') %>%
+        select(-contains('eval')) %>%
+        mutate(Description = format_column_names(Description)) %>%
+        set_names(c(' ', sample_headers))
+    
+    green <- 'rgb(146,208,80)'
+    expected_colors <- tibble(
+        SampleID = c(green, green, 'white', 'red', green, 'orange', 'yellow', 'orange', 'yellow', green, green, green),
+        SampleID2 = c(green, green, 'white', 'white', green, 'yellow', green, 'white', 'white', 'white', 'white', 'white'),
+    ) %>% set_names(sample_headers)
+    
+    ignored_calls <- paste0(
+        '\\nCalls with one of these Labels are not counted: ',
+        config$evaluation_settings$summary_stat_warning_levels$call_count_excl_labels %>% paste(collapse = '|')
+    )
+    summary_row_help <- c(
+        "Call Rate" = paste0(
+            'The Illumina call rate corresponds to the percentage of probes for which a clear genotype could be ',
+            'determined.\\nLow values are strong indicator of sample quality issues that also impact make any ',
+            'further analysis including CNV calling.'
+        ),
+        "Computed Gender" = paste0(
+            'The Illumina computed gender (sex) based on X and Y chromosome probes.\\n',
+            'Mismatches with annotated sex can indicate annotation mistakes, sample swaps, or severe quality issues.'
+        ),
+        "SNPs Post Filter" = 'The percentage of SNP probes retained after the employed StemCNV-check filter strategy.',
+        "SNP Pairwise Distance To Reference" = paste0(
+            'The number of probes with a different genotype than the reference sample.\\n',
+            'Calculated as pairwise difference, which may include more probes than used for sample clustering.\\n',
+            'Increased values can indicate a sample swap or a considerable number of genomic mutations between ',
+            'sample and references.'
+        ),
+        "Loss Gain Log2ratio" = paste0(
+            'The log2 transformed ratio of loss and gain CNV calls.\\n',
+            'Deviation from equal balance (0) can indicate potential quality issues or problems with CNV calling.',
+            ignored_calls
+        ),
+        "Total Calls CNV" = paste0('The total number of CNV (gain/loss) calls.', ignored_calls),
+        "Total Calls LOH" = paste0('The total number of LOH calls.', ignored_calls),
+        "Reportable Calls CNV" = 'The number of CNV calls designated as "reportable".',
+        "Reportable Calls LOH" = 'The number of LOH calls designated as "reportable".',
+        "Critical Calls CNV" = 'The number of CNV calls designated as "critical".',
+        "Critical Calls LOH" = 'The number of LOH calls designated as "critical".',
+        "Critical SNVs" = 'The number of detected SNVs designated as "critical".'
+    )
+    
+    expected <- expected_tb %>%
+        datatable(
+            options = list(
+                dom = 't',
+                pageLength = nrow(expected_tb),
+                rowCallback = JS(
+                    "function(row, data, displayNum, displayIndex, dataIndex) {",
+                    "let help_text = ", vector_to_js(summary_row_help), ";",
+                    #"console.log('hover-test: ' + help_text[data[0]]);",
+                    "$('td', row).attr('title', help_text[data[0]]);",
+                    "}"
+                )
+            ),
+            rownames = FALSE
+        ) %>% 
+        # Color coding of values
+        formatStyle(
+            2, 
+            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            textAlign = 'center'
+        ) %>%
+        formatStyle(
+            3,
+            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[2]]])), 
+            textAlign = 'center'
+        ) %>%
+        formatStyle(
+            1, 
+            fontWeight = styleEqual(
+                unlist(config$evaluation_settings$summary_stat_warning_levels$use_last_level) %>% format_column_names(), 
+                'bold'
+            )
+        )
+    
+    expect_equal(
+        summary_table(summary_stat_table, sample_headers, config, defined_labels),
+        expected
+    )
+    
+    # also test without reference
+    summary_stat_table <- summary_stat_table %>%
+        select(-contains('reference'))
+    sample_headers <- sample_headers[1]
+    
+    expected <- expected_tb %>%
+        select(-3) %>%
+        datatable(
+            options = list(
+                dom = 't',
+                pageLength = nrow(expected_tb),
+                rowCallback = JS(
+                    "function(row, data, displayNum, displayIndex, dataIndex) {",
+                    "let help_text = ", vector_to_js(summary_row_help), ";",
+                    #"console.log('hover-test: ' + help_text[data[0]]);",
+                    "$('td', row).attr('title', help_text[data[0]]);",
+                    "}"
+                )
+            ),
+            rownames = FALSE
+        ) %>% 
+        # Color coding of values
+        formatStyle(
+            2, 
+            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            textAlign = 'center'
+        ) %>%
+        formatStyle(
+            3, 
+            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            textAlign = 'center'
+        ) %>%
+        # Make all last level (= potentially red) rows have bold text
+        formatStyle(
+            1, 
+            fontWeight = styleEqual(
+                unlist(config$evaluation_settings$summary_stat_warning_levels$use_last_level) %>% format_column_names(), 
+                'bold'
+            )
+        )
+    
+    expect_equal(
+        summary_table(summary_stat_table, sample_headers, config, defined_labels),
+        expected
+    )    
 })

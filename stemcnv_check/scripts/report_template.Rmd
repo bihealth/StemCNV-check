@@ -107,6 +107,7 @@ knitr::opts_chunk$set(
 )
 options(knitr.kable.NA = '')
 
+defined_labels <- get_defined_labels(config)
 
 sampletable <- config$sample_table %>%
     fix_rel_filepath(config) %>%
@@ -210,7 +211,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
     if (nrow(call.table) == 0) {
         return(str_glue('No {plotsection} CNV calls found.'))
     }
-    always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
+    always_include <- report_config$call.data.and.plots[[plotsection]]$always_include_CNVs
     for (i in call.table$i) {
 
         row <- call.table[i,]
@@ -356,7 +357,7 @@ read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'summary_stats'
 ) %>%
-    summary_table(sample_headers, config)
+    summary_table(sample_headers, config, defined_labels, params$out_format)
 cat('\n\n')
 ```
 
@@ -459,11 +460,11 @@ cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
     bind_ranges() %>%
     fix_CHROM_format(target_chrom_style) %>%
     as_tibble() %>%
+	filter(Call_label %!in% report_config$CNV_call_labels_removed) %>%
     mutate(
         CNV_type = factor(CNV_type),
         reference_overlap = factor(!is.na(reference_coverage)),
-        Call_label = ifelse(is.na(Call_label), '', Call_label),
-        Call_label = factor(Call_label, levels = c('Reportable', 'Critical', 'Reference genotype', '')),
+        Call_label = factor(Call_label, levels = names(config$evaluation_settings$CNV_call_labels)),
         FILTER = ifelse(is.na(FILTER), '', FILTER),
         probe_coverage_gap = str_detect(FILTER, 'probe_gap'),
         high_probe_density = str_detect(FILTER, 'high_probe_dens'),
@@ -482,37 +483,17 @@ cnv_calls <- c(params$input$cnv_vcf, params$input$ref_cnv_vcf) %>%
 cnv_calls$seqnames <- fct_expand(cnv_calls$seqnames, levels(raw_LRR_BAF$Chr))
 cnv_calls$seqnames <- fct_relevel(cnv_calls$seqnames, levels(raw_LRR_BAF$Chr))
 
-
-denovo_filter_regex <- ifelse(
-    is.null(report_config$call.data.and.plots$denovo$exclude_filter),
-    'dummy',
-    report_config$call.data.and.plots$denovo$exclude_filter %>% paste(collapse = '|')
-)
 denovo_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
-    filter(sample_id == !!sample_id & Call_label != 'Reference genotype') %>%
-    filter(
-        !str_detect(FILTER, denovo_filter_regex) | 
-            Call_label %in% report_config$call.data.and.plots$denovo$always_include
-    ) %>%
+    filter(sample_id == !!sample_id & Call_label %in% report_config$call.data.and.plots$denovo$call_labels_include) %>%
     mutate(i = row_number())
 
-refgt_filter_regex <- ifelse(
-    is.null(report_config$call.data.and.plots$reference_gt$exclude_filter),
-    'dummy',
-    report_config$call.data.and.plots$reference_gt$exclude_filter %>% paste(collapse = '|')
-)
 reference_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
     arrange(desc(Check_Score), desc(Size), chrom, start) %>%
-    filter(
-        sample_id == !!sample_id & Call_label == 'Reference genotype'
-    ) %>%
-    filter(!str_detect(FILTER, refgt_filter_regex)) %>%
+    filter(sample_id == !!sample_id & Call_label %in% report_config$call.data.and.plots$reference_gt$call_labels_include) %>%
     mutate(i = row_number())
-
-
 
 ```
 
@@ -782,13 +763,8 @@ if (!is.na(ref_id)) {
     label_SNVs <- SNV_table %>% mutate(color = 'red', sample_id = sample_id) %>% filter(SNV_label == 'dummy')
 }
 
-call_filter_regex <- ifelse(
-    is.null(report_config$genome_overview$call.exclude_filter),
-    'dummy',
-    report_config$genome_overview$call.exclude_filter %>% paste(collapse = '|')
-)
 filtered_calls <- cnv_calls %>%
-    filter(!str_detect(FILTER, call_filter_regex))
+    filter(Call_label %in% report_config$genome_overview$call_labels_overview)
 
 for (chrom in levels(raw_LRR_BAF$Chr) %>% str_subset('M', T)) {
     cat('### ', chrom, '\n\n')

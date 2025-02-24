@@ -65,7 +65,7 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
         snp_qc_details %>%
             dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs) %>%
             unique(),
-        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_labels$call_count_excl_filters)
+        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_labels$call_count_excl_labels)
     )
     
     sample_levels <- names(get_defined_labels(config)$sample_labels)    
@@ -114,17 +114,11 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
 }
 
 
-get_call_stats <- function(gr.or.tb, call_count_excl_filters = list(), name_addition = NA) {
-    
-    call_filter_regex <- ifelse(
-        is.null(call_count_excl_filters) || length(call_count_excl_filters) == 0,
-        'dummy',
-        call_count_excl_filters %>% paste(collapse = '|')
-    )
+get_call_stats <- function(gr.or.tb, call_count_excl_labels = list(), name_addition = NA) {
     
     tb <- gr.or.tb %>%
         as_tibble() %>%
-        filter(is.na(FILTER) | !str_detect(FILTER, call_filter_regex)) %>%
+        filter(Call_label %!in% call_count_excl_labels) %>%
         group_by(sample_id) %>%
         mutate(
             loss_gain_log2ratio = log2(sum(CNV_type == 'gain') / sum(CNV_type == 'loss')) %>% round(digits = 2),
@@ -134,12 +128,13 @@ get_call_stats <- function(gr.or.tb, call_count_excl_filters = list(), name_addi
             CNV_type = ifelse(CNV_type == 'LOH', 'LOH', 'CNV'),
         ) %>%
         group_by(sample_id, CNV_type, loss_gain_log2ratio) %>%
-        # TODO NOW: these names are now config definable!
-        # >> need a better way to handle this?
+        # Note: the call labels are now config definable!
+        # >> Names should NOT be hard-coded here?!
+        # >> either define via config or defined_labels
         summarise(
             total_calls = dplyr::n(),
-            reportable_calls = sum(Call_label == 'Reportable', na.rm = TRUE),
-            critical_calls = sum(Call_label == 'Critical', na.rm = TRUE)
+            reportable_calls = sum(Call_label == 'Reportable de-novo', na.rm = TRUE),
+            critical_calls = sum(Call_label == 'Critical de-novo', na.rm = TRUE)
         ) %>%
         pivot_wider(names_from = CNV_type, values_from = matches('(total|reportable|critical)_calls'))
     

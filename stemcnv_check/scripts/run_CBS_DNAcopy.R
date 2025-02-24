@@ -104,9 +104,9 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         get_median_LRR(snp_vcf_gr) %>%
         as_tibble()
     # Generate VCF
-    filtersettings <- tool_config$`filter-settings`
+    filtersettings <- tool_config$`probe_filter_settings`
     if (filtersettings == '_default_') {
-        filtersettings <- config$settings$`default-filter-settings`
+        filtersettings <- config$settings$default_probe_filter_set
     }
     header <- c(
         fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),

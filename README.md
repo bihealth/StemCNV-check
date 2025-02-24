@@ -87,8 +87,8 @@ StemCNV-check will produce the following output files for each sample, when run 
   The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm in vcf format
 - `data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz`  
   The CNV calls for the sample from the PennCNV caller, in vcf format
-- `data_path/{sample}/{sample}.combined-cnv-calls.vcf.gz`  
-  The CNV calls processed, combined and annotated by StemCNV-check in tabular and vcf format. 
+- `data_path/{sample}/{sample}.CNV_calls.combined-annotated.vcf.gz`  
+  The CNV calls processed, combined and annotated by StemCNV-check vcf format. 
   Annotation includes comparison against reference sample, call scoring and gene annotation.
 - `data_path/{sample}/extra_files`  
   Folder in which additional QC log files are stored.

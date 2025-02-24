@@ -51,31 +51,30 @@ evaluation_settings:
     reportable_calls_LOH: list_len2__int
     critical_calls_CNV: list_len2__int
     critical_calls_LOH: list_len2__int
-    call_count_excl_filters: list__str__labels:vcf_filters
+    call_count_excl_labels: list__str__cnvcallcategories
     use_last_level: list__str
     
   collate_output:
     file_format: str_(xlsx|tsv)
     summary_extra_sampletable_cols: list__insamplesheet
-    call_table_filters:
-      include_call_label: list__str__cnvcallcategories
-      exclude_filter_flags: list__str__labels:vcf_filters
-      min_check_score: float_ge0
+    cnv_collate_call_selection:
+      whitelist_call_label: list__cnvcallcategories
+      blacklist_call_label: list__cnvcallcategories
 
 
 settings:
   CNV.calling.tools: list__str__(PennCNV|CBS)
-  probe-filter-sets:
+  probe_filter_sets:
     __filterset:
         GenTrainScore: float_le1_ge0
         GenCallScore:  float_le1_ge0
         Position.duplicates: str_(keep|remove|highest-GenCall|highest-GenTrain)
         Pseudoautosomal: str_(keep|remove|remove-male)
 
-  default-filter-set: filtersetnodefault
+  default_probe_filter_set: filtersetnodefault
 
   PennCNV:
-    filter-settings: filterset
+    probe_filter_settings: filterset
     enable_LOH_calls: bool
     call.merging:
       merge.gap.absolute: int_ge0
@@ -87,7 +86,7 @@ settings:
     filter.mindensity.Mb: float_ge0
 
   CBS:
-    filter-settings: filterset
+    probe_filter_settings: filterset
     undo.SD.val: int
     call.merging:
       merge.gap.absolute: int_ge0
@@ -119,7 +118,7 @@ settings:
    
   CNV_processing:
     call_processing:
-      filter-settings: filterset
+      probe_filter_settings: filterset
       filter.minprobes: int_ge0
       filter.minlength: int_ge0
       filter.mindensity.Mb: float_ge0
@@ -183,7 +182,7 @@ settings:
         HighSNPDensity: float
         
   SNV_analysis:
-    filter-settings: filtersetplusnone
+    probe_filter_settings: filtersetplusnone
     snv_hotspot_table: str # Path|File|exists
     flag_GenCall_minimum: float_ge0_le1
     critical_SNV: list__str__labels:SNV_critical_labels
@@ -206,11 +205,13 @@ reports:
     exclude_sections: list__labels:report_sections
     sample.info.extra.cols: list__insamplesheet
 
+    CNV_call_labels_removed: list__cnvcallcategories
+
     call.data.and.plots:
       __plotsection:
-        exclude_filter: list__str__labels:vcf_filters
+        call_labels_include: list__cnvcallcategories
+        always_include_CNVs: list__cnvcallcategories
         min_number_plots: int_ge0
-        always_include: list__str__cnvcallcategories
         include.plot: bool
         include.hotspot.table: bool
         include.gene.table.details: str_(All|Call|None)
@@ -225,7 +226,7 @@ reports:
       dendrogram.shape.by: str_insamplesheet
     
     genome_overview:
-      call.exclude_filter: list__str__labels:vcf_filters
+      call_labels_overview: list__cnvcallcategories
       show_reference: bool
 
 wildcard_constraints:
