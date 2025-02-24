@@ -1,4 +1,4 @@
-suppressMessages(library(tidyverse))
+library(tidyverse)
 
 minimal_probes <- tibble(
     list_name = 'test-list',

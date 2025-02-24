@@ -37,7 +37,7 @@ jobs:
           miniforge-version: latest
           auto-activate-base: false
       - name: Run tests
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: Rscript -e "testthat::test_local()"
 #         env:
 #           DIFF_MAIN: ${{ github.event_name == 'pull_request' }}

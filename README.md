@@ -88,12 +88,13 @@ StemCNV-check will produce the following output files for each sample, when run 
 - `data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz`  
   The CNV calls for the sample from the PennCNV caller, in vcf format
 - `data_path/{sample}/{sample}.CNV_calls.combined-annotated.vcf.gz`  
-  The CNV calls processed, combined and annotated by StemCNV-check vcf format. 
-  Annotation includes comparison against reference sample, call scoring and gene annotation.
+  The CNV calls processed, combined and annotated by StemCNV-check, in vcf format. 
+  Annotation includes comparison against reference sample; gene annotation; hotspots for stem cells, cancer and dosage 
+  sensitivity; call scoring; and call labelling (i.e. as Critical de-novo call).
 - `data_path/{sample}/extra_files`  
   Folder in which additional QC log files are stored.
 - `data_path/{sample}/{sample}.summary-stats.xlsx`  
-  An excel file with summary information for the sample. The first sheets contains quality summary statistics, including 
+  An Excel file with summary information for the sample. The first sheets contains quality summary statistics, including 
   array quality measures, number of CNV and LOH calls, the number of calls above Check_Score thresholds. The further 
   sheets have more details from individual CNV callers or sample comparisons.
 - `data_path/{sample}/{sample}.StemCNV-check-report.html`; ... 
