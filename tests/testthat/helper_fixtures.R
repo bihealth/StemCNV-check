@@ -1,6 +1,6 @@
-library(tidyverse)
+# library(tidyverse)
 
-minimal_probes <- tibble(
+minimal_probes <- tibble::tibble(
     list_name = 'test-list',
     hotspot = c('DDX11L1', 'dummyC', 'chr1:40000-50000', '1p36', '1p35.2', '1q21'),
     mapping = c('gene_name', 'gene_name', 'position', 'gband', 'gband', 'gband'),
