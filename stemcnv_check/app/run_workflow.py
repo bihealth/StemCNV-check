@@ -38,7 +38,13 @@ def run_stemcnv_check_workflow(args):
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
         '--configfile', str(importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')),
-        get_cache_array_definition(cache_path) if os.path.isfile(get_cache_array_definition(cache_path)) else '',
+    ]
+    # Only add global config if it exists (inbetween defaults and user config)
+    # Adding an emtpy string will cause issues for snakemake
+    global_config = get_cache_array_definition(cache_path)
+    if global_config and os.path.isfile(global_config):
+        argv += [global_config]
+    argv += [
         args.config,
         '--config',
         f'sample_table={args.sample_table}',

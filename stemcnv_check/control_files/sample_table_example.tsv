@@ -3,8 +3,9 @@
 # Any number of additional columns can be added to the sample table as well, unless referred to in the config they will be ignored.
 # Specific explanations for columns:
 # - Sample_ID:		
-#       The folder and samples names for samples are derived from this entry. All entries *must* be unique and
-#       conform with unix filename patterns (i.e. no /). The recommended default allows only alphanumeric characters and -_
+#       The folder and samples names for samples are derived from this entry. All entries *must* be unique. 
+#       To prevent issues with filenames only alphanumeric characters (all letters and number) and the characters -_
+#       (dash and underscore) are allowed.
 # - Chip_Name and Chip_Pos:
 #       These entries must match the Sentrix name (usually a 12 digit number) and position (usually R..C..) on the Illumina array
 # - Array_Name
@@ -16,8 +17,14 @@
 #       If there is no usable or applicable reference sample the entry should be empty
 # - Regions_of_Interest
 #       Definition of regions for which plots are always generated in the report (i.e. gene edited sites)
-#       The syntax for regions is `NAME|chr?:start-end`, the `NAME|` part is optional, `chr?` can be i.e. 'chr3' or just '3'
-#       multiple regions for a single sample should all be in one column entry and be separated by a `;`	
+#       The syntax for regions of interest is `NAME|region`, the `NAME|` part is optional and mainly useful for 
+#       labeling or describing the region.
+#       The `{region}` part is mandatory and can be one of the following:
+#       1) Position, "chrN:start-end": `chrN` can be i.e. 'chr3' or just '3',
+#          start and end are coordinates (which are genome build specific!)
+#       2) Genomic band, i.e. "4q21.3": a cytogenetic band, both full bands (q21) and subbands (q21.3) are allowed 
+#       3) Gene symbol, i.e. "TP53": The gene name (or symbol) needs to exactly match the reference annotation (UCSC gtf)
+#       Multiple regions for a single sample should all be in one column entry and be separated by a `;`	
 # - Sample_Group
 #       This column can be used for annotation samples is used by default to select samples for clustering by SNPs.  								
 Sample_ID	Chip_Name	Chip_Pos	Array_Name	Sex	Reference_Sample	Regions_of_Interest	Sample_Group

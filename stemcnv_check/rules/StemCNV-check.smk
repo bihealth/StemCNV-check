@@ -215,6 +215,7 @@ rule run_process_CNV_calls:
     params:
         eval_settings=config["evaluation_settings"]["CNV_call_labels"],
         settings=config["settings"]["CNV_processing"],
+        sample_roi=lambda wildcards: get_sample_info(wildcards)['Regions_of_Interest'],
         gtf_file=lambda wildcards: get_global_file(
             'gtf', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
         ),

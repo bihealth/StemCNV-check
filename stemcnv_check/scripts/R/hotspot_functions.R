@@ -302,13 +302,12 @@ get_roi_tb <- function(sample_id, sampletable, config) {
     ) %>%
         mutate(
             description = paste0(
-                'ROI_', seq_along(description), ': ',
-                hotspot,
                 ifelse(
-                    !is.na(description), 
-                    paste(';', description),
-                    ''
-                )
+                    is.na(description), 
+                    paste0('ROI_', seq_along(description)), 
+                    description
+                ),
+                ': ', hotspot
             ),
             description_htmllinks = description,
             order = row_number(),

@@ -238,9 +238,9 @@ test_that('get_roi_tb', {
         mapping = c('gene_name', 'gband', 'position', 'gene_name'),
         call_type = 'any',
         check_score = 50,
-        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'),
         description_doi = NA_character_,
-        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'), 
+        description_htmllinks = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'), 
         order = 1:4,
     )
     
@@ -275,9 +275,9 @@ test_that('get_roi_gr', {
         mapping = c('gene_name', 'gband', 'position', 'gene_name'),
         call_type = 'any',
         check_score = 50,
-        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'),
         description_doi = NA_character_,
-        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'), 
+        description_htmllinks = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'),
         order = 1:4,
     )
     
@@ -293,9 +293,9 @@ test_that('get_roi_gr', {
         mapping = c('gene_name', 'gband', 'position', 'gene_name'),
         call_type = 'any',
         check_score = 50,
-        description = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene'),
+        description = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'),
         description_doi = NA_character_,
-        description_htmllinks = c('ROI_1: DDX11L1', 'ROI_2: 1q21.1; important', 'ROI_3: 1:1000-2000; edit site', 'ROI_4: dummyC; mygene')
+        description_htmllinks = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC')
     )
     
     expect_equal(get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style), expected)

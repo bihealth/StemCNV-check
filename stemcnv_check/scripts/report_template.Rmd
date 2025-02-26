@@ -567,7 +567,7 @@ fake_call_tb <- roi_gr %>%
     ) %>% 
     mutate(
         i = 1:plyranges::n(),
-        ID = ifelse(is.na(description), paste0('ROI_', i), description),
+        ID = paste0('ROI_', i),
         FILTER = NA_character_
     ) %>%
     select(-list_name, -mapping, -call_type, -description_doi, -check_score) %>%
@@ -591,7 +591,7 @@ fake_call_tb <- roi_gr %>%
         CNV_type = 'ROI',
         CN = NA_integer_,
         CNV_caller = 'ROI',
-        Call_label = ID,
+        Call_label =  ifelse(is.na(description), ID, description),
         caller_merging_coverage = NA_real_,
         Precision_Estimate = NA_character_,
         stemcell_hotspot = NA_character_,
@@ -599,6 +599,13 @@ fake_call_tb <- roi_gr %>%
         cancer_gene = NA_character_,
         LRR = NA_real_, #FIXME: this could be calculated
     )
+
+# Adjust factor levels
+fake_call_tb$chrom <- fct_expand(fake_call_tb$chrom, levels(raw_LRR_BAF$Chr))
+fake_call_tb$chrom <- fct_relevel(fake_call_tb$chrom, levels(raw_LRR_BAF$Chr))
+
+# Make sure to include all ROIS, which use the Name/ID as a Call Label (instead of the default labels)
+report_config$call.data.and.plots$regions_of_interest$always_include_CNVs <- fake_call_tb$Call_label
 
 CNV_table_output(
     fake_call_tb, 'regions_of_interest', 
