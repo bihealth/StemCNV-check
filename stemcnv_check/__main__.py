@@ -10,11 +10,11 @@ import sys
 
 from loguru import logger as logging
 
-from stemcnv_check import __version__
-from stemcnv_check.app.check_input import check_config, check_sample_table
-from stemcnv_check.app.run_workflow import run_stemcnv_check_workflow
-from stemcnv_check.app.make_staticdata import create_missing_staticdata
-from stemcnv_check.app.setup_files import setup_control_files
+from . import __version__
+from .app.check_input import check_config, check_sample_table
+from .app.run_workflow import run_stemcnv_check_workflow
+from .app.make_staticdata import create_missing_staticdata
+from .app.setup_files import setup_control_files
 
 def setup_argparse():
 
