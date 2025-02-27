@@ -137,7 +137,7 @@ roi_tb <- get_roi_tb(sample_id, sampletable, config)
 stemcell_hotspot_tb <- load_hotspot_table(config, 'stemcell_hotspot')
 dosage_sensitive_gene_tb <- get_dosage_sensivity_tb(
     snakemake@params$dosage_file,
-    config$settings$CNV_processing$Check_score_values
+    config
 )
 cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
 snv_hotspot_tb <- load_hotspot_table(config, 'snv_hotspot')

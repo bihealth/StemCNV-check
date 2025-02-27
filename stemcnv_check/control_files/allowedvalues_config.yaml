@@ -137,6 +137,7 @@ settings:
       whitelist_hotspot_genes: bool
       stemcell_hotspot_list: str
       cancer_gene_list: str
+      dosage_sensitive_gene_name_fixes: str
 
     Check_score_values:
       pHaplo_threshold: float_le1_ge0

@@ -143,18 +143,39 @@ parse_hotspot_table <- function(tb, gr_genes, gr_info, target_chrom_style=NA) {
 }
 
 
-get_dosage_sensivity_tb <- function(dosage_data_file, score_settings) {
+get_dosage_sensivity_tb <- function(dosage_data_file, config) {
     
-    # dosage_data_file <- 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz'
+    score_settings <- config$settings$CNV_processing$Check_score_values    
     doi <- '10.1016/j.cell.2022.06.036'
     
+    gene_name_fixes <- config$settings$CNV_processing$gene_overlap$dosage_sensitive_gene_name_fixes %>%
+        str_replace('__inbuilt__', config$snakedir) %>%
+        fix_rel_filepath(config) %>%        
+        read_tsv(show_col_types = F) %>%
+        mutate(
+            gene_name = ifelse(is.na(corrected_gene_name), gene_id, corrected_gene_name),
+            comment = paste0(
+                paste('Orig. gene name:', orig_gene_name),
+                ifelse(is.na(comment), '', paste0('\n', comment))
+            )
+        ) %>%
+        filter(!is.na(gene_name)) %>%
+        select(orig_gene_name, gene_name, comment)        
+    
     tb <- read_tsv(dosage_data_file, show_col_types = F) %>%
+        # Reformat orig. file
         rename_with(
             ~str_replace(., '#gene', 'hotspot') %>%
                 str_replace('pHaplo', 'loss') %>%
                 str_replace('pTriplo', 'gain')        
         ) %>%
-        pivot_longer(cols = -hotspot, names_to = 'call_type', values_to = 'dosage_score') %>%
+        # Fix some older gene names, fully remove those not in use anymore
+        left_join(gene_name_fixes, by = c('hotspot' = 'orig_gene_name')) %>%
+        mutate(hotspot = ifelse(is.na(gene_name), hotspot, gene_name)) %>%
+        filter(is.na(comment) | !str_detect(comment, '\\nretracted')) %>%
+        select(-gene_name) %>%       
+        # Reformat to the hotspot table format
+        pivot_longer(cols = -c(hotspot, comment), names_to = 'call_type', values_to = 'dosage_score') %>%
         mutate(
             list_name = 'Dosage-sensivity',
             mapping = 'gene_name',
@@ -168,12 +189,13 @@ get_dosage_sensivity_tb <- function(dosage_data_file, score_settings) {
                 ifelse(call_type == 'loss', 'haploinsufficiency', 'triplosensitivity'), ')\\n',
                 'Source: Collins et al. 2022 {1}.\\n',
                 ifelse(call_type == 'loss', 'pHaplo', 'pTriplo'),
-                ' score: ', round(dosage_score, 3)                
+                ' score: ', round(dosage_score, 3),
+                ifelse(is.na(comment), '', paste0('\\n', comment))
             ),            
             description_doi = doi,
         ) %>%
         filter(!is.na(check_score)) %>%
-        select(-dosage_score)
+        select(-dosage_score, -comment)
     
     description_html_pattern <- str_replace_all(
         tb$description,

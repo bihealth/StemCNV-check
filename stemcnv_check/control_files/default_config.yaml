@@ -296,6 +296,8 @@ settings:
       stemcell_hotspot_list: '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
       cancer_gene_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
+      # File path for dosage sensitivity score file is defined in global_settings
+      dosage_sensitive_gene_name_fixes: '__inbuilt__/supplemental-files/gene-names-mapping-dosage-sensitivity.tsv'
 
     # Scoring for CNV and LOH calls
     # scoring combines a Size based contribution with scores for overlapping annotated regions

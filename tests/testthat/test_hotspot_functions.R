@@ -149,8 +149,14 @@ test_that('parse inbuilt tables', {
                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
                     'whitelist_hotspot_genes' = TRUE,
                     'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv',
-                    'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
-                )
+                    'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv',
+                    'dosage_sensitive_gene_name_fixes' = '__inbuilt__/supplemental-files/gene-names-mapping-dosage-sensitivity.tsv'
+                ),
+                'Check_score_values' = list(
+                    'pHaplo_threshold' = 0.86,
+                    'pTriplo_threshold' = 0.94,
+                    'dosage_sensitive_gene' =  5
+                )    
             ),
             'SNV_analysis' = list(
                 'snv_hotspot_table' = '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
@@ -165,22 +171,19 @@ test_that('parse inbuilt tables', {
     cancer_gene_tb <- load_hotspot_table(config, 'cancer_gene')
     config$settings$CNV_processing$gene_overlap$cancer_gene_list <- '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
     cancer_gene_tb2 <- load_hotspot_table(config, 'cancer_gene')
+    dosage_tb <- get_dosage_sensivity_tb(dosage_data_file, config)
     hotspot_genes <- bind_rows(
         stemcell_hotspot_tb,
         cancer_gene_tb,
-        cancer_gene_tb2
+        cancer_gene_tb2,
+        dosage_tb
     ) %>%
         filter(mapping == 'gene_name') %>%
         pull(hotspot) %>%
         unique()
     gr_info <- load_genomeInfo(ginfo_file, config)
-    # SLC35E2A is a transcribed_unprocessed_pseudogene from the dosage list
-    gr_genes <- load_gtf_data(gtf_file, config, include_hotspot_genes = c(hotspot_genes, 'SLC35E2A'))
-    score_settings <- list(
-        'pHaplo_threshold' = 0.86,
-        'pTriplo_threshold' = 0.94,
-        'dosage_sensitive_gene' =  5
-    )
+    gr_genes <- load_gtf_data(gtf_file, config, include_hotspot_genes = hotspot_genes)
+
     expected_dosage_head <- tibble(
         hotspot = c("CACNA1C", "CACNA1C", "ZNF462", "ZNF462", "CHD8"),
         call_type = c('loss', 'gain', 'loss', 'gain', 'loss'),
@@ -207,10 +210,8 @@ test_that('parse inbuilt tables', {
     expect_no_error(parse_hotspot_table(stemcell_hotspot_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb, gr_genes, gr_info))
     expect_no_error(parse_hotspot_table(cancer_gene_tb2, gr_genes, gr_info))
-    # Note: this requires the table to be present in cache (like the gtf & genome info files)
-    dosage <- get_dosage_sensivity_tb(dosage_data_file, score_settings)
-    expect_no_error(parse_hotspot_table(dosage, gr_genes, gr_info))
-    expect_equal(head(dosage, 5), expected_dosage_head)
+    expect_no_error(parse_hotspot_table(dosage_tb, gr_genes, gr_info))
+    expect_equal(head(dosage_tb, 5), expected_dosage_head)
     # This one can not be parsed like the others (it's never used as a gr either)
     expect_no_error(load_hotspot_table(config, 'snv_hotspot'))
 })
