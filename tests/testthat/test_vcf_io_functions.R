@@ -110,6 +110,8 @@ cnv_tb_annotated_out <- cnv_tb_annotated %>%
         across(where(is.character), ~ ifelse(is.na(.), '.', .) %>% str_replace_all(',', '|'))
     )
 
+cnv_tb_empty <- cnv_tb %>% filter(seqnames == 'dummy')
+
 test_that('get_fix_section', {
     expected_fix <- tibble(
         CHROM = cnv_tb$seqnames,
@@ -130,6 +132,14 @@ test_that('get_fix_section', {
     
     get_fix_section(cnv_tb) %>%
         expect_equal(as.matrix(expected_fix))
+    
+    # test empty
+    expected_empty <- expected_fix %>% 
+        filter(CHROM == 'dummy') %>%
+        as.matrix()
+    
+    get_fix_section(cnv_tb_empty) %>%
+        expect_equal(expected_empty)
     
     # test advanced 
     expected_fix <- expected_fix %>%
@@ -170,10 +180,18 @@ test_that('get_gt_section', {
             cnv_tb$LRR,
             sep = ":"
         )
-    ) %>% as.matrix()
+    ) 
+    expected_empty <- expected_gt %>% 
+        filter(FORMAT == 'dummy') %>%
+        as.matrix()
+    expected_gt <- expected_gt %>% as.matrix()
     
-    get_gt_section(cnv_tb, 'f') %>%
-        expect_equal(expected_gt )
+    get_gt_section(cnv_tb, 'test_sample', 'f', 'UCSC') %>%
+        expect_equal(expected_gt)
+    
+    # test empty
+    get_gt_section(cnv_tb_empty, 'test_sample', 'f', 'UCSC') %>%
+        expect_equal(expected_empty)
 
     # Test with changes for male X & Y
     expected_gt_m <- expected_gt
@@ -185,7 +203,7 @@ test_that('get_gt_section', {
     factor(levels = genomeStyles('Homo_sapiens')$UCSC),
             CN = c(3, 4, 3, 3, 3, 2, 0, 3, 0)
         ) %>%
-        get_gt_section('m') %>%
+        get_gt_section('test_sample', 'm', 'UCSC') %>%
         expect_equal(expected_gt_m)
     
     # test with processed annotation
@@ -195,6 +213,6 @@ test_that('get_gt_section', {
         cnv_tb_annotated_out$reference_coverage,
         sep = ':'
     )
-    get_gt_section(cnv_tb_annotated, 'f') %>%
+    get_gt_section(cnv_tb_annotated, 'test_sample', 'f', 'UCSC') %>%
         expect_equal(expected_gt )
 })

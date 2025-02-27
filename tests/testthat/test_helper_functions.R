@@ -73,24 +73,27 @@ input_tb <- tibble(
 # there is also a test for this is test_CNV_preprocess_functions.R
 test_that("fix_CHROM_format", {
     expected_ncbi <- input_tb %>%
-        mutate(seqnames = factor(c('2', 'X', '1'), levels = c('1', '2', 'X'))) %>%
-        as_granges()
+        mutate(seqnames = factor(c('2', 'X', '1'), levels = c('1', '2', 'X')))
     expected_ucsc <- input_tb %>%
-        mutate(seqnames = factor(c('chr2', 'chrX', 'chr1'), levels = c('chr1', 'chr2', 'chrX'))) %>%
-        as_granges()
+        mutate(seqnames = factor(c('chr2', 'chrX', 'chr1'), levels = c('chr1', 'chr2', 'chrX')))
     
-    expect_equal(as_granges(input_tb) %>% fix_CHROM_format('NCBI'), expected_ncbi)
-    expect_equal(as_granges(input_tb) %>% fix_CHROM_format('UCSC'), expected_ucsc)
+    # Test on granges input
+    expect_equal(as_granges(input_tb) %>% fix_CHROM_format('NCBI'), as_granges(expected_ncbi))
+    expect_equal(as_granges(input_tb) %>% fix_CHROM_format('UCSC'), as_granges(expected_ucsc))
+    
+    # Test on tibble input
+    expect_equal(input_tb %>% fix_CHROM_format('NCBI'), expected_ncbi)
+    expect_equal(input_tb %>% fix_CHROM_format('UCSC'), expected_ucsc)
+    
+    # Expect error on invalid input
+    expect_error(input_tb %>% fix_CHROM_format('invalid'))
 })
 
 
 test_that("get_sex_chroms", {
-    expect_equal(get_sex_chroms(input_tb), c('X', 'Y'))
-    expect_equal(get_sex_chroms(as_granges(input_tb)), c('X', 'Y'))
-    as_granges(input_tb) %>%
-        fix_CHROM_format('UCSC') %>%
-        get_sex_chroms() %>%
-        expect_equal(c('chrX', 'chrY'))
+    expect_equal(get_sex_chroms('NCBI'), c('X', 'Y'))
+    expect_equal(get_sex_chroms('UCSC'), c('chrX', 'chrY'))
+    expect_error(get_sex_chroms('invalid'))
 })
 
 

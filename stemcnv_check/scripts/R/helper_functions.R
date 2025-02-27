@@ -11,22 +11,41 @@ get_defined_labels <- function(config) {
 }
 
 
-fix_CHROM_format <- function(gr, target_style) {
-    seqlevelsStyle(gr) <- target_style
-    return(sortSeqlevels(gr))
+fix_CHROM_format <- function(gr.or.tb, target_style) {
+    stopifnot("GRanges" %in% class(gr.or.tb) | "data.frame" %in% class(gr.or.tb))
+    if ("GRanges" %in% class(gr.or.tb)) {
+        seqlevelsStyle(gr.or.tb) <- target_style
+        return(sortSeqlevels(gr.or.tb))
+    } else {
+        orig_cols <- colnames(gr.or.tb)
+        gr <- as_granges(gr.or.tb)
+        seqlevelsStyle(gr) <- target_style
+        tb <- sortSeqlevels(gr) %>%
+            as_tibble() %>%
+            select(all_of(orig_cols))
+        return(tb)
+    }
 }
 
 
-get_sex_chroms <- function(tb.or.gr) {
-    if ("GRanges" %in% class(tb.or.gr)) {
-        chroms <- tb.or.gr
-    } else {
-        chroms <- as.character(tb.or.gr$seqnames)
-    }
-    
-    genomeStyles('Homo_sapiens') %>%
-        filter(sex) %>%
-        pull(chroms %>% seqlevelsStyle() %>% head(1))
+get_sex_chroms <- function(target_style) {
+    sex_chroms <- genomeStyles('Homo_sapiens') %>%
+        filter(sex)
+    stopifnot(target_style %in% colnames(sex_chroms))
+    sex_chroms %>% pull(target_style)
+  #   # Legacy option: Determine chrom style and return sex chroms
+  #   stopifnot("GRanges" %in% class(tb.or.gr) | "data.frame" %in% class(tb.or.gr))
+  #   if ("GRanges" %in% class(tb.or.gr)) {
+  #       chroms <- tb.or.gr
+  #   } else if(is.factor(tb.or.gr$seqnames)) {
+  #       chroms <- levels(tb.or.gr$seqnames)
+  #   } else {
+  #       chroms <- as.character(tb.or.gr$seqnames)
+  #       stopifnot(length(chroms), "Can not determine chrom style from empty list!")
+  #   }
+  #   
+  # sex_chroms %>%
+  #       pull(chroms %>% seqlevelsStyle() %>% head(1))
 }
 
 

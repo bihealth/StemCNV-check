@@ -239,9 +239,16 @@ get_fix_section <- function(tb) {
         as.matrix()
 }
 
-get_gt_section <- function(tb, sample_sex){
+get_gt_section <- function(tb, sample_id, sample_sex, target_style) {
     # Return a matrix with the following columns:
     # FORMAT, <sample>
+    
+    # sample_id is needed in case tb is empty (and/or doesn't contain any entries in sample_id column)
+    if (nrow(tb) == 0) {
+        out <- tibble(FORMAT = character())
+        out[[sample_id]] <- character()
+        return(out %>% as.matrix())
+    }
     
     # min. expected cols in tb:
     # seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id, 
@@ -251,7 +258,7 @@ get_gt_section <- function(tb, sample_sex){
     # FORMAT keys: GT, CN, TOOL (str desc), LRR (median), [opt: REFCOV]
     # Future: BAF (no. of clusters?)
     
-    sex_chroms <- get_sex_chroms(tb)
+    sex_chroms <- get_sex_chroms(target_style)
     use_cols <- c('GT', 'CN', 'TOOL', 'LRR')
     if ('reference_coverage' %in% colnames(tb)) {
         use_cols <- c(use_cols, 'REFCOV')

@@ -11,7 +11,7 @@ snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/CNV_preprocess_functions.R')
 
 
-read_PennCNV <- function(filename, sample_id, sample_sex) {
+read_PennCNV <- function(filename, sample_id, sample_sex, target_style) {
     tb <- read.table(
         filename, sep='', header = F, fill=T,
         col.names = c('Position', 'numsnp', 'length', 'hmm.state', 'input', 'startsnp', 'endsnp', 'caller_confidence')
@@ -27,18 +27,19 @@ read_PennCNV <- function(filename, sample_id, sample_sex) {
             CNV_caller = 'PennCNV',
         ) 
 
-    # Checking seqlevelStyle won't work on empty values
-    if (nrow(tb) == 0) {
-        tb <- tb %>%
-            mutate(CN = integer(), ID = character(), CNV_type = character()) %>%
-            select(seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id)
-        
-        return(tb)
-    }
+    # # Checking seqlevelStyle won't work on empty values
+    # if (nrow(tb) == 0) {
+    #     tb <- tb %>%
+    #         mutate(CN = integer(), ID = character(), CNV_type = character()) %>%
+    #         select(seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id)
+    #     
+    #     return(tb)
+    # }
     
-    sex_chroms <- get_sex_chroms(tb)
+    sex_chroms <- get_sex_chroms(target_style)
 
     tb %>% 
+        fix_CHROM_format(target_style) %>%
         mutate(
             CN = str_extract(hmm.state, '(?<=cn=)[0-9]') %>% as.integer(),  
             CNV_type = case_when(
@@ -65,16 +66,18 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
     snp_vcf <- read.vcfR(input_files[['vcf']], verbose = F) 
     snp_vcf_meta <- snp_vcf@meta
     snp_vcf_gr <- parse_snp_vcf(snp_vcf)
+    target_style <- get_target_chrom_style(config, snp_vcf_gr)
     
     # Read input files
     sample_sex <- get_sample_info(sample_id, "sex", config)
-    all_calls <- lapply(input_files[['tsvs']], read_PennCNV, 
-                        sample_id = sample_id, sample_sex = sample_sex) %>%
+    all_calls <- lapply(
+        input_files[['tsvs']], read_PennCNV, 
+        sample_id = sample_id, sample_sex = sample_sex, target_style = target_style
+    ) %>%
         bind_rows() %>%
         as_granges()
     
     #make sure that snp_vcf & cnv_vcf use the same (& intended) chrom style
-    target_style <- get_target_chrom_style(config, snp_vcf_gr)
     all_calls <- fix_CHROM_format(all_calls, target_style)
     snp_vcf_gr <- fix_CHROM_format(snp_vcf_gr, target_style)
     
@@ -105,7 +108,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         "vcfR",
         meta = header,
         fix = get_fix_section(all_calls),
-        gt = get_gt_section(all_calls, sample_sex)
+        gt = get_gt_section(all_calls, sample_id, sample_sex, target_style)
     )
     
     write.vcf(cnv_vcf, out_vcf)

@@ -169,7 +169,7 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
         "vcfR",
         meta = header,
         fix = get_fix_section(tb),
-        gt = get_gt_section(tb, sample_sex)
+        gt = get_gt_section(tb, sample_id, sample_sex, target_style)
     )
     
     write.vcf(cnv_vcf, vcf_out)

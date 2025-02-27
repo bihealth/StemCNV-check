@@ -12,7 +12,7 @@ snakemake@source('R/vcf_io_functions.R')
 snakemake@source('R/CNV_preprocess_functions.R')
 
 
-CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
+CBS_LRR_segmentation <- function(tb, CBS_config, sex, target_style, sample_id = 'test') {
    
     # CBS code
     cna.basic <- CNA(tb$LRR, tb$seqnames, tb$start, data.type = 'logratio', sampleid = sample_id)
@@ -27,18 +27,15 @@ CBS_LRR_segmentation <- function(tb, CBS_config, sex, sample_id = 'test') {
     )
 
     # Need sex chroms in matching style to set proper CNs
-    sex_chroms <- get_sex_chroms(tb)
+    sex_chroms <- get_sex_chroms(target_style)
     
     # Re-formatting
     tb <- segments.summary(cna.basic.smoothed.segmented) %>%
   		dplyr::rename(seqnames = chrom, start = loc.start, end = loc.end, n_probes = num.mark) %>%
+        fix_CHROM_format(target_style) %>%
         mutate(
-            seqnames = str_remove(seqnames, '^(chr|ch)'),
             sample_id = sample_id,
             width = end - start + 1,
-            # Chr = paste0('chr', Chr),
-            # Chr = factor(Chr, levels = c(paste0('chr', 1:22), 'chrX', 'chrY')),
-            # snp.density = n_snp_probes / length * 1e6,
             CN = case_when(
                 #Male is default CN=1 on X & Y, also unqiue cutoffs
                 sex == 'm' & seqnames %in% sex_chroms & seg.median < CBS_config$LRR.male.XorY.loss       ~ 0,
@@ -90,12 +87,13 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
     snp_vcf <- read.vcfR(input_vcf, verbose = F) 
     snp_vcf_meta <- snp_vcf@meta
     snp_vcf_gr <- parse_snp_vcf(snp_vcf)
+    target_style <- get_target_chrom_style(config, snp_vcf_gr)
+    
     # Run CBS
-    cnv_gr <- CBS_LRR_segmentation(as_tibble(snp_vcf_gr), tool_config, sample_sex, sample_id) %>%
+    cnv_gr <- CBS_LRR_segmentation(as_tibble(snp_vcf_gr), tool_config, sample_sex, target_style, sample_id) %>%
         as_granges()
     
     #make sure that snp_vcf & cnv_vcf use the same (& intended) chrom style
-    target_style <- get_target_chrom_style(config, snp_vcf_gr)
     cnv_gr <- fix_CHROM_format(cnv_gr, target_style)
     snp_vcf_gr <- fix_CHROM_format(snp_vcf_gr, target_style)
     
@@ -103,6 +101,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
     cnvs <- apply_preprocessing(cnv_gr, snp_vcf_gr, tool_config) %>%
         get_median_LRR(snp_vcf_gr) %>%
         as_tibble()
+    
     # Generate VCF
     filtersettings <- tool_config$`probe_filter_settings`
     if (filtersettings == '_default_') {
@@ -128,7 +127,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         "vcfR",
         meta = header,
         fix = get_fix_section(cnvs),
-        gt = get_gt_section(cnvs, sample_sex)
+        gt = get_gt_section(cnvs, sample_id, sample_sex, target_style)
     )
     
     write.vcf(cnv_vcf, out_vcf)
@@ -137,8 +136,8 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
 
 
 get_CBS_CNV_vcf(
-    snakemake@input[['vcf']],
-    snakemake@output[['vcf']],
-    snakemake@config,
-    snakemake@wildcards[['sample_id']]
+    input_vcf = snakemake@input[['vcf']],
+    out_vcf = snakemake@output[['vcf']],
+    config = snakemake@config,
+    sample_id = snakemake@wildcards[['sample_id']]
 )
