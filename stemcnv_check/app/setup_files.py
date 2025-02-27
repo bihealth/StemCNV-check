@@ -7,6 +7,7 @@ from loguru import logger as logging
 from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, MEHARI_DB_VERSION
 from stemcnv_check.helpers import read_sample_table
 
+@logging.catch(reraise=True)
 def setup_control_files(args):
 
     logging.info(f'Creating empty config and sample table files. Config details: {args.config_details}')
@@ -64,7 +65,11 @@ def setup_control_files(args):
                     line = line[:line.index('###!strip:')-n_strip] + '\n'
                 # Format normal comment lines as strings
                 if re.match(r'\s+#', line):
-                    line = line.format(**comment_format)
+                    try:
+                        line = line.format(**comment_format)
+                    except KeyError:
+                        logging.debug(f"KeyError in formatting comment line: {line}")
+                        pass
                 # '##!' lines are used for control of written out detail
                 if line.startswith('##!'):
                     write_lines = modes.index(line[3:-1]) <= modes.index(use_mode)
