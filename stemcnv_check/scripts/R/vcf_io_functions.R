@@ -10,10 +10,9 @@ vcfR_to_tibble <- function(vcf, info_fields = NULL, format_fields = NULL){
     listobj$dat %>% dplyr::rename(sample_id = Indiv)       
 }
 
-parse_snp_vcf <- function(vcf, 
-                         info_fields = FALSE, 
-                         format_fields = c("LRR", "BAF"), 
-                         apply_filter = TRUE) {
+parse_snp_vcf <- function(
+    vcf, info_fields = FALSE, format_fields = c("LRR", "BAF"), apply_filter = TRUE
+) {
     if (typeof(vcf) == 'character') {
         vcf <- read.vcfR(vcf, verbose = F)
     }
@@ -30,34 +29,58 @@ parse_snp_vcf <- function(vcf,
 }
 
 # parse_cnv_vcf
-parse_cnv_vcf <- function(vcf, 
-                         info_fields = NULL, 
-                         format_fields = NULL, 
-                         apply_filter = FALSE) {
+parse_cnv_vcf <- function(
+    vcf, info_fields = NULL, format_fields = NULL, apply_filter = FALSE
+) {
     if (typeof(vcf) == 'character') {
         vcf <- read.vcfR(vcf, verbose = F)
     }
-    # VCF POS are 1-based, *but* for SV/CNV entries describe the base _before_ the variant
-    # Granges are also 1-based and are (fully) open [= start & end should be included]
-    vcf <- vcf %>%
-        vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
-        mutate(
-            POS = POS + 1,
-            CNV_type = str_remove(ALT, '<') %>% str_remove('>') %>%
-                str_replace('DUP', 'gain') %>%
-                str_replace('DEL', 'loss') %>%
-                str_replace('CNV:LOH', 'LOH'),
-            CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+'),
-            n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
-            initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
-            across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
-            FILTER = ifelse(FILTER %in% c('', 'PASS'), NA_character_, FILTER),
+    # vcfR2tidy does not work on empty vcf objects
+    if (nrow(vcf@fix) == 0) {
+        vcf <- tibble(
+            seqnames = character(),
+            start = integer(),
+            ID = character(),
+            FILTER = character(),
+            end = integer(),
+            width = integer(),
+            n_probes = integer(),
+            n_uniq_probes = integer(),
+            probe_density_Mb = double(),            
+            sample_id = character(),
+            GT = character(),
+            CN = integer(),
+            LRR = double(),
+            CNV_type = character(),
+            CNV_caller = character(),
+            n_initial_calls = integer(),
+            initial_call_details = character(),
         ) %>%
-        rename_with(~str_to_lower(.), contains('PROBE')) %>%
-        rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
-        dplyr::rename(probe_density_Mb = probe_dens) %>%
-        select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
-        as_granges(seqnames = CHROM, start = POS, end = END, width = SVLEN)
+            as_granges()
+    } else {
+        # VCF POS are 1-based, *but* for SV/CNV entries describe the base _before_ the variant
+        # Granges are also 1-based and are (fully) open [= start & end should be included]
+        vcf <- vcf %>%
+            vcfR_to_tibble(info_fields = info_fields, format_fields = format_fields) %>%
+            mutate(
+                POS = POS + 1,
+                CNV_type = str_remove(ALT, '<') %>% str_remove('>') %>%
+                    str_replace('DUP', 'gain') %>%
+                    str_replace('DEL', 'loss') %>%
+                    str_replace('CNV:LOH', 'LOH'),
+                CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+'),
+                n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
+                initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
+                across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
+                FILTER = ifelse(FILTER %in% c('', 'PASS'), NA_character_, FILTER),
+            ) %>%
+            rename_with(~str_to_lower(.), contains('PROBE')) %>%
+            rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
+            dplyr::rename(probe_density_Mb = probe_dens) %>%
+            select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
+            as_granges(seqnames = CHROM, start = POS, end = END, width = SVLEN)
+    }
+        
     if (apply_filter) {
         vcf <- vcf %>% filter(is.na(FILTER))
     }

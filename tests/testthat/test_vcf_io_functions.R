@@ -10,7 +10,7 @@ source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
 #  Functions to test:
 # - [x] vcfR_to_tibble
 # - [x] parse_snp_vcf
-# - [x] parse_cnv_vcf
+# - [ ] parse_cnv_vcf
 # - [ ] fix_header_lines
 # - [x] get_fix_section
 # - [x] get_gt_section
@@ -18,7 +18,7 @@ source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
 
 snp_vcfr <- read.vcfR(test_path('../data/minimal_probes.vcf'), verbose = F) 
 
-expected_tb <- tibble(
+expected_snp_tb <- tibble(
     CHROM = 'chr1',
     POS = c(1, 49, 100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
     ID = c('dummy1a', 'dummy1b', NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
@@ -37,12 +37,12 @@ expected_tb <- tibble(
 test_that("vcfR_to_tibble", {
     vcfR_to_tibble(snp_vcfr) %>%
         filter(POS < 4000) %>% 
-        expect_equal(expected_tb)
+        expect_equal(expected_snp_tb)
 })
 
 test_that('parse_snp_vcf', {
 
-    expected <- expected_tb %>%
+    expected <- expected_snp_tb %>%
         dplyr::rename(seqnames = CHROM, start = POS) %>%
         mutate(width = 1) %>%
         as_granges()
