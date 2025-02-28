@@ -137,7 +137,7 @@ cnvs <- cnvs %>%
 
 
 # Also directly write out a cnv vcf
-combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config, vcf_meta, target_style) {
+combined_calls_to_vcf <- function(cnv_tb, out_vcf, sample_sex, processing_config, vcf_meta, target_style) {
     
     tb <- cnv_tb %>%
         as_tibble() %>%
