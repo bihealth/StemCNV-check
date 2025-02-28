@@ -12,6 +12,7 @@ dependencies:
   - r-yaml
   - r-sessioninfo
   - r-vcfr
+  - r-r.utils
   # xlsx support
   - r-readxl
   - r-writexl

@@ -165,15 +165,28 @@ combined_calls_to_vcf <- function(cnv_tb, vcf_out, sample_sex, processing_config
         )
     )
     
-    cnv_vcf <- new(
-        "vcfR",
-        meta = header,
-        fix = get_fix_section(tb),
-        gt = get_gt_section(tb, sample_id, sample_sex, target_style)
-    )
-    
-    write.vcf(cnv_vcf, vcf_out)
-    
+    fix <- get_fix_section(tb)
+    gt <- get_gt_section(tb, sample_id, sample_sex, target_style)
+    # write.vcf does not work on empty vcfR objects
+    if (nrow(tb) == 0) {
+        vcf_file <- out_vcf %>% str_replace('.gz$', '')
+        cat(header, file = vcf_file, sep = '\n')
+        cat(
+            paste0(
+                '#', paste(c(colnames(fix), colnames(gt)), collapse = '\t')
+            ),
+            file = vcf_file, sep = '\n', append = T
+        )
+        R.utils::gzip(vcf_file)
+    } else {
+        cnv_vcf <- new(
+            "vcfR",
+            meta = header,
+            fix = fix,
+            gt = gt
+        )
+        write.vcf(cnv_vcf, out_vcf)
+    }
 }
 
 cnvs %>%

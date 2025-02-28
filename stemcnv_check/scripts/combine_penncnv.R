@@ -104,15 +104,28 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         )
     )
     
-    cnv_vcf <- new(
-        "vcfR",
-        meta = header,
-        fix = get_fix_section(all_calls),
-        gt = get_gt_section(all_calls, sample_id, sample_sex, target_style)
-    )
-    
-    write.vcf(cnv_vcf, out_vcf)
-  
+    fix <- get_fix_section(all_calls)
+    gt <- get_gt_section(all_calls, sample_id, sample_sex, target_style)
+    # write.vcf does not work on empty vcfR objects
+    if (nrow(all_calls) == 0) {
+        vcf_file <- out_vcf %>% str_replace('.gz$', '')
+        cat(header, file = vcf_file, sep = '\n')
+        cat(
+            paste0(
+                '#', paste(c(colnames(fix), colnames(gt)), collapse = '\t')
+            ),
+            file = vcf_file, sep = '\n', append = T
+        )
+        R.utils::gzip(vcf_file)
+    } else {
+        cnv_vcf <- new(
+            "vcfR",
+            meta = header,
+            fix = fix,
+            gt = gt
+        )
+        write.vcf(cnv_vcf, out_vcf)
+    }
 }
 
 penncnv_calls_to_vcf(
