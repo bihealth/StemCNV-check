@@ -175,16 +175,10 @@ settings:
     #
     # We recommend to use these filter settings:
     standard:
-      GenTrainScore: 0.2
-      GenCallScore:  0.2 # Anything above this should be a stable genotype call according to Illumina
+      GenTrainScore: 0.15
+      GenCallScore:  0.15
       Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
       Pseudoautosomal: remove-male # keep|remove|remove-male
-    # These settings achieve higher precision at the cost of sensitivity
-    high_precision:
-      GenTrainScore: 0.8
-      GenCallScore:  0.8
-      Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
-      Pseudoautosomal: remove-male # keep|remove|remove-male  
 
   # Default filter set to use for all tools
   default_probe_filter_set: standard
