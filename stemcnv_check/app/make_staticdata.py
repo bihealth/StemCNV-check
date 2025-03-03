@@ -8,7 +8,7 @@ from deepdiff import DeepDiff
 from pydantic.v1.utils import deep_update
 from snakemake.api import SnakemakeApi
 from snakemake.settings.types import ResourceSettings, ConfigSettings, DeploymentSettings, DAGSettings, OutputSettings, DeploymentMethod
-from .check_input import check_config
+from .check_input import check_config, check_sample_table
 from stemcnv_check import STEM_CNV_CHECK, helpers
 from loguru import logger as logging
 
@@ -18,9 +18,20 @@ def create_missing_staticdata(args):
 
     check_config(args, minimal_entries_only=True)
     config = helpers.load_config(args)
+    check_sample_table(args)
+    sample_df = helpers.read_sample_table(args.sample_table, args.column_remove_regex)
 
+    ret = 0
     for array_name in config['array_definition']:
-        run_staticdata_workflow(args, array_name)
+        # Check that at least one sample per array is defined
+        # Otherwise give error, but continue with other arrays
+        if not sample_df[sample_df['Array_Name'] == array_name].empty:
+            ret += run_staticdata_workflow(args, array_name)
+        else:
+            logging.error(f'No samples defined for array "{array_name}"')
+            ret += 1
+
+    return ret
 
 
 def run_staticdata_workflow(args, array_name):

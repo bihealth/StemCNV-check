@@ -76,12 +76,16 @@ def check_sample_table(args):
         logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 
-    # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex (& aren't empty!)
+    # This includes the global array definition config
     config = load_config(args, inbuilt_defaults=False)
     # check that the array_definition block is loaded
     if 'array_definition' not in config:
-        raise ConfigValueError("The 'array_definition' block is missing from the config file.")
+        raise ConfigValueError(
+            "The 'array_definition' block is missing from the config file" +
+            "." if args.no_cache else " and no arrays are defined in the globally."
+        )
 
+    # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex (& aren't empty!)
     sample_data = read_sample_table(sample_table_file, args.column_remove_regex, return_type='list')
     for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
         pattern = config_extract(['wildcard_constraints', constraint], config, default_config)
@@ -93,7 +97,7 @@ def check_sample_table(args):
     array_names = set(sample_data_df['Array_Name'])
     array_names_not_config = [array for array in array_names if array not in config['array_definition']]
     if array_names_not_config:
-        logging.error("The following Array_Name values are not defined in the config file: " + ', '.join(array_names_not_config))
+        # logging.error("The following Array_Name values are not defined in the config file: " + ', '.join(array_names_not_config))
         raise SampleConstraintError("The following Array_Name values are not defined in the config file: " + ', '.join(array_names_not_config))
 
     # Check that all Chip_Name values have the same Array_Name

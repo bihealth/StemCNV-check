@@ -256,15 +256,6 @@ def load_config(args, inbuilt_defaults=True):
                 config['array_definition'] = global_array_config['array_definition']
             else:
                 config['array_definition'] = deep_update(global_array_config['array_definition'], config['array_definition'])
-            # # Now overwrite in the merged array_definition all empty or non_file_resolving entries if they can be
-            # # replaced with a value from the global config
-            # for array_name, array_def in config['array_definition'].items():
-            #     if array_name not in global_array_config['array_definition']:
-            #         continue
-            #     for config_key, value in array_def.items():
-            #         if (not value or (config_key.endswith('_file') and not os.path.isfile(value)) and
-            #                 config_key in global_array_config['array_definition'][array_name]):
-            #             array_def[config_key] = global_array_config['array_definition'][array_name][config_key]
 
     # Update inbuilt default config with all previously defined values
     if inbuilt_defaults:
