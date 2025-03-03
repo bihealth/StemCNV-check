@@ -66,7 +66,7 @@ def setup_argparse():
 
     group_snake.add_argument('--target', '-t', default='complete',
                              choices=('complete', 'report', 'collate-summary', 'summary-tables', 'collate-cnv-calls',
-                                      'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data'),
+                                      'combined-cnv-calls', 'PennCNV', 'CBS', 'SNP-data', 'gtc-data'),
                              help="Final target of the pipeline. Default: %(default)s")
     group_snake.add_argument('--collate-date', nargs='?', const=datetime.date.today().strftime("%Y-%m-%d"),
                              default=None, help="Add a date to the collate output files. Default without argument: today's date")

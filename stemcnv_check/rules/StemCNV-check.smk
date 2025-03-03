@@ -126,7 +126,17 @@ def get_target_files(target=TARGET):
             sample_id=all_samples,
             filter=config["settings"]["default_probe_filter_set"],
         )
-        
+    # Target gtc-data
+    elif target == "gtc-data":
+        sentrix_data = sample_data_df[['Array_Name', 'Chip_Name']].drop_duplicates()
+        sentrix_data['genome'] = sentrix_data.apply(
+            lambda x: config['array_definition'][x['Array_Name']]['genome_version'],
+            axis=1
+        )
+        out = [
+            os.path.join(DATAPATH, f"gtc_{genome}", f"{sentrix_name}", "_done") for 
+            genome, sentrix_name in zip(sentrix_data['genome'], sentrix_data['Chip_Name'])
+        ]       
     else:
         raise ValueError('Invalid target value: "{}"'.format(target))
 
