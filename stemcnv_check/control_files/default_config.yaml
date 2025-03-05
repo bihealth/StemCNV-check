@@ -167,11 +167,13 @@ settings:
     # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes. Multiple data 
     #                        points at the same position are problematic for CNV calling due to signal/noise issues.
     #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
-    # - pseudoautosomal: probes in the pseudo-autosomal regions of X and Y chromosomes, these are always (pseudo) diploid
-    #                    which can cause issues on haploid male samples. They can also be generally more problematic.
-    # Additionally SNPs on the Y chromosome are always (soft)filtered for female samples and SNPs without properly 
-    # defined REF & ALT alleles are hard-filtered (i.e. removed from the vcf). The latter mainly occurs if the manifest 
-    # csv is omitted, which causes Indel-probes to be improperly defined.
+    # - Pseudoautosomal: Handling probes in the pseudo-autosomal (PAR1, PAR2) and X-translocated (XTR) regions on the X and Y chromosomes
+    #                    These regions are identical or very similar between X and Y and always behave as if diploid,
+    #                    which can cause issues on haploid male samples. They can also be generally more problematic to interpret.
+    # Additionally:
+    # - SNPs on the Y chromosome are always (soft)filtered for female samples
+    # - SNPs without properly defined REF & ALT alleles are hard-filtered (i.e. removed from the vcf). 
+    #   The latter mainly occurs if the manifest csv is omitted, which causes Indel-probes to be improperly defined.
     #
     # We recommend to use these filter settings:
     standard:

@@ -7,7 +7,10 @@ from stemcnv_check.helpers import config_extract, get_global_file, get_array_fil
 from stemcnv_check.exceptions import SampleConstraintError
 
 def get_sample_info(wildcards):
-    return sample_data_df.loc[wildcards.sample_id].to_dict()
+    info = sample_data_df.loc[wildcards.sample_id].to_dict()
+    # ensure Sex is encoded as 'm' or 'f'
+    info['Sex'] = info['Sex'][0].lower()
+    return info
 
 def fix_container_path(path_in, bound_to):
     path_in = Path(path_in)

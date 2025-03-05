@@ -31,7 +31,10 @@ def get_filter_settings(filtersetname, config, sample_sex):
 
     pseudoauto = config_filterset.get('Pseudoautosomal')
     if pseudoauto == 'remove' or (pseudoauto == 'remove-male' and sample_sex == 'm'):
-        filterset['pseudoauto'] = ('PSEUDO-AUTOSOMAL', pseudoauto, 'Remove records in pseudoautosomal regions')
+        filterset['pseudoauto'] = (
+            'PSEUDO-AUTOSOMAL', pseudoauto,
+            'Remove records in pseudoautosomal regions (PAR1, PAR2) and X-transposed region (XTR)'
+        )
 
     if sample_sex == 'f':
         filterset['FEMALE-Y'] = ('FEMALE-Y', None, 'Remove Y records in female sample')
@@ -66,7 +69,7 @@ def apply_uniq_pos_filter(record_set):
 
 def apply_pseudo_autosomal_filter(record):
     if record.CHROM[-1] in ('X', 'Y'):
-        for start, end in PSEUDOAUTO_REGIONS[GENOME_VERSION][record.CHROM[-1]]:
+        for start, end, name in PSEUDOAUTO_REGIONS[GENOME_VERSION][record.CHROM[-1]]:
             if start <= record.POS <= end:
                 record.add_filter(FILTERSET['pseudoauto'][0])
                 break
@@ -148,15 +151,20 @@ def filter_snp_vcf(filterset, sample_sex, input='/dev/stdin', output='/dev/stdou
             # Write out last record set
             finalize_record_set(record_set)
 
-
+# Pseudoautosomal regions for hg19 and hg38, coordiantes are from Ensembl
+# XTR region is described by:
+# - Mumm et al 1997, doi: 10.1101/gr.7.4.307 
+# - Ross et al. 2005, doi: 10.1038/nature03440
+# - Webster et al. 2019, doi: 10.1093/gigascience/giz074
+# coordinates based on markers DXS1217 to DXS3 (X) and SY20/DXYS42 to DXYS1 (Y), marker coordinates from Ensembl
 PSEUDOAUTO_REGIONS = {
     "hg38": {
-        'X': [(10001, 2781479), (155701383, 156030895)],
-        'Y': [(10001, 2781479), (56887903, 57217415)],
+        'X': [(10001, 2781479, 'PAR1'), (89140845, 93328068, 'XTR'), (155701383, 156030895, 'PAR2')],
+        'Y': [(10001, 2781479, 'PAR1'), (3058403, 6675025, 'XTR'), (56887903, 57217415, 'PAR2')],
     },
     "hg19": {
-        'X': [(60001, 2699520), (88484850, 92327352), (154931044, 155260560)],
-        'Y': [(10001, 2649520), (59034050, 59363566)],
+        'X': [(60001, 2699520, 'PAR1'), (88484850, 92327352, 'XTR'), (154931044, 155260560, 'PAR2')],
+        'Y': [(10001, 2649520, 'PAR1'), (2926444, 6543066, 'XTR'), (59034050, 59363566, 'PAR2')],
     }
 }
 
