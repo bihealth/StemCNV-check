@@ -123,7 +123,7 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
 @patch('stemcnv_check.helpers.importlib.resources.files')
 def test_make_singularity_args(mock_resource_files, fs):
     mock_resource_files.return_value = '/fake/snakedir'
-
+    cache_path = '/path/to/cache'
     config = {
         'data_path': '/path/to/data',
         'raw_data_folder': '/path/to/rawdata',
@@ -134,11 +134,13 @@ def test_make_singularity_args(mock_resource_files, fs):
             'hg19_genomeInfo_file': 'relative/genome.info',
             'mehari_transcript_db': 'relative/mehari_db',
             'dosage_sensitivity_scores': 'relative/dosage_sensitivity_scores.tsv',
+            'cache_dir': cache_path
         },
         'array_definition': {
             'ExampleArray': {
                 'genome_version': 'hg19',
                 'bpm_manifest': 'relative_array/bpm_manifest.bpm',
+                'penncnv_pfb_file': 'relative_array/pfb_file.pfb',
             }
         }
     }
@@ -151,38 +153,43 @@ def test_make_singularity_args(mock_resource_files, fs):
         "'/path/to/rawdata':'/outside/rawdata'",
         "'/fake/snakedir':'/outside/snakedir'"
     ]
+    def get_expected(extra):
+        return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
     expected_extra = [
         "'/relative/genome.fasta':'/outside/static/genome.fasta'",
         "'/relative/genome.info':'/outside/static/genome.info'",
         "'/relative/gtf.gtf':'/outside/static/gtf.gtf'",
         "'/relative/mehari_db':'/outside/static/mehari_db'",
-        "'/relative/dosage_sensitivity_scores.tsv':'/outside/static/dosage_sensitivity_scores.tsv'"
+        "'/relative/dosage_sensitivity_scores.tsv':'/outside/static/dosage_sensitivity_scores.tsv'",
+        "'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"
     ]
-    for file in expected_base + expected_extra:
+    for file in expected_base + expected_extra[:-1]:
         fs.create_file(file.split(':')[0].rstrip("'").lstrip("'"))
     fs.create_dir('relative_array')
 
-    def get_expected(extra):
-        return "-B " + ','.join(sorted(expected_base + extra, key=lambda x: x.split(':')[1]))
+    # Fail if defined required file does not exist (bpm), even with not_existing_ok
+    with pytest.raises(FileNotFoundError):
+        helpers.make_apptainer_args(config, None, not_existing_ok=True)
+    fs.create_file('/relative_array/bpm_manifest.bpm')
 
+    # Successful test with not_existing_ok (pfb file missing)
     assert (get_expected(expected_extra+["'/relative_array':'/outside/writearray/ExampleArray'"]) ==
             helpers.make_apptainer_args(config, None, not_existing_ok=True))
 
-    # Fail if some defined paths do not exist
-    with pytest.raises(FileNotFoundError):
-        helpers.make_apptainer_args(config, None)
-
-    # Test with tmpdir
+    # Successful test with not_existing_ok & tmpdir (pfb file missing)
     fs.create_dir('/tmp/tmpdir')
     assert (get_expected(expected_extra + ["'/relative_array':'/outside/writearray/ExampleArray'", "'/tmp/tmpdir':'/outside/tmp'"])
             == helpers.make_apptainer_args(config, None, tmpdir='/tmp/tmpdir', not_existing_ok=True))
 
+    # Fail if the defined file does not exist without not_existing_ok (pfb file)
+    with pytest.raises(FileNotFoundError):
+        helpers.make_apptainer_args(config, None)
     # test after file creation
-    fs.create_file('relative_array/bpm_manifest.bpm')
-    expected = get_expected(expected_extra + ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"])
+    fs.create_file('relative_array/pfb_file.pfb')
+    expected = get_expected(expected_extra + ["'/relative_array/pfb_file.pfb':'/outside/ExampleArray/pfb_file.pfb'"])
     assert expected == helpers.make_apptainer_args(config, None)
 
-    # test with direct addition, these are NOT checked for existence
+    # test with direct addition of mount path, these are NOT checked for existence
     assert expected+',/abcdef' == helpers.make_apptainer_args(config, None, extra_bind_args='/abcdef')
 
     # test that links are resolved to actual file paths
@@ -190,10 +197,22 @@ def test_make_singularity_args(mock_resource_files, fs):
     fs.create_symlink('/somewhere/else/genome.fasta', '/relative/genome.fasta')
     assert expected == helpers.make_apptainer_args(config, None)
 
-    # test with cache_path & auto-creation of global paths
-    cache_path = '/path/to/cache'
+    # Test default cache paths for array definition files
     fs.create_dir(cache_path)
+    config['array_definition']['ExampleArray']['penncnv_pfb_file'] = '__cache-default__'
+    # file not existing, binds write path
+    expected = get_expected(expected_extra + [
+        f"'{cache_path}/array_definitions/ExampleArray':'/outside/writearray/ExampleArray'"
+    ])
+    assert expected == helpers.make_apptainer_args(config, cache_path, not_existing_ok=True)
+    # existing file directly bound
+    fs.create_file(f'{cache_path}/array_definitions/ExampleArray/PennCNV-PFB_hg19.pfb')
+    expected = get_expected(expected_extra + [
+        f"'{cache_path}/array_definitions/ExampleArray/PennCNV-PFB_hg19.pfb':'/outside/ExampleArray/PennCNV-PFB_hg19.pfb'"
+    ])
+    assert expected == helpers.make_apptainer_args(config, cache_path)
 
+    # test with cache_path & auto-creation of global paths
     config['global_settings'] = {
         'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
@@ -206,7 +225,10 @@ def test_make_singularity_args(mock_resource_files, fs):
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         fs.create_file(static_file)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += [
+        "'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'",
+        f"'{cache_path}/array_definitions/ExampleArray/PennCNV-PFB_hg19.pfb':'/outside/ExampleArray/PennCNV-PFB_hg19.pfb'"
+    ]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
     # test with multiple arrays/genome versions
@@ -226,7 +248,10 @@ def test_make_singularity_args(mock_resource_files, fs):
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
         static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-    expected_extra += ["'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'"]
+    expected_extra += [
+        "'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'",
+        f"'{cache_path}/array_definitions/ExampleArray/PennCNV-PFB_hg19.pfb':'/outside/ExampleArray/PennCNV-PFB_hg19.pfb'"
+    ]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
 
 @pytest.fixture
@@ -522,3 +547,43 @@ def test_get_global_file(fs):
                 genome=genome_format[gtype][genome],
                 MEHARI_DB_VERSION=MEHARI_DB_VERSION
             )
+
+
+def test_get_array_file(fs):
+    cache_path = '/path/to/cache'
+    fs.create_dir(cache_path)
+    config = {
+        'global_settings': {
+            'cache_dir': cache_path
+        },
+        'array_definition': {
+            'ExampleArray': {
+                'genome_version': 'hg19',
+                'bpm_manifest': 'relative_array/bpm_manifest.bpm',
+                'penncnv_pfb_file': 'relative_array/file.pfb',
+                'penncnv_GCmodel_file': '__cache-default__',
+                'array_density_file': '__cache-default__',
+                'array_gaps_file': '__cache-default__',
+            }
+        }
+    }
+    expected = {
+        'penncnv_pfb_file': 'relative_array/file.pfb',
+        'penncnv_GCmodel_file': '/path/to/cache/array_definitions/ExampleArray/PennCNV-GCmodel_hg19.gcmodel',
+        'array_density_file': '/path/to/cache/array_definitions/ExampleArray/density_hg19.bed',
+        'array_gaps_file': '/path/to/cache/array_definitions/ExampleArray/gaps_hg19.bed',
+    }
+    # test expected paths
+    for filekey, expected_file in expected.items():
+        assert expected_file == helpers.get_array_file(filekey, 'ExampleArray', config, cache_path)
+
+    # Test Cache error if no cache given, raised ONLY if file should be in cache
+    assert expected['penncnv_pfb_file'] == helpers.get_array_file(
+        'penncnv_pfb_file', 'ExampleArray', config, None
+    )
+    with pytest.raises(CacheUnavailableError):
+        helpers.get_array_file('penncnv_GCmodel_file', 'ExampleArray', config, None)
+
+    # Test ValueError if file not one of the array/penncnv files
+    with pytest.raises(ValueError):
+        helpers.get_array_file('bpm_manifest', 'ExampleArray', config, cache_path)

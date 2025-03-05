@@ -79,8 +79,7 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
         (config['log_path'], '/outside/logs'),
         (importlib.resources.files(STEM_CNV_CHECK), '/outside/snakedir'),
     ]
-
-    # When apptainer is used these should always be present
+    # When apptainer is used the global files should always be present
     used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items())
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         for genome_version in used_genomes:
@@ -90,38 +89,51 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
     if tmpdir is not None:
         bind_points.append((tmpdir, '/outside/tmp'))
 
-    # Apptainer is needed to create some of these, in these cases "not_existing_ok" should be set to True
+    # Apptainer is needed to create some of the array definition files, in these cases "not_existing_ok" should be set to True
     # However, the directory in which the files should be created still need to be linked
     array_base_dirs = {}
     for array in config['array_definition'].keys():
         for name, file in config['array_definition'][array].items():
             if name == 'genome_version':
                 continue
+            # CSV file is optional
+            elif name == 'csv_manifest_file' and not file:
+                continue
+            # Replace default cache path with actual cache path
+            if (name.startswith('penncnv') or name.startswith('array')) and file == '__cache-default__':
+                file = get_array_file(name, array, config, cache_path)
             # Can only directly mount existing files
             if not os.path.isfile(file):
-                if not_existing_ok or not file:
-                    # Try to bind a base directory, if it exists
+                # Only allow missing files for penncnv and array files
+                if not_existing_ok and (name.startswith('penncnv') or name.startswith('array')):
+                    if file == '__cache-default__':
+                        file = get_array_file(name, array, config, cache_path)
+                    # Try to bind the base directory where files should be written, if it exists
                     # Note: If multiple files from one array have different base directories, this will fail
-                    if not os.path.isdir(os.path.dirname(file)):
-                        logging.info(f"Creating base directory for array static-data '{array}': {os.path.dirname(file)}")
-                        os.makedirs(os.path.dirname(file))
+                    file_basedir = os.path.dirname(file)
+                    # If the filename not a path (i.e. string/in the local directory) the basedir needs to be set to pwd
+                    if not file_basedir:
+                        file_basedir = os.getcwd()
+                    if not os.path.isdir(file_basedir):
+                        logging.info(f"Creating base directory for array static-data '{array}': {file_basedir}")
+                        os.makedirs(file_basedir)
                     dir_mount = (
-                        os.path.dirname(file).format(cache=cache_path, array_name=array),
+                        file_basedir.format(cache=cache_path, array_name=array),
                         f'/outside/writearray/{array}'
                     )
                     if array in array_base_dirs:
-                        if array_base_dirs[array] != os.path.dirname(file):
+                        if array_base_dirs[array] != file_basedir:
                             logging.error(
                                 f"Multiple base directories found for static data files of array '{array}': "
-                                f"{array_base_dirs[array]} and {os.path.dirname(file)}. Static-data workflow "
+                                f"{array_base_dirs[array]} and {file_basedir}. Static-data workflow "
                                 f"will likely to fail writing to the intended file paths."
                             )
                     else:
-                        array_base_dirs[array] = os.path.dirname(file)
+                        array_base_dirs[array] = file_basedir
                         bind_points.append(dir_mount)
                     continue
                 else:
-                    raise FileNotFoundError(f"Static data file '{file}' does not exist.")
+                    raise FileNotFoundError(f"Array definition file '{file}' does not exist  ({name} for {array}).")
             bind_points.append((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
 
     # Sort bind_points to make testing easier (loops over config_dict add them in a non-deterministic order)
