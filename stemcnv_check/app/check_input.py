@@ -140,7 +140,7 @@ def check_config(args, minimal_entries_only=False):
     for array in config['array_definition'].keys():
         for req in allowed_values['array_definition']['__array'].keys():
             if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
-                infostr = "\nYou can create it by running `StemCNV-check make-staticdata`"
+                infostr = "\nYou can create it by running `stemcnv-check make-staticdata`"
                 minimal_file = False
             else:
                 infostr = ""

@@ -562,7 +562,7 @@ SNV_table_output <- function (
                 ROI_hits = ifelse(
                     critical_reason == 'ROI-match' & !is.na(critical_reason),
                     map_chr(
-                        ROI_hit,
+                        ROI_hits,
                         \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), get_color('ROI-match'))
                     ),
                     ROI_hits

@@ -17,7 +17,6 @@ def run_stemcnv_check_workflow(args):
         "--printshellcmds", "--rerun-incomplete",
         "--sdm", "conda", "apptainer",
         "--apptainer-args", make_apptainer_args(config, cache_path, extra_bind_args=args.bind_points),
-        #"--conda-frontend", args.conda_frontend,
         ]
     if args.directory:
         argv += ["--directory", args.directory]
@@ -31,9 +30,6 @@ def run_stemcnv_check_workflow(args):
             "--conda-prefix", cache_path,
             "--apptainer-prefix", cache_path
         ]
-    # Some disc space could be cleared by using these options:
-    # --cleanup-containers
-    # --conda-cleanup-envs
 
     basedir = args.directory if args.directory else os.getcwd()
     argv += [
