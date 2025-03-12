@@ -59,8 +59,8 @@ all = [
 [project.scripts]
 stemcnv-check = "stemcnv_check.__main__:main"
 
-[tool.setuptools]
-packages = [ "stemcnv_check"]
+#[tool.setuptools]
+#packages = [ "stemcnv_check" ]
 
 [tool.setuptools.dynamic]
 version = {attr = "stemcnv_check.version.__version__"}
@@ -78,6 +78,9 @@ version = {attr = "stemcnv_check.version.__version__"}
 minversion = "6.0"
 pythonpath = [
   "."
+]
+addopts = [
+    "--import-mode=importlib",
 ]
 #addopts = "--cov=snappy_pipeline --cov-report=xml"
 testpaths = [

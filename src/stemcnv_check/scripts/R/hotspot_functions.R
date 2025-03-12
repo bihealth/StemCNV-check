@@ -51,7 +51,7 @@ tb_to_gr_by_gband <- function(tb, gr_info, colname = 'band_name') {
     # get a _set_ of matching bands (=gr rows) for each tb row
     # then do the str_extract and group_by on each set
     gr.tb <- paste0(
-        '^', str_replace(unlist(tb[, colname]), fixed('.'), '\\.')
+        '^', str_replace(unlist(tb[, colname]), fixed(''), '\\.')
     ) %>%        
         lapply(\(gband_regex) {
             gr_info %>%

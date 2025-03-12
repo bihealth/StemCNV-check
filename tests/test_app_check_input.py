@@ -4,7 +4,7 @@ import textwrap
 import ruamel.yaml as ruamel_yaml
 from copy import deepcopy
 from unittest.mock import MagicMock
-from stemcnv_check.app.check_input import check_config, check_sample_table
+from src.stemcnv_check.app.check_input import check_config, check_sample_table
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.exceptions import ConfigValueError, SampleFormattingError, SampleConstraintError
 

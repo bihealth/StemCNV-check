@@ -80,7 +80,7 @@ rule relink_gencall:
         os.path.join(DATAPATH, "{sample_id}", "{sample_id}.gencall.{genome}.gtc"),
     params:
         gtc_link_path=lambda wildcards: os.path.join(
-            "..", f"gtc_{wildcards.genome}", get_chip(wildcards, outtype="file")
+            "..",f"gtc_{wildcards.genome}", get_chip(wildcards, outtype="file")
         ),
     shell:
         'ln -s "{params.gtc_link_path}" "{output}"'

@@ -5,7 +5,7 @@ library(plyranges)
 library(GenomeInfoDb)
 library(vcfR)
 
-source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/vcf_io_functions.R'))
 
 #  Functions to test:
 # - [x] vcfR_to_tibble

@@ -3,9 +3,9 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/hotspot_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/CNV_annotation_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/hotspot_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/CNV_annotation_functions.R'))
 
 
 config <- list(

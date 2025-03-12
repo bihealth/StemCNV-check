@@ -376,7 +376,7 @@ CNV_table_output <- function(
             ),
             selection = 'none'
         ) %>%
-        formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '.') %>%
+        formatRound(c('Start', 'End', 'Size'), digits = 0, mark = '') %>%
         formatRound(c('Check Score', 'Gap Percent'), digits = 2)
     return(dt)
     } else {
@@ -526,7 +526,7 @@ SNV_table_output <- function (
     tb <- SNV_table %>%
         dplyr::rename(Chromosome = seqnames, Position = start) %>%
         mutate(
-            SNV = paste0(Chromosome, ':', format(Position, big.mark='.', decimal.mark = ','), ':', REF, '>', ALT),
+            SNV = paste0(Chromosome, ':', format(Position, big.mark= '', decimal.mark = ','), ':', REF, '>', ALT),
         )
 
     if (out_format == 'html') {
@@ -642,7 +642,7 @@ SNV_table_output <- function (
                     "};"
                 )
             ) %>%
-            formatRound(c('Position'), digits = 0, mark = '.')
+            formatRound(c('Position'), digits = 0, mark = '')
         return(dt)
     } else {
         tb <- tb %>%

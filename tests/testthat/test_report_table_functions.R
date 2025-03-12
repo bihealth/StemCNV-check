@@ -3,11 +3,12 @@ library(plyranges)
 library(DT)
 library(knitr)
 library(testthat)
+library(yaml)
 
-source(test_path("../../stemcnv_check/scripts/R/helper_functions.R"))
-source(test_path("../../stemcnv_check/scripts/R/report_table_functions.R"))
+source(test_path("../../src/stemcnv_check/scripts/R/helper_functions.R"))
+source(test_path("../../src/stemcnv_check/scripts/R/report_table_functions.R"))
 
-defined_labels <- yaml.load_file(test_path('../../stemcnv_check/control_files/label_name_definitions.yaml'))
+defined_labels <- yaml.load_file(test_path('../../src/stemcnv_check/control_files/label_name_definitions.yaml'))
 
 # Functions to test:
 # - [ ] vector_to_js

@@ -38,7 +38,7 @@ jobs:
           auto-activate-base: false
       - name: Run tests
         shell: bash -el {0}
-        run: Rscript -e "testthat::test_local()"
+        run: Rscript -e "testthat::test_dir('tests/testthat')"
 #         env:
 #           DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
 #           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}

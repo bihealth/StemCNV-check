@@ -87,7 +87,7 @@ run_snp_analysis <- function(
             Transcript_ID = Feature_ID
         ) %>%
         mutate(
-            GT = ifelse(is.na(GT), './.', GT)
+            GT = ifelse(is.na(GT), '', GT)
         )
     
     defined_labels <- get_defined_labels(config)

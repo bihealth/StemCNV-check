@@ -4,8 +4,8 @@ library(tidyverse)
 library(plyranges)
 library(vcfR)
 
-source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R')) # for vcfR_to_tibble
-source(test_path('../../stemcnv_check/scripts/R/CNV_preprocess_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/vcf_io_functions.R')) # for vcfR_to_tibble
+source(test_path('../../src/stemcnv_check/scripts/R/CNV_preprocess_functions.R'))
 
 # Functions to test
 # - add_snp_probe_counts (only gr, + snp_vcf)

@@ -24,7 +24,7 @@ sample_GT_distances <- function(sample_SNP_gr, ref_SNP_gr, extra_snp_files, ref_
         bind_ranges(sample_SNP_gr, ref_SNP_gr) %>%
         select(ID, sample_id, GT) %>%
         as_tibble() %>%
-        mutate(GT = ifelse(GT == './.', NA, str_count(GT, '1'))) %>%
+        mutate(GT = ifelse(GT == '', NA, str_count(GT, '1'))) %>%
         pivot_wider(names_from = sample_id, values_from = GT, values_fill = NA) %>%
         filter(if_all(everything(), ~!is.na(.))) %>%
         dplyr::select(-seqnames, -start, -end, -strand, -width, -ID) %>%
@@ -66,7 +66,7 @@ get_SNV_table <- function(
             ref_GenCall_Score = max(ref_GenCall_Score),
             n_distinct_ref_GT = n_distinct(ref_GT),
         ) %>%
-        mutate(ref_GT = ifelse(is.na(ref_GT), './.', ref_GT))
+        mutate(ref_GT = ifelse(is.na(ref_GT), '', ref_GT))
     
     if (any(ref_tb$n_distinct_ref_GT > 1)) {
         ref_tb <- ref_tb %>%
@@ -222,8 +222,8 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, us
                 by = c('seqnames', 'start', 'end', 'width', 'strand', 'ID')
             ) %>%
             mutate(
-                numeric_GT = ifelse(GT == './.', NA, str_count(GT, '1')),
-                numeric_GT_ref = ifelse(ref_GT == './.', NA, str_count(ref_GT, '1')),
+                numeric_GT = ifelse(GT == '', NA, str_count(GT, '1')),
+                numeric_GT_ref = ifelse(ref_GT == '', NA, str_count(ref_GT, '1')),
                 pw_filter_apply = !use_filter | (FILTER == 'PASS' & ref_FILTER == 'PASS')
             ) %>%
             filter(GT != ref_GT & !is.na(GT) & !is.na(ref_GT) & pw_filter_apply) %>%

@@ -3,8 +3,8 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/hotspot_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/hotspot_functions.R'))
 
 config <- list(
     'snakedir' = '',
@@ -137,7 +137,7 @@ test_that('parse inbuilt tables', {
     skip_on_covr()
     config <- list(
         'genome_version' = 'hg19',
-        'snakedir' = test_path('../../stemcnv_check/'),
+        'snakedir' = test_path('../../src/stemcnv_check/'),
         'global_settings' = list(
             'hg19_gtf_file' = '~/.cache/stemcnv-check/static-data/gencode.hg19.v45.gtf.gz',
             'hg19_genomeInfo_file' = '~/.cache/stemcnv-check/static-data/UCSC_hg19_chromosome-info.tsv'

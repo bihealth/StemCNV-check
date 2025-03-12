@@ -3,7 +3,7 @@ library(testthat)
 library(tidyverse)
 library(plyranges)
 
-source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
 
 # Functions to test:
 # - [x] read_sampletable
@@ -35,7 +35,7 @@ test_that("read_sampletable", {
         Sample_Group = c("ExampleCellines", "ExampleCellines", "ExampleCellines", "ExampleCellines"),
     )
     
-    test_path('../../stemcnv_check/control_files/sample_table_example.tsv') %>%
+    test_path('../../src/stemcnv_check/control_files/sample_table_example.tsv') %>%
         read_sampletable() %>%
         # this removes the "spec_tbl_df" class that readr adds
         # see here: https://www.tidyverse.org/blog/2018/12/readr-1-3-1/
@@ -51,7 +51,7 @@ test_that("read_sampletable", {
 })
 
 test_that("get_sample_info", {
-    sampletable <- test_path('../../stemcnv_check/control_files/sample_table_example.tsv') %>%
+    sampletable <- test_path('../../src/stemcnv_check/control_files/sample_table_example.tsv') %>%
         read_sampletable()
     config <- list()
     

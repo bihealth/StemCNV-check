@@ -5,12 +5,12 @@ library(plyranges)
 library(yaml)
 
 
-source(test_path('../../stemcnv_check/scripts/R/helper_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/vcf_io_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/CNV_preprocess_functions.R'))
-source(test_path('../../stemcnv_check/scripts/R/CNV_comparison_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/vcf_io_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/CNV_preprocess_functions.R'))
+source(test_path('../../src/stemcnv_check/scripts/R/CNV_comparison_functions.R'))
 
-defined_labels <- yaml.load_file(test_path('../../stemcnv_check/control_files/label_name_definitions.yaml'))
+defined_labels <- yaml.load_file(test_path('../../src/stemcnv_check/control_files/label_name_definitions.yaml'))
 
 # Example calls (toolA and toolB):
 
