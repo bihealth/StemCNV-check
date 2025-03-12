@@ -71,7 +71,7 @@ parse_cnv_vcf <- function(
                 CNV_caller = str_extract(TOOL, '(?<=caller=)[^;]+'),
                 n_initial_calls = str_extract(TOOL, '(?<=n_initial_calls=)[^;]+'),
                 initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
-                across(where(is.character), ~ ifelse(. == '', NA_character_, .)),
+                across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
                 FILTER = ifelse(FILTER %in% c('', 'PASS'), NA_character_, FILTER),
             ) %>%
             rename_with(~str_to_lower(.), contains('PROBE')) %>%
@@ -239,17 +239,17 @@ get_fix_section <- function(tb) {
                 any_of(c("Check_Score", "Precision_Estimate", "Call_label",
                          "stemcell_hotspot", "cancer_gene", "dosage_sensitive_gene",
                          "ROI_hits", "Gap_percent", "overlapping_genes")),
-                ~ ifelse(is.na(.) | . == "", '', as.character(.))
+                ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),
                        
             # From VCF specs:
             # Note that for structural variant symbolic alleles, POS corresponds 
             # to the base immediately preceding the variant.
             POS = start - 1,
-            REF = '',
+            REF = '.',
             #FIXME (future): CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
             ALT = str_glue("<{CNV_type}>"),
-            QUAL = '',
+            QUAL = '.',
             FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
             # END position of the longest variant described in this record. The END of each allele is defined as
             # <DEL>, <DUP>, <INV>, and <CNV> symbolic structural variant alleles:, POS + SVLEN.
@@ -291,26 +291,26 @@ get_gt_section <- function(tb, sample_id, sample_sex, target_style) {
         arrange(seqnames, start) %>%
         rename_with(~str_replace(., 'reference_coverage', 'REFCOV')) %>%
         mutate(
-            across(any_of('REFCOV'), ~ ifelse(is.na(.), '', round(., 3) %>% as.character())),
+            across(any_of('REFCOV'), ~ ifelse(is.na(.), '.', round(., 3) %>% as.character())),
             FORMAT = paste(use_cols, collapse = ':'),
             GT = case_when(
                 # Male sex chroms have lower CN baseline
                 # Male CN=1 will never be present (not a CNV, no LOh is called)
                 sample_sex == 'm' & seqnames %in% sex_chroms & CN == 2 ~ '0/1',
-                sample_sex == 'm' & seqnames %in% sex_chroms & CN > 2  ~ '',
+                sample_sex == 'm' & seqnames %in% sex_chroms & CN > 2  ~ './.',
                 # All other chromosomes
                 # LOH
-                CN == 2 ~ '',
+                CN == 2 ~ './.',
                 # hom loss
                 CN == 0 ~ '1/1',
                 # single copy gain/loss
                 CN %in% c(1, 3) ~ '0/1',
                 # multi copy gain
-                CN > 3 ~ '',
+                CN > 3 ~ './.',
             ),
             CN = as.character(CN),
             # initial_call_details; this will already carry further extra annotation if existing
-            initial_call_details = ifelse(is.na(initial_call_details), '', initial_call_details),
+            initial_call_details = ifelse(is.na(initial_call_details), '.', initial_call_details),
             TOOL = str_glue("caller={CNV_caller};n_initial_calls={n_initial_calls};initial_call_details={initial_call_details}"),
         ) %>%
         select(FORMAT, sample_id, all_of(use_cols)) %>%

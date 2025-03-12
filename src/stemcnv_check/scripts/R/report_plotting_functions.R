@@ -53,7 +53,7 @@ make_BAF_panel <- function(
         theme_classic() +
         scale_x_continuous(
             expand = expansion(),
-            labels = label_number(big.mark = '', decimal.mark = ','),
+            labels = label_number(big.mark = '.', decimal.mark = ','),
             limits = c(win_start, win_end),
             oob = oob_keep
         ) +
@@ -101,7 +101,7 @@ make_LRR_panel <- function(
         theme_classic() +
         scale_x_continuous(
             expand = expansion(),
-            labels = label_number(big.mark = '', decimal.mark = ','),
+            labels = label_number(big.mark = '.', decimal.mark = ','),
             limits = c(win_start, win_end),
             position = 'top'
         ) +
@@ -124,7 +124,7 @@ make_CNV_panel <- function(
         ) +
         scale_x_continuous(
             expand = expansion(),
-            labels = label_number(big.mark = '', decimal.mark = ','),
+            labels = label_number(big.mark = '.', decimal.mark = ','),
             limits = c(win_start, win_end),
             oob = oob_keep
         ) +
@@ -260,7 +260,7 @@ make_header_panel <- function(
         theme_classic() +
         scale_x_continuous(
             expand = expansion(),
-            labels = label_number(big.mark = '', decimal.mark = ','),
+            labels = label_number(big.mark = '.', decimal.mark = ','),
             limits = c(win_start, win_end),
             oob = oob_keep
         ) +
