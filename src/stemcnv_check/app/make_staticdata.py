@@ -76,7 +76,7 @@ def run_staticdata_workflow(args, array_name):
                     resource_settings=ResourceSettings(
                         cores=args.local_cores,
                         local_cores=args.local_cores,
-                        nodes=args.jobs,
+                        # nodes=args.jobs,
                     ),
                     config_settings=ConfigSettings(
                         config={
@@ -153,7 +153,7 @@ def run_staticdata_workflow(args, array_name):
                         resource_settings=ResourceSettings(
                             cores=args.local_cores,
                             local_cores=args.local_cores,
-                            nodes=args.jobs,
+                            # nodes=args.jobs,
                         ),
                         config_settings=ConfigSettings(
                             configfiles=[
@@ -198,7 +198,7 @@ def run_staticdata_workflow(args, array_name):
                 resource_settings=ResourceSettings(
                     cores=args.local_cores,
                     local_cores=args.local_cores,
-                    nodes=args.jobs,
+                    # nodes=args.jobs,
                 ),
                 config_settings=ConfigSettings(
                     config=dict(
