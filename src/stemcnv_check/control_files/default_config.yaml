@@ -130,7 +130,8 @@ global_settings:
   cache_dir: '~/.cache/stemcnv-check'
   # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
   # defaults to "{{cache_dir}}/mehari-db/mehari-data-txs-{{genome}}-ensembl-{mehari_db_version}.bin.zst
-  mehari_transcript_db: '__cache-default__' 
+  hg19_mehari_transcript_db: '__cache-default__'
+  hg38_mehari_transcript_db: '__cache-default__' 
   # Dosage sensitivity predicitions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
   # Either '__cache-default__' or a path to the dosage sensitivity data file
   # defaults to "{{cache_dir}}/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz"

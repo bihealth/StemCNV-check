@@ -373,7 +373,7 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
         else:
             outfname = os.path.join(cache_path, 'static-data', 'UCSC_{genome}_chromosome-info.tsv')
     elif type == 'mehari_txdb':
-        config_entry = global_settings['mehari_transcript_db']
+        config_entry = global_settings[f'{genome}_mehari_transcript_db']
         wildcards['genome'] = 'GRCh38' if genome == 'hg38' else 'GRCh37'
         wildcards['MEHARI_DB_VERSION'] = MEHARI_DB_VERSION
         if config_entry != '__cache-default__':

@@ -1,6 +1,6 @@
-# library(tidyverse)
+suppressMessages(library(tidyverse))
 
-minimal_probes <- tibble::tibble(
+minimal_hotspots <- tibble::tibble(
     list_name = 'test-list',
     hotspot = c('DDX11L1', 'dummyC', 'chr1:40000-50000', '1p36', '1p35.2', '1q21'),
     mapping = c('gene_name', 'gene_name', 'position', 'gband', 'gband', 'gband'),
@@ -18,3 +18,11 @@ minimal_probes <- tibble::tibble(
         'Sources: <a href="https://doi.org/doi" target="_blank" rel="noopener noreferrer">dummy</a>,<a href="https://doi.org/doi2" target="_blank" rel="noopener noreferrer">dummy</a>'
     )
 )
+
+minimal_hotspots_positions <- minimal_hotspots %>%
+        mutate(
+            seqnames = 'chr1',
+            start = c(11873, 28050000, 40000, 0, 30200000, 142600000),
+            end = c(14409, 28070000, 50000, 7200000, 32400000, 155000000),
+            strand = c('+', '+', '*', '*', '*', '*'),
+        )

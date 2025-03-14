@@ -132,7 +132,7 @@ def test_make_singularity_args(mock_resource_files, fs):
             'hg19_genome_fasta': 'relative/genome.fasta',
             'hg19_gtf_file': 'relative/gtf.gtf',
             'hg19_genomeInfo_file': 'relative/genome.info',
-            'mehari_transcript_db': 'relative/mehari_db',
+            'hg19_mehari_transcript_db': 'relative/mehari_db',
             'dosage_sensitivity_scores': 'relative/dosage_sensitivity_scores.tsv',
             'cache_dir': cache_path
         },
@@ -217,7 +217,7 @@ def test_make_singularity_args(mock_resource_files, fs):
         'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
         'hg19_genomeInfo_file': '__default-UCSC__',
-        'mehari_transcript_db': '__cache-default__',
+        'hg19_mehari_transcript_db': '__cache-default__',
         'dosage_sensitivity_scores': '__cache-default__',
     }
     expected_extra = []
@@ -236,6 +236,7 @@ def test_make_singularity_args(mock_resource_files, fs):
         'hg38_genome_fasta': '__default-ensemble__',
         'hg38_gtf_file': '__default-gencode__',
         'hg38_genomeInfo_file': '__default-UCSC__',
+        'hg38_mehari_transcript_db': '__cache-default__',
     })
     config['array_definition'].update({
         'ExampleArray2': {'genome_version': 'hg38'}
@@ -502,7 +503,7 @@ def test_get_global_file(fs):
         'hg19_genome_fasta': 'relative/genome.fasta',
         'hg19_gtf_file': 'relative/gtf.gtf',
         'hg19_genomeInfo_file': 'relative/genome.info',
-        'mehari_transcript_db': 'relative/mehari_db',
+        'hg19_mehari_transcript_db': 'relative/mehari_db',
     })
     for gtype, expected in zip(('fasta', 'gtf', 'genome_info', 'mehari_txdb'), global_settings.values()):
         assert helpers.get_global_file(gtype, 'hg19', global_settings, None) == expected
@@ -512,10 +513,11 @@ def test_get_global_file(fs):
         'hg19_genome_fasta': '__default-ensemble__',
         'hg19_gtf_file': '__default-gencode__',
         'hg19_genomeInfo_file': '__default-UCSC__',
+        'hg19_mehari_transcript_db': '__cache-default__',
         'hg38_genome_fasta': '__default-ensemble__',
         'hg38_gtf_file': '__default-gencode__',
         'hg38_genomeInfo_file': '__default-UCSC__',
-        'mehari_transcript_db': '__cache-default__',
+        'hg38_mehari_transcript_db': '__cache-default__',
     }
 
     # Error without existing cache

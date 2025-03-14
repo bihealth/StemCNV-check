@@ -109,14 +109,7 @@ test_that('parse_hotspot_table', {
     tb <- load_hotspot_table(config)
     target_chrom_style <- 'UCSC'
 
-    expected_gr <- minimal_probes %>%
-        mutate(
-            seqnames = 'chr1',
-            start = c(11873, 28050000, 40000, 0, 30200000, 142600000),
-            end = c(14409, 28070000, 50000, 7200000, 32400000, 155000000),
-            strand = c('+', '+', '*', '*', '*', '*'),
-        ) %>%
-        as_granges()
+    expected_gr <- minimal_hotspots_positions %>% as_granges()
 
     expect_equal(parse_hotspot_table(tb, gr_genes, gr_info, target_chrom_style), expected_gr)
     
@@ -219,9 +212,9 @@ test_that('parse inbuilt tables', {
 test_that('load_hotspot_table', {
     load_hotspot_table(config, 'stemcell_hotspot') %>%
         # remove 'spec_tbl_df' class from readr
-        .[] %>% expect_equal(minimal_probes)
+        .[] %>% expect_equal(minimal_hotspots)
     load_hotspot_table(config, 'cancer_gene') %>%
-        .[] %>% expect_equal(minimal_probes)
+        .[] %>% expect_equal(minimal_hotspots)
 })
 
 # get_roi_tb <- function(sample_id, sampletable, config)
@@ -265,7 +258,7 @@ test_that('get_roi_tb', {
 })
 
 
-#TODO: doesn't catch everyhting
+#FIXME: may not catch everyhting?
 # get_roi_gr(roi_tb, gr_genes, gr_info, target_chrom_style)
 test_that('get_roi_gr', {
     target_chrom_style <- get_target_chrom_style(config, gr_genes)

@@ -1,6 +1,42 @@
 suppressMessages(library(tidyverse))
 suppressMessages(library(yaml))
 
+get_sample_SNV_tb <- function(
+    sample_gr, sample_id, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config
+) {
+    
+    sampletable <- read_sampletable(config$sample_table)
+    roi_tb <- get_roi_tb(sample_id, sampletable, config)
+    hotspot_genes <- c(
+        roi_tb %>% filter(mapping == 'gene_name') %>% pull(hotspot),
+        SNV_hotspot_table$gene_name
+    ) %>% unique()
+    gr_genes <- load_gtf_data(gtf_file, config, target_chrom_style, include_hotspot_genes = hotspot_genes)
+    gr_info  <- load_genomeInfo(ginfo_file, config, target_chrom_style)
+    
+    #Note: this should ideally be parsed from vcf header
+    #Note: can we get rsIDs from here also? (they are not consistently used as SNP probe IDs)
+    meahri_ann_header <- c(
+        'Allele', 'Annotation', 'Annotation_Impact', 'gene_name', 'gene_id', 'Feature_Type', "Feature_ID",
+        'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',        
+        # cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length |
+        'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
+    )
+    sample_SNV_tb <- sample_gr %>%
+        annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
+        as_tibble() %>%
+        separate(ANN, sep = '\\|', into = meahri_ann_header) %>%
+        dplyr::rename(
+            GenCall_Score = IGC,
+            Transcript_ID = Feature_ID
+        ) %>%
+        mutate(
+            GT = ifelse(is.na(GT), './.', GT)
+        )
+    
+    sample_SNV_tb
+}
+
 
 sample_GT_distances <- function(sample_SNP_gr, ref_SNP_gr, extra_snp_files, ref_SNP_vcf_file, target_chrom_style, use_filter=TRUE) {
     
@@ -113,7 +149,7 @@ get_SNV_table <- function(
         mutate(
             critical_reason = case_when(
                 !is.na(ROI_hits) & 'ROI-match' %in% subconfig$critical_SNV ~ 'ROI-match',
-                paste0(gene_name, '::', HGVS.p) %in% SNV_hotspot_table$hotspot & 'hotspot-match' %in% subconfig$critical_SNV      ~ 'hotspot-match',
+                paste0(gene_name, '::', HGVS.p) %in% SNV_hotspot_table$hotspot & 'hotspot-match' %in% subconfig$critical_SNV ~ 'hotspot-match',
                 gene_name %in% SNV_hotspot_table$gene_name & 'hotspot-gene' %in% subconfig$critical_SNV ~ 'hotspot-gene',
                 (str_detect(Annotation, critical_annotation_regex) | Impact %in% subconfig$critical_annotations$Impact) &
                     'critical-annotation' %in% subconfig$critical_SNV ~ 'critical-annotation',
@@ -155,13 +191,24 @@ get_SNV_hotspot_coverage <- function(
         str_glue('{round(100*n_covered/total, 2)}% ({n_covered}/{total})')
     }
     
+    # retrun early and prevent error if no SNVs are present
+    if (nrow(sample_SNV_tb) == 0) {
+        return(tibble(
+            gene_name = NA_character_,
+            hotspots = NA_character_,
+            Transcript_ID = NA_character_,
+            Transcript_BioType = NA_character_,
+            cDNA_covered = NA_character_,
+            CDS_covered = NA_character_,
+            AA_covered = NA_character_
+        ))
+    }    
     
     gene_coverage_table <- sample_SNV_tb %>%
         filter(!str_detect(FILTER, 'FEMALE-Y')) %>%
         filter(gene_name %in% SNV_hotspot_table$gene_name) %>%    
         group_by(gene_name) %>%
         group_modify(~ {
-            #TODO: this can break, needs unit tests?
             spots <- SNV_hotspot_table %>% filter(gene_name == unique(.y$gene_name)) %>%
                 filter(!is.na(HGVS.p)) %>% pull(HGVS.p)
             if (length(spots) == 0) {

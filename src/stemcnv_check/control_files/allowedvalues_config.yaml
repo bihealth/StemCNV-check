@@ -25,7 +25,8 @@ log_path: str # Path|dir|no-exist-ok
 global_settings:
   cache_dir: str # Path|dir|no-exist-ok
   dosage_sensitivity_scores: str #Path|__cache-default__
-  mehari_transcript_db: str # Path|__cache-default__
+  hg19_mehari_transcript_db: str # Path|__cache-default__
+  hg38_mehari_transcript_db: str # Path|__cache-default__
   hg19_genome_fasta: str # Path|__-use-vep__
   hg38_genome_fasta: str # Path|__-use-vep__
   hg19_gtf_file: str # Path|'__default-gencode__'

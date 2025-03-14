@@ -27,21 +27,22 @@ run_snp_analysis <- function(
     gtf_file,
     ginfo_file
 ) {
-    
-    sampletable <- read_sampletable(config$sample_table)
+    # Internal tables
+    defined_labels <- get_defined_labels(config)
+    SNV_hotspot_table <- load_hotspot_table(config, 'snv_hotspot')
+    # sample info
     ref_id <- get_sample_info(sample_id, 'ref_id', config) 
     
-    ## Load SNP data from sample (& ref)
+    ## Load SNP data for sample
     sample_SNP_gr <- parse_snp_vcf(
         sample_SNP_vcf_file,
         info_fields = c('GenTrain_Score', 'ANN'),
         format_fields = c('GT', 'IGC'),
         apply_filter = FALSE
-    ) 
-    
+    )
     target_chrom_style <- get_target_chrom_style(config, sample_SNP_gr)
     sample_SNP_gr <- fix_CHROM_format(sample_SNP_gr, target_chrom_style)
-
+    # and for ref (if it exists)
     if(!is.na(ref_id)) {
         ref_SNP_gr <- parse_snp_vcf(
             ref_SNP_vcf_file,
@@ -57,40 +58,14 @@ run_snp_analysis <- function(
             GT = character()
         )
     }
-    
-    SNV_hotspot_table <- load_hotspot_table(config, 'snv_hotspot')
-    
-    roi_tb <- get_roi_tb(sample_id, sampletable, config)
-    hotspot_genes <- c(
-        roi_tb %>% filter(mapping == 'gene_name') %>% pull(hotspot),
-        SNV_hotspot_table$gene_name
-    ) %>% unique()
-    gr_genes <- load_gtf_data(gtf_file, config, target_chrom_style, include_hotspot_genes = hotspot_genes)
-    gr_info  <- load_genomeInfo(ginfo_file, config, target_chrom_style)
-    
-    # Sort, filter & Label annotated SNVs
-    
-    #Note: this should ideally be parsed from vcf header
-    #Note: can we get rsIDs from here also? (they are not consistently used as SNP probe IDs)
-    meahri_ann_header <- c(
-        'Allele', 'Annotation', 'Annotation_Impact', 'gene_name', 'gene_id', 'Feature_Type', "Feature_ID",
-        'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',        
-        # cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length |
-        'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
-    )
-    sample_SNV_tb <- sample_SNP_gr %>%
-        annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
-        as_tibble() %>%
-        separate(ANN, sep = '\\|', into = meahri_ann_header) %>%
-        dplyr::rename(
-            GenCall_Score = IGC,
-            Transcript_ID = Feature_ID
-        ) %>%
-        mutate(
-            GT = ifelse(is.na(GT), '', GT)
-        )
-    
-    defined_labels <- get_defined_labels(config)
+    # Prepare internal table of SNVs: 
+    # - annotate SNVs with sample ROI
+    # - extract mehari annotations into separate columns
+    sample_SNV_tb <- get_sample_SNV_tb(sample_SNP_gr, sample_id, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config)
+    # Prepare table for xlsx output
+    # - compare with reference GT
+    # - check which critical reasons apply (ROI, SNV-hotspot, HIGH impact, ..)
+    # - label SNVs (critical, non-critical, etc.)
     SNV_table <- get_SNV_table(sample_SNV_tb, ref_SNP_gr, SNV_hotspot_table, config, defined_labels)
     
     # Calculate sample distance matrix
