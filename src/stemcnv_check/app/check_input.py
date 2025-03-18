@@ -7,8 +7,7 @@ from collections import defaultdict
 from collections.abc import MutableMapping
 from loguru import logger as logging
 
-from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import config_extract, read_sample_table, load_config
+from stemcnv_check import STEM_CNV_CHECK, helpers
 from stemcnv_check.exceptions import SampleFormattingError, SampleConstraintError, ConfigValueError
 
 
@@ -40,7 +39,7 @@ def check_sample_table(args):
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Config file '{config_file}' does not exist.")
 
-    sample_data_df = read_sample_table(sample_table_file, args.column_remove_regex)
+    sample_data_df = helpers.read_sample_table(sample_table_file, args.column_remove_regex)
     yaml = ruamel_yaml.YAML(typ='safe')
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
@@ -77,7 +76,7 @@ def check_sample_table(args):
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 
     # This includes the global array definition config
-    config = load_config(args, inbuilt_defaults=False)
+    config = helpers.load_config(args, inbuilt_defaults=False)
     # check that the array_definition block is loaded
     if 'array_definition' not in config:
         raise ConfigValueError(
@@ -86,9 +85,9 @@ def check_sample_table(args):
         )
 
     # Check that Chip_Name & Chip_Pos match the sentrix wildcard regex (& aren't empty!)
-    sample_data = read_sample_table(sample_table_file, args.column_remove_regex, return_type='list')
+    sample_data = helpers.read_sample_table(sample_table_file, args.column_remove_regex, return_type='list')
     for constraint, val in (('sample_id', 'sid'), ('sentrix_name', 'n'), ('sentrix_pos', 'p')):
-        pattern = config_extract(['wildcard_constraints', constraint], config, default_config)
+        pattern = helpers.config_extract(['wildcard_constraints', constraint], config, default_config)
         mismatch = [sid for sid, n, p, _, _, _, _, _ in sample_data if not re.match('^' + pattern + '$', eval(val)) and eval(val)]
         if mismatch:
             raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
@@ -127,7 +126,9 @@ def check_config(args, minimal_entries_only=False):
     if not os.path.isfile(sample_table_file):
         raise FileNotFoundError(f"Sample table file '{sample_table_file}' does not exist.")
 
-    config = load_config(args, inbuilt_defaults=False)
+    config = helpers.load_config(args, inbuilt_defaults=False)
+    config_with_defaults = helpers.load_config(args)
+    cache_path = helpers.get_cache_dir(args, config_with_defaults)
     yaml = ruamel_yaml.YAML(typ='safe')
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('default_config.yaml').open() as f:
         default_config = yaml.load(f)
@@ -157,23 +158,33 @@ def check_config(args, minimal_entries_only=False):
             if req not in config['array_definition'][array] or not config['array_definition'][array][req]:
                 raise ConfigValueError(f"Required config entry is missing: array_definition:{array}:{req}")
             req_value = config['array_definition'][array][req]
-            # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing
+            # Check basic file path issues and genome version 
             if req_value.startswith('~'):
                 raise ConfigValueError(
                     "File paths in the config may not start with '~'. "
                     "Use absolute paths for anything outside the current directory."
                 )
-            if (
-                    req != 'genome_version' and
-                    (minimal_file if minimal_entries_only else True) and
+            if req == 'genome_version':
+                if req_value not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
+                    raise ConfigValueError(
+                        f"Genome version '{req_value}' for array '{array}' is not supported. Use 'hg38' or 'hg19'."
+                    )
+            # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing
+            elif (
+                    minimal_file and not minimal_entries_only and
+                    req_value == '__cache-default__'
+            ):
+                file = helpers.get_array_file(req, array, config, cache_path)
+                if not os.path.isfile(file):
+                    raise FileNotFoundError(
+                        f"Array definition file from cache '{array}:{req}' does not exist: {file}."
+                    )
+            elif (
+                    (minimal_file if minimal_entries_only else req_value != '__cache-default__') and
                     not os.path.isfile(req_value)
             ):
                 raise FileNotFoundError(
                     f"Array definition file for '{array}:{req}' does not exist: {req_value}." + infostr
-                )
-            elif req == 'genome_version' and req_value not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
-                raise ConfigValueError(
-                    f"Genome version '{req_value}' for array '{array}' is not supported. Use 'hg38' or 'hg19'."
                 )
         # Check that genome versions match Illumina syntax for manifest files
         # Can not be sure, this is a hard rule so only raise a warning
@@ -229,11 +240,11 @@ def check_config(args, minimal_entries_only=False):
 
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('label_name_definitions.yaml').open() as f:
         defined_label_names = yaml.load(f)
-    defined_filtersets = set(config_extract(['settings', 'probe_filter_sets'], config, default_config).keys())
+    defined_filtersets = set(helpers.config_extract(['settings', 'probe_filter_sets'], config, default_config).keys())
     defined_CNV_categories = set(
-        config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
+        helpers.config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
     )
-    defined_sampletable_cols = read_sample_table(sample_table_file, args.column_remove_regex).columns
+    defined_sampletable_cols = helpers.read_sample_table(sample_table_file, args.column_remove_regex).columns
 
     check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
     check_functions['labels'] = lambda x, v: x in defined_label_names[v]
@@ -281,9 +292,9 @@ def check_config(args, minimal_entries_only=False):
         flatkey_ = re.sub('settings:probe_filter_sets:[^:]+', 'settings:probe_filter_sets:__filterset', flatkey_)
         flatkey_ = re.sub('reports:__report:call.data.and.plots:({})'.format('|'.join(allowed_plotsections)),
                           'reports:__report:call.data.and.plots:__plotsection', flatkey_)
-        funcs = config_extract(flatkey_.split(':'), allowed_values, allowed_values)
+        funcs = helpers.config_extract(flatkey_.split(':'), allowed_values, allowed_values)
         if funcs is None:
-            # Happens for unknown config entries; config_extract gives a warning in this case
+            # Happens for unknown config entries; helpers.config_extract gives a warning in this case
             #print(flatkey, config_value)
             continue
         funcs, *list_funcs = funcs.split('__')

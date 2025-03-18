@@ -53,16 +53,10 @@ def run_stemcnv_check_workflow(args):
     ]
     if args.collate_date:
         argv += [f'collate_date={args.collate_date}']
-    #FIXME: use a clearer local vs cluster submission
-    if args.cluster_profile:
-        argv += [
-            "--profile", args.cluster_profile,
-            "-j", str(args.jobs)
-        ]
-    else:
-        argv += [
-            '--cores', str(args.local_cores)
-        ]
+
+    argv += [
+        '--cores', str(args.local_cores)
+    ]
 
     if args.snake_options:
         argv += args.snake_options
