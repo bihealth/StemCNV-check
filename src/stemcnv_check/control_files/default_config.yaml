@@ -262,7 +262,7 @@ settings:
       # This is minimum for the median of coverage percentages from all tool in any merged group
       tool.overlap.min.cov.sum.perc: 60
       ## Reference comparison
-      min.reciprocal.coverage.with.ref: 80
+      min.reciprocal.coverage.with.ref: 50
       ## Probe gap flagging of calls
       # Values to determine 'call_has_probe_gap' based on coverage percentage with gap areas (from array attribute
       # summary) and log2 number of unique probe positions. The two values represent slope and intercept of
