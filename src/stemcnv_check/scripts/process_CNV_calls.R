@@ -105,12 +105,6 @@ stemcell_hotspots_gr <- parse_hotspot_table(stemcell_hotspots_tb, gr_genes, gr_i
 cancer_genes_gr <- parse_hotspot_table(cancer_genes_tb, gr_genes, gr_info)
 dosage_sensitive_gene_gr <- parse_hotspot_table(dosage_sensitive_gene_tb, gr_genes, gr_info)
 
-array <- sampletable %>%
-    filter(Sample_ID == sample_id) %>%
-    pull('Array_Name')
-gap_file <- config$array_definition[[array]]$array_gaps_file
-density_file <- config$array_definition[[array]]$array_density_file
-
 cnvs <- cnvs %>%
     plyranges::select(-LRR) %>%
     get_median_LRR(snp_vcf_gr) %>%
@@ -119,13 +113,13 @@ cnvs <- cnvs %>%
 	annotate_impact_lists(cancer_genes_gr, 'cancer_gene') %>%
 	annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
 	annotate_gaps(
-        gap_file,
+        snakemake@params$array_gaps_file,
         processing_config$min.perc.gap_area, 
         processing_config$gap_area.uniq_probes.rel,
         target_chrom_style
     ) %>%
 	annotate_high_density(
-        density_file,
+        snakemake@params$array_density_file,
         processing_config$density.quantile.cutoff,
         target_chrom_style
     ) %>%

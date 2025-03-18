@@ -303,8 +303,8 @@ def run_staticdata_workflow(args, array_name):
 
     info_str = (
         f'local file "{yaml_write_path}"' if (yaml_write_path == array_name_sanitized + '_config.yaml') else
-        f'global config. You either need to update the following entries in your main config ({args.config}) or remove '
-        f'the "{array_name}" array definition there, so that the global config can be used instead'
+        'global config.' #You either need to update the following entries in your main config ({args.config}) or remove '
+        #f'the "{array_name}" array definition there, so that the global config can be used instead'
     )
     logging.info(
         f'Missing static files generated. Writing array definiton data entries to ' +
