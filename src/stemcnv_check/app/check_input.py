@@ -156,18 +156,24 @@ def check_config(args, minimal_entries_only=False):
             # All other array definition fields need to be defined
             if req not in config['array_definition'][array] or not config['array_definition'][array][req]:
                 raise ConfigValueError(f"Required config entry is missing: array_definition:{array}:{req}")
-            # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing  
-            if (req != 'genome_version' and
-                    (minimal_file if minimal_entries_only else True) and
-                    not os.path.isfile(config['array_definition'][array][req])):
-                raise FileNotFoundError(
-                    f"Array definition file for '{array}:{req}' does not exist: "
-                    f"{config['array_definition'][array][req]}." + infostr
-                )
-            elif req == 'genome_version' and config['array_definition'][array][req] not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
+            req_value = config['array_definition'][array][req]
+            # Check if file(s) exists, non-minimal/auto-generated files may optionally be missing
+            if req_value.startswith('~'):
                 raise ConfigValueError(
-                    f"Genome version '{config['array_definition'][array][req]}' for "
-                    f"array '{array}' is not supported. Use 'hg38' or 'hg19'."
+                    "File paths in the config may not start with '~'. "
+                    "Use absolute paths for anything outside the current directory."
+                )
+            if (
+                    req != 'genome_version' and
+                    (minimal_file if minimal_entries_only else True) and
+                    not os.path.isfile(req_value)
+            ):
+                raise FileNotFoundError(
+                    f"Array definition file for '{array}:{req}' does not exist: {req_value}." + infostr
+                )
+            elif req == 'genome_version' and req_value not in ('hg38', 'hg19', 'GRCh38', 'GRCh37'):
+                raise ConfigValueError(
+                    f"Genome version '{req_value}' for array '{array}' is not supported. Use 'hg38' or 'hg19'."
                 )
         # Check that genome versions match Illumina syntax for manifest files
         # Can not be sure, this is a hard rule so only raise a warning
