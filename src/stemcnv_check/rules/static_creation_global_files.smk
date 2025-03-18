@@ -28,6 +28,8 @@ rule download_ensmble_fasta:
         datatype="dna",
         release=ENSEMBL_RELEASE,
         build='GRCh37' if GENOME in ('hg19', 'GRCh37') else 'GRCh38',
+        # ftp download may not always work, https always should
+        url='https://ftp.ensembl.org/pub/'
     cache: "omit-software"  # save space and time with between workflow caching (see docs)
     wrapper:
         "v5.5.0/bio/reference/ensembl-sequence"
