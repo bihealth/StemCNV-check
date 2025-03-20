@@ -15,7 +15,7 @@ def test_main_run(mock_check, mock_run_workflow, mock_logging, fs):
     mock_logging.remove.return_value = 0
 
     with pytest.raises(FileNotFoundError) as e:
-        ret_val = main([])
+        ret_val = main(['run'])
         assert ret_val != 0
 
     with pytest.raises(SystemExit) as e:
@@ -34,6 +34,6 @@ def test_main_run(mock_check, mock_run_workflow, mock_logging, fs):
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
 
-    ret_val = main([])
+    ret_val = main(['run'])
     assert ret_val == 0
 

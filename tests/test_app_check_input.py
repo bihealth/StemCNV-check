@@ -281,8 +281,9 @@ def test_default_config(full_config_block, caplog, fs):
     #Ensure that only expected warnings on missing folders are raised
     check_config(fake_args)
     logrecords = caplog.records
-    assert len(logrecords) == 3
+    assert len(logrecords) == 4
     assert [rec.message for rec in logrecords] == [
+        "No cache directory will be used, conda and docker images will be stored in snakemake project directory",
         "Entry for required setting 'data_path' is not an existing folder (data)! Creating it now.",
         "Entry for required setting 'log_path' is not an existing folder (logs)! Creating it now.",
         "Entry for required setting 'raw_data_folder' is not an existing folder (rawdata)! Creating it now."
