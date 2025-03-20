@@ -189,7 +189,7 @@ annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_
 }
 
 
-annotate_precision.estimates <- function(tb, size_categories, precision_estimates) {
+annotate_precision.estimates_old <- function(tb, size_categories, precision_estimates) {
 	tb %>%
 		rowwise() %>%
 		mutate(
@@ -217,6 +217,64 @@ annotate_precision.estimates <- function(tb, size_categories, precision_estimate
 		ungroup() %>%
 	  dplyr::select(-size_category)
 }
+
+annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_file) {
+    # handle empty input
+    if (nrow(tb) == 0) {
+        tb$Precision_Estimate <- double()
+        tb$Precision_Estimate_evaluated_calls <- integer()
+        return(tb)
+    }
+    
+    precision_estimations <- read_tsv(precision_estimation_file) %>%
+        mutate(
+            estimated_precision = round(estimated_precision, 3),
+            # If this stays NA or empty, it will never be used in the match_prec_est function
+            # No filters should contain whitepasce, so that is a safe dummy value
+            vcf_filters_excluded = ifelse(is.na(vcf_filters_excluded), ' ', vcf_filters_excluded)
+        )
+    if (probe_filter %!in% precision_estimations$probe_filter_setting) {
+        warning('Unable to find precision estimates for probe filter setting: ', probe_filter)
+        tb$Precision_Estimate <- NA_real_
+        tb$Precision_Estimate_evaluated_calls <- NA_integer_
+        return(tb)        
+    }
+    
+    match_prec_est <- function(row) {
+        matched_values <- precision_estimations %>%
+            filter(probe_filter_setting == probe_filter) %>%
+            filter(row$CNV_caller == CNV_caller) %>%
+            filter(str_detect(row$CNV_type, CNV_type_match)) %>%
+            filter(str_detect(row$seqnames, seqnames_match)) %>%
+            filter(row$width > size_min & row$width <= size_max) %>%
+            filter(is.na(row$FILTER) | !str_detect(row$FILTER, vcf_filters_excluded))
+        
+        # Will happen for all LOHs, other CNVs should get something
+        if (nrow(matched_values) == 0) {
+            row$Precision_Estimate <- NA_real_
+            row$Precision_Estimate_evaluated_calls <- NA_integer_
+            return(row)
+        }
+        
+        # at this point multiple rows might match, 
+        # but we only want the first one (most specific size)
+        matched_values <- matched_values %>%
+            arrange(size_max, desc(size_min)) %>%
+            slice(1)
+        
+        row$Precision_Estimate <- matched_values$estimated_precision
+        row$Precision_Estimate_evaluated_calls <- matched_values$evaluated_calls        
+        return(row)
+    }
+    
+	tb %>%
+		rowwise() %>%
+        # using group_modify %>% ungroup would be preferrable
+        # but group_modify & rowwise don't properly interact: https://github.com/tidyverse/dplyr/issues/6870
+        group_map(~match_prec_est(.)) %>%
+        bind_rows()
+}
+
 
 annotate_call.label <- function(gr.or.tb, call_cat_config) {
     

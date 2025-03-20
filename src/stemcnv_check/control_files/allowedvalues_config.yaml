@@ -150,38 +150,7 @@ settings:
       double_copy_factor: float_ge0
       neutral_copy_factor: float_ge0
       flat_decrease: float
-
-    Precision:
-      size_categories:
-        extreme.loh: int
-        extreme.cnv: int
-        very.large.loh: int
-        very.large.cnv: int
-        large.loh: int
-        large.cnv: int
-        medium.loh: int
-        medium.cnv: int
-      estimate_values:
-        multiple_Callers:
-          extreme: float_le1_ge0
-          very_large: float_le1_ge0
-          large: float_le1_ge0
-          medium: float_le1_ge0
-          small: float_le1_ge0
-        PennCNV:
-          extreme: float_le1_ge0
-          very_large: float_le1_ge0
-          large: float_le1_ge0
-          medium: float_le1_ge0
-          small: float_le1_ge0
-        CBS:
-          extreme: float_le1_ge0
-          very_large: float_le1_ge0
-          large: float_le1_ge0
-          medium: float_le1_ge0
-          small: float_le1_ge0
-        Call_has_Gap: float
-        HighSNPDensity: float
+    precision_estimation_file: str # Path|File|exists
         
   SNV_analysis:
     probe_filter_settings: filtersetplusnone
