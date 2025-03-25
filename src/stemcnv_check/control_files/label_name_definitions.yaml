@@ -18,8 +18,9 @@ CNV_labels:
 # possible labels for SNVs
 SNV_labels:
     - critical
-    - unreliable critical
-    - protein changing
+    - reportable
+    - unreliable impact
+    - de-novo SNV
     - reference genotype
 
 # Label for CNVs merged from multiple callers
@@ -35,26 +36,30 @@ vcf_filters:
     - min_probes
     - min_density
 
-# Possible/Defined "reasons" a SNV can be labelled critical
-SNV_critical_labels:
-    - ROI-match
+# Possible/Defined categories for SNVs, each category can be assigned critical or reportable
+SNV_category_labels:
+    - ROI-overlap
     - hotspot-match
     - hotspot-gene
-    - critical-annotation
-    - any-protein-changing
+    - protein-ablation
+    - protein-changing
+    - other
 
 # Possible/Defined QC measures on sample level
 sample_qc_measures:
     - call_rate
+    - computed_gender
+    - SNPs_post_filter
     - SNP_pairwise_distance_to_reference
     - loss_gain_log2ratio
     - total_calls_CNV
     - total_calls_LOH
     - reportable_calls_CNV
     - reportable_calls_LOH
+    - reportable_SNVs
     - critical_calls_CNV
     - critical_calls_LOH
-    - critical_snvs
+    - critical_SNVs
   
 # Possible/Defined report sections
 report_sections:

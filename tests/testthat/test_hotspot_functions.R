@@ -6,6 +6,14 @@ library(plyranges)
 source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
 source(test_path('../../src/stemcnv_check/scripts/R/hotspot_functions.R'))
 
+# [x] tb_to_gr_by_position
+# [x] tb_to_gr_by_gband
+# [x] parse_hotspot_table
+# [ ] get_dosage_sensivity_tb
+# [x] load_hotspot_table
+# [?] get_roi_gr
+# [x] get_roi_tb
+
 config <- list(
     'snakedir' = '',
     'genome_version' = 'hg19',

@@ -45,13 +45,14 @@ evaluation_settings:
     call_rate: list_len2__float__le1__ge0
     loss_gain_log2ratio: list_len2__int
     SNP_pairwise_distance_to_reference: list_len2__int
-    critical_snvs: list_len2__int
     total_calls_CNV: list_len2__int
     total_calls_LOH: list_len2__int
     reportable_calls_CNV: list_len2__int
     reportable_calls_LOH: list_len2__int
+    reportable_SNVs: list_len2__int
     critical_calls_CNV: list_len2__int
     critical_calls_LOH: list_len2__int
+    critical_SNVs: list_len2__int
     call_count_excl_labels: list__str__cnvcallcategories
     use_last_level: list__str
     
@@ -187,18 +188,25 @@ settings:
     probe_filter_settings: filtersetplusnone
     snv_hotspot_table: str # Path|File|exists
     flag_GenCall_minimum: float_ge0_le1
-    critical_SNV: list__str__labels:SNV_critical_labels
-    critical_annotations:
-      Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
-      Annotation: list__str #technically mehari/ontology derived, but used as regex anyway
+    critical_SNV: list__str__labels:SNV_category_labels
+    reportable_SNV: list__str__labels:SNV_category_labels
     variant_selection:
       Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
-      Annotation_regex: str
+      Annotation_regex: noneorstr
+      include_all_ROI_overlaps: bool
+    protein_ablation_annotations:
+      Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
+      Annotation_regex: noneorstr
+    protein_change_annotations:
+      Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
+      Annotation_regex: noneorstr
+
+ 
     SNP_clustering:
-        sample_ids: list__str # sample_id
-        id_columns: list__insamplesheet
-        match_columns: list__insamplesheet
-        max_number_samples: int_ge1
+      sample_ids: list__str # sample_id
+      id_columns: list__insamplesheet
+      match_columns: list__insamplesheet
+      max_number_samples: int_ge1
 
 reports:
   __report:
@@ -220,8 +228,8 @@ reports:
         plot.flanking.region.relative: float_ge0
         plot.region.minsize: float_ge10000
 
-    SNV_analysis:
-      critical_reasons_with_red_highlight: list__str__labels:SNV_critical_labels
+#     SNV_analysis:
+#       SNV_categories_with_red_highlight: list__str__labels:SNV_category_labels
 
     SNP_comparison:
       dendrogram.color.by: str_insamplesheet

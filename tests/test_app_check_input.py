@@ -257,7 +257,7 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
         "Value(s) need to be matching this regex: (PennCNV|CBS).",
     ]
 
-    #FIXME: future tests
+    #FIXME: add more tests
     # - Check for matching/mismatching sample_table columns
     # - labels:... functions
     # - Special other fields: filterset, filtersetdefault, sectionorsall

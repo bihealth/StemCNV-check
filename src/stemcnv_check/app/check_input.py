@@ -252,6 +252,7 @@ def check_config(args, minimal_entries_only=False):
     def_functions = {
         'list': lambda x, v: type(x) == list,
         'str': lambda x, v: type(x) == str,
+        'noneorstr': lambda x, v: x is None or type(x) == str,
         'int': lambda x, v: type(parse_scientific(x)) == int,
         'noneorfloat': lambda x, v: x is None or type(parse_scientific(x)) in (int, float),
         'float': lambda x, v: type(parse_scientific(x)) in (int, float),

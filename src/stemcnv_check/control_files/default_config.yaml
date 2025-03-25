@@ -93,7 +93,8 @@ evaluation_settings:
     reportable_calls_LOH: [5, 10]
     critical_calls_CNV: [1, 1]
     critical_calls_LOH: [1, 1]
-    critical_snvs: [1, 1]
+    reportable_SNVs: [5, 10]
+    critical_SNVs: [1, 1]
     # CNVs/LOHs gievn one these labels are not counted for QC measures
     # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
     # Default labels: {CNV_labels}
@@ -103,7 +104,7 @@ evaluation_settings:
       - call_rate
       - computed_gender
       - SNP_pairwise_distance_to_reference
-      - critical_snvs
+      - critical_SNVs
       - critical_calls_CNV
       - critical_calls_LOH
       
@@ -370,30 +371,37 @@ settings:
     probe_filter_settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even include chrY on female samples
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
     flag_GenCall_minimum: 0.2
-    # List of SNV categories that are considered critical.
-    # Allowed values: {SNV_critical_labels}
-    critical_SNV:
-      - 'ROI-match'
-      - 'hotspot-match'
-      - 'hotspot-gene'
-      - 'critical-annotation'
-      # - 'any-protein-changing'
-    # SNV annotations considered 'Critical', summarised as "critical-annotation"
-    # these are derived from mehari, annotations are specifically derived from the terms defined by http://www.sequenceontology.org 
-    critical_annotations:
-      Impact: ['HIGH']
-      Annotation: []
-      # The 'HIGH' impact category generally contains these annotations:      
-      #   - stop_gained
-      #   - start_lost
-      #   - stop_lost
-      #   - frameshift_variant
-      #   - splice_acceptor_variant
-      #   - splice_donor_variant   
-    # Only variants matching one of the following criteria are part of outout in the SNV_analysis table & report
-    # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODEARTE' impact category
+    # Only variants matching at least one of the following criteria are included in SNV analysis 
+    # This means that i.e. intron or synonymous variants in SNV hotspot genes are NOT included in the output files 
+    # Underlying annotations are derived from mehari, specifically from the terms defined by http://www.sequenceontology.org 
     variant_selection:
-      Impact: [HIGH]
+      Impact: [HIGH, MODERATE]      
+      Annotation_regex: ~
+      # This will include ALL variants in any ROI region, regardless of annotation
+      include_all_ROI_overlaps: TRUE
+    # List of SNV categories that are considered critical or reportable.
+    # Allowed values: {SNV_category_labels}
+    critical_SNV:
+      - 'ROI-overlap'
+      - 'hotspot-match'
+    reportable_SNV:
+      - 'hotspot-gene'
+      - 'protein-ablation'
+    # SNVs that can fully remove protein function are summarised in the "protein-ablation" category (generally HIGH impact)
+    protein_ablation_annotations:
+      # The 'HIGH' impact category generally contains these variant annotations/groups:      
+      # - stop_gained
+      # - start_lost
+      # - stop_lost
+      # - frameshift_variant
+      # - splice_acceptor_variant
+      # - splice_donor_variant  
+      Impact: ['HIGH']
+      Annotation_regex: ~
+    # SNVs impacting protein sequence, but not generally removing protein function are summarised as "protein-changing"
+    protein_change_annotations:
+      Impact: []
+      # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODERATE' impact category
       Annotation_regex: 'missense_variant|inframe'
     
     # These settings determine which samples are used for the SNP clustering & dendrogram
@@ -500,12 +508,12 @@ reports:
         <<: *default_plot_settings
         plot.region.minsize: 100000
 
-    # Report settings for the SNV analysis block
-    SNV_analysis:
-      # Which critical SNV reasons should use red (instead of orange) highlights  
-      critical_reasons_with_red_highlight:
-        - 'ROI-match'
-        - 'hotspot-match'
+#     # Report settings for the SNV analysis block
+#     SNV_analysis:
+#       # Which critical SNV reasons should use red (instead of orange) highlights  
+#       SNV_categories_with_red_highlight:
+#         - 'ROI-match'
+#         - 'hotspot-match'
 
     # Settings for the Sample comparison / SNP dendrogram sections
     SNP_comparison:

@@ -2,11 +2,9 @@ suppressMessages(library(tidyverse))
 suppressMessages(library(yaml))
 
 get_sample_SNV_tb <- function(
-    sample_gr, sample_id, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config
+    sample_gr, roi_tb, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config
 ) {
     
-    sampletable <- read_sampletable(config$sample_table)
-    roi_tb <- get_roi_tb(sample_id, sampletable, config)
     hotspot_genes <- c(
         roi_tb %>% filter(mapping == 'gene_name') %>% pull(hotspot),
         SNV_hotspot_table$gene_name
@@ -90,16 +88,17 @@ get_SNV_table <- function(
             ref_GT = GT
         ) %>%
         group_by(seqnames, start, REF, ALT) %>%
-        # Note: somehow slice_max is much slower than summarise ?
+        # Note: somehow slice_max is much slower than summarise/reframe ?
         # slice_max(ref_GenCall_Score, n=1, with_ties = FALSE) %>%
-        reframe(
+        summarise(
             # pick the GT per position with the highest GenCall_Score, ignore NA genotypes
             ref_GT = ifelse(
-                n_distinct(ref_GT) == 1,
+                n_distinct(ref_GT) == 1 | all(is.na(ref_GenCall_Score)),
                 unique(ref_GT),
                 unique(ref_GT[ref_GenCall_Score == max(ref_GenCall_Score)]) %>% na.omit()
             ),
-            ref_GenCall_Score = max(ref_GenCall_Score),
+            # max causes warnings if the input vector is zero-length
+            ref_GenCall_Score = suppressWarnings(max(ref_GenCall_Score)),
             n_distinct_ref_GT = n_distinct(ref_GT),
         ) %>%
         mutate(ref_GT = ifelse(is.na(ref_GT), './.', ref_GT))
@@ -121,14 +120,33 @@ get_SNV_table <- function(
         ref_tb <- ref_tb %>% select(-n_distinct_ref_GT)
     }
     
-    critical_annotation_regex <- subconfig$critical_annotations %>%
-        paste(collapse = '|')
-    
+    #Use whitespace as dummy regex that should match nothing (str_detect can not handle empty regex)
+    protein_ablation_regex <- ifelse(
+        is.null(subconfig$protein_ablation_annotations$Annotation_regex),
+        ' ',
+        subconfig$protein_ablation_annotations$Annotation_regex
+    )
+    protein_change_regex <- ifelse(
+        is.null(subconfig$protein_change_annotations$Annotation_regex),
+        ' ',
+        subconfig$protein_change_annotations$Annotation_regex
+    )
+    selection_regex <- ifelse(
+        is.null(subconfig$variant_selection$Annotation_regex),
+        ' ',
+        subconfig$variant_selection$Annotation_regex
+    )
     snv_tb <- sample_SNV_tb %>%
         filter(!str_detect(FILTER, 'FEMALE-Y')) %>%
+        # Only keep variants with:
+        # - ROI overlap (if enabled)
+        # - impact listed in any of the config sections
+        # - annotation string matching any Annotation regex
         filter(
-            Annotation_Impact %in% subconfig$variant_selection$Impact | 
-                str_detect(Annotation, subconfig$variant_selection$Annotation_regex)) %>%
+            (!is.na(ROI_hits) & subconfig$variant_selection$include_all_ROI_overlaps) |
+                Annotation_Impact %in% subconfig$variant_selection$Impact | 
+                str_detect(Annotation, selection_regex)                
+        ) %>%
         select(
             seqnames, start, REF, ALT, ID, FILTER, GT, GenTrain_Score, GenCall_Score, 
             Annotation, Annotation_Impact, gene_name, Transcript_ID, Transcript_BioType, 
@@ -145,33 +163,36 @@ get_SNV_table <- function(
         ungroup() %>%
         # add/merge in reference GT
         left_join(ref_tb, by = c('seqnames', 'start', 'REF', 'ALT')) %>%
-        # Assign critical labels (see also: label_name_definitions.yaml)
+        # Assign SNV categories & labels (see also: label_name_definitions.yaml)
         mutate(
-            critical_reason = case_when(
-                !is.na(ROI_hits) & 'ROI-match' %in% subconfig$critical_SNV ~ 'ROI-match',
-                paste0(gene_name, '::', HGVS.p) %in% SNV_hotspot_table$hotspot & 'hotspot-match' %in% subconfig$critical_SNV ~ 'hotspot-match',
-                gene_name %in% SNV_hotspot_table$gene_name & 'hotspot-gene' %in% subconfig$critical_SNV ~ 'hotspot-gene',
-                (str_detect(Annotation, critical_annotation_regex) | Impact %in% subconfig$critical_annotations$Impact) &
-                    'critical-annotation' %in% subconfig$critical_SNV ~ 'critical-annotation',
-                'any-protein-changing' %in% subconfig$critical_SNV ~ 'any-protein-changing',
-                TRUE ~ NA_character_
+            SNV_category = case_when(
+                !is.na(ROI_hits)                                               ~ 'ROI-overlap',
+                # SNV_hotspot_table$hotspot does NOT contain the "p." part of the HGVS.p notation
+                paste0(gene_name, '::', str_remove(HGVS.p, '^p.')) %in% 
+                    SNV_hotspot_table$hotspot                                  ~ 'hotspot-match',
+                gene_name %in% SNV_hotspot_table$gene_name                     ~ 'hotspot-gene',
+                (str_detect(Annotation, protein_ablation_regex) | 
+                    Impact %in% subconfig$protein_ablation_annotations$Impact) ~ 'protein-ablation',
+                (str_detect(Annotation, protein_change_regex) | 
+                    Impact %in% subconfig$protein_change_annotations$Impact)   ~ 'protein-changing',
+                TRUE                                                           ~ 'other'
             ) %>%
-                factor(levels = subconfig$critical_SNV),
+                factor(levels = defined_labels$SNV_category_labels),
             
             SNV_label = case_when(
-                GT == ref_GT                        ~ 'reference genotype',
-                !is.na(critical_reason) & (
-                    GenCall_Score < subconfig$flag_GenCall_minimum | 
-                    ref_GenCall_Score < subconfig$flag_GenCall_minimum
-                )                                   ~ 'unreliable critical',
-                !is.na(critical_reason)             ~ 'critical',
-                TRUE                                ~ 'protein changing'
+                GT == ref_GT                                                   ~ 'reference genotype',
+                SNV_category %in% c(subconfig$critical_SNV, subconfig$reportable_SNV) & 
+                    (
+                        GenCall_Score < subconfig$flag_GenCall_minimum |
+                        ref_GenCall_Score < subconfig$flag_GenCall_minimum
+                    )                                                          ~ 'unreliable impact',
+                SNV_category %in% subconfig$critical_SNV                       ~ 'critical',
+                SNV_category %in% subconfig$reportable_SNV                     ~ 'reportable',
+                TRUE                                                           ~ 'de-novo SNV'
             ) %>%
                  factor(levels = defined_labels$SNV_labels),
-
-            
         ) %>%
-        arrange(SNV_label, critical_reason, seqnames, start)
+        arrange(SNV_label, SNV_category, seqnames, start)
 
     snv_tb
 }
@@ -188,7 +209,8 @@ get_SNV_hotspot_coverage <- function(
         stopifnot(length(total) == 1)
         n_covered <- str_extract(pos, '^[0-9]+') %>% 
             as.integer() %>% .[. > 0] %>% unique() %>% length()
-        str_glue('{round(100*n_covered/total, 2)}% ({n_covered}/{total})')
+        str_glue('{round(100*n_covered/total, 2)}% ({n_covered}/{total})') %>%
+            as.character()
     }
     
     # retrun early and prevent error if no SNVs are present
@@ -204,6 +226,8 @@ get_SNV_hotspot_coverage <- function(
         ))
     }    
     
+    # This will only find genes based on existing annotations from the SNP vcf
+    # therefore genes/hotspots not covered there will not be missing
     gene_coverage_table <- sample_SNV_tb %>%
         filter(!str_detect(FILTER, 'FEMALE-Y')) %>%
         filter(gene_name %in% SNV_hotspot_table$gene_name) %>%    
@@ -227,8 +251,9 @@ get_SNV_hotspot_coverage <- function(
         }) %>%
         group_by(gene_name, hotspots, Transcript_ID, Transcript_BioType) %>%
         summarise(
-            cDNA_covered = get_coverage_str(cDNA.pos),
-            CDS_covered = get_coverage_str(CDS.pos),
+            # Note: mehari  cDNA & CDS, and additionally UTR variants from CDS
+            cDNA_covered = get_coverage_str(cDNA.pos[Distance==0]), #[!str_detect(HGVS.c, 'c\\.[0-9]+[+-][0-9]+[ACGT]>[ACGT]')]
+            CDS_covered = get_coverage_str(CDS.pos[Distance==0]), #[str_detect(HGVS.c, 'c\\.[0-9]+[ACGT]>[ACGT]')]
             AA_covered = get_coverage_str(AA.pos),
         ) %>%
         group_by(gene_name, hotspots) %>%
@@ -242,8 +267,33 @@ get_SNV_hotspot_coverage <- function(
         ) %>%
         slice(1)
     
-    gene_coverage_table
-    
+    # Create summary for missing genes
+    missing_genes <- SNV_hotspot_table %>%
+        filter(!gene_name %in% gene_coverage_table$gene_name) %>%
+        group_by(gene_name) %>%
+        summarise(
+            hotspots = ifelse(
+                dplyr::n() == 1 & all(is.na(HGVS.p)), 
+                'none defined',
+                paste0(
+                    'covered (0/', dplyr::n(), '): \n',
+                    'missing (', dplyr::n(), '/', dplyr::n(), '): ', str_c(HGVS.p, collapse = ', ')
+                )
+            ),
+            Transcript_ID = NA_character_,
+            Transcript_BioType = NA_character_,
+            cDNA_covered = get_coverage_str(''),
+            CDS_covered = get_coverage_str(''),
+            AA_covered = get_coverage_str(''),
+        )
+
+
+    bind_rows(
+        gene_coverage_table,
+        missing_genes
+    ) %>%
+        ungroup() %>%
+        arrange(gene_name)
 }
 
 
@@ -315,8 +365,11 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, us
         )
     }
     
-    # number of critical SNVs
-    snv_qc_tb$critical_snvs <- SNV_table %>%
+    # number of reportable & critical SNVs
+    snv_qc_tb$reportable_SNVs <- SNV_table %>%
+        filter(SNV_label == 'reportable') %>%
+        nrow()
+    snv_qc_tb$critical_SNVs <- SNV_table %>%
         filter(SNV_label == 'critical') %>%
         nrow()
     

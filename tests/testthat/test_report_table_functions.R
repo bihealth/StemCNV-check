@@ -6,6 +6,7 @@ library(testthat)
 library(yaml)
 
 source(test_path("../../src/stemcnv_check/scripts/R/helper_functions.R"))
+source(test_path("../../src/stemcnv_check/scripts/R/hotspot_functions.R"))
 source(test_path("../../src/stemcnv_check/scripts/R/report_table_functions.R"))
 
 defined_labels <- yaml.load_file(test_path('../../src/stemcnv_check/control_files/label_name_definitions.yaml'))
@@ -19,13 +20,21 @@ defined_labels <- yaml.load_file(test_path('../../src/stemcnv_check/control_file
 # - [ ] CNV_table_output
 # - [ ] gene_table_output
 # - [x] hotspot_table_output
-# - [ ] SNV_table_output
+# - [x] SNV_table_output
 
 config <- list(
     'snakedir' = '',
+    'genome_version' = 'hg19',
+    'global_settings' = list(
+        'hg19_gtf_file' = test_path('../data/hg_minimal.gtf'),
+        'hg19_genomeInfo_file' = test_path('../data/gr_info_minimal.tsv')
+    ),
     'settings' = list(
         'CNV_processing' = list(
             'gene_overlap' = list(
+                'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
+                'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv'),
+                'whitelist_hotspot_genes' = FALSE,
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
                 'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
             )
@@ -38,13 +47,15 @@ config <- list(
         )
     )
 )
+gr_info <- load_genomeInfo(config$global_settings$hg19_genomeInfo_file, config)
+gr_genes <- load_gtf_data(config$global_settings$hg19_gtf_file, config)
 
-# Test `format_hotspots_to_badge` function
-# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, gene_details, color = 'red')
+# format_hotspots_to_badge <- function(hotspot_vec, CNVtype_vec, colorgene_details, gene_details, include_hover = TRUE)
 test_that("format_hotspots_to_badge", {
     testthat::local_edition(3)
     hotspot_vec <- c("", "1q21", "1q21", "dummyC", "1p36|DDX11L1", "1p36|DDX11L1", 'A|B|C')
     CNVtype_vec <- c("gain", "gain", "LOH", "gain", "loss", "gain", 'gain')
+    color_vec <- c('red', 'orange', 'red', 'red', 'red', 'orange', 'red')
     # 1 - empty
     # 2 - gband hit, matching CNV (gain)
     # 3 - gband hit, not matching CNV (Note: this case should never occur; warning needed?)
@@ -56,7 +67,7 @@ test_that("format_hotspots_to_badge", {
     
     expected <- c(
         '-', 
-        '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
+        '<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
         '1q21', 
         '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 15&#013;Something: Dummy{1}">dummyC</span>', 
         paste0(
@@ -65,15 +76,15 @@ test_that("format_hotspots_to_badge", {
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;',
             'Sources: dummy">DDX11L1</span>'
         ),
-        '1p36<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>',
+        '1p36<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>',
         'A; B; C'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'red'),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, color_vec, gene_details),
         expected
     )
     
-    #test with include_hover = FALSE & shorthand = orange
+    #test with include_hover = FALSE & fixed color
     expected <- c(
         '-', 
         '<span class="badge badge-orange">1q21</span>', 
@@ -84,8 +95,12 @@ test_that("format_hotspots_to_badge", {
         'A; B; C'
     )
     expect_equal(
-        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, gene_details, 'orange', FALSE),
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, 'orange', gene_details,FALSE),
         expected
+    )
+    # test error on wrong color
+    expect_error(
+        format_hotspots_to_badge(hotspot_vec, CNVtype_vec, 'dummy', gene_details, FALSE)
     )
 })
 
@@ -219,20 +234,19 @@ test_that("summary_table", {
     
     summary_stat_table <- tibble(
         Description = c(
-            'sample_id', 'call_rate', 'computed_gender', 'SNP_pairwise_distance_to_reference',
-            'SNPs_post_filter', defined_labels$sample_qc_measures[3:10]
+            'sample_id', defined_labels$sample_qc_measures
         ),
         sample_value = c(
-            'SampleID', '0.991', 'M', '60% (123 SNPs)', '123456', '-0.5', '50', '30', '15', '7', '0', '0', '0'
+            'SampleID', '0.991', 'M', '60% (123 SNPs)', '123456', '-0.5', '50', '30', '15', '7', '3', '0', '0', '0'
         ),
         sample_eval = c(
-            'SampleID', 'OK', 'OK', NA, 'high concern', 'OK', 'warning', 'unusual', 'warning', 'unusual', 'OK', 'OK', 'OK'
+            'SampleID', 'OK', 'OK', NA, 'high concern', 'OK', 'warning', 'unusual', 'warning', 'unusual', 'unusual', 'OK', 'OK', 'OK'
         ),
         reference_value = c(
-            'SampleID2', '0.995', 'M', '61% (135 SNPs)', NA, '0.3', '40', '20', NA, NA, NA, NA, NA
+            'SampleID2', '0.995', 'M', '61% (135 SNPs)', NA, '0.3', '40', '20', NA, NA, NA, NA, NA, NA
         ),
         reference_eval = c(
-            'SampleID2', 'OK', 'OK', NA, NA, 'OK', 'unusual', 'OK', NA, NA, NA, NA, NA
+            'SampleID2', 'OK', 'OK', NA, NA, 'OK', 'unusual', 'OK', NA, NA, NA, NA, NA, NA
         ),
     )
     
@@ -249,8 +263,8 @@ test_that("summary_table", {
     
     green <- 'rgb(146,208,80)'
     expected_colors <- tibble(
-        SampleID = c(green, green, 'white', 'red', green, 'orange', 'yellow', 'orange', 'yellow', green, green, green),
-        SampleID2 = c(green, green, 'white', 'white', green, 'yellow', green, 'white', 'white', 'white', 'white', 'white'),
+        SampleID = c(green, green, 'white', 'red', green, 'orange', 'yellow', 'orange', 'yellow', 'yellow', green, green, green),
+        SampleID2 = c(green, green, 'white', 'white', green, 'yellow', green, 'white', 'white', 'white', 'white', 'white', 'white'),
     ) %>% set_names(sample_headers)
     
     ignored_calls <- paste0(
@@ -372,4 +386,162 @@ test_that("summary_table", {
         summary_table(summary_stat_table, sample_headers, config, defined_labels),
         expected
     )    
+})
+
+#SNV_table_output(SNV_table, roi_gr, snv_hotspot_tb, config, report_config, out_format = 'html', caption = NULL)
+test_that("SNV_table_output", {
+    
+    test_config <- config
+    test_config$settings[['SNV_analysis']] <- list(
+        snv_hotspot_table = test_path('../data/minimal-snv-hotspots.tsv'),
+        flag_GenCall_minimum = 0.2,
+        variant_selection = list(
+          Impact = list('HIGH', 'MODERATE'),
+          Annotation_regex = NULL,
+          include_all_ROI_overlaps = TRUE
+        ),
+        critical_SNV = list('ROI-overlap', 'hotspot-match'),
+        reportable_SNV = list('hotspot-gene', 'protein-ablation', 'protein-changing'),
+        protein_ablation_annotations = list(
+            Impact = list('HIGH'),
+            Annotation_regex = NULL
+        ),
+        protein_change_annotations = list(
+            Impact = list(),
+            Annotation_regex = 'missense_variant|inframe'
+        )
+    )
+    report_config <- list()
+    
+    roi_gr <- tibble(
+        list_name = 'ROI',
+        hotspot = c('1:5000-5250', '1:8000-8250', 'DDX11L1'),
+        mapping = c('position', 'position', 'gene_name'),
+        call_type = 'any',
+        check_score = 50,
+        description = c('ROI_1: 1:5000-5250', 'ROI_2: 1:5000-5250', 'DDX11L1'),
+        description_doi = NA_character_,
+        description_htmllinks = c('ROI_1: 1:5000-5250', 'ROI_2: 1:5000-5250', 'DDX11L1'),
+        order = 1:3,
+    ) %>% 
+        get_roi_gr(gr_genes, gr_info, target_chrom_style='UCSC') 
+    
+    snv_hotspot_tb <- load_hotspot_table(test_config, 'snv_hotspot')
+    
+    outcols <- c(
+        'seqnames', 'start', 'REF', 'ALT', 'ID', 'FILTER', 'GT', 'GenTrain_Score', 'GenCall_Score',
+        'Annotation', 'Impact', 'gene_name', 'Transcript_ID', 'Transcript_BioType',	'HGVS.c', 'HGVS.p', 'ROI_hits'
+    )
+    
+    SNV_table <- sample_SNV_tb %>%
+        dplyr::rename(Impact = Annotation_Impact) %>%
+        select(all_of(outcols)) %>%
+        filter(Impact %in% c('HIGH', 'MODERATE'))
+    # Add some roi, Impact & annotation highlights
+    SNV_table <- bind_rows(
+        SNV_table %>% mutate(
+            SNV_category = c('hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match'),
+            SNV_label = c('reportable', 'reportable', 'critical', 'reportable', 'critical')
+        ),
+        SNV_table %>% mutate(
+            SNV_label = c('unreliable impact', rep('reportable', 4)),
+            SNV_category = c('ROI-overlap', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
+            ROI_hits = c('DDX11L1', rep(NA, 4))
+        )
+    ) %>%        
+        mutate(
+            ref_GT = NA, # function will output ligcal NA vector
+            ref_GenCall_Score = NA_real_,
+            SNV_category = factor(SNV_category, levels = defined_labels$SNV_category_labels),
+            SNV_label = factor(SNV_label, levels = defined_labels$SNV_labels),
+        ) %>%
+        arrange(SNV_label, SNV_category)
+    
+    # setup expected DT    
+    column_help_text <- c(
+        'Chromosome of the SNV/SNP',
+        'Position of the SNV/SNP',
+        'SNV/SNP in the format "Chr:Pos:REF>ALT"',
+        'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
+        paste0('Designation label for the SNV/SNP (', paste(defined_labels$SNV_labels, collapse = ', '), ')'),
+        paste0('Evaluation category for the SNV/SNP (', paste(defined_labels$SNV_category_labels, collapse = ', '), ')'),
+        'Reference allele of the SNV/SNP',
+        'Alternative allele of the SNV/SNP',
+        'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
+        'Reference sample genotype of the SNV/SNP for 2 Allels (0 - allele, 1 - alternative allele)',
+        'Regions of interest overlapping with this SNV/SNP',
+        'Gene name affected by the SNV/SNP',
+        'Effect/Annotation of the SNV/SNP on the gene (from mehari)',
+        'Impact annotation of the SNV/SNP on the gene (from mehari)',
+        'Ensembl ID of the selected transcript for the affected gene',
+        'Description of the selected transcript.\\nNote: ManeSelect designates the (medically) primary transcript of a gene.',
+        'HGVS.c notation of the mutation/effect of the SNV/SNP on the transcript',
+        'HGVS.p notation of the mutation/effect of the SNV/SNP on the protein',
+        'GenTrain Score of the SNV/SNP',
+        'GenCall Score of the SNV/SNP',
+        'GenCall Score of the SNV/SNP in the reference sample'            
+    )
+    
+    expected_dt <- SNV_table  %>%
+        dplyr::rename(Chromosome = seqnames, Position = start) %>%
+        mutate(
+            desc = c('desc{1},{2}', 'desc', rep('SNV hotspot gene (see hotspot coverage)', 3), rep(NA, 5)),
+            SNV = paste0(Chromosome, ':', format(Position, big.mark = '.', decimal.mark = ','), ':', REF, '>', ALT),
+            ROI_hits = ifelse(1:dplyr::n() == 10, "<span class=\"badge badge-red\" title=\"ROI&#013;DDX11L1\">DDX11L1</span>", ROI_hits),
+            HGVS.p = ifelse(
+                1:dplyr::n() %in% 1:2, 
+                paste0("<span class=\"badge badge-red\" title=\"test SNV hotspots&#013;", desc, '">', HGVS.p, "</span>"),
+                HGVS.p
+            ),
+            gene_name = ifelse(
+                1:dplyr::n() %in% 3:5, 
+                paste0("<span class=\"badge badge-orange\" title=\"test SNV hotspots&#013;", desc, '">', gene_name, "</span>"),
+                gene_name
+            ),
+            Impact = ifelse(
+                1:dplyr::n() %in% 6:7, 
+                paste0("<span class=\"badge badge-orange\">", Impact, "</span>"),
+                Impact
+            ), 
+            Annotation = ifelse(
+                1:dplyr::n() %in% 8:9, 
+                paste0("<span class=\"badge badge-orange\">", Annotation, "</span>"),
+                Annotation
+            )
+        ) %>%
+        select(
+            Chromosome, Position, SNV, ID, SNV_label, SNV_category, 
+            REF, ALT, GT, ref_GT, ROI_hits, gene_name, Impact, Annotation,  
+            Transcript_ID, Transcript_BioType, HGVS.c, HGVS.p,
+            GenTrain_Score, GenCall_Score, ref_GenCall_Score
+        ) %>%
+        rename_with(format_column_names) %>%
+        datatable(
+            rownames = FALSE,
+            escape = FALSE,
+            extensions = c('Buttons', 'Scroller'),
+            filter = 'top',
+            caption = NULL,
+            options = list(
+                scrollY = 300, scrollCollapse = TRUE, scrollX =  TRUE, scroller = TRUE,
+                dom = 'Bftilp',
+                buttons = c('colvis', 'copy', 'csv', 'excel', 'print'),
+                columnDefs = list(
+                    list(targets = c(0:1,3,5:7,14:16,18,20), visible = FALSE)
+                )
+            ),
+            callback = JS(
+                "var info_text = ", vector_to_js(column_help_text), ";",
+                "header = table.columns().header();",
+                "for (var i = 0; i < info_text.length; i++) {",
+                "  $(header[i]).attr('title', info_text[i]);",
+                "};"
+            )
+        ) %>%
+        formatRound(c('Position'), digits = 0, mark = '.')
+    
+    SNV_table_output(SNV_table, roi_gr, snv_hotspot_tb, test_config, report_config, defined_labels) %>%
+        expect_equal(expected_dt)
+    
+    #TODO: add tests with empty roi_gr, empty snv_hotspot_tb & empty SNV_table
 })

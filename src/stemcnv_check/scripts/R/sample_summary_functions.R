@@ -54,7 +54,7 @@ apply_measure_th <- function(
 }
 
 
-get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV_gr, config) {
+get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV_gr, config, defined_labels) {
     
     sample_id <- unique(gencall_stats$sample_id)
 
@@ -63,7 +63,7 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             dplyr::select(sample_id, call_rate, computed_gender) %>%
             mutate(call_rate = round(call_rate, 3)),
         snp_qc_details %>%
-            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, critical_snvs) %>%
+            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, reportable_SNVs, critical_SNVs) %>%
             unique(),
         get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_labels$call_count_excl_labels)
     )
@@ -88,10 +88,15 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             SNP_pairwise_distance_to_reference = apply_measure_th(
                 SNP_pairwise_distance_to_reference, 'SNP_pairwise_distance_to_reference', sample_levels, config
             ),
-            critical_snvs = ifelse(
+            reportable_SNVs = ifelse(
                 is.na(SNP_pairwise_distance_to_reference),
                 NA_character_,
-                apply_measure_th(critical_snvs, 'critical_snvs', sample_levels, config)
+                apply_measure_th(reportable_SNVs, 'reportable_SNVs', sample_levels, config)
+            ),
+            critical_SNVs = ifelse(
+                is.na(SNP_pairwise_distance_to_reference),
+                NA_character_,
+                apply_measure_th(critical_SNVs, 'critical_SNVs', sample_levels, config)
             )
         ),
         qc_measure_list[[3]] %>%
@@ -106,11 +111,10 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             tr_sample_tb() %>%
             dplyr::rename(sample_eval = Value)
     )
-    # Sort the "critical" columns together
-    bind_rows(
-        tb %>% filter(Description != 'critical_snvs'),
-        tb %>% filter(Description == 'critical_snvs')
-    )
+    # Sort the rows based on the order of the defined labels
+    tb %>%
+        mutate(Description = factor(Description, levels = c('sample_id', defined_labels$sample_qc_measures))) %>%
+        arrange(Description)
 }
 
 

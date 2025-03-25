@@ -31,7 +31,8 @@ run_snp_analysis <- function(
     defined_labels <- get_defined_labels(config)
     SNV_hotspot_table <- load_hotspot_table(config, 'snv_hotspot')
     # sample info
-    ref_id <- get_sample_info(sample_id, 'ref_id', config) 
+    ref_id <- get_sample_info(sample_id, 'ref_id', config)
+    roi_tb <- get_roi_tb(sample_id, read_sampletable(config$sample_table), config)
     
     ## Load SNP data for sample
     sample_SNP_gr <- parse_snp_vcf(
@@ -61,7 +62,7 @@ run_snp_analysis <- function(
     # Prepare internal table of SNVs: 
     # - annotate SNVs with sample ROI
     # - extract mehari annotations into separate columns
-    sample_SNV_tb <- get_sample_SNV_tb(sample_SNP_gr, sample_id, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config)
+    sample_SNV_tb <- get_sample_SNV_tb(sample_SNP_gr, roi_tb, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config)
     # Prepare table for xlsx output
     # - compare with reference GT
     # - check which critical reasons apply (ROI, SNV-hotspot, HIGH impact, ..)

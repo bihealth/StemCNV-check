@@ -167,11 +167,12 @@ summary_table <- function(summary_stat_table, sample_headers, config, defined_la
 }
 
 format_hotspots_to_badge <- function(
-    hotspot_vec, CNVtype_vec, hotspot_table, color = 'orange', include_hover = TRUE
+    hotspot_vec, CNVtype_vec, color_vec, hotspot_table, include_hover = TRUE
 ) {
     
-    if (color %!in% c('orange', 'red')) {
-        stop(str_glue("Unsupported color '{color}', only 'red' and 'orange' are defined"))
+    if (!all(color_vec %in% c('orange', 'red'))) {
+        wrong <- color_vec[color_vec %!in% c('orange', 'red')] %>% unique() %>% paste(collapse = ', ')
+        stop(str_glue("Unsupported badge color(s): {wrong}. Only 'red' and 'orange' are defined"))
     }
 
     hotspot_table.any <- hotspot_table %>%
@@ -180,7 +181,8 @@ format_hotspots_to_badge <- function(
     
     tb <- tibble(
         hotspot = str_split(hotspot_vec, '\\|'),
-        call_type = CNVtype_vec
+        call_type = CNVtype_vec,
+        color = color_vec
     ) %>%
         mutate(id = 1:dplyr::n()) %>%
         unnest(hotspot) %>%
@@ -217,7 +219,6 @@ format_hotspots_to_badge <- function(
                 row_number() == dplyr::n() ~ "",
                 # No sep after badge
                 str_detect(out_str, '^<') ~ "",
-                # TODO: no sep _before_ badge?
                 str_detect(out_str[row_number()+1], '^<') ~ "",
                 TRUE ~ "; "
             )
@@ -255,11 +256,11 @@ CNV_table_output <- function(
                     image_folder, "/CNV_call.", plotsection, ".nr", i, '.plot-1.png\'); return false;">',
                     'Nr. ', i,' (ext. plot)</a>'
                 )
-            ), 
+            ),
             Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
-            stemcell_hotspot = map2_chr(stemcell_hotspot, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, stemcell_hotspot_tb, 'red')),
-            dosage_sensitive_gene = map2_chr(dosage_sensitive_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, dosage_sensitive_gene_tb, 'orange')),
-            cancer_gene = map2_chr(cancer_gene, CNV_type, \(hi,c) format_hotspots_to_badge(hi, c, cancer_gene_tb, 'orange')),
+            stemcell_hotspot = format_hotspots_to_badge(stemcell_hotspot, CNV_type, 'red', stemcell_hotspot_tb),
+            dosage_sensitive_gene = format_hotspots_to_badge(dosage_sensitive_gene, CNV_type, 'orange', dosage_sensitive_gene_tb),
+            cancer_gene = format_hotspots_to_badge(cancer_gene, CNV_type, 'orange', cancer_gene_tb),
             genome_bands = pmap_chr(., \(chrom, start, end, ...) {
                 gr_info %>% 
                     filter_by_overlaps(GRanges(seqnames = chrom, strand = '*', ranges = IRanges(start, end))) %>%
@@ -423,9 +424,9 @@ gene_table_output <- function(
             Ensembl = str_glue("<a href=' https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={gene_id}' target='_blank' rel='noopener noreferrer'>{gene_id}</a>"),
             #Reformat gene name
             gene_name = case_when(
-                stemcell_hotspot == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'red', FALSE)),
-                dosage_sensitive_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'orange', FALSE)),
-                cancer_gene == 'yes' ~ map2_chr(gene_name, CNVtype, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'orange', FALSE)),
+                stemcell_hotspot == 'yes' ~ format_hotspots_to_badge(gene_name, CNVtype, 'red', stemcell_hotspot_tb, FALSE),
+                dosage_sensitive_gene == 'yes' ~ format_hotspots_to_badge(gene_name,CNVtype, 'orange', dosage_sensitive_gene_tb, FALSE),
+                cancer_gene == 'yes' ~ format_hotspots_to_badge(gene_name, CNVtype, 'orange', cancer_gene_tb, FALSE),
                 TRUE ~ gene_name
             ),
         ) %>%
@@ -475,9 +476,9 @@ hotspot_table_output <- function(
                 select(hotspot, call_type, list_name, description, check_score, any_of(colnames(tb))) %>%
                 mutate(
                     hotspot = case_when(
-                        list_name == unique(stemcell_hotspot_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, stemcell_hotspot_tb,'red', FALSE)),
-                        list_name == unique(dosage_sensitive_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, dosage_sensitive_gene_tb, 'orange', FALSE)),
-                        list_name == unique(cancer_gene_tb$list_name) ~ map2_chr(hotspot, call_type, \(g, c) format_hotspots_to_badge(g,c, cancer_gene_tb, 'orange', FALSE))
+                        list_name == unique(stemcell_hotspot_tb$list_name) ~ format_hotspots_to_badge(hotspot, call_type, 'red', stemcell_hotspot_tb, FALSE),
+                        list_name == unique(dosage_sensitive_gene_tb$list_name) ~ format_hotspots_to_badge(hotspot, call_type, 'orange', dosage_sensitive_gene_tb, FALSE),
+                        list_name == unique(cancer_gene_tb$list_name) ~ format_hotspots_to_badge(hotspot, call_type, 'orange', cancer_gene_tb, FALSE)
                     ),
                     description = str_replace_all(description, '&#013;', '<br/>')
                 ) %>%
@@ -510,23 +511,61 @@ hotspot_table_output <- function(
 
 
 SNV_table_output <- function (
-    SNV_table, 
-    roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
-    config, report_config, out_format = 'html', caption = NULL
+    SNV_table, roi_gr, snv_hotspot_tb, config, report_config, defined_labels, out_format = 'html', caption = NULL
 ){
-
-    get_color <- function(crit_reason) {
-        ifelse(
-            crit_reason %in% report_config$SNV_analysis$critical_reasons_with_red_highlight,
-            'red',
-            'orange'
-        )
+    # Setup variables and tables with specific information to highlight
+    SNV_config <- config$settings$SNV_analysis
+    highlight_category <- c(SNV_config$critical_SNV, SNV_config$reportable_SNV) %>% unlist()
+    badge_color <- function(cat) ifelse(cat %in% unlist(SNV_config$critical_SNV), 'red', 'orange')
+    #Use whitespace as dummy regex that should match nothing (str_detect can not handle empty regex)
+    annotation_hotspot_regex <- c(
+        SNV_config$protein_ablation_annotations$Annotation_regex,
+        SNV_config$protein_change_annotations$Annotation_regex
+    ) %>% paste(collapse = '|')
+    annotation_hotspot_regex <- ifelse(annotation_hotspot_regex == '', ' ', annotation_hotspot_regex)
+    # Create tables with the hotspot annotations
+    snv_annotation_tb <- tibble(
+        list_name = 'highlight_annotations',
+        hotspot = c(
+            SNV_config$protein_ablation_annotations$Impact,
+            SNV_config$protein_change_annotations$Impact,
+            SNV_table %>% separate_rows(Annotation, sep = '&') %>%
+                filter(str_detect(Annotation, annotation_hotspot_regex)) %>% 
+                pull(Annotation) %>% unique()
+        ) %>% unlist(),
+        description = NA_character_,
+        call_type = 'any',
+        check_score = NA_real_
+    )
+    # Ensure gene descriptions are unique
+    gene_snv_hotspots <- snv_hotspot_tb %>%
+        mutate(
+            hotspot = gene_name,
+            description = 'SNV hotspot gene (see hotspot coverage)',
+        ) %>%
+        select(list_name, hotspot, description, call_type, check_score) %>%
+        unique()
+    mutation_snv_hotspots <- snv_hotspot_tb %>%
+        mutate(hotspot = HGVS.p)
+    # Do not display Check_score info
+    if (length(roi_gr) > 0 ) {
+        roi_gr$check_score <- NA_real_
     }
+        
+    # Column, corresponding hotspot table, include hover text
+    highlight_mappings <- list(
+        'ROI_hits' = list('ROI-overlap', as_tibble(roi_gr), TRUE),
+        'HGVS.p' = list('hotspot-match', mutation_snv_hotspots, TRUE),
+        'gene_name' = list('hotspot-gene', gene_snv_hotspots, TRUE),
+        'Annotation' = list('protein-ablation|protein-changing', snv_annotation_tb, FALSE),
+        'Impact' = list('protein-ablation|protein-changing', snv_annotation_tb, FALSE)
+    )
     
     tb <- SNV_table %>%
         dplyr::rename(Chromosome = seqnames, Position = start) %>%
         mutate(
             SNV = paste0(Chromosome, ':', format(Position, big.mark = '.', decimal.mark = ','), ':', REF, '>', ALT),
+            
         )
 
     if (out_format == 'html') {
@@ -536,9 +575,8 @@ SNV_table_output <- function (
             'Position of the SNV/SNP',
             'SNV/SNP in the format "Chr:Pos:REF>ALT"',
             'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
-            #FIXME: pull from label_name_definitions.yaml
-            'Designation label for the SNV/SNP (critical, unrelaible critical, protein changing, reference_genotype)',
-            'Reason for the critical designation label (see config:settings:SNV_analysis:critical_SNV)',
+            paste0('Designation label for the SNV/SNP (', paste(defined_labels$SNV_labels, collapse = ', '), ')'),
+            paste0('Evaluation category for the SNV/SNP (', paste(defined_labels$SNV_category_labels, collapse = ', '), ')'),
             'Reference allele of the SNV/SNP',
             'Alternative allele of the SNV/SNP',
             'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
@@ -558,53 +596,27 @@ SNV_table_output <- function (
         
         dt <- tb %>%
             mutate(
-                across(c(Chromosome, SNV_label, critical_reason), as.factor),
-                ROI_hits = ifelse(
-                    critical_reason == 'ROI-match' & !is.na(critical_reason),
-                    map_chr(
-                        ROI_hits,
-                        \(x) format_hotspots_to_badge(x, 'any', as_tibble(roi_gr), get_color('ROI-match'))
-                    ),
-                    ROI_hits
-                ),
-                HGVS.p = ifelse(
-                    critical_reason == 'hotspot-match' & !is.na(critical_reason),
-                    map_chr(
-                        HGVS.p,
-                        \(x) format_hotspots_to_badge(x, 'any', mutation_snv_hotspots, get_color('hotspot-match'))
-                    ),
-                    HGVS.p
-                ),
-                gene_name = ifelse(
-                    critical_reason == 'hotspot-gene' & !is.na(critical_reason),
-                    map_chr(
-                        gene_name,
-                        \(x) format_hotspots_to_badge(x, 'any', gene_snv_hotspots, get_color('hotspot-gene'))
-                    ),
-                    gene_name
-                ),
-                Annotation = ifelse(
-                    critical_reason == 'critical-annotation' & !is.na(critical_reason),
-                    map_chr(
-                        str_replace_all(Annotation, '&', '|'), 
-                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical-annotation'))
-                    ),
-                    Annotation
-                ) %>%
-                    str_replace_all('\\|', ', '),
-                Impact = ifelse(
-                    critical_reason == 'critical-annotation' & !is.na(critical_reason),
-                    map_chr(
-                        str_replace_all(Impact, '&', '|'), 
-                        \(x) format_hotspots_to_badge(x, 'any', snv_annotation_tb, get_color('critical-annotation'))
-                    ),
-                    Impact
-                ) %>%
-                    str_replace_all('\\|', ', ')
+                CNV_type = 'any',
+                across(c(Chromosome, SNV_label, SNV_category), as.factor),
+                across(c(ROI_hits, HGVS.p, gene_name, Impact, Annotation), \(col) {
+                    mappings <- highlight_mappings[[cur_column()]]
+                    ifelse(
+                        str_detect(SNV_category, mappings[[1]]) & SNV_category %in% highlight_category,
+                        format_hotspots_to_badge(
+                            # Needed for Annotation and Impact; should not break anyhting?
+                            str_replace_all(col, '&', '|'),
+                            CNV_type, 
+                            badge_color(SNV_category),
+                            mappings[[2]],
+                            include_hover = mappings[[3]]
+                        ),
+                        col
+                    )
+                }),
             ) %>%
             select(
                 # 0-5
-                Chromosome, Position, SNV, ID, SNV_label, critical_reason, 
+                Chromosome, Position, SNV, ID, SNV_label, SNV_category, 
                 # 6-9
                 REF, ALT, GT, ref_GT,
                 # 10-17
@@ -647,7 +659,7 @@ SNV_table_output <- function (
     } else {
         tb <- tb %>%
             select(
-                SNV, SNV_label, critical_reason, GT, ref_GT,
+                SNV, SNV_label, SNV_category, GT, ref_GT,
                 ROI_hits, gene_name, Impact, Annotation, HGVS.p,
                 GenCall_Score
             ) %>%

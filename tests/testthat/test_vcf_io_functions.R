@@ -22,14 +22,14 @@ expected_snp_tb <- tibble(
     CHROM = 'chr1',
     POS = c(1, 49, 100, 105, 110, 115, 115, 199, 1000, 1300, 1599, 3000, 3250, 3500, 3500, 3750, 3999) %>% as.integer(),
     ID = c('dummy1a', 'dummy1b', NA, NA, NA, NA, 'dummy', NA, NA, NA, NA, NA, NA, NA, 'DUP', NA, NA),
-    REF = NA_character_, # or "."
-    ALT = NA_character_, # or "."
+    REF = c('A', 'C', 'T', 'G', 'A', 'C', 'C', 'G', 'A', 'C', 'T', 'G', 'A', 'T', 'T', 'G', 'C'),
+    ALT = c('C', 'T', 'G', 'A', 'C', 'T', 'T', 'A', 'C', 'T', 'G', 'A', 'C', 'G', 'G', 'A', 'T'),
     QUAL = NA_real_, # or "."
     FILTER = c(rep('PASS', 6), 'LOWQUAL', rep('PASS', 10)),
     GenTrain_Score = c(rep(0.8, 6), 0.2, rep(0.8, 7), 0.9, 0.8, NA),
     CSQ = c(NA,NA,'gene_id|gene_name', NA, NA, NA, NA, NA, NA, NA, NA, 'ABC|abc', NA, NA, NA, NA, NA),
     sample_id = 'test_sample',
-    GT = NA_character_, # or "."
+    GT = c(rep('0/1', 16), '0/0'),
     LRR = c(1,1,1, 1.1, 0.7, 1, 1, 0.9, 1.3, 1.2, 1.3, 0.85, 0.82, 0.8, 1.15, 0.87, 0.88),
     BAF = c(1,1,1, 0, 0.3, 0.7, 1, 1, 1, 1, 0, 0.33, 1, 1, 0.67, 1, 0.67)        
 )

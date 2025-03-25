@@ -22,6 +22,8 @@ params:
   ginfo_file: ''
   dosage_file: ''
   version: 'unversioned'
+  verbosity: 0
+  log_dir: ''
 ---
 
 <style type="text/css">
@@ -279,6 +281,11 @@ collapsible_html_text <- function(text, header = 'Description' ) {
         '</p>\n\n',
         '</details>\n\n'
     ) %>% cat()
+}
+
+# Additional RData file for interactive report testing
+if (params$verbosity >= 3) {
+    save.image(file = file.path(, 'R_env_report.Rdata'))
 }
 
 ```
@@ -649,27 +656,10 @@ paste(
     'I.e. the "Critical reason" column, which contains a text label showing why an SNV is labelled critical.',
     'This information is displayed by the color highlights of these columns:\n\n',
     ' - "ROI Hits", displaying overlap with sample specific annotation\n\n',
-    ' - "Gene Name", hits in genes thta have known hotspots for stem cells, see also the next "SNV hotspot coverage" tab\n\n',
-    ' - "Annotation" and "Impact", specific effect of the SNP on the gene based on mehari\n\n',
-    ' - "HGVS.p", specific mutation in the proteion, which may overlap with a known stemcell hotspot (see also next tab)\n\n'
+    ' - "HGVS.p", specific mutation in the protein, which may overlap with a known stemcell hotspot (see also next tab)\n\n',
+    ' - "Gene Name", hits in genes that have known hotspots for stem cells, see also the next "SNV hotspot coverage" tab\n\n',
+    ' - "Annotation" and "Impact", specific effect of the SNP on the gene based on mehari\n\n'    
 ) %>% collapsible_html_text('SNV table explanations')
-
-snv_annotation_tb <- tibble(
-    list_name = 'critical_annotations',
-    hotspot = c(
-        config$settings$SNV_analysis$critical_annotations$Impact,
-        config$settings$SNV_analysis$critical_annotations$Annotation
-    ),
-    description = NA_character_,
-    call_type = 'any',
-    check_score = NA_real_
-)
-gene_snv_hotspots <- snv_hotspot_tb %>%
-    select(-HGVS.p) %>%
-    mutate(hotspot = gene_name) %>%
-    unique()
-mutation_snv_hotspots <- snv_hotspot_tb %>%
-    mutate(hotspot = HGVS.p)
 
 if (is.na(ref_id)) {
     cat(
@@ -680,8 +670,7 @@ if (is.na(ref_id)) {
 
 SNV_table_output(
     SNV_table %>% filter(SNV_label != 'reference genotype'), 
-    roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
-    config, report_config, params$out_format #, caption
+    roi_gr, snv_hotspot_tb, config, report_config, defined_labels, params$out_format #, caption
 )
 
 ref_snv <- SNV_table %>% filter(SNV_label == 'reference genotype')
@@ -691,8 +680,7 @@ if (nrow(ref_snv) > 0) {
     
     SNV_table_output(
         ref_snv, 
-        roi_gr, snv_annotation_tb, gene_snv_hotspots, mutation_snv_hotspots,
-        config, report_config, params$out_format #, caption
+        roi_gr, snv_hotspot_tb, config, report_config, defined_labels, params$out_format #, caption
     )
 }
 

@@ -32,6 +32,7 @@ rmarkdown::render(
     output_format = paste0(snakemake@wildcards$ext, '_document'),
     output_file = outfile,
     output_options = list(self_contained = TRUE),
+    #FIXME: consider just passing the snakemake object?
     params = list(
         sample_id =  snakemake@wildcards$sample_id,
         inputs = snakemake@input,
@@ -45,6 +46,8 @@ rmarkdown::render(
         gtf_file = snakemake@params$gtf_file,
         ginfo_file = snakemake@params$ginfo_file,
         dosage_file = snakemake@params$dosage_file,
-        version = snakemake@params$version
+        version = snakemake@params$version,
+        verbosity = config$verbose_level,
+        log_dir = dirname(snakemake@log[['err']])
     )
 )
