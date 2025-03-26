@@ -522,7 +522,7 @@ tools:
     memory: 4000 # "4000MB"
     runtime: "30m"
   PennCNV:
-    memory: 500 # "500MB"
+    memory: 1000 # "500MB"
     runtime: "30m"
   SNV_analysis:
     threads: 2
