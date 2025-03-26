@@ -69,7 +69,7 @@ cnv_tb <- tibble(
   width = c(100, 600, 2400, 1000, 1e7, 1000, 1000, 3e4, 2e6+400),
   sample_id = 'test_sample',
   CNV_caller = 'Test',
-  CNV_type = c(rep('DUP', 5), 'CNV:LOH', rep('DEL', 2), 'DUP'),
+  CNV_type = c(rep('gain', 5), 'LOH', rep('loss', 2), 'gain'),
   n_initial_calls = c(1, 1, 2, 1, 1, 1, 2, 3, 2),
   initial_call_details = c(NA, NA, '3000_3999_CN3|4400_5399_CN3', NA, NA, 
                            NA, '9000_9399_CN2|9600_9999_CN2', '120000_129999_CN1,130000_139999_CN0|140000_149999_CN1',
@@ -90,7 +90,8 @@ cnv_tb_annotated <- cnv_tb %>%
     mutate(
         # FILTER = c(), # could be adapted to proper values, but doesn't matter for this test
         Check_Score = 20 + runif(9, 5, 30),
-        Precision_Estimate = c(sample(c(0.1, 0.4, 0.6, 0.8), 7, T), NA, NA),
+        precision_estimate = c(sample(c(0.1, 0.4, 0.6, 0.8), 7, T), NA, NA),
+        precision_estimate_description = 'dummy: somevalue; another: value',
         Call_label = c('Critical', NA, 'Reportable', NA, NA, NA, NA, rep ('Reference genotype', 2)),
         # reference_caller
         reference_coverage = c(rep(NA, 4), runif(5, 0, 1)),
@@ -107,7 +108,8 @@ cnv_tb_annotated <- cnv_tb %>%
 cnv_tb_annotated_out <- cnv_tb_annotated %>%
     mutate(
         across(where(is.numeric), ~ round(., 3) %>% as.character()),
-        across(where(is.character), ~ ifelse(is.na(.), '.', .) %>% str_replace_all(',', '|'))
+        across(where(is.character), ~ ifelse(is.na(.), '.', .) %>% str_replace_all(',', '|')),
+        precision_estimate_description = 'dummy=somevalue;another=value'
     )
 
 cnv_tb_empty <- cnv_tb %>% filter(seqnames == 'dummy')
@@ -118,7 +120,11 @@ test_that('get_fix_section', {
         POS = cnv_tb$start - 1,
         ID = cnv_tb$ID,
         REF = '.',
-        ALT = paste0('<', cnv_tb$CNV_type, '>'),
+        ALT = paste0(
+            '<', cnv_tb$CNV_type %>% str_replace('gain', 'DUP') %>% 
+                str_replace('loss', 'DEL') %>% str_replace('LOH', 'CNV:LOH'),
+            '>'
+        ),
         QUAL = '.',
         FILTER = cnv_tb$FILTER,
         # 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
@@ -150,7 +156,7 @@ test_that('get_fix_section', {
                 str_glue('N_PROBES={cnv_tb$n_probes};N_UNIQ_PROBES={cnv_tb$n_uniq_probes};'),
                 str_glue('PROBE_DENS={round(cnv_tb$probe_density_Mb, 3)};'),
                 str_glue('Check_Score={cnv_tb_annotated_out$Check_Score};'),
-                str_glue('Precision_Estimate={cnv_tb_annotated_out$Precision_Estimate};'),
+                #str_glue('precision_estimate={cnv_tb_annotated_out$precision_estimate};'),
                 str_glue('Call_label={cnv_tb_annotated_out$Call_label};'),
                 str_glue('stemcell_hotspot={cnv_tb_annotated_out$stemcell_hotspot};'),
                 str_glue('dosage_sensitive_gene={cnv_tb_annotated_out$dosage_sensitive_gene};'),
@@ -207,9 +213,11 @@ test_that('get_gt_section', {
         expect_equal(expected_gt_m)
     
     # test with processed annotation
-    expected_gt[1:9] <- 'GT:CN:TOOL:LRR:REFCOV'
+    expected_gt[1:9] <- 'GT:CN:TOOL:LRR:PREC_EST:PREC_DESC:REFCOV'
     expected_gt[10:18] <- paste(
         expected_gt[10:18],
+        cnv_tb_annotated_out$precision_estimate,
+        cnv_tb_annotated_out$precision_estimate_description,
         cnv_tb_annotated_out$reference_coverage,
         sep = ':'
     )

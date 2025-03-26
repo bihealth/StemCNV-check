@@ -257,7 +257,7 @@ CNV_table_output <- function(
                     'Nr. ', i,' (ext. plot)</a>'
                 )
             ),
-            Precision_Estimate = ifelse(is.na(Precision_Estimate), '-', as.character(Precision_Estimate)),
+            #precision_estimate = ifelse(is.na(precision_estimate), '-', as.character(precision_estimate)),
             stemcell_hotspot = format_hotspots_to_badge(stemcell_hotspot, CNV_type, 'red', stemcell_hotspot_tb),
             dosage_sensitive_gene = format_hotspots_to_badge(dosage_sensitive_gene, CNV_type, 'orange', dosage_sensitive_gene_tb),
             cancer_gene = format_hotspots_to_badge(cancer_gene, CNV_type, 'orange', cancer_gene_tb),
@@ -282,8 +282,9 @@ CNV_table_output <- function(
             CNV_type, chrom, Size, genome_bands,
             start, end, #invis 10-11
             CNV_caller, stemcell_hotspot, dosage_sensitive_gene, cancer_gene, ROI_hits,
-            Precision_Estimate, probe_coverage_gap, high_probe_density,
+            probe_coverage_gap, high_probe_density, precision_estimate, 
             # invis: 20++
+            precision_estimate_description,
             copynumber, LRR, n_probes, n_uniq_probes, #n_premerged_calls, caller_confidence,
             caller_merging_coverage, Gap_percent
         ) 
@@ -322,8 +323,6 @@ CNV_table_output <- function(
             'Dosage sensitive genes overlapping with this CNV call',
             'Cancer genes overlapping with this CNV call',
             'Regions of interest overlapping with this CNV call',
-            #FIXME (future): add a doi for precision benchmark once available
-            'Precision estimate of the CNV call, based on internal benchmarking',
             paste0(
                 'Call has a gap in probe coverage.\\nBased on percentage of call without probes and size of the call. ',
                 'Based on `min.perc.gap_area` and `gap_area.uniq_probes.rel` from config settings:CNV_processing:call_processing'
@@ -332,6 +331,9 @@ CNV_table_output <- function(
                 'Call has higher probe density than {100*config$settings$CNV_processing$call_processing$density.quantile.cutoff}',
                 ' percent of the the array (from config settings:CNV_processing:call_processing)'
             ),
+            #FIXME (future): add a doi for precision benchmark once available
+            'Precision estimate of the CNV call, based on internal benchmarking',
+            'Description of the data basis for the precision estimate',
             '(Estimated) copy number of the CNV call',
             'Median Log R Ratio of the CNV call',
             'Number of SNP probes (post filtering) in the CNV call area',
@@ -386,7 +388,7 @@ CNV_table_output <- function(
                 CNV_type, Check_Score,
                 chrom, start, end, Size, genome_bands, CNV_caller,
                 stemcell_hotspot, dosage_sensitive_gene, cancer_gene,
-                Precision_Estimate, probe_coverage_gap, high_probe_density
+                precision_estimate, probe_coverage_gap, high_probe_density
             ) %>% 
             rename_with(format_column_names)
         return(kable(tb, caption = caption))

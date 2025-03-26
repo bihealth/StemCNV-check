@@ -327,46 +327,9 @@ settings:
       neutral_copy_factor: 0.275
       flat_decrease: 15      
       # Note: male sex chromosomes have baseline CN=1, and generally use the 1-copy factor unless CN>2
+    # This file contains precision estimations based on benchmarking data
+    precision_estimation_file: '__inbuilt__/supplemental-files/precision-estimation.tsv'
 
-      
-
-    Precision:
-      size_categories:
-        # Lower bound size thresholds / categories for estimating CNV call precision
-        extreme.loh:    5000000
-        extreme.cnv:    2000000
-        very.large.loh: 2500000
-        very.large.cnv:  400000
-        large.loh:       100000
-        large.cnv:       100000
-        medium.loh:       10000
-        medium.cnv:       10000
-   
-      estimate_values:
-        # Estimated the reliability (accuracy) of CNV calls
-        # These are optimised for 'extended' filter settings
-        # use commented values for 'full' filter settings
-        multiple_Callers:
-          extreme:    1.0
-          very_large: 1.0
-          large:      0.8 # full: 1.0
-          medium:     0.8
-          small:      0.2 # full: 0.5
-        PennCNV:
-          extreme:    1.0
-          very_large: 1.0
-          large:      0.8 # full: 1.0
-          medium:     0.6
-          small:      0.2 # full: 0.5
-        CBS:
-          extreme:    0.6  # full: 0.7
-          very_large: 0.6  # full: 0.7
-          large:      0.4
-          medium:     0.15
-          small:      0.1  # full: 0.2
-        Call_has_Gap:   -0.1
-        HighSNPDensity: -0.1
-  
   SNV_analysis:
     probe_filter_settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even include chrY on female samples
     snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
@@ -567,7 +530,7 @@ tools:
     memory: 4000 # "4000MB"
     runtime: "30m"
   PennCNV:
-    memory: 500 # "500MB"
+    memory: 1000 # "500MB"
     runtime: "30m"
   SNV_analysis:
     threads: 2

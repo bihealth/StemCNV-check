@@ -78,8 +78,13 @@ if (length(snakemake@input$ref_data) > 0) {
 #Scoring
 check_scores <- config$settings$CNV_processing$Check_score_values
 #Precision esitmation
-size_categories <- config$settings$CNV_processing$Precision$size_categories
-precision_estimates<- config$settings$CNV_processing$Precision$estimate_values
+precision_estimation_file <- config$settings$CNV_processing$precision_estimation_file %>%
+    str_replace('__inbuilt__', config$snakedir) %>%
+    fix_rel_filepath(config)
+probe_filter_settings <- config$settings$CNV_processing$call_processing$probe_filter_settings
+if (probe_filter_settings == '_default_') {
+    probe_filter_settings <- config$settings$default_probe_filter_set
+}   
 
 stemcell_hotspots_tb <- load_hotspot_table(config, 'stemcell_hotspot')
 cancer_genes_tb <- load_hotspot_table(config, 'cancer_gene')
@@ -126,7 +131,7 @@ cnvs <- cnvs %>%
 	annotate_gene_overlaps(gr_genes) %>%
     as_tibble() %>%
 	annotate_cnv.check.score(stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores, sample_sex) %>%
-	annotate_precision.estimates(size_categories, precision_estimates) %>%
+	annotate_precision.estimates(probe_filter_settings, precision_estimation_file) %>%
     annotate_call.label(config$evaluation_settings$CNV_call_labels)
 
 
@@ -142,7 +147,7 @@ combined_calls_to_vcf <- function(cnv_tb, out_vcf, sample_sex, processing_config
             FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
         )
     
-    filtersettings <- processing_config$`probe_filter_settings`
+    filtersettings <- processing_config$probe_filter_settings
     if (filtersettings == '_default_') {
         filtersettings <- config$settings$default_probe_filter_set
     }    

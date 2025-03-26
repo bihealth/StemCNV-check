@@ -40,7 +40,7 @@ sample_cnvs <- tibble(
   sample_id = 'test_sample',
   CNV_type = c('gain', 'gain', 'gain', 'loss', 'loss', 'loss', 'loss'),
   ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-  CNV_caller = c('StemCNV-check', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
+  CNV_caller = c('combined-call', 'toolA', 'combined-call', 'combined-call', 'toolB', 'toolB', 'toolB'),
   n_probes = c(15, 100, 150, 250, 100, 50, 50),
   n_uniq_probes = c(15, 100, 150, 100, 100, 50, 50),
   CN = c(3, 3, 4, 1, 1, 1, 0),
@@ -169,7 +169,6 @@ test_that("Annotate CNVs with probe density flags", {
 
 ### Genes & Check Score ###
 
-
 base_tb <- tibble(
     seqnames = 'chr1',
     start = c(4000, 10000, 40000, 28000000, 28060000, 40000, 5000000, 3000) %>% as.integer(),
@@ -177,7 +176,7 @@ base_tb <- tibble(
     sample_id = 'test_sample',
     CNV_type = c('gain', 'gain', 'gain', 'gain', 'loss', 'loss', 'LOH', 'LOH'),
     ID = paste('combined', CNV_type, seqnames, start, end, sep='_'),
-    CNV_caller = c('StemCNV-check', 'toolA', 'toolA', 'StemCNV-check', 'StemCNV-check', 'toolA', 'toolB', 'toolB'),
+    CNV_caller = c('combined-call', 'toolA', 'toolA', 'combined-call', 'combined-call', 'toolB', 'toolB', 'toolB'),
     n_probes = c(15, 100, 100, 150, 100, 100, 50, 50),
     n_uniq_probes = c(15, 100, 100, 150, 100, 100, 50, 50),
     CN = c(3, 3, 3, 4, 1, 1, 2, 2),
@@ -308,13 +307,40 @@ test_that("Annotate CNV check scores", {
 })
 
 
-
-# test_that("Annotate precision estimates", {
-# - CBS only
-# - PennCNV only
-# - CBS + PennCNV
-# - different sizes
-
+# annotate_precision.estimates(tb, probe_filter, precision_estimation_file)
+test_that("Annotate precision estimates", {
+    # note: "high_probe_dens" filter is ignored in the minimal prec estimation file
+    precision_estimation_file <- test_path('../data/precision_estinates_minimal.tsv')
+    precision_estimation_tb <- read_tsv(precision_estimation_file)
+    probe_filter <- 'testing'
+    
+    tb <- expected_gene_tb %>%
+        bind_rows(
+            expected_gene_tb[c(1,2,5),] %>% mutate(seqnames = 'chrX')
+        )
+    
+    matching_prec_file_rows <- c(24, 19, 1, 15, 6, 26, NA, NA, 39, 34, 33)
+    expected_tb <- tb %>%
+        mutate(
+            precision_estimate = precision_estimation_tb$estimated_precision[matching_prec_file_rows],
+            precision_estimate_description = precision_estimation_tb$bracket_description[matching_prec_file_rows]
+        )
+    expect_equal(annotate_precision.estimates(tb, probe_filter, precision_estimation_file), expected_tb)
+    # Test warning for probe filter without precision estimation data
+    expected_tb <- tb %>%
+        mutate(precision_estimate = NA_real_, precision_estimate_description = NA_character_)
+    expect_warning(
+        expect_equal(
+            annotate_precision.estimates(tb, 'non-standard', precision_estimation_file),
+            expected_tb
+        )
+    )
+    # test empty input
+    tb <- tb %>% filter(seqnames == '123')
+    expected_tb <- expected_tb %>% filter(seqnames == '123')
+    expect_equal(annotate_precision.estimates(tb, probe_filter, precision_estimation_file), expected_tb)
+})
+    
 
 test_that("Annotate call label", {
     # Test scenarios:
