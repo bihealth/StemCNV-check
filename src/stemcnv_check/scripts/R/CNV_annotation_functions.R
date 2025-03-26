@@ -204,7 +204,7 @@ annotate_precision.estimates_old <- function(tb, size_categories, precision_esti
 				width >= size_categories$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
 				TRUE ~ 'small'
 		  	),
-			Precision_Estimate =
+			precision_estimate =
 			  ifelse(CNV_type %in% c('gain', 'loss'),
 				precision_estimates[[
 					ifelse(n_initial_calls > 1, 'multiple_Callers', CNV_caller)]][[
@@ -221,8 +221,8 @@ annotate_precision.estimates_old <- function(tb, size_categories, precision_esti
 annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_file) {
     # handle empty input
     if (nrow(tb) == 0) {
-        tb$Precision_Estimate <- double()
-        tb$Precision_Estimate_evaluated_calls <- integer()
+        tb$precision_estimate <- double()
+        tb$precision_estimate_description <- character()
         return(tb)
     }
     
@@ -235,8 +235,8 @@ annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_
         )
     if (probe_filter %!in% precision_estimations$probe_filter_setting) {
         warning('Unable to find precision estimates for probe filter setting: ', probe_filter)
-        tb$Precision_Estimate <- NA_real_
-        tb$Precision_Estimate_evaluated_calls <- NA_integer_
+        tb$precision_estimate <- NA_real_
+        tb$precision_estimate_description <- NA_character_
         return(tb)        
     }
     
@@ -251,8 +251,8 @@ annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_
         
         # Will happen for all LOHs, other CNVs should get something
         if (nrow(matched_values) == 0) {
-            row$Precision_Estimate <- NA_real_
-            row$Precision_Estimate_evaluated_calls <- NA_integer_
+            row$precision_estimate <- NA_real_
+            row$precision_estimate_description <- NA_character_
             return(row)
         }
         
@@ -262,8 +262,8 @@ annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_
             arrange(size_max, desc(size_min)) %>%
             slice(1)
         
-        row$Precision_Estimate <- matched_values$estimated_precision
-        row$Precision_Estimate_evaluated_calls <- matched_values$evaluated_calls        
+        row$precision_estimate <- matched_values$estimated_precision
+        row$precision_estimate_description <- matched_values$bracket_description        
         return(row)
     }
     

@@ -310,7 +310,8 @@ test_that("Annotate CNV check scores", {
 # annotate_precision.estimates(tb, probe_filter, precision_estimation_file)
 test_that("Annotate precision estimates", {
     # note: "high_probe_dens" filter is ignored in the minimal prec estimation file
-    precision_estimation_file <- test_path('../data/minimal_precision.tsv')
+    precision_estimation_file <- test_path('../data/precision_estinates_minimal.tsv')
+    precision_estimation_tb <- read_tsv(precision_estimation_file)
     probe_filter <- 'testing'
     
     tb <- expected_gene_tb %>%
@@ -318,15 +319,16 @@ test_that("Annotate precision estimates", {
             expected_gene_tb[c(1,2,5),] %>% mutate(seqnames = 'chrX')
         )
     
+    matching_prec_file_rows <- c(24, 19, 1, 15, 6, 26, NA, NA, 39, 34, 33)
     expected_tb <- tb %>%
         mutate(
-            Precision_Estimate = c(0.001, 0.12, 0.002, 0.8, 0.33, 0.17, NA, NA, NA, 0.003, 0.34),
-            Precision_Estimate_evaluated_calls = c(28, 83, 53, 12, 9, 18, NA, NA, 0, 4, 3)
+            precision_estimate = precision_estimation_tb$estimated_precision[matching_prec_file_rows],
+            precision_estimate_description = precision_estimation_tb$bracket_description[matching_prec_file_rows]
         )
     expect_equal(annotate_precision.estimates(tb, probe_filter, precision_estimation_file), expected_tb)
     # Test warning for probe filter without precision estimation data
     expected_tb <- tb %>%
-        mutate(Precision_Estimate = NA_real_, Precision_Estimate_evaluated_calls = NA_integer_)
+        mutate(precision_estimate = NA_real_, precision_estimate_description = NA_character_)
     expect_warning(
         expect_equal(
             annotate_precision.estimates(tb, 'non-standard', precision_estimation_file),

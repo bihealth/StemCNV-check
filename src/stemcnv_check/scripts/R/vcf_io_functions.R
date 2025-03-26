@@ -36,6 +36,7 @@ parse_cnv_vcf <- function(
         vcf <- read.vcfR(vcf, verbose = F)
     }
     # vcfR2tidy does not work on empty vcf objects
+    # FIXME: what about the additional annotation fields?
     if (nrow(vcf@fix) == 0) {
         vcf <- tibble(
             seqnames = character(),
@@ -73,9 +74,19 @@ parse_cnv_vcf <- function(
                 initial_call_details = str_extract(TOOL, '(?<=initial_call_details=)[^;]+'),
                 across(where(is.character), ~ ifelse(. == '.', NA_character_, .)),
                 FILTER = ifelse(FILTER %in% c('', 'PASS'), NA_character_, FILTER),
+                across(
+                    any_of('PREC_DESC'),
+                    ~ str_replace_all(., '=', ': ') %>% str_replace_all(';', '; ')
+                ),
+                across(any_of(c('REFCOV', 'PREC_EST')), ~ ifelse(. == '.', NA_real_, as.numeric(.)))
             ) %>%
             rename_with(~str_to_lower(.), contains('PROBE')) %>%
             rename_with(~str_replace(., 'REFCOV', 'reference_coverage'), contains('REFCOV')) %>%
+            rename_with(
+                ~str_replace(., 'PREC_DESC', 'precision_estimate_description') %>%
+                    str_replace('PREC_EST', 'precision_estimate'),
+                contains('PREC_')
+            ) %>%
             dplyr::rename(probe_density_Mb = probe_dens) %>%
             select(-REF, -ALT, -QUAL, -SVCLAIM, -TOOL) %>%
             as_granges(seqnames = CHROM, start = POS, end = END, width = SVLEN)
@@ -104,18 +115,17 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         stopifnot(!is.null(fullconfig))
         info <- c(
             info,
-            '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',     
-            '##INFO=<ID=Precision_Estimate,Number=1,Type=Float,Description="Estimated precision for this call">',
+            '##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">',
             paste0(
                 '##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on reference ',
-                'overlap, Check-Score and Filters (',
+                'overlap, Check-Score and Filters; one of: ',
                 paste(names(fullconfig$evaluation_settings$CNV_call_labels), collapse = ', '),
                 ')">'
             ),
             '##INFO=<ID=stemcell_hotspot,Number=1,Type=String,Description="Overlapping stemcell hotspot sites (StemCNV-check defined)">',
             '##INFO=<ID=dosage_sensitive_gene,Number=1,Type=String,Description="Overlapping dosage sensitive genes (Collins et al. 2022)">',
             '##INFO=<ID=cancer_gene,Number=1,Type=String,Description="Overlapping cancer genes (Intogen cancer drivers)">',
-            '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (user defined)">',
+            '##INFO=<ID=ROI_hits,Number=1,Type=String,Description="Overlapping ROI sites (sample specific)">',
             '##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">',
             '##INFO=<ID=Genes,Number=1,Type=String,Description="Overlapping genes">'
         )
@@ -133,6 +143,8 @@ static_cnv_vcf_header <- function(toolconfig, extra_annotation = FALSE, INFO = T
         min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref * 100 %>% round(1)
         format <- c(
             format,
+            '##FORMAT=<ID=PREC_EST,Number=1,Type=Float,Description="Estimated precision for this call">',
+            '##FORMAT=<ID=PREC_DESC,Number=1,Type=String,Description="Data basis for precision esimate">',
             paste0(
                 '##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call ',
                 str_glue(' in reference sample (min {min.ref.ov}% reciprocal overlap)">')
@@ -215,7 +227,7 @@ get_fix_section <- function(tb) {
     base_info_str <- 'END={end};SVLEN={width};SVCLAIM=D;N_PROBES={n_probes};N_UNIQ_PROBES={n_uniq_probes};PROBE_DENS={probe_density_Mb}'
     extra_info_str <- paste(
         base_info_str,
-        'Check_Score={Check_Score};Precision_Estimate={Precision_Estimate};Call_label={Call_label}',
+        'Check_Score={Check_Score};Call_label={Call_label}',
         'stemcell_hotspot={stemcell_hotspot};dosage_sensitive_gene={dosage_sensitive_gene}',
         'cancer_gene={cancer_gene};ROI_hits={ROI_hits}',
         'Gap_percent={Gap_percent};Genes={overlapping_genes}',
@@ -236,18 +248,22 @@ get_fix_section <- function(tb) {
             across(where(is.numeric), ~ round(., 3)),
             # convert NA or empty string to ".", all columns with possible NA to character
             across(
-                any_of(c("Check_Score", "Precision_Estimate", "Call_label",
-                         "stemcell_hotspot", "cancer_gene", "dosage_sensitive_gene",
-                         "ROI_hits", "Gap_percent", "overlapping_genes")),
+                any_of(c(
+                    "Check_Score", "Call_label", "stemcell_hotspot", "cancer_gene", "dosage_sensitive_gene",
+                    "ROI_hits", "Gap_percent", "overlapping_genes"
+                )),
                 ~ ifelse(is.na(.) | . == "", '.', as.character(.))
             ),
-                       
+            # Fix CNV_types used internally to match VCF specs
+            # FIXME (future): CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
+            CNV_type = str_replace(CNV_type, 'gain', 'DUP') %>%
+                str_replace('loss', 'DEL') %>%
+                str_replace('LOH', 'CNV:LOH'),
             # From VCF specs:
             # Note that for structural variant symbolic alleles, POS corresponds 
             # to the base immediately preceding the variant.
             POS = start - 1,
             REF = '.',
-            #FIXME (future): CN>=4 should probably not be DUP but CNV accoring to newest VCF specs
             ALT = str_glue("<{CNV_type}>"),
             QUAL = '.',
             FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
@@ -277,21 +293,30 @@ get_gt_section <- function(tb, sample_id, sample_sex, target_style) {
     # seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id, 
     #  n_initial_calls, initial_call_details, n_probes, n_uniq_probes, probe_density_Mb
     #  FILTER, LRR
+    # Additional columns used: reference_coverage, precision_estimate, precision_estimate_description
     
-    # FORMAT keys: GT, CN, TOOL (str desc), LRR (median), [opt: REFCOV]
+    # FORMAT keys: GT, CN, TOOL (str desc), LRR (median), [opt: PREC_EST, PREC_DESC, REFCOV]
     # Future: BAF (no. of clusters?)
-    
     sex_chroms <- get_sex_chroms(target_style)
     use_cols <- c('GT', 'CN', 'TOOL', 'LRR')
+    # Add extra columns from CNV processing, they should always be present in a set
     if ('reference_coverage' %in% colnames(tb)) {
-        use_cols <- c(use_cols, 'REFCOV')
+        use_cols <- c(use_cols, 'PREC_EST', 'PREC_DESC', 'REFCOV')
     }
 
     tb %>%
         arrange(seqnames, start) %>%
-        rename_with(~str_replace(., 'reference_coverage', 'REFCOV')) %>%
+        rename_with(
+            ~str_replace(., 'reference_coverage', 'REFCOV') %>%
+                str_replace('precision_estimate_description', 'PREC_DESC') %>%
+                str_replace('precision_estimate', 'PREC_EST')
+        ) %>%
         mutate(
-            across(any_of('REFCOV'), ~ ifelse(is.na(.), '.', round(., 3) %>% as.character())),
+            across(any_of(c('PREC_EST', 'REFCOV')), ~ ifelse(is.na(.), '.', round(., 3) %>% as.character())),
+            across(
+                any_of('PREC_DESC'),
+                ~ ifelse(is.na(.), '.', str_replace_all(., ': ', '=') %>% str_replace_all('; ', ';'))
+            ),
             FORMAT = paste(use_cols, collapse = ':'),
             GT = case_when(
                 # Male sex chroms have lower CN baseline
