@@ -328,7 +328,7 @@ settings:
       flat_decrease: 15      
       # Note: male sex chromosomes have baseline CN=1, and generally use the 1-copy factor unless CN>2
     # This file contains precision estimations based on benchmarking data
-    precision_estimation_file: '__inbuilt__/supplemental-files/precision-estimation.tsv'
+    precision_estimation_file: '__inbuilt__/supplemental-files/precision_estimates.tsv'
 
   SNV_analysis:
     probe_filter_settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even include chrY on female samples
