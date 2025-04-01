@@ -5,6 +5,16 @@
 ##FORMAT=<ID=IGC,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Log R Ratio">
 ##FORMAT=<ID=BAF,Number=1,Type=Float,Description="B Allele Frequency">
+##contig=<ID=1,length=249250621>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=3,length=198022430>
+##contig=<ID=5,length=180915260>
+##contig=<ID=X,length=155270560>
+##contig=<ID=CONTIG123,length=1234567>
+##BPM=manifest_A1.bpm
+##CSV=manifest_A1.csv.gz
+##EGT=manifest_A1.egt
 ##Minimal VCF file for testing
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	annot_sample
 chr1	1	dummy1a	A	C	.	PASS	GenTrain_Score=0.8	GT:IGC:LRR:BAF	0/1:0.8:1:1

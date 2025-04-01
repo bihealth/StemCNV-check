@@ -135,10 +135,12 @@ annotate_gene_overlaps <- function(gr, gr_genes) {
 
 annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_gene_gr, cancer_genes_gr, check_scores, sample_sex) {
 
+    stopifnot(all(tb$CNV_type %in% c('gain', 'loss', 'LOH')))
+    
     cn1_3 <- check_scores$single_copy_factor
     cn0_4 <- check_scores$double_copy_factor
     cn2   <- check_scores$neutral_copy_factor
-    flat  <- check_scores$flat_decrease  
+    flat  <- check_scores$flat_decrease
     
 	tb %>% 
         rowwise() %>% 
@@ -188,35 +190,6 @@ annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_
 	    ungroup() 
 }
 
-
-annotate_precision.estimates_old <- function(tb, size_categories, precision_estimates) {
-	tb %>%
-		rowwise() %>%
-		mutate(
-			size_category = case_when(
-				width >= size_categories$extreme.loh & CNV_type %!in% c('gain', 'loss') ~ 'extreme',
-				width >= size_categories$extreme.cnv & CNV_type %in% c('gain', 'loss') ~ 'extreme',
-				width >= size_categories$very.large.loh & CNV_type %!in% c('gain', 'loss') ~ 'very_large',
-				width >= size_categories$very.large.cnv & CNV_type %in% c('gain', 'loss') ~ 'very_large',
-				width >= size_categories$large.loh & CNV_type %!in% c('gain', 'loss') ~ 'large',
-				width >= size_categories$large.cnv & CNV_type %in% c('gain', 'loss') ~ 'large',
-				width >= size_categories$medium.loh & CNV_type %!in% c('gain', 'loss') ~ 'medium',
-				width >= size_categories$medium.cnv & CNV_type %in% c('gain', 'loss') ~ 'medium',
-				TRUE ~ 'small'
-		  	),
-			precision_estimate =
-			  ifelse(CNV_type %in% c('gain', 'loss'),
-				precision_estimates[[
-					ifelse(n_initial_calls > 1, 'multiple_Callers', CNV_caller)]][[
-					size_category]] +
-				  (precision_estimates$Call_has_Gap * (probe_coverage_gap)) +
-				  (precision_estimates$HighSNPDensity * (high_probe_density)),
-				NA_real_
-			  )
-		) %>%
-		ungroup() %>%
-	  dplyr::select(-size_category)
-}
 
 annotate_precision.estimates <- function(tb, probe_filter, precision_estimation_file) {
     # handle empty input

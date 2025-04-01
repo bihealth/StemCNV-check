@@ -49,11 +49,11 @@ read_PennCNV <- function(filename, sample_id, sample_sex, target_style) {
                 sample_sex == 'm' & seqnames %in% sex_chroms & CN == 1 ~ 'ERROR',
                 # autosomes & female X
                 CN < 2                                                 ~ 'DEL',
-                CN == 2                                                ~ 'CNV:LOH',
+                CN == 2                                                ~ 'LOH',
                 #FIXME (future): technically DUP should ONLY be used for CN=3 (or 2 on male XY)
                 CN > 2                                                 ~ 'DUP',
             ),
-            ID = paste(CNV_caller, str_remove(CNV_type, 'CNV:'), seqnames, start, end, sep='_')
+            ID = paste(CNV_caller, CNV_type, seqnames, start, end, sep='_')
         ) %>%
         select(seqnames, start, end, width, ID, CNV_caller, CNV_type, CN, sample_id)
 }
@@ -86,46 +86,27 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         get_median_LRR(snp_vcf_gr) %>%
         as_tibble()       
     
-    filtersettings <- tool_config$`probe_filter_settings`
+    # Write VCF
+    filtersettings <- tool_config$probe_filter_settings
     if (filtersettings == '_default_') {
         filtersettings <- config$settings$default_probe_filter_set
-    }    
-    enable_LOH_calls <- tool_config$enable_LOH_calls
-    header <- c(
-        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
-        static_cnv_vcf_header(tool_config),
-        #Add a line describing tool specific details
-        '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
-        paste(
-            '##PennCNV="docker://genomicslab/penncnv"',
-            str_glue('StemCNV-check_array_probe_filtering="{filtersettings}"'),
-            ifelse(enable_LOH_calls, 'LOH_detection=True', 'LOH_detection=False'),
-            'GC_wave_correction=True'
-        )
+    } 
+    vcf_info_text <- paste(
+        '##PennCNV="docker://genomicslab/penncnv"',
+        str_glue('StemCNV-check_array_probe_filtering="{filtersettings}"'),
+        ifelse(tool_config$enable_LOH_calls, 'LOH_detection=True', 'LOH_detection=False'),
+        'GC_wave_correction=True'
+    )    
+    write_cnv_vcf(
+        all_calls,
+        out_vcf,
+        sample_sex,
+        'PennCNV',
+        config,
+        snp_vcf_meta,
+        vcf_info_text,
+        target_style
     )
-    
-    fix <- get_fix_section(all_calls)
-    gt <- get_gt_section(all_calls, sample_id, sample_sex, target_style)
-    # write.vcf does not work on empty vcfR objects
-    if (nrow(all_calls) == 0) {
-        vcf_file <- out_vcf %>% str_replace('.gz$', '')
-        cat(header, file = vcf_file, sep = '\n')
-        cat(
-            paste0(
-                '#', paste(c(colnames(fix), colnames(gt)), collapse = '\t')
-            ),
-            file = vcf_file, sep = '\n', append = T
-        )
-        R.utils::gzip(vcf_file)
-    } else {
-        cnv_vcf <- new(
-            "vcfR",
-            meta = header,
-            fix = fix,
-            gt = gt
-        )
-        write.vcf(cnv_vcf, out_vcf)
-    }
 }
 
 penncnv_calls_to_vcf(

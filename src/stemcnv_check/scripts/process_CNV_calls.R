@@ -51,7 +51,7 @@ if (length(snakemake@input$ref_data) > 0) {
     
 	combined_tools_ref <- parse_cnv_vcf(snakemake@input$ref_data) %>%
 		# These cols will interefere
-		select(-reference_coverage, -Genes)
+		select(-reference_coverage, -overlapping_genes)
     
 	
 	cnvs <- annotate_reference_overlap(combined_tools_sample, combined_tools_ref,
@@ -117,6 +117,7 @@ cnvs <- cnvs %>%
     annotate_impact_lists(dosage_sensitive_gene_gr, 'dosage_sensitive_gene') %>%
 	annotate_impact_lists(cancer_genes_gr, 'cancer_gene') %>%
 	annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
+    #FIXME: those two calls produce warnings
 	annotate_gaps(
         snakemake@params$array_gaps_file,
         processing_config$min.perc.gap_area, 
@@ -135,64 +136,18 @@ cnvs <- cnvs %>%
     annotate_call.label(config$evaluation_settings$CNV_call_labels)
 
 
-# Also directly write out a cnv vcf
-combined_calls_to_vcf <- function(cnv_tb, out_vcf, sample_sex, processing_config, vcf_meta, target_style) {
-    
-    tb <- cnv_tb %>%
-        as_tibble() %>%
-        rowwise() %>%
-        mutate(
-            CNV_type = ifelse(CNV_type == 'LOH', 'CNV:LOH', CNV_type),
-            CNV_caller = ifelse(length(CNV_caller) > 1, 'StemCNV-check', unlist(CNV_caller)),
-            FILTER = ifelse(is.na(FILTER), 'PASS', FILTER),
-        )
-    
-    filtersettings <- processing_config$probe_filter_settings
-    if (filtersettings == '_default_') {
-        filtersettings <- config$settings$default_probe_filter_set
-    }    
-
-    header <- c(
-        fix_header_lines(vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
-        static_cnv_vcf_header(processing_config, extra_annotation = TRUE, fullconfig = config),
-        '##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">',
-        #FIXME (future): maybe also keep the PennCNV & CBS lines? (doesn't seem to be 100% standard though)
-        str_glue(
-            '##StemCNV-check process_CNV_calls',
-            'tool.overlap.greatest.call.min.perc={processing_config$tool.overlap.greatest.call.min.perc}',
-            'tool.overlap.min.cov.sum.perc={processing_config$tool.overlap.min.cov.sum.perc}'
-        )
-    )
-    
-    fix <- get_fix_section(tb)
-    gt <- get_gt_section(tb, sample_id, sample_sex, target_style)
-    # write.vcf does not work on empty vcfR objects
-    if (nrow(tb) == 0) {
-        vcf_file <- out_vcf %>% str_replace('.gz$', '')
-        cat(header, file = vcf_file, sep = '\n')
-        cat(
-            paste0(
-                '#', paste(c(colnames(fix), colnames(gt)), collapse = '\t')
-            ),
-            file = vcf_file, sep = '\n', append = T
-        )
-        R.utils::gzip(vcf_file)
-    } else {
-        cnv_vcf <- new(
-            "vcfR",
-            meta = header,
-            fix = fix,
-            gt = gt
-        )
-        write.vcf(cnv_vcf, out_vcf)
-    }
-}
-
-cnvs %>%
-    combined_calls_to_vcf(
-        snakemake@output$vcf,
-        get_sample_info(sample_id, 'sex', snakemake$config, sampletable),
-        processing_config,
-        snp_vcf_meta,
-        target_chrom_style
-    )
+vcf_info_text <- str_glue(
+    '##StemCNV-check process_CNV_calls',
+    'tool.overlap.greatest.call.min.perc={processing_config$tool.overlap.greatest.call.min.perc}',
+    'tool.overlap.min.cov.sum.perc={processing_config$tool.overlap.min.cov.sum.perc}'
+)
+write_cnv_vcf(
+    as_tibble(cnvs),
+    snakemake@output$vcf,
+    get_sample_info(sample_id, 'sex', snakemake$config, sampletable),
+    'combined_calls',
+    config,
+    snp_vcf_meta,
+    vcf_info_text,
+    target_chrom_style
+)

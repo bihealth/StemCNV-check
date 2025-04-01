@@ -1,0 +1,44 @@
+##fileformat=VCFv4.2
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chrX,length=155270560>
+##BPM=manifest_A1.bpm
+##CSV=manifest_A1.csv.gz
+##EGT=manifest_A1.egt
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the longest variant described in this record">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of structural variant">
+##INFO=<ID=SVCLAIM,Number=A,Type=String,Description="Claim made by the structural variant call. Valid values are D, J, DJ for abundance, adjacency and both respectively">
+##INFO=<ID=N_PROBES,Number=1,Type=Integer,Description="Number of array probes in segment">
+##INFO=<ID=N_UNIQ_PROBES,Number=1,Type=Integer,Description="Number of unique array probe positions in segment">
+##INFO=<ID=PROBE_DENS,Number=1,Type=Float,Description="Density of Probes in segment (Probes / 10Mb)">
+##INFO=<ID=Check_Score,Number=1,Type=Float,Description="StemCNV Check_Score for CNV call">
+##INFO=<ID=Call_label,Number=1,Type=String,Description="Evaluation of CNV, based on reference overlap, Check-Score and Filters; one of: )">
+##INFO=<ID=stemcell_hotspot,Number=1,Type=String,Description="Overlapping stemcell hotspot sites (StemCNV-check defined)">
+##INFO=<ID=dosage_sensitive_gene,Number=1,Type=String,Description="Overlapping dosage sensitive genes (Collins et al. 2022)">
+##INFO=<ID=cancer_gene,Number=1,Type=String,Description="Overlapping cancer genes (Intogen cancer drivers)">
+##INFO=<ID=Gap_percent,Number=1,Type=Float,Description="Percent of segment which has a gap of probe coverage">
+##INFO=<ID=overlapping_genes,Number=1,Type=String,Description="Overlapping gene names">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Segment genotype">
+##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy-number (estimated)">
+##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Segment median Log R Ratio">
+##FORMAT=<ID=TOOL,Number=1,Type=String,Description="Details for copy number calling tools">
+##FORMAT=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites">
+##FORMAT=<ID=PREC_EST,Number=1,Type=Float,Description="Estimated precision for this call">
+##FORMAT=<ID=PREC_DESC,Number=1,Type=String,Description="Data basis for precision esimate">
+##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call  in reference sample (min 5000% reciprocal overlap)">
+##FILTER=<ID=PASS,Description="All filters passed">
+##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">
+##StemCNV-check test description
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test_sample
+chr1	99	Test_gain_chr1_100_199	.	<DUP>	.	min_size	END=199;SVLEN=100;SVCLAIM=D;N_PROBES=5;N_UNIQ_PROBES=5;PROBE_DENS=50000;Check_Score=68.924;Call_label=Critical;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0;overlapping_genes=abc|er123|xyz	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:3:1:caller=Test;n_initial_calls=1;initial_call_details=.:.:0.6:dummy=somevalue;another=value:.
+chr1	999	Test_gain_chr1_1000_1599	.	<DUP>	.	min_size;min_probes	END=1599;SVLEN=600;SVCLAIM=D;N_PROBES=3;N_UNIQ_PROBES=3;PROBE_DENS=5000;Check_Score=38.838;Call_label=.;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0;overlapping_genes=.	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	./.:4:1.3:caller=Test;n_initial_calls=1;initial_call_details=.:.:0.4:dummy=somevalue;another=value:.
+chr1	2999	Test_gain_chr1_3000_5399	.	<DUP>	.	PASS	END=5399;SVLEN=2400;SVCLAIM=D;N_PROBES=11;N_UNIQ_PROBES=10;PROBE_DENS=4166.667;Check_Score=45.692;Call_label=Reportable;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=gene3;Gap_percent=0;overlapping_genes=gene3	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:3:0.89:caller=Test;n_initial_calls=2;initial_call_details=3000_3999_CN3|4400_5399_CN3:.:0.4:dummy=somevalue;another=value:.
+chr3	5999	Test_gain_chr3_6000_6999	.	<DUP>	.	PASS	END=6999;SVLEN=1000;SVCLAIM=D;N_PROBES=5;N_UNIQ_PROBES=5;PROBE_DENS=5000;Check_Score=37.664;Call_label=.;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.943;overlapping_genes=.	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:3:2:caller=Test;n_initial_calls=1;initial_call_details=.:.:0.8:dummy=somevalue;another=value:.
+chr5	99999999	Test_gain_chr5_100000000_109999999	.	<DUP>	.	min_density	END=109999999;SVLEN=1e+07;SVCLAIM=D;N_PROBES=20;N_UNIQ_PROBES=20;PROBE_DENS=2;Check_Score=25.518;Call_label=.;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.047;overlapping_genes=.	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:3:1.385:caller=Test;n_initial_calls=1;initial_call_details=.:.:0.6:dummy=somevalue;another=value:0.239
+chr17	7399	Test_LOH_chr17_7400_8399	.	<CNV:LOH>	.	PASS	END=8399;SVLEN=1000;SVCLAIM=D;N_PROBES=5;N_UNIQ_PROBES=5;PROBE_DENS=5000;Check_Score=26.937;Call_label=.;stemcell_hotspot=gene1|gene2;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.102;overlapping_genes=gene1|gene2	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	./.:2:0:caller=Test;n_initial_calls=1;initial_call_details=.:.:0.1:dummy=somevalue;another=value:0.208
+chr18	8999	Test_loss_chr18_9000_9999	.	<DEL>	.	PASS	END=9999;SVLEN=1000;SVCLAIM=D;N_PROBES=10;N_UNIQ_PROBES=10;PROBE_DENS=10000;Check_Score=30.998;Call_label=.;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.212;overlapping_genes=.	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	1/1:0:-0.88:caller=Test;n_initial_calls=2;initial_call_details=9000_9399_CN2|9600_9999_CN2:.:0.4:dummy=somevalue;another=value:0.246
+chrX	119999	Test_loss_chrX_120000_149999	.	<DEL>	.	PASS	END=149999;SVLEN=30000;SVCLAIM=D;N_PROBES=15;N_UNIQ_PROBES=15;PROBE_DENS=500;Check_Score=32.161;Call_label=Reference genotype;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.303;overlapping_genes=.	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:1:-1.31:caller=Test;n_initial_calls=3;initial_call_details=120000_129999_CN1,130000_139999_CN0|140000_149999_CN1:.:.:dummy=somevalue;another=value:0.777
+chrX	999999	Test_gain_chrX_1000000_3000399	.	<DUP>	.	min_density	END=3000399;SVLEN=2000400;SVCLAIM=D;N_PROBES=20;N_UNIQ_PROBES=20;PROBE_DENS=9.998;Check_Score=47.375;Call_label=Reference genotype;stemcell_hotspot=.;dosage_sensitive_gene=.;cancer_gene=.;Gap_percent=0.652;overlapping_genes=gene5	GT:CN:LRR:TOOL:ROI:PREC_EST:PREC_DESC:REFCOV	0/1:3:-0.895:caller=Test;n_initial_calls=2;initial_call_details=1000000_1999999_CN1|2000400_3000399_CN1:ROI1:.:dummy=somevalue;another=value:0.812

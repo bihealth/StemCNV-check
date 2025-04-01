@@ -102,50 +102,32 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         get_median_LRR(snp_vcf_gr) %>%
         as_tibble()
     
-    # Generate VCF
-    filtersettings <- tool_config$`probe_filter_settings`
+    # Write VCF
+    filtersettings <- tool_config$probe_filter_settings
     if (filtersettings == '_default_') {
         filtersettings <- config$settings$default_probe_filter_set
-    }
-    header <- c(
-        fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
-        static_cnv_vcf_header(tool_config),
-        paste(
-            '##CBS=R-DNAcopy LRR segmentation: CNA/smooth.CNA/segment',
-            str_glue('undo.SD={tool_config$undo.SD.val} min.width=5'),
-            str_glue('CN_LRR_thresholds_autosomes: CN0={tool_config$LRR.loss.large} CN1={tool_config$LRR.loss}'),
-            str_glue('CN3={tool_config$LRR.gain} CN4={tool_config$LRR.gain.large}'),
-            str_glue('CN_LRR_thresholds_female_X: CN0={tool_config$LRR.female.XX.loss} CN1={tool_config$LRR.female.X.loss}'),
-            str_glue('CN3={tool_config$LRR.female.X.gain} CN4={tool_config$LRR.female.X.fain.large}'), 
-            str_glue('CN_LRR_thresholds_male_XY: CN0={tool_config$LRR.male.XorY.loss}'),
-            str_glue('CN2={tool_config$LRR.male.XorY.gain} CN3={tool_config$LRR.male.XorY.gain.large}'),
-            str_glue('StemCNV-check_array_probe_filtering="{filtersettings}"')
-        )
+    } 
+    vcf_info_text <- paste(
+        '##CBS=R-DNAcopy LRR segmentation: CNA/smooth.CNA/segment',
+        str_glue('undo.SD={tool_config$undo.SD.val} min.width=5'),
+        str_glue('CN_LRR_thresholds_autosomes: CN0={tool_config$LRR.loss.large} CN1={tool_config$LRR.loss}'),
+        str_glue('CN3={tool_config$LRR.gain} CN4={tool_config$LRR.gain.large}'),
+        str_glue('CN_LRR_thresholds_female_X: CN0={tool_config$LRR.female.XX.loss} CN1={tool_config$LRR.female.X.loss}'),
+        str_glue('CN3={tool_config$LRR.female.X.gain} CN4={tool_config$LRR.female.X.fain.large}'), 
+        str_glue('CN_LRR_thresholds_male_XY: CN0={tool_config$LRR.male.XorY.loss}'),
+        str_glue('CN2={tool_config$LRR.male.XorY.gain} CN3={tool_config$LRR.male.XorY.gain.large}'),
+        str_glue('StemCNV-check_array_probe_filtering="{filtersettings}"')
     )
-    
-    
-    fix <- get_fix_section(cnvs)
-    gt <- get_gt_section(cnvs, sample_id, sample_sex, target_style)
-    # write.vcf does not work on empty vcfR objects
-    if (nrow(cnvs) == 0) {
-        vcf_file <- out_vcf %>% str_replace('.gz$', '')
-        cat(header, file = vcf_file, sep = '\n')
-        cat(
-            paste0(
-                '#', paste(c(colnames(fix), colnames(gt)), collapse = '\t')
-            ),
-            file = vcf_file, sep = '\n', append = T
-        )
-        R.utils::gzip(vcf_file)
-    } else {
-        cnv_vcf <- new(
-            "vcfR",
-            meta = header,
-            fix = fix,
-            gt = gt
-        )
-        write.vcf(cnv_vcf, out_vcf)
-    }
+    write_cnv_vcf(
+        cnvs,
+        out_vcf,
+        sample_sex,
+        'CBS',
+        config,
+        snp_vcf_meta,
+        vcf_info_text,
+        target_style
+    )
 }
 
 

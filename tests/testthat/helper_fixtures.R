@@ -34,7 +34,7 @@ meahri_ann_header <- c(
     'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
 )
 # Directly setup the expected SNV table from vcf parsing
-sample_SNV_tb <- suppressMessages(read_tsv(test_path('../data/minimal_probes_annotated.vcf'), skip = 8)) %>%
+sample_SNV_tb <- suppressMessages(read_tsv(test_path('../data/minimal_probes_annotated.vcf'), comment = '##')) %>%
     dplyr::rename(
         seqnames = `#CHROM`,
         start = POS,
