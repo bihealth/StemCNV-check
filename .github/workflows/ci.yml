@@ -33,7 +33,7 @@ jobs:
         with:
           activate-environment: stemcnv-check-general-R
           channels: conda-forge,bioconda
-          environment-file: stemcnv_check/envs/general-R.yaml
+          environment-file: src/stemcnv_check/envs/general-R.yaml
           miniforge-version: latest
           auto-activate-base: false
       - name: Run tests
