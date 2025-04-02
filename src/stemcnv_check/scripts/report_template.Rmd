@@ -492,7 +492,7 @@ cnv_calls$seqnames <- fct_relevel(cnv_calls$seqnames, levels(raw_LRR_BAF$Chr))
 
 denovo_calls.table <- cnv_calls %>% 
     dplyr::rename(chrom = seqnames, Size = width) %>%
-    arrange(desc(Check_Score), desc(Size), chrom, start) %>%
+    arrange(Call_label, desc(Check_Score), desc(Size), chrom, start) %>%
     filter(sample_id == !!sample_id & Call_label %in% report_config$call.data.and.plots$denovo$call_labels_include) %>%
     mutate(i = row_number())
 

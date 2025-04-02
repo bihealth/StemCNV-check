@@ -56,9 +56,9 @@ that array is available.
 
 `stemcnv-check make-staticdata [-s <sample_table>] [-c <config_file>]`
 
-To start the analysis, simply invoke the (implied) run command:
+To start the analysis, invoke the run command:
 
-`stemcnv-check [run] [-s <sample_table>] [-c <config_file>]`
+`stemcnv-check run [-s <sample_table>] [-c <config_file>]`
 
 
 ## Example data
@@ -76,7 +76,7 @@ Install git lfs and pull test data:
 Run the example data:
 - `cd example_data`
 - `stemcnv-check make-staticdata` 
-- `stemcnv-check`
+- `stemcnv-check run`
 
 ## Output
 
@@ -97,11 +97,18 @@ StemCNV-check will produce the following output files for each sample, when run 
   An Excel file with summary information for the sample. The first sheets contains quality summary statistics, including 
   array quality measures, number of CNV and LOH calls, the number of calls above Check_Score thresholds. The further 
   sheets have more details from individual CNV callers or sample comparisons.
+- `data_path/{sample}/{sample}.SNV-analysis.xlsx` 
+  An Excel file with the results from analysis on annotated SNVs (from the SNP probes). This includes a list of all SNVs 
+  with an annotated impact on a gene (including the gene name and categorisation based on predicted impact, known hPSC 
+  reference SNV hotspots, match and call reliability), coverage of known hotspots by the utilised array, a distance 
+  matrix of the sample to other selected samples (based on config settings), and a chromosome based summary of where SNPs occur.
 - `data_path/{sample}/{sample}.StemCNV-check-report.html`; ... 
   Html report containing summary statistics, QC statistics, lists of CNV calls sorted by annotation score, 
   plots of most/all CNVs and sample comparison. The default 'StemCNV-check-report' only contains plots for the top20 
-  calls or calls above a user defined Check_Score threshold. A full report can easily be enabled in the config.yaml. 
+  calls or calls above a user defined Check_Score threshold. A fully self-contained report can easily be enabled in the config.yaml. 
   The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
+- `data_path/{sample}/{sample}.StemCNV-check-report-html_images`  
+  Folder containing all images included in the html report. 
 
 Furthermore, the following collated summary tables can be created. 
 (Optionally with a date prefix, or as tsv instead of xlsx files):

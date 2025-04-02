@@ -240,6 +240,17 @@ CNV_table_output <- function(
     tb, plotsection, stemcell_hotspot_tb, dosage_sensitive_gene_tb, cancer_gene_tb, gr_info, report_config, caption = NULL
 ) {
     always_include <- report_config$call.data.and.plots[[plotsection]]$always_include
+    detected_tb <- tibble(
+        list_name = 'dummy-highlight',
+        hotspot = 'detected',
+        mapping = NA_character_,
+        call_type = 'annot',
+        check_score = NA_real_,
+        description = NA_character_,
+        description_doi = NA_character_,
+        description_htmllinks = NA_character_
+    )
+    
     # Reorder & subset columns
     tb <- tb %>%
     # The links for internal plots do switch to the correct plot, but switching the active marked tab requires more JS, sadly the Rmd tabs do not have IDs making this very tricky
@@ -257,12 +268,6 @@ CNV_table_output <- function(
                     'Nr. ', i,' (ext. plot)</a>'
                 )
             ),
-            CNV_caller = factor(CNV_caller),
-            #precision_estimate = ifelse(is.na(precision_estimate), '-', as.character(precision_estimate)),
-            n_genes = ifelse(is.na(overlapping_genes), 0 , str_count(overlapping_genes, '\\|')),
-            stemcell_hotspot = format_hotspots_to_badge(stemcell_hotspot, CNV_type, 'red', stemcell_hotspot_tb),
-            dosage_sensitive_gene = format_hotspots_to_badge(dosage_sensitive_gene, CNV_type, 'orange', dosage_sensitive_gene_tb),
-            cancer_gene = format_hotspots_to_badge(cancer_gene, CNV_type, 'orange', cancer_gene_tb),
             genome_bands = pmap_chr(., \(chrom, start, end, ...) {
                 gr_info %>% 
                     filter_by_overlaps(GRanges(seqnames = chrom, strand = '*', ranges = IRanges(start, end))) %>%
@@ -275,7 +280,21 @@ CNV_table_output <- function(
                         )
                     ) %>%
                     pull(gbands)
-            })
+            }),
+            CNV_caller = factor(CNV_caller),
+            probe_coverage_gap = format_hotspots_to_badge(
+                ifelse(probe_coverage_gap, 'detected', '-'), 
+                'annot', 'orange', detected_tb, FALSE
+            ), 
+            high_probe_density = format_hotspots_to_badge(
+                ifelse(high_probe_density, 'detected', '-'), 
+                'annot', 'orange', detected_tb, FALSE
+            ),
+            #precision_estimate = ifelse(is.na(precision_estimate), '-', as.character(precision_estimate)),
+            stemcell_hotspot = format_hotspots_to_badge(stemcell_hotspot, CNV_type, 'red', stemcell_hotspot_tb),
+            dosage_sensitive_gene = format_hotspots_to_badge(dosage_sensitive_gene, CNV_type, 'orange', dosage_sensitive_gene_tb),
+            cancer_gene = format_hotspots_to_badge(cancer_gene, CNV_type, 'orange', cancer_gene_tb),
+            n_genes = ifelse(is.na(overlapping_genes), 0 , str_count(overlapping_genes, '\\|')),
         ) %>%
         dplyr::rename(copynumber = CN) %>%  
         select(
@@ -387,11 +406,12 @@ CNV_table_output <- function(
     return(dt)
     } else {
         tb <- tb %>% 
+            mutate(n_genes = ifelse(is.na(overlapping_genes), 0 , str_count(overlapping_genes, '\\|'))) %>%
             select(
                 CNV_type, Check_Score,
                 chrom, start, end, Size, genome_bands, CNV_caller,
-                stemcell_hotspot, dosage_sensitive_gene, cancer_gene,
-                precision_estimate, probe_coverage_gap, high_probe_density
+                probe_coverage_gap, high_probe_density, precision_estimate, 
+                stemcell_hotspot, dosage_sensitive_gene, cancer_gene, ROI_hits, n_genes                
             ) %>% 
             rename_with(format_column_names)
         return(kable(tb, caption = caption))
