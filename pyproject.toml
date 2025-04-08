@@ -38,8 +38,8 @@ dependencies = [
     # Config validation & comparison
     "pydantic ~=2.8", 
     "deepdiff ~=8.0",
-    # ressource detection
-    "psutil ~=6.0.0",
+    # resource detection
+    "psutil ~=7.0.0",
 ]
 
 [project.urls]
