@@ -15,9 +15,9 @@ source(test_path('../../src/stemcnv_check/scripts/R/helper_functions.R'))
 # - [x] load_gtf_data
 # - [x] load_genomeInfo
 # - [x] load_hotspot_table
-# - [ ] unsplit_merged_CNV_callers
+# - [x] split_merged_CNV_callers
 
-# Note: primary checks are done in python, R just needs to work
+# Note: primary consistency checks are done in python, R just needs to work
 test_that("read_sampletable", {
     expected_tb <- tibble(
         Sample_ID = c("Cellline-A-MB", "Cellline-A-WB", "Cellline-B-MB", "Cellline-B-1-cl1"),
@@ -70,7 +70,7 @@ input_tb <- tibble(
     end = c(3e4, 5e6, 77e5)
 )
 
-# there is also a test for this is test_CNV_preprocess_functions.R
+# there is also a test for this in test_CNV_preprocess_functions.R
 test_that("fix_CHROM_format", {
     expected_ncbi <- input_tb %>%
         mutate(seqnames = factor(c('2', 'X', '1'), levels = c('1', '2', 'X')))
@@ -199,4 +199,25 @@ test_that('load_genomeInfo', {
     ) %>% as_granges()
 
     expect_equal(load_genomeInfo(ginfo_file, config), expected_gr)
+})
+
+test_that('split_merged_CNV_callers', {
+    # Example calls defined in helper_combined_cnv_data.R
+    # source(test_path('helper_combined_cnv_data.R'))
+    
+    #Note: only some value are restored for initial_call_details string:
+    # <caller>_<start>-<end>_CN<copy_number>_cov<coverage_merge_call>_<filter>
+    # other values (i.e. n_probes, probe_density_Mb) are kept from the recalculation for the merged call
+    expected <- bind_rows(toolA, toolB) %>%
+        as_granges() %>%
+        # expect same order as input
+        select(colnames(combined_tools@elementMetadata)) %>%
+        # will not be the same
+        select(sample_id, CNV_type, CNV_caller, CN, FILTER) %>%
+        arrange(CNV_caller, start)
+    
+    
+    split_merged_CNV_callers(combined_tools, defined_labels) %>%
+        select(sample_id, CNV_type, CNV_caller, CN, FILTER) %>%
+        expect_equal(expected)
 })

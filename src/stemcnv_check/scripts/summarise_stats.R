@@ -94,7 +94,7 @@ collect_summary_stats <- function(
     
     min.ref.coverage <- config$settings$CNV_processing$call_processing$min.reciprocal.coverage.with.ref
     sample_levels <- names(defined_labels$sample_labels)
-    tool_stats <- unsplit_merged_CNV_callers(sample_CNV_gr, defined_labels) %>%
+    tool_stats <- split_merged_CNV_callers(sample_CNV_gr, defined_labels) %>%
         split(.$CNV_caller) %>%
         imap(function (gr, name) {
             tb1 <- gr %>%

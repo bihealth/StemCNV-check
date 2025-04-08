@@ -170,25 +170,30 @@ load_genomeInfo <- function(ginfo_file, config, target_style='UCSC') {
 }
 
 
-unsplit_merged_CNV_callers <- function(cnv_gr, defined_labels) {
+split_merged_CNV_callers <- function(cnv_gr, defined_labels) {
     
     unmerged_calls <- cnv_gr %>%
-        filter(CNV_caller != defined_labels$combined_cnvs) %>%
+        filter(CNV_caller != defined_labels$combined_cnvs)
     
     merged_calls <- cnv_gr %>%
         filter(CNV_caller == defined_labels$combined_cnvs) %>%
         as_tibble() %>%
         separate_rows(initial_call_details, sep = '\\|') %>%
         mutate(
+            # patterm for initial_call_details: <caller>_<start>-<end>_CN<copy_number>_cov<coverage_merge_call>_<filter>
             CNV_caller = str_extract(initial_call_details, '^[^_]+'),
             start = str_extract(initial_call_details, '(?<=_)[0-9]+(?=-)') %>% as.integer(),
             end = str_extract(initial_call_details, '(?<=-)[0-9]+(?=_CN)') %>% as.integer(),
             CN = str_extract(initial_call_details, '(?<=CN)[0-9]+(?=_cov)') %>% as.integer(),
             # overlap_merged_call = str_extract(initial_call_details, '(?<=cov)[0-9]+\\.[0-9]+')
+            FILTER = str_extract(initial_call_details, '(?<=cov[0-9.]{2,6}_).+$') %>%
+                str_replace_all('&', ';') %>%
+                ifelse(str_detect(., 'PASS'), NA_character_, .)
         ) %>%
         select(-width) %>%
         as_granges()
     
-    bind_ranges(merged_calls, unmerged_calls)
+    bind_ranges(merged_calls, unmerged_calls) %>%
+        arrange(CNV_caller, start)
 
 }

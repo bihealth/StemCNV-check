@@ -1,7 +1,6 @@
 library(tidyverse)
 library(plyranges)
 library(testthat)
-library(yaml)
 
 source(test_path("../../src/stemcnv_check/scripts/R/helper_functions.R"))
 source(test_path("../../src/stemcnv_check/scripts/R/hotspot_functions.R"))
@@ -56,8 +55,6 @@ config <- list(
         )
     )
 )
-
-defined_labels <- yaml.load_file(test_path('../../src/stemcnv_check/control_files/label_name_definitions.yaml'))
 
 SNV_hotspot_table <- load_hotspot_table(config, 'snv_hotspot')
 

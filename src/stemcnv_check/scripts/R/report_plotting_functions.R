@@ -333,7 +333,7 @@ make_call_plot <- function(
     calls <- cnv_calls %>%
         filter(sample_id %in% names(sample_headers) & seqnames == chr & end >= win_start & start < win_end) %>%
         as_granges() %>%
-        unsplit_merged_CNV_callers(defined_labels) %>%
+        split_merged_CNV_callers(defined_labels) %>%
         as_tibble() %>% 
         mutate(
             x_pos = (end + start) / 2,
