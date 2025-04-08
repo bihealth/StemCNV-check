@@ -57,6 +57,8 @@ def run_stemcnv_check_workflow(args):
     argv += [
         '--cores', str(args.local_cores)
     ]
+    if args.memory_mb:
+        argv += ["--resources", f"mem_mb={args.memory_mb}"]
 
     if args.snake_options:
         argv += args.snake_options

@@ -5,7 +5,10 @@
 
 import argparse
 import datetime
+import multiprocessing
 import os
+import platform
+import psutil
 import sys
 
 from loguru import logger as logging
@@ -16,7 +19,30 @@ from .app.run_workflow import run_stemcnv_check_workflow
 from .app.make_staticdata import create_missing_staticdata
 from .app.setup_files import setup_control_files
 
+# from: https://github.com/scivision/detect-windows-subsystem-for-linux/blob/main/is_wsl.py
+def is_wsl(v: str = platform.uname().release) -> int:
+    """
+    detects if Python is running in WSL
+    """
+
+    if v.endswith("-Microsoft"):
+        return 1
+    elif v.endswith("microsoft-standard-WSL2"):
+        return 2
+
+    return 0
+
+def get_default_memory_limit():
+
+    if not is_wsl():
+        return None
+    # available memory in MB
+    mem_mb = psutil.virtual_memory().total / (1024 * 1024)
+    return int(mem_mb)
+
 def setup_argparse():
+    # Check if running on WSL, if yes we need to set memory limit
+    
     # General options, available through inheritance for all subparsers
     general_options = argparse.ArgumentParser(description="General StemCNV-check options", add_help=False)
     general_group = general_options.add_argument_group("General", "General pipeline arguments")
@@ -27,7 +53,7 @@ def setup_argparse():
     general_group.add_argument(
         '-c', '--config', default='config.yaml',
         help="Filename of config file. Default: %(default)s\n"
-             "Note: if a global config exists in the cache path, it will also be used by default"
+             "Note: if a global array definition exists in the cache path, it will also be used by default"
     )
     general_group.add_argument(
          '-s', '--sample-table', default=None,
@@ -46,13 +72,13 @@ def setup_argparse():
         version=f"%(prog)s {__version__}",
     )
     subparsers = parser.add_subparsers(
-        dest='action', required=True
+        dest='action', required=True,
     )
 
     group_setupfiles = subparsers.add_parser(
         "setup-files",
         help="Create a sample table and config file for the pipeline",
-        parents=[general_group]
+        parents=[general_group],
     )
     group_setupfiles.add_argument(
         '--config-details', default='minimal',
@@ -76,10 +102,13 @@ def setup_argparse():
         '-d', '--directory', default=None,
         help="Directory to run pipeline in. Default: current directory"
     )
-    # group_snake.add_argument('-j', '-jobs', default=20, help="Number of oarallel job submissions in cluster mode. Default: %(default)s")
     group_snake.add_argument(
-        '-n', '--local-cores', default=4,
-        help="Number of cores for local submission. Default: %(default)s"
+        '-n', '--local-cores', default=multiprocessing.cpu_count(),
+        help="Number of cores for local submission. Default is to use all available (%(default)s)"
+    )
+    group_snake.add_argument(
+        '--memory-mb', default=get_default_memory_limit(),
+        help="Maximum memory to use, in Mb. Default is None on Linux, on WSL the detected available memory: %(default)s"
     )
     group_snake.add_argument(
         '--cache-path', default=None,
