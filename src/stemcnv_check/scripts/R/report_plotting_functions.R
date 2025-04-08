@@ -279,7 +279,7 @@ make_header_panel <- function(
 
 make_call_plot <- function(
     call.row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info,
-    sample_headers,
+    sample_headers, defined_labels,
     total_min_size = 2e6, flank_factor = 2
 ) {
     
@@ -321,7 +321,7 @@ make_call_plot <- function(
         return(list('gg' = warn_msg, 'genes' = tibble(), 'hotspots' = c()))
     }
 
-    cnv_tools <- cnv_calls$CNV_caller %>% unique() %>% str_subset('StemCNV-check', TRUE) %>% sort()
+    cnv_tools <- cnv_calls$CNV_caller %>% unique() %>% str_subset(defined_labels$combined_cnvs, TRUE) %>% sort()
     get_cnv_y <- function(CNV_type, CNV_caller) {
         # Go by tool order (start from 1)
         out <- match(CNV_caller, cnv_tools)
@@ -333,7 +333,7 @@ make_call_plot <- function(
     calls <- cnv_calls %>%
         filter(sample_id %in% names(sample_headers) & seqnames == chr & end >= win_start & start < win_end) %>%
         as_granges() %>%
-        unsplit_merged_CNV_callers() %>%
+        unsplit_merged_CNV_callers(defined_labels) %>%
         as_tibble() %>% 
         mutate(
             x_pos = (end + start) / 2,

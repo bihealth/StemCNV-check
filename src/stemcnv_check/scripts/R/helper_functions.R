@@ -170,13 +170,13 @@ load_genomeInfo <- function(ginfo_file, config, target_style='UCSC') {
 }
 
 
-unsplit_merged_CNV_callers <- function(cnv_gr) {
+unsplit_merged_CNV_callers <- function(cnv_gr, defined_labels) {
     
     unmerged_calls <- cnv_gr %>%
-        filter(CNV_caller != 'StemCNV-check')
+        filter(CNV_caller != defined_labels$combined_cnvs) %>%
     
     merged_calls <- cnv_gr %>%
-        filter(CNV_caller == 'StemCNV-check') %>%
+        filter(CNV_caller == defined_labels$combined_cnvs) %>%
         as_tibble() %>%
         separate_rows(initial_call_details, sep = '\\|') %>%
         mutate(

@@ -218,7 +218,7 @@ make_CNV_plot_section <- function(call.table, plotsection = 'denovo') {
 
         row <- call.table[i,]
         res <- make_call_plot(
-            row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info, sample_headers,
+            row, raw_LRR_BAF, cnv_calls, gr_genes, gr_info, sample_headers, defined_labels,
             report_config$call.data.and.plots[[plotsection]]$plot.region.minsize,
             report_config$call.data.and.plots[[plotsection]]$plot.flanking.region.relative
         )
