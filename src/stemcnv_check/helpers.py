@@ -217,8 +217,10 @@ def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
         if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
         match_val = sample_data_df[col].loc[sample_id]
-        checked_ids = check_collected_ids(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]].to_list())
-        ids.update(checked_ids)
+        # Only actually use truthy values (not empty strings or NAs)
+        if match_val:
+            checked_ids = check_collected_ids(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]].to_list())
+            ids.update(checked_ids)
 
     return ids
 

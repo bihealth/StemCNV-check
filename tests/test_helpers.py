@@ -385,6 +385,13 @@ def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
         {'match_columns': ['Sample_Name'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
         sample_data_df
     )
+    # Do not use empty strings as matching value
+    sample_data_df['empty_col'] = ''
+    assert set() == helpers.collect_SNP_cluster_ids(
+        'Cellline-A-MB',
+        {'match_columns': ['empty_col'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
+        sample_data_df
+    )
     # Test finding sample_ids based on values in given column
     assert set(all_ids[1:3]) == helpers.collect_SNP_cluster_ids(
         'Cellline-A-MB',
