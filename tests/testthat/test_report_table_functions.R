@@ -255,8 +255,7 @@ test_that("summary_table", {
     expected_tb <- summary_stat_table %>%
         filter(Description != 'sample_id') %>%
         select(-contains('eval')) %>%
-        mutate(Description = format_column_names(Description)) %>%
-        set_names(c(' ', sample_headers))
+        mutate(Description = format_column_names(Description))
     
     green <- 'rgb(146,208,80)'
     expected_colors <- tibble(
@@ -294,20 +293,21 @@ test_that("summary_table", {
         "Total Calls LOH" = paste0('The total number of LOH calls.', ignored_calls),
         "Reportable Calls CNV" = 'The number of CNV calls designated as "reportable".',
         "Reportable Calls LOH" = 'The number of LOH calls designated as "reportable".',
+        "Reportable SNVs" = 'The number of detected SNVs designated as "reportable".',
         "Critical Calls CNV" = 'The number of CNV calls designated as "critical".',
         "Critical Calls LOH" = 'The number of LOH calls designated as "critical".',
         "Critical SNVs" = 'The number of detected SNVs designated as "critical".'
     )
     
-    expected <- expected_tb %>%
+    expected_data <- expected_tb[1:7,] %>%
+        set_names(c('Data QC measures', sample_headers)) %>%
         datatable(
             options = list(
                 dom = 't',
-                pageLength = nrow(expected_tb),
+                pageLength = 7,
                 rowCallback = JS(
                     "function(row, data, displayNum, displayIndex, dataIndex) {",
-                    "let help_text = ", vector_to_js(summary_row_help), ";",
-                    #"console.log('hover-test: ' + help_text[data[0]]);",
+                    "let help_text = ", vector_to_js(summary_row_help[1:7]), ";",
                     "$('td', row).attr('title', help_text[data[0]]);",
                     "}"
                 )
@@ -317,12 +317,41 @@ test_that("summary_table", {
         # Color coding of values
         formatStyle(
             2, 
-            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            backgroundColor = styleRow(1:7, unlist(expected_colors[1:7, sample_headers[[1]]])),
             textAlign = 'center'
         ) %>%
         formatStyle(
             3,
-            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[2]]])), 
+            backgroundColor = styleRow(1:7, unlist(expected_colors[1:7, sample_headers[[2]]])), 
+            textAlign = 'center'
+        ) %>%
+        formatStyle(
+            1, 
+            fontWeight = styleEqual(
+                unlist(config$evaluation_settings$summary_stat_warning_levels$use_last_level) %>% format_column_names(), 
+                'bold'
+            )
+        )
+    
+    expected_sample <- expected_tb[8:13, 1:2] %>%
+        set_names(c('Sample QC measures', sample_headers[1])) %>%
+        datatable(
+            options = list(
+                dom = 't',
+                pageLength = 6,
+                rowCallback = JS(
+                    "function(row, data, displayNum, displayIndex, dataIndex) {",
+                    "let help_text = ", vector_to_js(summary_row_help[8:13]), ";",
+                    "$('td', row).attr('title', help_text[data[0]]);",
+                    "}"
+                )
+            ),
+            rownames = FALSE
+        ) %>% 
+        # Color coding of values
+        formatStyle(
+            2, 
+            backgroundColor = styleRow(1:6, unlist(expected_colors[8:13, sample_headers[[1]]])),
             textAlign = 'center'
         ) %>%
         formatStyle(
@@ -335,7 +364,7 @@ test_that("summary_table", {
     
     expect_equal(
         summary_table(summary_stat_table, sample_headers, config, defined_labels),
-        expected
+        list(expected_data, expected_sample)
     )
     
     # also test without reference
@@ -343,16 +372,16 @@ test_that("summary_table", {
         select(-contains('reference'))
     sample_headers <- sample_headers[1]
     
-    expected <- expected_tb %>%
+    expected_data <- expected_tb[1:7,] %>%
         select(-3) %>%
+        set_names(c('Data QC measures', sample_headers)) %>%
         datatable(
             options = list(
                 dom = 't',
-                pageLength = nrow(expected_tb),
+                pageLength = 7,
                 rowCallback = JS(
                     "function(row, data, displayNum, displayIndex, dataIndex) {",
-                    "let help_text = ", vector_to_js(summary_row_help), ";",
-                    #"console.log('hover-test: ' + help_text[data[0]]);",
+                    "let help_text = ", vector_to_js(summary_row_help[1:7]), ";",
                     "$('td', row).attr('title', help_text[data[0]]);",
                     "}"
                 )
@@ -362,12 +391,12 @@ test_that("summary_table", {
         # Color coding of values
         formatStyle(
             2, 
-            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            backgroundColor = styleRow(1:7, unlist(expected_colors[1:7, sample_headers[[1]]])),
             textAlign = 'center'
         ) %>%
         formatStyle(
             3, 
-            backgroundColor = styleRow(1:nrow(expected_tb), unlist(expected_colors[, sample_headers[[1]]])),
+            backgroundColor = styleRow(1:7, unlist(expected_colors[1:7, sample_headers[[1]]])),
             textAlign = 'center'
         ) %>%
         # Make all last level (= potentially red) rows have bold text
@@ -381,7 +410,7 @@ test_that("summary_table", {
     
     expect_equal(
         summary_table(summary_stat_table, sample_headers, config, defined_labels),
-        expected
+        list(expected_data, expected_sample)
     )    
 })
 

@@ -44,13 +44,15 @@ simple_table_output <- function(tb, out_format='html', caption=NULL, escape=TRUE
     }
 }
 
-summary_table <- function(summary_stat_table, sample_headers, config, defined_labels, out_format='html') {
+summary_table <- function(
+    summary_stat_table, sample_headers, config, defined_labels,
+    out_format='html', description1='Data QC measures', description2='Sample QC measures'
+) {
     
     Combined.metrics <- summary_stat_table %>%
         select(-ends_with('eval')) %>%
         filter(Description != 'sample_id') %>%
-        mutate(Description = format_column_names(Description)) %>%
-        set_names(c(' ', sample_headers))
+        mutate(Description = format_column_names(Description))
     
     sample_labels <- defined_labels$sample_labels
     
@@ -100,32 +102,23 @@ summary_table <- function(summary_stat_table, sample_headers, config, defined_la
                 ignored_calls
             ),
             "Total Calls CNV" = paste0('The total number of CNV (gain/loss) calls.', ignored_calls),
-            "Total Calls LOH" = paste0('The total number of LOH calls.', ignored_calls)
-        )
-        if ("Reportable Calls CNV" %in% Combined.metrics$` `) {
-            summary_row_help <- c(summary_row_help,
-                "Reportable Calls CNV" = 'The number of CNV calls designated as "reportable".',
-                "Reportable Calls LOH" = 'The number of LOH calls designated as "reportable".'
-            )
-        }
-        if ("Critical Calls CNV" %in% Combined.metrics$` `) {
-            summary_row_help <- c(summary_row_help,
-                "Critical Calls CNV" = 'The number of CNV calls designated as "critical".',
-                "Critical Calls LOH" = 'The number of LOH calls designated as "critical".'
-            )
-        }
-        summary_row_help <- c(summary_row_help,
+            "Total Calls LOH" = paste0('The total number of LOH calls.', ignored_calls),
+            "Reportable Calls CNV" = 'The number of CNV calls designated as "reportable".',
+            "Reportable Calls LOH" = 'The number of LOH calls designated as "reportable".',
+            "Reportable SNVs" = 'The number of detected SNVs designated as "reportable".',
+            "Critical Calls CNV" = 'The number of CNV calls designated as "critical".',
+            "Critical Calls LOH" = 'The number of LOH calls designated as "critical".',
             "Critical SNVs" = 'The number of detected SNVs designated as "critical".'
         )
         
-        datatable(Combined.metrics,
+        data_qc <- datatable(
+            Combined.metrics %>% set_names(c(description1, sample_headers)) %>% .[1:7,],
             options = list(
                 dom = 't',
-                pageLength = nrow(Combined.metrics),
+                pageLength = 7,
                 rowCallback = JS(
                     "function(row, data, displayNum, displayIndex, dataIndex) {",
-                    "let help_text = ", vector_to_js(summary_row_help), ";",
-                    #"console.log('hover-test: ' + help_text[data[0]]);",
+                    "let help_text = ", vector_to_js(summary_row_help[1:7]), ";",
                     "$('td', row).attr('title', help_text[data[0]]);",
                     "}"
                 )
@@ -135,13 +128,13 @@ summary_table <- function(summary_stat_table, sample_headers, config, defined_la
         # Color coding of values
         formatStyle(
             2, 
-            backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[1]]])),
+            backgroundColor = styleRow(1:7, unlist(Combined.colors[1:7, sample_headers[[1]]])),
             textAlign = 'center'
         ) %>%
         # DT can take specification of non-existing columns - just need a workaround for the sample_header call
         formatStyle(
             3,
-            backgroundColor = styleRow(1:nrow(Combined.metrics), unlist(Combined.colors[, sample_headers[[length(sample_headers)]]])), 
+            backgroundColor = styleRow(1:7, unlist(Combined.colors[1:7, sample_headers[[length(sample_headers)]]])), 
             textAlign = 'center'
         ) %>%
         # Make all last level (= potentially red) rows have bold text
@@ -153,17 +146,54 @@ summary_table <- function(summary_stat_table, sample_headers, config, defined_la
             )
         )
         
+        sample_qc <- datatable(
+            Combined.metrics %>% set_names(c(description2, sample_headers)) %>% .[8:nrow(Combined.metrics),1:2],
+            options = list(
+                dom = 't',
+                pageLength = nrow(Combined.metrics) - 7,
+                rowCallback = JS(
+                    "function(row, data, displayNum, displayIndex, dataIndex) {",
+                    "let help_text = ", vector_to_js(summary_row_help[8:nrow(Combined.metrics)]), ";",
+                    "$('td', row).attr('title', help_text[data[0]]);",
+                    "}"
+                )
+            ),
+            rownames = FALSE
+        ) %>% 
+        # Color coding of values
+        formatStyle(
+            2, 
+            backgroundColor = styleRow(
+                1:(nrow(Combined.metrics)-7),
+                unlist(Combined.colors[8:nrow(Combined.metrics), sample_headers[[1]]])
+            ),
+            textAlign = 'center'
+        ) %>%
+        # Make all last level (= potentially red) rows have bold text
+        formatStyle(
+            1, 
+            fontWeight = styleEqual(
+                unlist(config$evaluation_settings$summary_stat_warning_levels$use_last_level) %>% format_column_names(), 
+                'bold'
+            )
+        )        
     } else {
-    
-        tbout <- kable(Combined.metrics, align = c('l', rep('c', length(sample_headers))), format = 'latex') %>%
-            column_spec(2, background = unlist(Combined.colors[, sample_headers[[1]]]))
-        if (!is.na(ref_id)) {
-           tbout <- column_spec(tbout, 3, background = unlist(Combined.colors[, sample_headers[[2]]]))
+        data_qc <- kable(
+            Combined.metrics[1:7,],
+            align = c('l', rep('c', length(sample_headers))), format = 'latex'
+        ) %>%
+            column_spec(2, background = unlist(Combined.colors[1:7, sample_headers[[1]]]))
+        if (length(sample_headers) > 1) {
+           data_qc <- column_spec(data_qc, 3, background = unlist(Combined.colors[1:7, sample_headers[[2]]]))
         }
-        tbout
+        sample_qc <- kable(
+            Combined.metrics[8:nrow(Combined.metrics), 1:2],
+            align = c('l', 'c'), format = 'latex'
+        ) %>%
+            column_spec(2, background = unlist(Combined.colors[8:nrow(Combined.metrics), sample_headers[[1]]]))
+        
     }
-
-
+    return(list(data_qc, sample_qc))
 }
 
 format_hotspots_to_badge <- function(

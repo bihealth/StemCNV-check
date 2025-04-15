@@ -316,55 +316,75 @@ cat('\n\n')
 cat('### Summary\n\n')
 
 crit_excl_filters <- ifelse(
-    is.null(config$evaluation_settings$CNV_call_labels$filters.exclude.critical),
+    is.null(config$evaluation_settings$CNV_call_labels$`Critical de-novo`$not_allowed_vcf_filters),
     '<none>',
-    config$evaluation_settings$CNV_call_labels$filters.exclude.critical %>% paste(collapse = ', ')
+    config$evaluation_settings$CNV_call_labels$`Critical de-novo`$not_allowed_vcf_filters %>% paste(collapse = ', ')
 )
 repo_excl_filters <- ifelse(
-    is.null(config$evaluation_settings$CNV_call_labels$filters.exclude.reportable),
+    is.null(config$evaluation_settings$CNV_call_labels$`Reportable de-novo`$not_allowed_vcf_filters),
     '<none>',
-    config$evaluation_settings$CNV_call_labels$filters.exclude.reportable %>% paste(collapse = ', ')
+    config$evaluation_settings$CNV_call_labels$`Reportable de-novo`$not_allowed_vcf_filters %>% paste(collapse = ', ')
 )
 
-snv_critical_desc <- list(
-    'ROI-match' = ' - overlaps with a sample specific region of interest',
+snv_cat_desc <- list(
+    'ROI-overlap' = ' - overlaps with a sample specific region of interest',
     'hotspot-match' = ' - overlaps with a known stemcell hotspot SNV',
     'hotspot-gene' = ' - overlaps with a gene that has known stemcell SNV hotspots',
-    'critical-annotation' = paste(
-        ' - has an annotation set as critical:',
-        paste(config$settings$SNV_analysis$critical_annotations, collapse = ', ')
-    ),
-    'any-protein-changing' = ' - changes the protein sequence'
+    'protein-ablation' = ' - SNV that (likely) fully disrupts the protein function (i.e by frameshift or truncation)',
+    'protein-changing' = ' - causes changes the protein sequence (i.e. point mutations)',
+    'other' = ' - effect on protein can not be determined'
 )
 
-paste(
-    'This summary table is meant to serve as a quick overview of the quality of an hPSC sample. ',
+paste0(
+    'These summary tables are meant to serve as a quick overview of the quality of an hPSC sample. ',
+    'The first table contains QC metrics primarily related to data quality (affected by both the DNA used and the array ',
+    'run itself), this table will also display values from the reference sample if possible. The second table contains ',
+    'QC metrics related to the potentially problematic CNVs and SNVs identified in only the primary sample. ',
     'Note that without a reference sample all detected variants are considered "de-novo", even if most are likely from ',
     'the original donor germline.\n\n',
-    'Coloring of all fields is based on (usually) two thresholds defined in the config file (under the evaluation_settings section),',
+    'Coloring of all fields is based on (usually) two thresholds defined in the config file (under the evaluation_settings section), ',
     'one for a signalling (yellow) level, and one for a more serious warning (orange) or even critical (red) level. ',
     'Only certain values are potentially considered critical and are marked by bold text in the table, ',
-    'which values behave like this is also defined in the config.\n\n',
-    'For assigning SNVs (as determined by the Chip Array) as critical, the SNV genotype needs to differs from the ',
-    'reference sample (if one is defined) and (by default preselection) it needs to change the protein sequence. ',
-    'Additionally one of the following criteria needs to be met:\n\n',
-    paste(sapply(config$settings$SNV_analysis$critical_SNV, \(x){snv_critical_desc[[x]]}), collapse = '\n\n'), '\n\n',
-    'CNV Call designation takes into account minimum Check_Score thresholds for critical and (optionally) reportable level, ',
-    'and for exclusion overlap with a reference call (these calls are not denovo and never criticcal or reportable) and ',
-    'call filter flags (i.e. calls below minimum size, or having a probe coverage gap). ',
-    'If no reportable Check_Score threshold is defined the critical one is used (but with the reportable exclusion filters).\n\n',
-    'The current thresholds and exclsuion filters are:\n\n',
-    ' - Critical Check_Score:', config$evaluation_settings$CNV_call_labels$check_score.critical, '\n\n',
-    ' - Critical exclusion Filters:', crit_excl_filters, '\n\n',
-    ' - Reportable Check_Score:', config$evaluation_settings$CNV_call_labels$check_score.reportable, '\n\n',
-    ' - Reportable exclusion Filters: ', repo_excl_filters, '\n\n'
-) %>% collapsible_html_text('Summary table explanations')
+    'which values behave like this is also defined in the config.'
+) %>% collapsible_html_text('Data QC explanations')
 
-read_excel(
+summary_tables <- read_excel(
     fix_rel_filepath(params$input$summary_xlsx, config),
     sheet = 'summary_stats'
 ) %>%
     summary_table(sample_headers, config, defined_labels, params$out_format)
+
+#TODO set headers / table names
+# ? caption
+# ? first col name >> inside fucntion
+# ? text
+summary_tables[[1]]
+
+paste0(
+    'For assigning SNVs (as determined by the Chip Array) as critical or reportable, the SNV genotype needs to differs ',
+    'from the reference sample (if one is defined) and it needs to match specific criteria:\n\n',
+    'Critical SNVs:\n\n', 
+    paste(sapply(config$settings$SNV_analysis$critical_SNV, \(x){snv_cat_desc[[x]]}), collapse = '\n\n'), 
+    '\n\nReportable SNVs:\n\n',
+    paste(sapply(config$settings$SNV_analysis$reportable_SNV, \(x){snv_cat_desc[[x]]}), collapse = '\n\n'),
+    '\n\n',
+    'All CNV calls are given a single label designation which takes into account a minimum Check_Score threshold, ',
+    'overlap with a reference call and certain call filter flags (i.e. calls below minimum size, or having a probe ',
+    'coverage gap). The defined call labels are:\n\n',
+    paste(imap(
+        config$evaluation_settings$CNV_call_labels, \(x, name) {
+            str_glue('
+                 - {name}:
+                   Minimum required Check-Score: {x$minimum_check_score}
+                   Exclusion of calls with any filter among: {paste(x$not_allowed_vcf_filters, collapse=", ")}
+                   Match to CNV in reference sample: {ifelse(x$reference_match, "required", "not allowed")}'                
+            ) %>% str_replace_all('\\n', '\n\n')
+        }), collapse = '\n\n'
+    )
+) %>% collapsible_html_text('Sample QC explanations')
+
+summary_tables[[2]]
+
 cat('\n\n')
 ```
 
