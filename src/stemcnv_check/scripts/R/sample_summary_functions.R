@@ -22,7 +22,7 @@ get_gencall_stats <- function(gencall_stat_file) {
         dplyr::rename(sample_id = gtc)
 }
 
-# sample  levels include names and colors (4 each) for QC measures and are defined in the 'label_name_definitions.yaml' file
+# sample levels include names and colors (4 each) for QC measures and are defined in the 'label_name_definitions.yaml' file
 # The last level is only used for certain measures (based on config)
 # Default names should be: 'OK', 'unusual', 'warning' / 'high concern'
 # Default colors are: green, yellow, orange / red
@@ -63,9 +63,11 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
             dplyr::select(sample_id, call_rate, computed_gender) %>%
             mutate(call_rate = round(call_rate, 3)),
         snp_qc_details %>%
-            dplyr::select(sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, reportable_SNVs, critical_SNVs) %>%
+            dplyr::select(
+                sample_id, SNPs_post_filter, SNP_pairwise_distance_to_reference, reportable_SNVs, critical_SNVs
+            ) %>%
             unique(),
-        get_call_stats(sample_CNV_gr, config$evaluation_settings$CNV_call_labels$call_count_excl_labels)
+        get_call_stats(sample_CNV_gr, config$evaluation_settings$summary_stat_warning_levels$call_count_excl_labels)
     )
     
     sample_levels <- names(get_defined_labels(config)$sample_labels)    
@@ -119,6 +121,11 @@ get_summary_overview_table <- function(gencall_stats, snp_qc_details, sample_CNV
 
 
 get_call_stats <- function(gr.or.tb, call_count_excl_labels = list(), name_addition = NA) {
+    
+    stopifnot(
+        is(gr.or.tb, 'GRanges') | is(gr.or.tb, 'GRangesList') | is(gr.or.tb, 'data.frame'),
+        is(call_count_excl_labels, 'list') | is(call_count_excl_labels, 'character')
+    )
     
     tb <- gr.or.tb %>%
         as_tibble() %>%
