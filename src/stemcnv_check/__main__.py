@@ -202,7 +202,7 @@ def main(argv=None):
         check_config(args)
         if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
-        ret = run_stemcnv_check_workflow(args)
+        ret = run_stemcnv_check_workflow(args, is_wsl())
     elif args.action == 'setup-files':
         if not args.sample_table:
             args.sample_table = 'sample_table.tsv' if args.sampletable_format == 'tsv' else 'sample_table.xlsx'
@@ -210,7 +210,7 @@ def main(argv=None):
     elif args.action == 'make-staticdata':
         if args.directory is not None and not os.path.isdir(args.directory):
             os.makedirs(args.directory)
-        ret = create_missing_staticdata(args)
+        ret = create_missing_staticdata(args, is_wsl())
 
     return ret
 

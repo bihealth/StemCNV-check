@@ -6,6 +6,19 @@ from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import config_extract, get_global_file, get_array_file
 from stemcnv_check.exceptions import SampleConstraintError
 
+# Determine if we can pipe initial vcf files
+# Do not pipe if:
+# 1) running on WSL and writing to /mnt/[any windows drive]
+#FIXME:
+# 2) <3 cores or not enough memory for all 3 rules 
+# > requires to determine available cores and set memory
+if (
+    config['is_wsl'] and Path(config['data']).absolute().match("/mnt/*") 
+):
+    pipe_or_temp_function = temp
+else:
+    pipe_or_temp_function = pipe
+
 def get_sample_info(wildcards):
     info = sample_data_df.loc[wildcards.sample_id].to_dict()
     # ensure Sex is encoded as 'm' or 'f'
