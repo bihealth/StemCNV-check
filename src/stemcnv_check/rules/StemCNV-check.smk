@@ -159,7 +159,7 @@ rule run_SNV_analysis:
     output:
         xlsx=os.path.join(DATAPATH,"{sample_id}","{sample_id}.SNV-analysis.xlsx"),
     threads:
-        get_tool_resource("SNV_analysis","threads"),
+        1 if config['is_wsl'] else get_tool_resource("SNV_analysis","threads"),
     resources:
         runtime=get_tool_resource("SNV_analysis","runtime"),
         mem_mb=get_tool_resource("SNV_analysis","memory"),
