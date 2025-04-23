@@ -34,7 +34,7 @@
 ##FILTER=<ID=min_probes,Description="CNV call from <5 probes">
 ##FILTER=<ID=min_density,Description="CNV call with <10 probes/Mb">
 ##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than 99% of the array">
-##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerable gap (min. 33%)">
+##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerable gap (min. 33% depending on probe number - see config)">
 ##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">
 ##StemCNV-check test description
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test_sample
