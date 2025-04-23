@@ -470,7 +470,7 @@ test_that("SNV_table_output", {
             SNV_label = c('reportable', 'reportable', 'critical', 'reportable', 'critical')
         ),
         SNV_table %>% mutate(
-            SNV_label = c('unreliable impact', rep('reportable', 4)),
+            SNV_label = c('unreliable critical/reportable', rep('reportable', 4)),
             SNV_category = c('ROI-overlap', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
             ROI_hits = c('DDX11L1', rep(NA, 4))
         )

@@ -40,7 +40,7 @@ SNV_categories:
 SNV_labels:
     critical: "SNV with likely critical significance on hiPSC line"
     reportable: "SNV with possible significance on hiPSC line"
-    unreliable impact: "SNV with likely or possible significance on hiPSC line, but unreliable signal"
+    unreliable critical/reportable: "SNV with likely or possible significance on hiPSC line, but unreliable signal"
     de-novo SNV: "SNV with de-novo status, but no clear functional impact"
     reference genotype: "SNV already detected in the reference sample"
 

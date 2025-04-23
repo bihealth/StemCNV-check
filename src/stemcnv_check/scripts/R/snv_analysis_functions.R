@@ -185,7 +185,7 @@ get_SNV_table <- function(
                     (
                         GenCall_Score < subconfig$flag_GenCall_minimum |
                         ref_GenCall_Score < subconfig$flag_GenCall_minimum
-                    )                                                          ~ 'unreliable impact',
+                    )                                                          ~ 'unreliable critical/reportable',
                 SNV_category %in% subconfig$critical_SNV                       ~ 'critical',
                 SNV_category %in% subconfig$reportable_SNV                     ~ 'reportable',
                 TRUE                                                           ~ 'de-novo SNV'
