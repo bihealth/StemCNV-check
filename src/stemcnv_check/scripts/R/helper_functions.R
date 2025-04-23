@@ -3,6 +3,7 @@ suppressMessages(require(GenomeInfoDb))
 suppressMessages(require(tidyverse))
 suppressMessages(require(readxl))
 suppressMessages(require(plyranges))
+suppressMessages(library(yaml))
 `%!in%` <- Negate(`%in%`)
 
 get_defined_labels <- function(config) {

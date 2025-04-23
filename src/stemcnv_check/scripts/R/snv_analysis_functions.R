@@ -177,7 +177,7 @@ get_SNV_table <- function(
                     Impact %in% subconfig$protein_change_annotations$Impact)   ~ 'protein-changing',
                 TRUE                                                           ~ 'other'
             ) %>%
-                factor(levels = defined_labels$SNV_category_labels),
+                factor(levels = names(defined_labels$SNV_categories)),
             
             SNV_label = case_when(
                 GT == ref_GT                                                   ~ 'reference genotype',
@@ -190,10 +190,16 @@ get_SNV_table <- function(
                 SNV_category %in% subconfig$reportable_SNV                     ~ 'reportable',
                 TRUE                                                           ~ 'de-novo SNV'
             ) %>%
-                 factor(levels = defined_labels$SNV_labels),
+                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category, seqnames, start)
 
+    # Ensure that only the defined labels are used
+    stopifnot(
+        all(snv_tb$SNV_label %in% names(defined_labels$SNV_labels)) & !any(is.na(snv_tb$SNV_label)),
+        all(snv_tb$SNV_category %in% names(defined_labels$SNV_categories)) & !any(is.na(snv_tb$SNV_category))
+    )
+    
     snv_tb
 }
 

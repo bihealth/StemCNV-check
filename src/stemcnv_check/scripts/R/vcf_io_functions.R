@@ -109,8 +109,8 @@ parse_cnv_vcf <- function(
 
 
 # CNV vcf writing
-static_cnv_vcf_header <- function(
-    toolconfig, extra_annotation = FALSE, INFO = TRUE, FORMAT = TRUE, FILTER = TRUE, ALT = FALSE, fullconfig = NULL
+cnv_vcf_header <- function(
+    toolconfig, defined_labels, extra_annotation = FALSE, INFO = TRUE, FORMAT = TRUE, FILTER = TRUE, ALT = FALSE, fullconfig = NULL
 ) {
 
     alt <- c('##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">')
@@ -152,7 +152,7 @@ static_cnv_vcf_header <- function(
         # '##FORMAT=<ID=BAF,Number=1,Typeq=Foat,Description="Segment me(di)an B Allele Frequency">',
     )
     if (extra_annotation) {
-        min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref * 100 %>% round(1)
+        min.ref.ov <- toolconfig$min.reciprocal.coverage.with.ref %>% round(1)
         format <- c(
             format,
             '##FORMAT=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites">',
@@ -164,23 +164,17 @@ static_cnv_vcf_header <- function(
             )
         )
     }
-    # See also label_name_definitions.yaml for all filters defined in the workflow 
-    filter.minsize <- toolconfig$filter.minsize
-    filter.minprobes <- toolconfig$filter.minprobes
-    filter.mindensity.Mb <- toolconfig$filter.mindensity
     filter <- c(
         '##FILTER=<ID=PASS,Description="All filters passed">',
-        str_glue('##FILTER=<ID=min_size,Description="CNV call <below min. size <{filter.minsize}bp">'),
-        str_glue('##FILTER=<ID=min_probes,Description="CNV call from <{filter.minprobes} probes">'),
-        str_glue('##FILTER=<ID=min_density,Description="CNV call with <{filter.mindensity.Mb} probes/Mb">')
+        str_glue('##FILTER=<ID=min_size,Description="', defined_labels[['vcf_filters']][['min_size']], '">'),
+        str_glue('##FILTER=<ID=min_probes,Description="', defined_labels[['vcf_filters']][['min_probes']], '">'),
+        str_glue('##FILTER=<ID=min_density,Description="', defined_labels[['vcf_filters']][['min_density']], '">')
     )
     if (extra_annotation) {
-        density.perc.cutoff <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
-        gap.min.perc <- toolconfig$density.quantile.cutoff * 100 %>% round(1)
         filter <- c(
-            '##FILTER=<ID=PASS,Description="All filters passed">',
-            str_glue('##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than {density.perc.cutoff}% of the array">'),
-            str_glue('##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerbale gap (min. {gap.min.perc}%)">')
+            filter,
+            str_glue('##FILTER=<ID=high_probe_dens,Description="', defined_labels[['vcf_filters']][['high_probe_dens']], '">'),
+            str_glue('##FILTER=<ID=probe_gap,Description="', defined_labels[['vcf_filters']][['probe_gap']], '">')
         )
     }
     
@@ -367,7 +361,9 @@ get_gt_section <- function(tb, sample_id, sample_sex, target_style) {
 
 
 # Also directly write out a cnv vcf
-write_cnv_vcf <- function(cnv_tb, out_vcf, sample_sex, tool_name, fullconfig, snp_vcf_meta, command_desc, target_style) {
+write_cnv_vcf <- function(
+    cnv_tb, out_vcf, sample_sex, tool_name, fullconfig, defined_labels, snp_vcf_meta, command_desc, target_style
+) {
 
     stopifnot(str_ends(out_vcf, '\\.gz'))
     
@@ -388,7 +384,7 @@ write_cnv_vcf <- function(cnv_tb, out_vcf, sample_sex, tool_name, fullconfig, sn
     header <- c(
         # contains fileformat, so needs to go first
         fix_header_lines(snp_vcf_meta, 'fileformat|contig|BPM=|EGT=|CSV=', target_style),
-        static_cnv_vcf_header(tool_config, extra_annotation = extra_annotation, ALT = include_LOH_calls, fullconfig = fullconfig),
+        cnv_vcf_header(tool_config, defined_labels, extra_annotation = extra_annotation, ALT = include_LOH_calls, fullconfig = fullconfig),
         ifelse(str_starts(command_desc, '##'), command_desc, paste0('##', command_desc))
     )
 

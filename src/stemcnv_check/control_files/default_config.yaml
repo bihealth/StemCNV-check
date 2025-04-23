@@ -51,7 +51,7 @@ evaluation_settings:
   # The labels described here are always available, but can be changed or new labels can be added
   # If not other category fits (which should not occur with default settings), 
   #  then the last defined "Exclude call" label will always be assigned
-  # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters}
+  # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters_names}
   CNV_call_labels:
     Critical de-novo:
       minimum_check_score: 55
@@ -343,7 +343,7 @@ settings:
       # This will include ALL variants in any ROI region, regardless of annotation
       include_all_ROI_overlaps: TRUE
     # List of SNV categories that are considered critical or reportable.
-    # Allowed values: {SNV_category_labels}
+    # Allowed values: {SNV_categories_names}
     critical_SNV:
       - 'ROI-overlap'
       - 'hotspot-match'

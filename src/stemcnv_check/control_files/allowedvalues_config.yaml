@@ -157,8 +157,8 @@ settings:
     probe_filter_settings: filtersetplusnone
     snv_hotspot_table: str # Path|File|exists
     flag_GenCall_minimum: float_ge0_le1
-    critical_SNV: list__str__labels:SNV_category_labels
-    reportable_SNV: list__str__labels:SNV_category_labels
+    critical_SNV: list__str__labels:SNV_categories
+    reportable_SNV: list__str__labels:SNV_categories
     variant_selection:
       Impact: list__str__(HIGH|MODERATE|MODIFIER|LOW)
       Annotation_regex: noneorstr
@@ -198,7 +198,7 @@ reports:
         plot.region.minsize: float_ge10000
 
 #     SNV_analysis:
-#       SNV_categories_with_red_highlight: list__str__labels:SNV_category_labels
+#       SNV_categories_with_red_highlight: list__str__labels:SNV_categories
 
     SNP_comparison:
       dendrogram.color.by: str_insamplesheet

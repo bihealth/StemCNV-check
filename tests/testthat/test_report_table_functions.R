@@ -478,8 +478,8 @@ test_that("SNV_table_output", {
         mutate(
             ref_GT = NA, # function will output ligcal NA vector
             ref_GenCall_Score = NA_real_,
-            SNV_category = factor(SNV_category, levels = defined_labels$SNV_category_labels),
-            SNV_label = factor(SNV_label, levels = defined_labels$SNV_labels),
+            SNV_category = factor(SNV_category, levels = names(defined_labels$SNV_categories)),
+            SNV_label = factor(SNV_label, levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
     
@@ -489,8 +489,8 @@ test_that("SNV_table_output", {
         'Position of the SNV/SNP',
         'SNV/SNP in the format "Chr:Pos:REF>ALT"',
         'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
-        paste0('Designation label for the SNV/SNP (', paste(defined_labels$SNV_labels, collapse = ', '), ')'),
-        paste0('Evaluation category for the SNV/SNP (', paste(defined_labels$SNV_category_labels, collapse = ', '), ')'),
+        paste0('Designation label for the SNV/SNP (', paste(names(defined_labels$SNV_labels), collapse = ', '), ')'),
+        paste0('Evaluation category for the SNV/SNP (', paste(names(defined_labels$SNV_categories), collapse = ', '), ')'),
         'Reference allele of the SNV/SNP',
         'Alternative allele of the SNV/SNP',
         'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
