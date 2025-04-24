@@ -386,7 +386,7 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
             outfname = os.path.join(
                 cache_path,
                 'mehari-db',
-                "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst"
+                "mehari-data-txs-{genome}-ensembl-and-refseq-{MEHARI_DB_VERSION}.bin.zst"
             )
     elif type == 'dosage_scores':
         config_entry = global_settings['dosage_sensitivity_scores']
