@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'stemCNV-check'
-copyright = '2025, Mariia'
-author = 'Mariia'
+project = 'StemCNV-check'
+copyright = '2025, BIH Core Unit Bioinformatics'
+author = 'BIH Core Unit Bioinformatics'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -24,4 +24,4 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+# html_static_path = ['_static']
