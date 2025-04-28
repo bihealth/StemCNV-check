@@ -59,6 +59,7 @@ The sample table (default: sample_table.tsv) is a tab-separated file describing 
 Empty example files for the sample table and config can be created with this command:
 
 ``stemcnv-check setup-files``
+
 If you prefer to use an xlsx file here you can create an example by using:  
 
 ``stemcnv-check setup-files --sampletable-format xlsx``
