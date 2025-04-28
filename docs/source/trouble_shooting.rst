@@ -25,9 +25,7 @@ to the data it may be necessary to provide the raw data and config files to repr
 -**Reporting issues**
 
 If you encounter issues please:
-
  - make sure they are reproducible
-
  - indentify the step where the error occurs
  - rerun the workflow with an added "-vv" flag and record the output
    - i.e. ``stemcnv-check -vv > log.txt 2>&1``
