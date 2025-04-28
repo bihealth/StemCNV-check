@@ -155,7 +155,8 @@ You can also use your own Excel file, if the following criteria are met:
 **Extended sample table. Description of the data types contained in the columns.**
 
 - Sample_ID
-CORE unique (Include bank ID when possible, only: - or _, do not use special characters: (), {}, /, \, ~,*, & Name has to be UNIQUE). This column has auto-formatting enabled, so that the IDs will work with the CNV-pipeline:
+Include bank ID when possible, only: - or _, do not use special characters: (), {}, /, \, ~,*, & Name has to be UNIQUE.
+This column has auto-formatting enabled, so that the IDs will work with the CNV-pipeline:
 	- red entries are either duplicate or contain not-allowed characters (/ and .\)
 	- orange entries contain characters that the pipeline will remove (since they can cause issues if used in file names):  :,;()[]{}!?* and <space>
 
