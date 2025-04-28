@@ -229,7 +229,7 @@ project specific config file to use a complete array definition, or you can simp
 and rely on the automatically saved central definitions.
 
 Running the analysis
-____________________
+-----------
 
 Once the config file is properly set up and the necessary static files are generated, you can run the StemCNV-check
 workflow with simple command:   
