@@ -190,7 +190,7 @@ def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
         n_new_ids = len(add_ids)
         if max_n and (n_current_ids + n_new_ids) > max_n:
             logging.warning(
-                f"Too many samples for SNP clustering ({len(add_ids)}), only the first {max_n} will be used."
+                f"Too many samples for SNP clustering ({n_current_ids + n_new_ids}), only the first {max_n} will be used."
             )
             add_ids = add_ids[:(max_n - n_current_ids)]
 
