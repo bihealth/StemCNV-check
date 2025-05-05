@@ -156,3 +156,49 @@ get_call_stats <- function(gr.or.tb, call_count_excl_labels = list(), name_addit
     
     tb
 }
+
+
+# Extract qc summary stats from PennCNV log files
+parse_penncnv_logs <- function(penncnv_log_files) {
+    
+    lapply(penncnv_log_files, function(fname) {
+        chrs <- basename(fname) %>% str_extract('(?<=PennCNV.)[^.]+')
+        lines <- readLines(fname)
+        # Extract wave correction from summary lines
+        tb <- lines %>%
+                str_subset('Adjusting LRR by GC model') %>%
+                str_remove('.*: ') %>%
+                str_split(', ') %>%
+                unlist() %>%
+                as_tibble_col(column_name = 'dummy') %>%
+                separate(dummy, c('Name', 'value'), sep = ' changes from ') %>%
+                mutate(Name = paste(Name, '(adjusted)'))
+        # Get "quality summary
+        # Note: this may be missing if not matching data is found (i.e. wrong sex assigned)
+        if (any(str_detect(lines, 'NOTICE: quality summary'))) {
+            tb <- lines %>%
+                str_subset('NOTICE: quality summary') %>%
+                str_remove('.*: ') %>%
+                str_split(' ') %>%
+                unlist() %>%
+                as_tibble_col(column_name = 'dummy') %>%
+                separate(dummy, c('Name', 'value'), sep = '=') %>%
+                filter(Name %!in% c('WF', 'GCWF')) %>%
+                mutate(Name = str_remove(Name, '[XY]')) %>%
+                bind_rows(tb)
+        }
+        # Get median correction BAF & LRR (auto only)
+        if (chrs == 'auto') {
+            tb[str_detect(tb$Name, 'median' ),] <- lines %>%
+                    str_subset('Median-adjusting') %>%
+                    str_replace('.*(LRR|BAF).*( -?[0-9]\\.[0-9]{4})', '\\1_median;0-adjusted by\\2') %>%
+                    as_tibble() %>%
+                    separate(value, c('Name', 'value'), sep = ';')
+        }
+    
+        mutate(tb, chr = ifelse(chrs == 'auto', 'chr1:22', chrs))
+    }) %>%
+        bind_rows() %>%
+        pivot_wider(names_from = chr, values_from = value) %>%
+        dplyr::rename(Description = Name)
+}
