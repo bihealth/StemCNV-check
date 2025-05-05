@@ -8,6 +8,7 @@ import datetime
 import os
 import sys
 
+from collections import defaultdict
 from loguru import logger as logging
 
 from . import __version__
@@ -138,6 +139,17 @@ def setup_argparse():
 
     return parser
 
+_msg_history = defaultdict(set)
+
+# from here: https://github.com/Delgan/loguru/issues/383
+def filter_logs(record):
+    if "once" in record["extra"]:
+        level = record["level"].no
+        message = record["message"]
+        if message in _msg_history[level]:
+            return False
+        _msg_history[level].add(message)
+    return True
 
 def main(argv=None):
 
@@ -152,11 +164,13 @@ def main(argv=None):
     if not args.verbose:
         sys.tracebacklimit = 0
     logging.remove(0)
-    logging.add(sys.stderr,
-                level=["WARNING", "INFO", "DEBUG"][min(args.verbose, 2)],
-                backtrace=args.verbose > 0,
-                diagnose=args.verbose > 1,
-                )
+    logging.add(
+        sys.stderr,
+        level=["WARNING", "INFO", "DEBUG"][min(args.verbose, 2)],
+        backtrace=args.verbose > 0,
+        diagnose=args.verbose > 1,
+        filter=filter_logs
+    )
 
     if args.sample_table is None and args.action != 'setup-files':
         if os.path.isfile('sample_table.tsv'):

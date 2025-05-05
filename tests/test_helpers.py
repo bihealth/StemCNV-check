@@ -350,7 +350,7 @@ def test_config_extract(caplog):
     assert '"cat : nested : key3" is not a valid config entry or has been deprecated' == caplog.records[-1].message
 
 
-def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
+def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs, caplog):
     sampletable = fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
     sample_data_df = helpers.read_sample_table('sample_table.tsv')
 
@@ -429,25 +429,35 @@ def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
             {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': [], 'max_number_samples': 20},
             sample_data_df
         )
-    #FIXME: add checks for log messages to the next 2 tests
 
     # Test exclusion of samples from a different array
     sampletable.set_contents(
         sample_table_extra_cols +
         "DifferentArray\tCellline-X-MB\t0\tMale\tCellline-X\t\tExampleCellines\t773456789000\tR01C03\tCellline-X-MB"
     )
+    sample_data_df2 = helpers.read_sample_table('sample_table.tsv')
     assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids(
         'Cellline-A-MB',
         {'match_columns': ['Sample_Group'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
-        sample_data_df
+        sample_data_df2
     )
+    assert (caplog.records[-1].message == 
+        "Samples Cellline-X-MB do not belong to the same array as Cellline-A-MB (ExampleArray). "
+        "They will be excluded from SNP clustering."
+    )
+
     # test with max_number_samples
+    # Added in Order: reference sample {NA} -> sample_ids {ids[3]} -> id_columns {ids[1,2]} -> match_columns
     assert {all_ids[3], all_ids[1]} == helpers.collect_SNP_cluster_ids(
         'Cellline-A-MB',
         {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': ['Cellline-B-1-cl1'], 'max_number_samples': 2},
         sample_data_df
     )
-
+    logrecords = caplog.records[-2:]
+    assert [rec.message for rec in logrecords] == [
+        "Too many samples for SNP clustering of Cellline-A-MB (3), only the first 2 will be used.",
+        "Skipping: Cellline-B-MB"
+    ]
 
 
 def test_get_cache_dir(caplog, fs):
