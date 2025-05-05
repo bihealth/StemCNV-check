@@ -30,7 +30,7 @@
 ##FORMAT=<ID=PREC_DESC,Number=1,Type=String,Description="Data basis for precision esimate">
 ##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call  in reference sample (min 50% reciprocal overlap)">
 ##FILTER=<ID=PASS,Description="All filters passed">
-##FILTER=<ID=min_size,Description="CNV call below min. size <1000bp">
+##FILTER=<ID=min_size,Description="CNV call below minimum size (<1000bp)">
 ##FILTER=<ID=min_probes,Description="CNV call from <5 probes">
 ##FILTER=<ID=min_density,Description="CNV call with <10 probes/Mb">
 ##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than 99% of the array">

@@ -5,9 +5,6 @@
 #   marked as auto-generatable. By default both the files and an update to a global array definition file will be
 #   written into the cache directory (unless --no-cache is used). By default this file is at 
 #   ~/.cache/stemcnv-check/global_array_definitions.yaml
-# Once the array definitions are in the global file, you need to either delete the 'array_definition' block here 
-#   or also update it with the information written out by `stemcnv-check make-staticdata` (which is the same as the 
-#   entry written into the global array definition config), since this config takes precedence over the global file.
 # If no global config was used during the `make-staticdata` run, i.e. due to the --no-cache flag the array definitions 
 #   will instead be written to a local file, i.e. 'ExampleArray_config.yaml' in the current working directory. 
 #   In this case you will need to copy the contents of that file into this one, or alternatively into a global array 
@@ -84,7 +81,7 @@ evaluation_settings:
     call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
     # SNP_pairwise_distance_to_reference is the absolute GT distance between a sample and it's reference
     # Note that the expected baseline difference strongly depends on the array platform
-    # and may need to be adjusted. These values are based on the GSA array (~700k probes)
+    # and may need to be adjusted. These values are based on the GSA array (~700.000 probes)
     SNP_pairwise_distance_to_reference: [500, 5000]
     loss_gain_log2ratio: [2, 4]
     total_calls_CNV: [10, 50]
@@ -95,11 +92,11 @@ evaluation_settings:
     critical_calls_LOH: [1, 1]
     reportable_SNVs: [5, 10]
     critical_SNVs: [1, 1]
-    # CNVs/LOHs gievn one these labels are not counted for QC measures
+    # CNVs/LOHs given one these labels are not counted for QC measures
     # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
     # Default labels: {CNV_labels}
     call_count_excl_labels: ['Excluded call'] # Fully ignore calls with any of these labels 
-    # These measures use last QC category and are also bolded in the html summary table
+    # These measures use the last QC category (i.e. red/high concern) and are also bolded in the html summary table
     use_last_level:
       - call_rate
       - computed_gender
@@ -126,19 +123,19 @@ evaluation_settings:
 
 
 global_settings:
-  # By default all conda environments and apptainer images are stored to a common cache
+  # By default both static files as well as all conda environments and apptainer images are stored to a common cache
   # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
   cache_dir: '~/.cache/stemcnv-check'
   # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
-  # defaults to "{{cache_dir}}/mehari-db/mehari-data-txs-{{genome}}-ensembl-{mehari_db_version}.bin.zst
+  # defaults to "{{cache_dir}}/mehari-db/mehari-data-txs-{{genome}}-ensembl-and-refseq-{mehari_db_version}.bin.zst
   hg19_mehari_transcript_db: '__cache-default__'
   hg38_mehari_transcript_db: '__cache-default__' 
-  # Dosage sensitivity predicitions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
+  # Dosage sensitivity predictions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
   # Either '__cache-default__' or a path to the dosage sensitivity data file
   # defaults to "{{cache_dir}}/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz"
   dosage_sensitivity_scores: '__cache-default__'
   # Fasta file for the genome sequence, either '__default-ensemble__' or a path to the genome fasta file
-  # '__default-ensemble__' will download the genome fasta file from ensembl ftp servers
+  # '__default-ensemble__' will download the genome fasta file from ensembl ftp servers (using an https connection)
   # Note: fasta files can be compressed, but *only* with bgzip!
   # defaults to "{{cache_dir}}/fasta/homo_sapiens/{ensembl_release}_{{genome}}/Homo_sapiens.{{genome}}.dna.primary_assembly.fa.gz"
   hg19_genome_fasta: '__default-ensemble__'
@@ -250,22 +247,21 @@ settings:
       # SNP probe counts may change with merging of calls from different tools
       # therefore a single probe_filter_settings needs to be used as reference here
       probe_filter_settings: '_default_'
-      # Prefiltering of calls is done (after merging of nearby calls) as follows:
-      # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
-      filter.minprobes: 5
-      filter.minlength: 1000
-      filter.mindensity.Mb: 10 #snps per Mb
-      
       ## Calls from multiple tools are combined if they match
       # This is the minimum coverage the largest single call in an combined group needs to have.
       # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
       tool.overlap.greatest.call.min.perc: 50
       # This is minimum for the median of coverage percentages from all tool in any merged group
       tool.overlap.min.cov.sum.perc: 60
+      ## vcf filters / CNV call filters 
+      # These are applied to calls after caller combination and merging of nearby calls, as for individual callers:
+      filter.minprobes: 5
+      filter.minlength: 1000
+      filter.mindensity.Mb: 10 #snps per Mb    
       ## Reference comparison
       min.reciprocal.coverage.with.ref: 50
       ## Probe gap flagging of calls
-      # Values to determine 'call_has_probe_gap' based on coverage percentage with gap areas (from array attribute
+      # Values to determine 'probe_gap' filter based on coverage percentage with gap areas (from array attribute
       # summary) and log2 number of unique probe positions. The two values represent slope and intercept of
       # slope * percent_gap_area + gap_intercept ~ log2(uniq_snp_positions), calls above that line "have gaps"
       # These defaults mean that calls with larger % gap area need fewer unique probes to be flagged as "having a gap"

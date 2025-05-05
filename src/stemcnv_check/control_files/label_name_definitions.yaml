@@ -21,7 +21,7 @@ combined_cnvs: 'combined-call'
 
 # Possible/Defined FILTERs applied to CNV calls (vcf style)
 vcf_filters:
-    min_size: "CNV call below min. size <{toolconfig$filter.minlength}bp"
+    min_size: "CNV call below minimum size (<{toolconfig$filter.minlength}bp)"
     min_probes: "CNV call from <{toolconfig$filter.minprobes} probes"
     min_density: "CNV call with <{toolconfig$filter.mindensity} probes/Mb"
     high_probe_dens: "Probe density of segment is higher than {round(100*toolconfig$density.quantile.cutoff, 1)}% of the array"
