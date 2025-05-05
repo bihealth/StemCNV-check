@@ -14,7 +14,7 @@ from loguru import logger as logging
 
 import importlib.resources
 
-def create_missing_staticdata(args):
+def create_missing_staticdata(args, is_wsl=False):
 
     check_config(args, minimal_entries_only=True)
     config = helpers.load_config(args)
@@ -26,7 +26,7 @@ def create_missing_staticdata(args):
         # Check that at least one sample per array is defined
         # Otherwise give error, but continue with other arrays
         if not sample_df[sample_df['Array_Name'] == array_name].empty:
-            ret += run_staticdata_workflow(args, array_name)
+            ret += run_staticdata_workflow(args, array_name, is_wsl)
         else:
             logging.error(f'No samples defined for array "{array_name}"')
             ret += 1
@@ -34,7 +34,7 @@ def create_missing_staticdata(args):
     return ret
 
 
-def run_staticdata_workflow(args, array_name):
+def run_staticdata_workflow(args, array_name, is_wsl=False):
     """
     Use the static_creation_global_files.smk workflow to generate missing static and array definition files.
     This includes download of (static) fasta and gtf files unless they are already defined in the config.
@@ -76,7 +76,7 @@ def run_staticdata_workflow(args, array_name):
                     resource_settings=ResourceSettings(
                         cores=args.local_cores,
                         local_cores=args.local_cores,
-                        # nodes=args.jobs,
+                        resources={'mem_mb': args.memory_mb} if args.memory_mb else {},
                     ),
                     config_settings=ConfigSettings(
                         config={
@@ -153,7 +153,7 @@ def run_staticdata_workflow(args, array_name):
                         resource_settings=ResourceSettings(
                             cores=args.local_cores,
                             local_cores=args.local_cores,
-                            # nodes=args.jobs,
+                            resources={'mem_mb': args.memory_mb} if args.memory_mb else {},
                         ),
                         config_settings=ConfigSettings(
                             configfiles=[
@@ -168,6 +168,7 @@ def run_staticdata_workflow(args, array_name):
                                 # 'target': 'SNP-probe-data',
                                 'cache_path': str(cache_path),
                                 'verbose_level': args.verbose,
+                                'is_wsl': is_wsl,
                             }
                         ),
                         deployment_settings=DeploymentSettings(
@@ -198,7 +199,7 @@ def run_staticdata_workflow(args, array_name):
                 resource_settings=ResourceSettings(
                     cores=args.local_cores,
                     local_cores=args.local_cores,
-                    # nodes=args.jobs,
+                    resources={'mem_mb': args.memory_mb} if args.memory_mb else {},
                 ),
                 config_settings=ConfigSettings(
                     config=dict(
