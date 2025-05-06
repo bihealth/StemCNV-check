@@ -549,7 +549,7 @@ def test_get_global_file(fs):
         'fasta': os.path.join(cache, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}', 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz'),
         'gtf': os.path.join(cache, 'static-data', 'gencode.{genome}.v45.gtf.gz'),
         'genome_info': os.path.join(cache, 'static-data', 'UCSC_{genome}_chromosome-info.tsv'),
-        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst")
+        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-and-refseq-{MEHARI_DB_VERSION}.bin.zst")
     }
     # fasta and mehari need specific format versions!
     genome_format = defaultdict(
