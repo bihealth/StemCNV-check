@@ -36,7 +36,9 @@ rule download_ensmble_fasta:
 
 rule bgzip_fasta:
     input:
-        get_global_file('fasta',GENOME,config['global_settings'],config['cache_path'],False).removesuffix(".gz")
+        get_global_file(
+            'fasta', GENOME, config['global_settings'], config['cache_path'],False
+        ).removesuffix(".gz")
     output:
         get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False)
     wrapper:
@@ -45,10 +47,10 @@ rule bgzip_fasta:
 
 rule download_mehari_ensembl_db:
     output:
-        get_global_file('mehari_txdb', GENOME, config['global_settings'],config['cache_path'], False)
+        get_global_file('mehari_txdb', GENOME, config['global_settings'], config['cache_path'], False)
     wildcard_constraints: 
         genome = 'GRCh37|GRCh38',
-        MEHARI_DB_VERSION = '[0-9]\\.[0-9]\\.[0-9]'
+        MEHARI_DB_VERSION = '[0-9]+\\.[0-9]+\\.[0-9]+'
     shell:
         "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.MEHARI_DB_VERSION}/$(basename {output}) -O {output}"
 
