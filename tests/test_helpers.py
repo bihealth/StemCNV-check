@@ -292,7 +292,7 @@ def array_config():
     )
 
 
-def test_load_config(user_config, default_config, array_config, fs):
+def test_load_config(user_config, default_config, array_config, sample_table_minimal, fs):
 
     fs.create_file('config.yaml', contents=user_config)
     fs.create_file(
@@ -316,7 +316,11 @@ def test_load_config(user_config, default_config, array_config, fs):
     assert config_from_defaults == helpers.load_config(fake_args)
 
     # Test loading of array definition from present global config
+    # This needs to check sample table for used arrays
     fs.create_file('/path/to/cache/global_array_definitions.yaml', contents=array_config)
+    fs.create_file('sample_table.tsv', contents=sample_table_minimal)
+    fake_args.sample_table = 'sample_table.tsv'
+    fake_args.column_remove_regex = None
     array_block = {'array_definition': {'ExampleArray': {'key': 'value', 'key_file': 'filepath'}}}
     config_from_defaults.update(array_block)
     assert config_from_defaults == helpers.load_config(fake_args)

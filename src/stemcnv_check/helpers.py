@@ -266,27 +266,34 @@ def config_extract(entry_kws, config, def_config):
     return subconfig
 
 
-def load_config(args, inbuilt_defaults=True):
+def load_config(args, inbuilt_defaults=True, use_global_config=True):
     yaml = ruamel_yaml.YAML(typ='safe')
     with open(args.config) as f:
         config = yaml.load(f)
 
     # Use the global array definition block, if it exists: update with user-defined values
-    if not args.no_cache:
+    if not args.no_cache and use_global_config:
         # check whether a global array definition file exists in the cache and load it
-        # if it doesn't exist or doesn't contain the array definition block, return the config as is
         cache_array_defs = get_cache_array_definition(get_cache_dir(args, config))
         if cache_array_defs:
             with open(cache_array_defs, 'r') as f:
                 global_array_config = yaml.load(f)
 
-            if 'array_definition' not in global_array_config:
-                pass
-            # Merge the configs, with the user-defined values taking precedence
-            elif 'array_definition' not in config or not config['array_definition']:
-                config['array_definition'] = global_array_config['array_definition']
-            else:
-                config['array_definition'] = deep_update(global_array_config['array_definition'], config['array_definition'])
+            # Only continue if global config contains the array definition block                
+            if 'array_definition' in global_array_config:
+                # Subset the global config to use only those arrays also used in the current sampletable
+                used_arrays = read_sample_table(args.sample_table, args.column_remove_regex)['Array_Name'].unique()
+                for array in list(global_array_config['array_definition'].keys()):
+                    if array not in used_arrays:
+                        global_array_config['array_definition'].pop(array)
+                # Now merge the configs, with the user-defined values taking precedence
+                if 'array_definition' not in config or not config['array_definition']:
+                    config['array_definition'] = global_array_config['array_definition']
+                else:
+                    config['array_definition'] = deep_update(
+                        global_array_config['array_definition'],
+                        config['array_definition']
+                    )
 
     # Update inbuilt default config with all previously defined values
     if inbuilt_defaults:
