@@ -14,7 +14,7 @@ from loguru import logger as logging
 # 2) <3 cores or not enough memory for all 3 rules 
 # > requires to determine available cores and set memory
 if (
-    config['is_wsl'] and Path(config['data']).absolute().match("/mnt/*") 
+    config['is_wsl'] and Path(config['data_path']).absolute().match("/mnt/*") 
 ):
     pipe_or_temp_function = temp
     logging.warning(
