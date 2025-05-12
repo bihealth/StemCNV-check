@@ -48,6 +48,7 @@ setup-files command.
 
 - **genome_version options:** hg38/GRCh38 or hg19/GRCh37
 **Define  files specific to the used array platform and genome build:**
+
 - **egt_cluster_file**: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array
 
 - **bpm_manifest_file**: the beadpool manifest file (.bpm) for the array platform, available from Illumina or the provider running the array
