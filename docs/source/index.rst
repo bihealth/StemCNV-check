@@ -1,7 +1,3 @@
-.. stemCNV-check documentation master file, created by
-   sphinx-quickstart on Mon Apr 14 21:18:34 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 stemCNV-check Manual
 ===========================
@@ -21,7 +17,7 @@ StemCNV-check is a tool written to simplify copy number variation (CNV) analysis
 
 - Quality control of hPSC genetic integrity based on CNV detection in SNP-array data 
 - Detection of loss of heterozygosity
-- Detection of CNVs/SNPsresponsible for changes in amino acid sequence
+- Detection of CNVs/SNPs responsible for changes in amino acid sequence
 - Identification of hPSC line and detection of swaps or cross-contamination based on comparison to reference samples,  analysis based on samples SNP distance which indicates hPSC line identity. This allows sample identification and detection of swaps  or cross-contamination 
 
 - Evaluation of SNPs in coding regions of interest, detect  on/off target genomic changes generated after genetic engineering procedures.

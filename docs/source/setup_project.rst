@@ -14,8 +14,6 @@ and use this command or a variantion instead: ``stemcnv-check run -- --resources
 
 Project set up before running the analysis.
 ============
-Preparing the config file, the sample table, generating static data
-------------
 
 **Setting up your own data for analysis with StemCNV-check requires:**
 
@@ -24,7 +22,6 @@ Preparing the config file, the sample table, generating static data
 - manifest and static files: egt_cluster_file, bpm_manifest_file, csv_manifest_file (optional)
 
 Empty example files for the sample table and config can be created with this command:
-
 ``stemcnv-check setup-files``
 
 Config file
@@ -127,7 +124,6 @@ Filling in the sample table with your data
 ----------
 
 - **Required Columns**: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
-- Any number of additional columns can be added to the sample table as well, unless referred to in the config they will be ignored.
 
 Specific explanations for columns:
  - Sample_ID:
@@ -230,7 +226,9 @@ Specific explanations for columns:
      - 
      - NA24695
 
-**Extended sample table. Data types contained in the columns.**
+**Extended sample table. Additional data types/columns.**
+
+- Any number of additional columns can be added to the sample table as well, unless referred to in the config they will be ignored.
 
 - Line family (iPSC line names without the clone part)	
 - DNA ID/ Barcode (CORE)	
