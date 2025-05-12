@@ -25,19 +25,16 @@ Empty example files for the sample table and config can be created with this com
 ``stemcnv-check setup-files``
 
 Config file
------------
+============
 
 The default config file (config.yaml) defines all settings for the analysis and inherits from the inbuilt default.
-
 *Adjust the config file* so that all entries marked as
 ``“#REQUIRED”`` are filled in.
-
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default, as
 well as system-wide array definitions if those exist. While most of the settings can be left on default, the input files
 need to be defined. The file paths for these files need to be entered in the config under the 'array_definition' section.
 
 **Array definition**
-
 In this section you also need to give your array a name (that needs to match the 'Array_Name' column in the sample table) and define a
 genome version (hg19 or hg38). Please note that the Illumina bpm and csv manifest files are also specific to a certain
 genome version, usually files for hg19 end in 'A1' and those for hg38 end in 'A2' (the egt cluster file is not specific
@@ -47,13 +44,10 @@ While most of the settings can be left on default, the input files need to be de
 required settings apart from raw data locations, that can not have defined defaults in the config file created by the
 setup-files command.
 
-
 - **'ExampleArray'** should to be renamed to the actual array name
 
 - **genome_version options:** hg38/GRCh38 or hg19/GRCh37
-
 **Define  files specific to the used array platform and genome build:**
-
 - **egt_cluster_file**: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array
 
 - **bpm_manifest_file**: the beadpool manifest file (.bpm) for the array platform, available from Illumina or the provider running the array
