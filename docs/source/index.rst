@@ -44,7 +44,10 @@ Workflow overview
 
     installation
     setup_project
-    trouble_shooting 
+    labels
     output_files
+    report_analysis
+    trouble_shooting 
+
     
 
