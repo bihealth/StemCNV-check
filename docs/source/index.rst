@@ -42,8 +42,8 @@ Workflow overview
     setup_project
     labels
     output_files
-    report_analysis
     trouble_shooting 
+    report_analysis
 
     
 
