@@ -83,13 +83,9 @@ Data QC measures table
 .. image:: sample_qc.png
    :width: 600
 
-- **Call rate** is % of loci (SNP, CNV) genotyped for the sample
-    Call rate > 0.99 (default threshold), indicates good-quality data.
+- **Call rate** is % of loci (SNP, CNV) genotyped for the sample. Call rate > 0.99 (default threshold), indicates good-quality data.
 
-.. math::
-
-   call rate 
-   = \frac{called markers}{all markers}
+.. math:: Call rate = \frac{called markers}{all markers}
 
 For high-quality data 99.5% call rate is expected. However, accuracy is highly sample dependent. When samples do not perform as expected, experimenters can choose to reprocess these samples to confirm or potentially improve results. Poorly performing samples can be systematically excluded from the project. 
 
