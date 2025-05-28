@@ -85,8 +85,6 @@ Data QC measures table
 
 - **Call rate** is % of loci (SNP, CNV) genotyped for the sample. Call rate > 0.99 (default threshold), indicates good-quality data.
 
-.. math:: Call rate = \frac{called markers}{all markers}
-
 For high-quality data 99.5% call rate is expected. However, accuracy is highly sample dependent. When samples do not perform as expected, experimenters can choose to reprocess these samples to confirm or potentially improve results. Poorly performing samples can be systematically excluded from the project. 
 
 - **Computed gender:** M (male) or F (female), should match the value in “Sex” column from the sample table;
@@ -113,4 +111,8 @@ log R Ratio = log2CNV signal  intensity sampleCNV signal intensity  ref
 
 LRR deviation from an average of 0 indicates a gain or a loss.
 
+.. role:: raw-math(raw)
+    :format: latex html
+
+:raw-math:`$$ \text{Call rate} = \frac{\text{called markers}}{\text{all markers}} $$`
 
