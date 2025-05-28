@@ -105,5 +105,12 @@ Homozygosity: a locus can duplicate one chromosome and transpose it to the other
 Hemizygosity: a region can be deleted entirely, leaving only one chromosomal copy;
 
 
+**Loss Gain Log2 ratio** (signal intensity - log R ratio)
+
+Log R Ratio is a metric that normalises signal intensity for CNV analysis.
+It represents the number of copies relative to the normal reference sample.
+log R Ratio = log2CNV signal  intensity sampleCNV signal intensity  ref  
+
+LRR deviation from an average of 0 indicates a gain or a loss.
 
 
