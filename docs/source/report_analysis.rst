@@ -13,10 +13,41 @@ Report sections
 - SNV analysis
 - Sample comparison
 
-Sample overview 
+1. Sample overview 
 ----------------
 
 .. image:: sample_info.png
    :width: 600
 
 
+**Sample information table**
+
+- Contains information from the sample table about the sample named by sample_id: Sex, Reference_Sample, Array_Name, Chip_Name, Chip_Pos
+
+- Reference sample is the sample for comparison, it is a precursor cell line or earliest progenitor cell line for this sample with iPSC clone. It is defined by the sample id in the sample table. 
+
+.. image:: sample_table.png
+   :width: 600
+The sample table with all samples specifies the sample id and the reference for analysis of each sample. A sample table is used as input for running StemCNV-check.
+
+**QC metrics**
+
+- Summary (Data and Sample QC explanations)
+
+- GenCall
+- PennCNV
+- CBS
+- StemCNV-check utilizes both the PennCNV and CBS algorithms
+- Config
+- R session info
+
+**Summary.** Data and Sample QC explanations: these summary tables are meant to serve as a quick overview of the quality of an hPSC sample. 
+
+**Data QC explanations:** QC metrics primarily related to the SNP data quality (affected by both the DNA used and the array run itself), this table will also display values from the reference sample if possible. 
+
+**Sample QC explanations:** QC metrics related to the potentially problematic CNVs and SNVs identified in only the analysed sample. This table sums up all variant findings from the analysed sample, which were flagged as critical or reportable.
+
+Note that in contrast to general SNP probes on the array, only those single variants that actually show an alternative allele and affect a protein are considered SNVs by StemCNV-check. Variants that match the genotype of assigned reference samples are never considered critical or reportable.
+
+.. image:: coloring.png
+   :width: 600
