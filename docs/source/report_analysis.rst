@@ -85,15 +85,19 @@ Data QC measures table
 
 - **Call rate** is % of loci (SNP, CNV) genotyped for the sample
     Call rate > 0.99 (default threshold), indicates good-quality data.
-                  .. math:: call rate = called markers / all markers 
+
+.. math::
+
+   call rate 
+   = \frac{called markers}{all markers}
 
 For high-quality data 99.5% call rate is expected. However, accuracy is highly sample dependent. When samples do not perform as expected, experimenters can choose to reprocess these samples to confirm or potentially improve results. Poorly performing samples can be systematically excluded from the project. 
 
 - **Computed gender:** M (male) or F (female), should match the value in “Sex” column from the sample table;
 
 - **SNPs Post Filter:** “good quality” SNPs that passed the QC thresholds;
-- **SNP Pairwise distance to reference:** absolute GT distance between a sample and its reference. 
-It reflects the similarity between the two cell lines. The smaller the distance (number of different SNPs) the smaller the phylogenetic distance (higher genetic relation between the samples).
+
+- **SNP Pairwise distance to reference:** absolute GT distance between a sample and its reference. It reflects the similarity between the two cell lines. The smaller the distance (number of different SNPs) the smaller the phylogenetic distance (higher genetic relation between the samples).
 - **Loss Gain Log2ratio:** difference in SNP signal intensity between the sample and the reference
 - **Total calls CNV:** number of CNVs detected 
 - **Total calls LOH:** number of LOH regions detected 
@@ -104,9 +108,6 @@ LOH (loss of heterozygosity): a region that no longer has two different alleles 
 Homozygosity: a locus can duplicate one chromosome and transpose it to the other chromosome;
 Hemizygosity: a region can be deleted entirely, leaving only one chromosomal copy;
 
-.. math::
 
-   call rate 
-   = \frac{called markers}{all markers}
 
 
