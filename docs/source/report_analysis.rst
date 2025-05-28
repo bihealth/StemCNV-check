@@ -106,6 +106,7 @@ Hemizygosity: a region can be deleted entirely, leaving only one chromosomal cop
 
 .. math::
 
-   call rate = \frac{called markers}{all markers}
+   call rate 
+   = \frac{called markers}{all markers}
 
 
