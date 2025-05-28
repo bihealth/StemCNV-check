@@ -49,14 +49,16 @@ The sample table with all samples specifies the sample id and the reference for 
 
 Note that in contrast to general SNP probes on the array, only those single variants that actually show an alternative allele and affect a protein are considered SNVs by StemCNV-check. Variants that match the genotype of assigned reference samples are never considered critical or reportable.
 
-.. image:: coloring.png
-   :width: 600
+
 
 
 Data QC measures table
 ===========================
 
 .. image:: qc_metrics.png
+   :width: 600
+
+.. image:: coloring.png
    :width: 600
 
 **Threshold measures set in the config file (can be changed by user):**
