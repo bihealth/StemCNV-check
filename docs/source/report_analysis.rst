@@ -16,7 +16,7 @@ Report sections
 Sample overview 
 ----------------
 
-.. image:: report/sample_info.png
+.. image:: sample_info.png
    :width: 600
 
 
