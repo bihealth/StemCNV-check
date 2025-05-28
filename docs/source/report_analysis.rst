@@ -61,20 +61,18 @@ Data QC measures table
 
 **Threshold measures set in the config file (can be changed by user):**
 
-**call rate**: [0.99, 0.99]
+- **call rate**: [0.99, 0.99]
 
-**SNP_pairwise_distance_to_reference:** [500, 5000] 
-It is based on the array platform
-[500,5000] for GSA array (~700k probes)
-    **loss_gain_log2ratio:** [2, 4]
-    **total_calls_CNV:** [10, 50]
-    **total_calls_LOH:** [30, 75]
-    **reportable_calls_CNV:** [5, 10]
-    **reportable_calls_LOH:** [5, 10]
-    **critical_calls_CNV:** [1, 1]
-    **critical_calls_LOH:** [1, 1]
-    **reportable_SNVs:** [5, 10]
-    **critical_SNVs:** [1, 1]
+- **SNP_pairwise_distance_to_reference:** [500, 5000]. It is based on the array platform. [500,5000] for GSA array (~700k probes).
+- **loss_gain_log2ratio:** [2, 4]
+- **total_calls_CNV:** [10, 50]
+- **total_calls_LOH:** [30, 75]
+- **reportable_calls_CNV:** [5, 10]
+- **reportable_calls_LOH:** [5, 10]
+- **critical_calls_CNV:** [1, 1]
+- **critical_calls_LOH:** [1, 1]
+- **reportable_SNVs:** [5, 10]
+- **critical_SNVs:** [1, 1]
 
 .. image:: data_qc.png
    :width: 600
