@@ -164,6 +164,7 @@ BAF and log2 ratio charts
    :width: 950
 
 **In the case of 4 bands overall**, when there is a “split into two” of the middle band, there may be a gain, increase in copy number. 
+
 | BAF ≈ 0.33, AAB genotype (30 % of alleles are B)
 | BAF ≈ 0.67, ABB genotype (60 % of alleles are B)
 | BAF ≈  0.0, AAA
@@ -205,6 +206,57 @@ For copy number variants (CNVs) the assigned label designation takes into accoun
 
 .. image:: cnv_calling.png
    :width: 700
+
+
+.. list-table::  
+   :widths: 10 10 20 10 10 40 
+   :header-rows: 1
+
+   * - CNV_call labels
+     - Minimum Check_Score
+     - Exclusion filters 
+     - Match with reference
+     - Impact
+     - Description
+
+   * - Critical de-novo
+     - ≥55
+     - high_probe_dens, probe_gap, min_size, min_probes, min_density
+     - No
+     - High
+     - Critical CNV indicate high-concern sample (de novo aberrations have impact on hPSC), biological relevance.
+
+   * - Reportable de-novo
+     - ≥55
+     - min_size, min_probes, min_density
+     - No
+     - Middle
+     - Reportable CNV - potential biological relevance, should be looked at in case they affect area of interest. 
+
+   * - De-novo call
+     - ≥ 0
+     - min_size, min_probes, min_density
+     - No
+     - Low
+     - De-novo calls meet minimal quality requirements. Don’t pass check-score threshold, little concern for QC.
+
+   * - Reference genotype
+     - ≥ 0 (any)
+     - 
+     - Yes
+     - 
+     - CNV call that matches the reference sample genotype. No concern for QC (match with germline reference or QC-passed iPSC line).
+
+
+
+   * - Excluded call
+     -  Any CNV not matching previous categories will be placed in excluded cal
+     - 
+     - 
+     - 
+     - CNVs which are indistinguishable from noise (basic filter flags: size < 1 kb or probes < 5 or probes/Mb < 10). Ignored for QC.
+
+
 
 3. SNV calling
 ===========================
