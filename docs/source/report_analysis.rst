@@ -327,3 +327,21 @@ CNV calls (filtered based on the config settings) are shown on chromosomes as co
 
 .. image:: loh_chromosome.png
    :width: 800
+
+
+Dendrogram, clustering based on SNP analysis 
+--------
+Sample identities can be compared based on the dendrogram built on the SNP genotypes.
+
+.. image:: dendrogram.png
+   :width: 800
+
+ The dendrogram is built using the manhattan distance between samples, counting both alleles from Probes that are not quality in every included sample. Accordingly, the distance between two samples is the sum of the absolute differences between the two alleles at each SNP (also shown in the table below) after QC filters. Samples that are very close together are likely identical or clonally related. Sample selection as well as color and shape labels are controlled by the config file.
+
+**The user can indicate reference samples as a list of sample_ids to calculate the distances by typing them in the config file under section ‘SHP_clustering’, ‘sample_ids’.**
+
+.. image:: config.png
+   :width: 800
+
+**sample_ids** are potential “precursor” samples distances to which will be calculated for each sample. These sample-IDs are from the sample table and will be added to the clustering of every sample.
+
