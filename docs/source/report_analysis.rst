@@ -166,14 +166,17 @@ BAF and log2 ratio charts
 .. image:: gain_chart.png
    :width: 1000
 
-.. image:: genome_overview.png
-   :width: 1000
-
 .. image:: bugs_baf.png
    :width: 1000
 
+2. CNV calling
+===========================
+
 .. image:: cnv_calling.png
    :width: 600
+
+3. SNV calling
+===========================
 
 
 4. Sample comparison
@@ -182,4 +185,7 @@ BAF and log2 ratio charts
 Genome overview
 --------
 This section provides a whole chromosome overview of the sample. 
-CNV calls (filtered based on the config settings) are shown on chromosomes as coloured stripes: green:`green for gains`, red:`red for losses`, and grey:`grey for LOH`. 
+CNV calls (filtered based on the config settings) are shown on chromosomes as coloured stripes: :green:`green for gains`, :red:`red for losses`, and :grey:`grey for LOH`. 
+
+.. image:: genome_overview.png
+   :width: 1000
