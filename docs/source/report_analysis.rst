@@ -326,7 +326,7 @@ CNV calls (filtered based on the config settings) are shown on chromosomes as co
    :width: 1000
 
 .. image:: loh_chromosome.png
-   :width: 800
+   :width: 1000
 
 
 Dendrogram, clustering based on SNP analysis 
