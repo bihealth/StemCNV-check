@@ -152,3 +152,28 @@ BAF and log2 ratio charts
 - **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
 - **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
 | *BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.*
+
+
+.. image:: loh_ref.png
+   :width: 800
+
+.. image:: loh_baf.png
+   :width: 1000
+
+.. image:: loss_denovo.png
+   :width: 1000
+
+.. image:: gain_chart.png
+   :width: 1000
+
+.. image:: genome_overview.png
+   :width: 1000
+
+.. image:: bugs_baf.png
+   :width: 1000
+
+.. image:: cnv_calling.png
+   :width: 600
+
+
+
