@@ -1,5 +1,5 @@
 
-
+===========================
 Report sections       
 ===========================
 
@@ -13,7 +13,7 @@ Report sections
 - Sample comparison
 
 1. Sample overview 
-----------------
+===========================
 
 .. image:: sample_info.png
    :width: 600
