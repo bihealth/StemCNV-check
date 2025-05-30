@@ -1,8 +1,7 @@
-Report analysis 
-===========================
+
 
 Report sections       
-----------------
+===========================
 
 - Sample Overview 
 
@@ -43,16 +42,27 @@ QC measures
 **Sample QC explanations:** QC metrics related to the potentially problematic CNVs and SNVs identified in only the analysed sample. This table sums up all variant findings from the analysed sample, which were flagged as critical or reportable.
 
 Note that in contrast to general SNP probes on the array, only those single variants that actually show an alternative allele and affect a protein are considered SNVs by StemCNV-check. Variants that match the genotype of assigned reference samples are never considered critical or reportable.
-- **GenCall** (Illumina genotyping values)
-- **PennCNV and CBS** are two CNV calling algorithms utilized by StemCNV-check
-- Config 
-- R session info
+
+- **GenCall** (Illumina genotyping algorythm)
+
+- **PennCNV and CBS** (two CNV calling algorithms utilized by StemCNV-check)
+- **Config** (file with analysis parameters)
+
+- **R session info** (output from terminal in R, useful for determining errors)
+
 
 .. image:: qc_metrics.png
    :width: 600
 
-QC metrics 
+.. image:: coloring.png
+   :width: 500
+
+Data QC explanation 
 -------- 
+
+.. image:: data_qc.png
+   :width: 600
+
 
 - **Call rate** is % of loci (SNP, CNV) genotyped for the sample. Call rate > 0.99 (default threshold), indicates good-quality data.
 
@@ -68,31 +78,38 @@ For high-quality data 99.5% call rate is expected. However, accuracy is highly s
 - **SNPs Post Filter:** “good quality” SNPs that passed the QC thresholds;
 
 - **SNP Pairwise distance to reference:** absolute GT distance between a sample and its reference. It reflects the similarity between the two cell lines. The smaller the distance (number of different SNPs) the smaller the phylogenetic distance (higher genetic relation between the samples).
-- **Loss Gain Log2ratio:** difference in SNP signal intensity between the sample and the reference
-- **Total calls CNV:** number of CNVs detected.
-    **CNVs** (copy number variation) are increases or decreases in chromosomal copies for a given region in the genome;
-- **Total calls LOH:** number of LOH regions detected 
-    **LOH (loss of heterozygosity):** a region that no longer has two different alleles has a LOH;
-   Homozygosity: a locus can duplicate one chromosome and transpose it to the other chromosome;
-   Hemizygosity: a region can be deleted entirely, leaving only one chromosomal copy;
 
-- **Loss Gain Log2 ratio** (signal intensity - log R ratio);
-   Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
-   LRR deviation from an average of 0 **indicates a gain or a loss.**
+- **Total calls CNV:** number of CNVs detected.
+ | **CNVs** (copy number variation) are increases or decreases in chromosomal copies for a given region in the genome;
+- **Total calls LOH:** number of LOH regions detected 
+ | **LOH (loss of heterozygosity):** a region that no longer has two different alleles has a LOH;
+ | **Homozygosity:** a locus can duplicate one chromosome and transpose it to the other chromosome;
+ | **Hemizygosity:** a region can be deleted entirely, leaving only one chromosomal copy;
+
+- **Loss Gain Log2 ratio** (signal intensity - log R ratio): difference in SNP signal intensity between the sample and the reference
+ | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
+ | LRR deviation from an average of 0 **indicates a gain or a loss.**
 
 .. role:: raw-math(raw)
     :format: latex html
 
 :raw-math:`$$ \text{log R Ratio} = \log{2}{\frac{\text{CNV signal  intensity sample}}{\text{CNV signal intensity  ref}}} $$`
 
-.. image:: data_qc.png
-   :width: 600
+LRR deviation from an average of 0 indicates a gain or a loss.
 
-.. image:: sample_qc.png
-   :width: 600
+.. list-table::  
+   :widths: 50 50
+   :header-rows: 0
 
-.. image:: coloring.png
-   :width: 500
+   * - Log2 Ratio = 0
+     - SNP has the expected copy number (usually two in a diploid genome)
+   
+   * - Log2 Ratio > 0
+     - Indicates a gain in copy number, meaning the sample has more than two copies of the region
+ 
+   * - Log2 Ratio < 0
+     - Indicates a loss in copy number, meaning the sample has fewer than two copies of the region
+
 
 **Threshold measures set in the config file (can be changed by user):**
 
@@ -111,3 +128,27 @@ For high-quality data 99.5% call rate is expected. However, accuracy is highly s
 - **critical_SNVs:** [1, 1]
 
 
+Sample QC explanation  
+-------- 
+
+- Reportable calls CNV
+
+- Reportable calls LOH 
+- Reportable SNVs
+- Critical calls CNV
+- Critical calls LOH 
+
+- Critical SNVs
+
+.. image:: sample_qc.png
+   :width: 600
+
+| **Call frequency**: % of samples that a genotype was called for the SNP
+
+BAF and log2 ratio charts
+--------
+| **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. It is  a normalized representation of how often B allele is called.
+
+- **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
+- **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
+| *BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.*
