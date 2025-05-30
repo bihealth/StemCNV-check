@@ -55,13 +55,13 @@ Note that in contrast to general SNP probes on the array, only those single vari
    :width: 600
 
 .. image:: coloring.png
-   :width: 500
+   :width: 700
 
 Data QC explanation 
 -------- 
 
 .. image:: data_qc.png
-   :width: 600
+   :width: 700
 
 
 - **Call rate** is % of loci (SNP, CNV) genotyped for the sample. Call rate > 0.99 (default threshold), indicates good-quality data.
@@ -141,7 +141,7 @@ Sample QC explanation
 - Critical SNVs
 
 .. image:: sample_qc.png
-   :width: 600
+   :width: 800
 
 | **Call frequency**: % of samples that a genotype was called for the SNP
 
@@ -209,11 +209,13 @@ For copy number variants (CNVs) the assigned label designation takes into accoun
 3. SNV calling
 ===========================
 
-.. image:: snv_analysis.png
-   :width: 800
+
 
 The table allows sorting and filtering the SNVs by various criteria, default is sorting by the SNV Label.Hovering over the column headers gives explanations for each column and the “Column visibility” button can be used to show (or hide) columns. Each SNV genotype (GT) is shown in vcf format: each allele is represented by a single number, separated by a forward slash. A 0 indicates the reference allele, a 1 indicates the alternate allele. A dot (.) indicates that the genotype could not be determined.
 This table lists all SNVs detected by the Chip Array which are different from the reference genome and are annotated as at least protein changing. Due to their potential impact these are now called “SNVs” rather than “SNPs”, independent of their actual (unknown) frequency in the population.
+
+.. image:: snv_analysis.png
+   :width: 800
 
 All SNVs are categorised into one of the following categories (shown in the hidden SNV category column):
 
