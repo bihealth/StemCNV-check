@@ -155,7 +155,7 @@ BAF and log2 ratio charts
 
 
 .. image:: loh_ref.png
-   :width: 800
+   :width: 1000
 
 .. image:: loh_baf.png
    :width: 1000
@@ -176,4 +176,10 @@ BAF and log2 ratio charts
    :width: 600
 
 
+4. Sample comparison
+===========================
 
+Genome overview
+--------
+This section provides a whole chromosome overview of the sample. 
+CNV calls (filtered based on the config settings) are shown on chromosomes as coloured stripes: green:`green for gains`, red:`red for losses`, and grey:`grey for LOH`. 
