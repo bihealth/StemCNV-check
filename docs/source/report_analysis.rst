@@ -55,7 +55,7 @@ Note that in contrast to general SNP probes on the array, only those single vari
    :width: 600
 
 .. image:: coloring.png
-   :width: 700
+   :width: 500
 
 Data QC explanation 
 -------- 
