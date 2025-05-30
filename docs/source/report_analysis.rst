@@ -163,6 +163,16 @@ BAF and log2 ratio charts
 .. image:: loss_denovo.png
    :width: 950
 
+**In the case of 4 bands overall**, when there is a “split into two” of the middle band, there may be a gain, increase in copy number. 
+| BAF ≈ 0.33, AAB genotype (30 % of alleles are B)
+| BAF ≈ 0.67, ABB genotype (60 % of alleles are B)
+| BAF ≈  0.0, AAA
+| BAF ≈ 1.0, BBB 
+
+In the case of 5 bands at BAF of 0.0, 0.25, 0.5, 0.75, 1.0 expected genotypes are AAAA, AAAB, AABB, ABBB, BBBB.
+
+
+
 .. image:: gain_chart.png
    :width: 950
 
@@ -172,12 +182,74 @@ BAF and log2 ratio charts
 2. CNV calling
 ===========================
 
+
+**CNV_labels**:
+
+- Critical de-novo (used to count critical CNVs & LOHs)
+
+- Reportable de-novo (used to count reportable CNVs & LOHs)
+- De-novo call
+- Reference genotype
+- Excluded call
+
+For copy number variants (CNVs) the assigned label designation takes into account a minimum Check_Score threshold, overlap with a reference call and certain call filter flags (see below). 
+| The defined CNV filter flags are:
+
+- **min_size**: CNV call below minimum size (<1000bp)
+
+- **min_probes**: CNV call from <5 probes
+- **min_density**: CNV call with <10 probes/Mb
+- **high_probe_dens**: Probe density of segment is higher than 99% of the array
+- **probe_gap**: Probe coverage of segment has considerable gap (min. 33% depending on probe number - see config
+
+
 .. image:: cnv_calling.png
    :width: 700
 
 3. SNV calling
 ===========================
 
+.. image:: snv_analysis.png
+   :width: 800
+
+The table allows sorting and filtering the SNVs by various criteria, default is sorting by the SNV Label.Hovering over the column headers gives explanations for each column and the “Column visibility” button can be used to show (or hide) columns. Each SNV genotype (GT) is shown in vcf format: each allele is represented by a single number, separated by a forward slash. A 0 indicates the reference allele, a 1 indicates the alternate allele. A dot (.) indicates that the genotype could not be determined.
+This table lists all SNVs detected by the Chip Array which are different from the reference genome and are annotated as at least protein changing. Due to their potential impact these are now called “SNVs” rather than “SNPs”, independent of their actual (unknown) frequency in the population.
+
+All SNVs are categorised into one of the following categories (shown in the hidden SNV category column):
+
+- **ROI-overlap**: SNV overlapping a sample specific regions of interest
+
+- **hotspot-match**: SNV matching a known stemcell hotspot mutation (see also SNV hotspot coverage)
+- **hotspot-gene**: SNV in a gene with known iPSC hotspots (see also SNV hotspot coverage)
+- **protein-ablation**: SNV (likely) fully disrupting protein function (i.e. frameshift, stop gain, stop loss)
+- **protein-changing**: SNV causing a change the protein sequence (i.e. missense, inframe)
+other: SNV with other unclear or undetermined effect on protein function
+
+The “SNV label” further categorizes the SNVs into:
+
+- **critical**: SNV with likely critical significance on hiPSC line
+
+- **reportable**: SNV with possible significance on hiPSC line
+- **unreliable critical/reportable**: SNV with likely or possible significance on hiPSC line, but unreliable signal
+- **de-novo SNV**: SNV with de-novo status, but no clear functional impact
+- **reference genotype**: SNV already detected in the reference sample
+
+The following criteria are used to assign SNVs as critical or reportable:
+
+
+.. list-table::  
+   :widths: 50 50
+   :header-rows: 0
+
+   * - Critical SNVs
+     - Reportable SNVs 
+   
+   * -  ROI-overlap: SNV overlapping a sample specific regions of interest
+
+        | hotspot-match: SNV matching a known stemcell hotspot mutation (see also SNV hotspot coverage)
+     -  hotspot-gene: SNV in a gene with known iPSC hotspots (see also SNV hotspot coverage)
+
+        | protein-ablation: SNV (likely) fully disrupting protein function (i.e. frameshift, stop gain, stop loss)
 
 4. Sample comparison
 ===========================
