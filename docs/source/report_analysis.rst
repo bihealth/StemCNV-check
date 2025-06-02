@@ -147,10 +147,19 @@ Sample QC explanation
 
 BAF and log2 ratio charts
 --------
-| **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. It is  a normalized representation of how often B allele is called.
 
-- **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
+- **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. In other words, BAF is a normalized measure of the allelic intensity ratio of two alleles (normalized representation of how often B allele is called). 
+
+
+
 - **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
+
+
+- **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP. 
+- **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
+When the middle band is missing while the bands at 1.0 and 0.0 remain, there is a loss of heterozygosity (LOH) BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
+
+- The combination of LRR and BAF can be used to infer copy number changes in the genome.
 | *BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.*
 
 
