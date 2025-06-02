@@ -19,29 +19,27 @@ Report sections
    :width: 600
 
 
-**Sample information table**
+**Sample information**
 
 - Contains information from the sample table about the sample named by sample_id: Sex, Reference_Sample, Array_Name, Chip_Name, Chip_Pos
 
 - Reference sample is the sample for comparison, it is a precursor cell line or earliest progenitor cell line for this sample with iPSC clone. It is defined by the sample id in the sample table. 
 
-.. image:: sample_table.png
-   :width: 600
+   .. image:: sample_table.png
+      :width: 600
 The sample table with all samples specifies the sample id and the reference for analysis of each sample. A sample table is used as input for running StemCNV-check.
 
 
 QC measures 
 ===========================
 
-**Sections** 
-
 - **Summary** with two tables (Data and Sample QC explanation)Data and Sample QC explanations: these summary tables are meant to serve as a quick overview of the quality of an hPSC sample. 
 
-**Data QC explanations:** QC metrics primarily related to the SNP data quality (affected by both the DNA used and the array run itself), this table will also display values from the reference sample if possible. 
-
-**Sample QC explanations:** QC metrics related to the potentially problematic CNVs and SNVs identified in only the analysed sample. This table sums up all variant findings from the analysed sample, which were flagged as critical or reportable.
-
-Note that in contrast to general SNP probes on the array, only those single variants that actually show an alternative allele and affect a protein are considered SNVs by StemCNV-check. Variants that match the genotype of assigned reference samples are never considered critical or reportable.
+   **Data QC explanations:** QC metrics primarily related to the SNP data quality (affected by both the DNA used and the array run itself), this table will also display values from the reference sample if possible. 
+   
+   **Sample QC explanations:** QC metrics related to the potentially problematic CNVs and SNVs identified in only the analysed sample. This table sums up all variant findings from the analysed sample, which were flagged as critical or reportable.
+   
+   Note that in contrast to general SNP probes on the array, only those single variants that actually show an alternative allele and affect a protein are considered SNVs by StemCNV-check. Variants that match the genotype of assigned reference samples are never considered critical or reportable.
 
 - **GenCall** (Illumina genotyping algorythm)
 
@@ -52,10 +50,11 @@ Note that in contrast to general SNP probes on the array, only those single vari
 
 
 .. image:: qc_metrics.png
-   :width: 600
-
-.. image:: coloring.png
+   :width: 600                                
+                                          
+ .. image:: coloring.png
    :width: 500
+
 
 Data QC explanation 
 -------- 
@@ -66,12 +65,10 @@ Data QC explanation
 
 - **Call rate** is % of loci (SNP, CNV) genotyped for the sample. Call rate > 0.99 (default threshold), indicates good-quality data.
 
-.. role:: raw-math(raw)
-    :format: latex html
+   For high-quality data 99.5% call rate is expected. However, accuracy is highly sample dependent. When samples do not perform as expected, experimenters can choose to reprocess these samples to confirm or potentially improve results. Poorly performing samples can be systematically excluded from the project. 
 
-:raw-math:`$$ \text{Call rate} = \frac{\text{called markers}}{\text{all markers}} $$`
-
-For high-quality data 99.5% call rate is expected. However, accuracy is highly sample dependent. When samples do not perform as expected, experimenters can choose to reprocess these samples to confirm or potentially improve results. Poorly performing samples can be systematically excluded from the project. 
+   .. image:: call_rate.png
+      :width: 200
 
 - **Computed gender:** M (male) or F (female), should match the value in “Sex” column from the sample table;
 
@@ -90,10 +87,8 @@ For high-quality data 99.5% call rate is expected. However, accuracy is highly s
  | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
  | LRR deviation from an average of 0 **indicates a gain or a loss.**
 
-.. role:: raw-math(raw)
-    :format: latex html
-
-:raw-math:`$$ \text{log R Ratio} = \log{2}{\frac{\text{CNV signal  intensity sample}}{\text{CNV signal intensity  ref}}} $$`
+   .. image:: lor.png
+      :width: 300
 
 LRR deviation from an average of 0 indicates a gain or a loss.
 
@@ -111,21 +106,47 @@ LRR deviation from an average of 0 indicates a gain or a loss.
      - Indicates a loss in copy number, meaning the sample has fewer than two copies of the region
 
 
-**Threshold measures set in the config file (can be changed by user):**
+**Config file  default options (thresholds):** 
+Can be changed by user.
 
-- **call rate**: [0.99, 0.99]
+.. list-table::  
+   :widths: 50 50
+   :header-rows: 0
 
-- **SNP_pairwise_distance_to_reference:** [500, 5000]. It is based on the array platform. [500,5000] for GSA array (~700k probes).
-- **loss_gain_log2ratio:** [2, 4]
-- **total_calls_CNV:** [10, 50]
-- **total_calls_LOH:** [30, 75]
-- **reportable_calls_CNV:** [5, 10]
-- **reportable_calls_LOH:** [5, 10]
-- **critical_calls_CNV:** [1, 1]
-- **critical_calls_LOH:** [1, 1]
-- **reportable_SNVs:** [5, 10]
+   * - **call rate** 
+     - [0.99, 0.99]
+   
+   * - **SNP_pairwise_distance_to_reference**
+     - [500, 5000], 
+ 
+   * - **loss_gain_log2ratio**
+     - [2, 4]
 
-- **critical_SNVs:** [1, 1]
+   * - **total_calls_CNV**
+     - [10, 50]
+
+   * - **total_calls_LOH**
+     - [30, 75]
+ 
+   * - **reportable_calls_CNV**
+     - [5, 10]
+
+   * - **reportable_calls_LOH**
+     -  [5, 10]
+
+   * - **critical_calls_CNV**
+     -  [1, 1]
+
+   * - **critical_calls_LOH**
+     -  [1, 1]
+
+   * - **reportable_SNVs**
+     -  [5, 10]
+
+   * - **critical_SNVs**
+     -  [1, 1]
+
+SNP pairwise distance to refrenrece is based on the array platform, for GSA array (~700k probes) it is [500, 5000]. 
 
 
 Sample QC explanation  
@@ -150,17 +171,11 @@ BAF and log2 ratio charts
 
 - **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. In other words, BAF is a normalized measure of the allelic intensity ratio of two alleles (normalized representation of how often B allele is called). 
 
-
-
-- **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
-
-
-- **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP. 
-- **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
+- **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP.  **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
 When the middle band is missing while the bands at 1.0 and 0.0 remain, there is a loss of heterozygosity (LOH) BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
 
-- The combination of LRR and BAF can be used to infer copy number changes in the genome.
-| *BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.*
+- **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
+| The combination of LRR and BAF can be used to infer copy number changes in the genome. BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.
 
 
 .. image:: loh_ref.png
