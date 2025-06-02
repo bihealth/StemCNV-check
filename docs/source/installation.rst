@@ -3,7 +3,7 @@ Installation
 
 Step-by-step instructions for setting up StemCNV-check for Windows and Linux. 
 
-**1.1 For Windows: Installation of WSL (Windows Subsystem for Linux)**
+**1.0 For Windows: Installation of WSL (Windows Subsystem for Linux)**
 
 Please also consult the `official instructions <https://learn.microsoft.com/en-us/windows/wsl/install>`_ for installing WSL, 
 especially if you encounter any problems. In short:
@@ -17,9 +17,9 @@ You can now start a linux environment using the WSL programm (ie. wsl.exe)
 *Important*: Please note that all following commands in these instructions should be executed in the WSL console (and not in i.e. the windows powershell).
 
 
-For Windows and Linux
+Install from download
 ----------
-**1.2 Installation of Conda**
+**1.1 Installation of Conda**
 Conda is software that facilitates the distribution and installation of primarily scientific software with the ability 
 to control which specific versions are used. StemCNV-check utilises this for almost all steps of the workflow and 
 as such depends on a working conda setup. In principle any conda setup can be used, but for anyone not familiar 
@@ -39,7 +39,7 @@ After successful installation of conda you either have to restart WSL (close and
 .bashrc of WSL: ``source ~/.bashrc``
 
 
-**1.3 Install StemCNV-check**
+**1.2 Install StemCNV-check**
 
 *Note*: we plan to release StemCNV-check via bioconda to take this step by simply running  ``conda install -c bioconda stemcnv-check``
 Perform the following steps to install and setup up the development version of StemCNV-check:
