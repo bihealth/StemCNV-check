@@ -1,5 +1,5 @@
 
-stemCNV-check Manual
+StemCNV-check Manual
 ===========================
 
 StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
