@@ -2,10 +2,8 @@ Running the analysis for the first time
 ============
 
 Before the first analysis sample table and config file need to be set up. Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file.
-
-It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
-
-Once the config file is properly set up and the necessary static files are generated, you can run the StemCNV-check
+| It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
+| Once the config file is properly set up and the necessary static files are generated, you can run the StemCNV-check
 workflow with simple command:
 ``stemcnv-check``
 
@@ -16,16 +14,12 @@ Continuing from previous steps and running multiple projects
 ============
 
 If you have already completed some or all steps of the initial installation setup, you do not need to repeat them.
-
-However, if you restart the terminal (WSL) window, this will also always return you to the home directory.
-
-To make sure that you are in the correct directory for the following steps, each section assumes you start (again) in
+| However, if you restart the terminal (WSL) window, this will also always return you to the home directory.
+| To make sure that you are in the correct directory for the following steps, each section assumes you start (again) in
 the home directory. You can restart your WSL window or use cd ~ to get back to the home directory.
-
-If you follow the recommended instructions the stemcnv-check command will always be available in your terminal
+| If you follow the recommended instructions the stemcnv-check command will always be available in your terminal
 (through the base environment of conda), but if you use the version for experienced users you will need to activate
 your stemcnv-check conda every time you start a new terminal window: conda activate stemcnv-check.
-
 
 If you want to run your own data analysis project(s) with StemCNV-check, it is recommended to create a new
 directory for each project. These directories can be located anywhere on your system, you can create them in the
