@@ -1,10 +1,5 @@
 Troubleshooting errors
 ================
-
-
-Common issues running StemCNV-check
-------------
-
 The StemCNV-check tool runs in two parts. 
 
 First it parses the sample table and config files and prepares the actual analysis,
@@ -27,6 +22,8 @@ likely an unforseen issue with the workflow. To help us fix such issues, please 
 log files (indicating by snakemake in the step that failed) when reporting the issue. Since such errors are often specific 
 to the data it may be necessary to provide the raw data and config files to reproduce the error.
 
+Common issues running StemCNV-check
+------------
 
 -**Snakemake: Directory cannot be locked**
 
@@ -92,8 +89,6 @@ You can make these changes either manually by using a text editor like nano (`na
     echo "export ftp_proxy=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export PIP_PROXY=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export no_proxy=$no_proxy,localhost,{intranet.domain,your_institute.com}" >> ~/.bashrc
-
-
 
 -**Reporting issues**
 
