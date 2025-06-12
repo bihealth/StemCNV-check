@@ -38,13 +38,48 @@ Workflow overview
     :caption: Contents:
 
 
+Table of Contents
+^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Contents:
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Introduction
+    :name: stemcnv_intro
+
+    introduction
+    glossary
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Installation
+    :name: stemcnv_install
+
     installation
+ 
+.. toctree::
+    :maxdepth: 2
+    :caption: Tutorial. Running StemCNV-check
+    :name: run_stemcnv
+    
     setup_project
-    labels
     output_files
     report_analysis
+    
+
+.. toctree::
+    :maxdepth: 2
+    :caption: FAQ. Troubleshooting
+    :name: troubles_stemcnv
+
     trouble_shooting 
-    
 
+.. toctree::
+    :maxdepth: 2
+    :caption: Options, labels and advanced features  
+    :name: advanced_stemcnv
     
-
+    labels
