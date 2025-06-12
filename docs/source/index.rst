@@ -30,10 +30,17 @@ StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) 
 
 
 Workflow overview
----------
+=============
 
+- Raw data processing     
+- CNV calling and processing 
+- CNV scoring and evaluation 
+- SNP & SNV analysis 
+- Report generation 
+    
 .. image:: workflow.png
    :width: 600
+
 
 .. toctree::
     :maxdepth: 2
@@ -47,29 +54,25 @@ Table of Contents
     :maxdepth: 2
     :caption: Contents:
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Introduction
-    :name: stemcnv_intro
-
-    introduction
-    glossary
 
 .. toctree::
     :maxdepth: 2
     :caption: Getting started 
     :name: stemcnv_install
 
+    introduction
     installation
+    example
  
 .. toctree::
     :maxdepth: 2
     :caption: Tutorial
     :name: run_stemcnv
     
+    running
     setup_project
-    config
     sample_table
+    config
     output_files
     report_analysis
     
