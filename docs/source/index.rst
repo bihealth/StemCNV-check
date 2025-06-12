@@ -62,7 +62,7 @@ Table of Contents
 
     introduction
     installation
-    example
+    example_data
  
 .. toctree::
     :maxdepth: 2
