@@ -1,3 +1,4 @@
+
 Running the example dataset
 =============
   
@@ -6,7 +7,7 @@ Running the example dataset
 Test data can be downloaded via git LFS and StemCNV-check can be run with the following commands. 
   
 Obtain the example data:
-  -------------------
+-------------------
 Note that this will download a fasta and gtf file for the human genome. If you have suitable files available locally, it
 is recommended to replace the corresponding paths in the config.yaml to avoid unnecessary and time-consuming
 downloads.
@@ -20,7 +21,7 @@ downloads.
   – Actually download the files (~300Mb): ``git lfs fetch; git lfs checkout``
   
 Run the example data:
-  -------------------
+-------------------
 
 • First change into the example_data folder: ``cd example_data``
   
