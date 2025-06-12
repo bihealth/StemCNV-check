@@ -12,7 +12,7 @@ workflow with simple command:
 *Reminder for WSL users:* as before you may need to limit the memory usage of the workflow
 and use this command or a variantion instead: ``stemcnv-check run -- --resources mem_mb=6000``
 
-Project set up before running the analysis.
+Project set up
 ============
 
 **Setting up your own data for analysis with StemCNV-check requires:**
