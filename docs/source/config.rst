@@ -1,5 +1,5 @@
 
-Config file
+Setting up the config file
 ============
 
 The default config file (config.yaml) defines all settings for the analysis and inherits from the inbuilt default.
