@@ -2,16 +2,7 @@
 stemCNV-check Manual
 ===========================
 
-StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
-
-**StemCNV-check provides:**
-
-• Automated CNV calling
-• Improved quality of calls over other tools
-• CNV highlighting by Check-Score
-• Easily readable report in html format
-• Richly annotated CNV calls
-• Comparison of cell line genotype identities
+StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
 
 **stemCNV-check applications include:**
 
@@ -22,6 +13,16 @@ StemCNV-check is a tool written to simplify copy number variation (CNV) analysis
 
 - Evaluation of SNPs in coding regions of interest, detect  on/off target genomic changes generated after genetic engineering procedures.
 
+StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
+
+**StemCNV-check provides:**
+
+• Automated CNV calling and annotation, with improved quality of calls over other tools
+• CNV scoring, filtering and labeling (based on Check-Score and other config file options) 
+• Sample comparison based on genotypes (sample identity compared to reference and other samples based on SNP distance)
+• SNV analysis (de-novo, impact estimation)
+• Easily readable report in html format
+
 **Requirements:**
 
 - linux environment (or WSL on windows) 
@@ -30,6 +31,7 @@ StemCNV-check is a tool written to simplify copy number variation (CNV) analysis
 
 Workflow overview
 ---------
+
 .. image:: workflow.png
    :width: 600
 
