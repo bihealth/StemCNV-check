@@ -68,6 +68,8 @@ Table of Contents
     :name: run_stemcnv
     
     setup_project
+    config
+    sample_table
     output_files
     report_analysis
     
