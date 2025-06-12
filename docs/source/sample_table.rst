@@ -1,5 +1,4 @@
-
-Sample table
+Setting up the sample table
 ============
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed.
