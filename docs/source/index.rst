@@ -57,14 +57,14 @@ Table of Contents
 
 .. toctree::
     :maxdepth: 2
-    :caption: Installation
+    :caption: Getting started 
     :name: stemcnv_install
 
     installation
  
 .. toctree::
     :maxdepth: 2
-    :caption: Tutorial. Running StemCNV-check
+    :caption: Tutorial
     :name: run_stemcnv
     
     setup_project
@@ -74,14 +74,14 @@ Table of Contents
 
 .. toctree::
     :maxdepth: 2
-    :caption: FAQ. Troubleshooting
+    :caption: FAQ
     :name: troubles_stemcnv
 
     trouble_shooting 
 
 .. toctree::
     :maxdepth: 2
-    :caption: Options, labels and advanced features  
+    :caption: Settings and advanced features  
     :name: advanced_stemcnv
     
     labels
