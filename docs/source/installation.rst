@@ -17,15 +17,13 @@ You can now start a linux environment using the WSL programm (ie. wsl.exe)
 *Important*: Please note that all following commands in these instructions should be executed in the WSL console (and not in i.e. the windows powershell).
 
 
-Install from download
-----------
 **1.1 Installation of Conda**
-Conda is software that facilitates the distribution and installation of primarily scientific software with the ability 
-to control which specific versions are used. StemCNV-check utilises this for almost all steps of the workflow and 
-as such depends on a working conda setup. In principle any conda setup can be used, but for anyone not familiar 
+
+| Conda is software that facilitates the distribution and installation of primarily scientific software with the ability  to control which specific versions are used. StemCNV-check utilises this for almost all steps of the workflow and as such depends on a working conda setup. In principle any conda setup can be used, but for anyone not familiar 
 we recommend the following: 
 
-Install the `miniforge conda <https://github.com/conda-forge/miniforge>`_. In short, use these commands: 
+Install the `miniforge conda <https://github.com/conda-forge/miniforge>`_. 
+In short, use these commands: 
 
 .. code:: bash
 
@@ -39,10 +37,25 @@ After successful installation of conda you either have to restart WSL (close and
 .bashrc of WSL: ``source ~/.bashrc``
 
 
-**1.2 Install StemCNV-check**
+**1.2 Installation StemCNV-check**
 
-*Note*: we plan to release StemCNV-check via bioconda to take this step by simply running  ``conda install -c bioconda stemcnv-check``
-Perform the following steps to install and setup up the development version of StemCNV-check:
+It is recommended to install StemCNV-check through the bioconda channel. If you do not use conda for other things omitting the environment name and installing into your base environment may be an option.
+
+
+Install StemCNV-check through conda
+----------
+
+To `install StemCNV-check through bioconda <https://anaconda.org/bioconda/stemcnv-check>`_ run the command:
+
+.. code:: bash
+
+    conda install bioconda::stemcnv-check
+   
+
+
+Install from download
+----------
+Alternatively to bioconda, one can perform the following steps to install and setup up the development version of StemCNV-check:
 
 **Clone the StemCNV-check git repository**
 
