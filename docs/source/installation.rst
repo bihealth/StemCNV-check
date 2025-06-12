@@ -42,7 +42,7 @@ After successful installation of conda you either have to restart WSL (close and
 It is recommended to install StemCNV-check through the bioconda channel. If you do not use conda for other things omitting the environment name and installing into your base environment may be an option.
 
 
-Install StemCNV-check through conda
+Install through conda
 ----------
 
 To `install StemCNV-check through bioconda <https://anaconda.org/bioconda/stemcnv-check>`_ run the command:
