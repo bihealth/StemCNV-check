@@ -15,3 +15,5 @@ Workflow
 - SNP & SNV analysis 
 - Report generation 
     
+.. image:: workflow.png
+   :width: 600
