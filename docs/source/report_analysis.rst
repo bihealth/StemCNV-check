@@ -83,9 +83,7 @@ Data QC explanation
  | **Homozygosity:** a locus can duplicate one chromosome and transpose it to the other chromosome;
  | **Hemizygosity:** a region can be deleted entirely, leaving only one chromosomal copy;
 
-- **Loss Gain Log2 ratio** (signal intensity - log R ratio): difference in SNP signal intensity between the sample and the reference
- | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
- | LRR deviation from an average of 0 **indicates a gain or a loss.**
+- **Loss Gain Log2 ratio** 
 
    .. image:: lor.png
       :width: 300
@@ -171,7 +169,11 @@ BAF and log2 ratio charts
 
 - **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. In other words, BAF is a normalized measure of the allelic intensity ratio of two alleles (normalized representation of how often B allele is called). 
 
-- **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP.  **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
+- **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP (signal intensity - log R ratio).
+ | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
+ | LRR deviation from an average of 0 **indicates a gain or a loss.**
+
+**Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
 When the middle band is missing while the bands at 1.0 and 0.0 remain, there is a loss of heterozygosity (LOH) BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
 
 - **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
