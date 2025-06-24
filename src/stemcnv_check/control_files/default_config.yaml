@@ -478,8 +478,8 @@ reports:
     SNP_comparison:
       # Selection of sample table columns, to determine shape and color of the samples in the dendrogram.
       # Note: You can also use any column from the sample table, incl optional ones you added yourself
-      dendrogram.color.by: 'Chip_Name'
-      dendrogram.shape.by: 'Sample_Group'
+      dendrogram.color.by: 'Sample_Group'
+      dendrogram.shape.by: 'Chip_Name'
       
     genome_overview:
         # Call labels for the overview plots

@@ -12,6 +12,9 @@ static-data/*
 *.Rproj
 .idea/
 
+#Docs
+docs/_build/*
+
 #Misc
 .git/*
 **/*.pyc
