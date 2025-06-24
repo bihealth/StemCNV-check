@@ -45,7 +45,7 @@ usage inside the virtual WSL system. Rules exiting with a SIGKILL signal are als
 To prevent this it is advisable to specifically instruct StemCNV-check how much memory can be used (otherwise it will 
 use all available, which may not be properly defined or detected inside WSL). Memory should be given in Mb, so for i.e.
 6Gb of memory use:  
-``stemcnv-check {--options} run -- --resources mem_mb=6000``
+``stemcnv-check run --memory-mb=6000``
 
 
 -**Downloads / Internet connection not working**
