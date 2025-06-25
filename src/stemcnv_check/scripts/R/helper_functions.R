@@ -6,13 +6,6 @@ suppressMessages(require(plyranges))
 suppressMessages(library(yaml))
 `%!in%` <- Negate(`%in%`)
 
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("GenomeInfoDbData")
-BiocManager::install("plyranges")
-
-
 get_defined_labels <- function(config) {
     label_def_file <- file.path(config$snakedir, 'control_files', 'label_name_definitions.yaml')
     return(yaml.load_file(label_def_file))
@@ -58,32 +51,34 @@ get_sex_chroms <- function(target_style) {
 
 
 read_sampletable <- function(filename, col_remove_regex = NA) {
-
-  if (str_detect(filename, '\\.(txt|tsv)$')) {
-    tb <- read_tsv(filename, comment = '#', show_col_types = F)
-  } else if(str_detect(filename, '\\.csv$')) {
-    tb <- read_csv(filename, comment = '#', show_col_types = F)
-  } else if (str_detect(filename, '\\.xlsx$')) {
-    tb <- read_excel(filename) %>%
-      filter(!if_all(everything(), ~is.na(.))) %>%
-      # read_excel doesn't support the 'comment' flag
-      # need to recreate that behaviour while properly handling (NA) an empty first column
-      filter(if_any(1, ~!str_detect(
-        ifelse(is.na(.), '', as.character(.)),
-        '^#')))
-    if (str_detect(colnames(tb)[1], "^#")) {
-      colnames(tb) <-  as.character(tb[1,])
-      tb<- tb[-1,]
+    
+    if (str_detect(filename, '\\.(txt|tsv)$')) {
+        tb <- read_tsv(filename, comment = '#', show_col_types = F) 
+    } else if(str_detect(filename, '\\.csv$')) {
+        tb <- read_csv(filename, comment = '#', show_col_types = F) 
+    } else if (str_detect(filename, '\\.xlsx$')) {
+        tb <- read_excel(filename) %>%
+            filter(!if_all(everything(), ~is.na(.))) %>%
+            # read_excel doesn't support the 'comment' flag
+            # need to recreate that behaviour while properly handling (NA) an empty first column
+            filter(if_any(1, ~!str_detect(
+                ifelse(is.na(.), '', as.character(.)),
+                '^#')
+            ))
+        if (str_detect(colnames(tb)[1], "^#")) {
+            colnames(tb) <-  as.character(tb[1,])
+            tb<- tb[-1,]
+        }
+    } else stop(paste('Unsupported file format:', filename))
+    
+    # Optional removal/editing of columns with a regex
+    if (!is.na(col_remove_regex) & col_remove_regex != '') {
+        tb <- rename_with(tb, ~str_remove(., col_remove_regex))
     }
-  } else stop(paste('Unsupported file format:', filename))
-
-  # Optional removal/editing of columns with a regex
-  if (!is.na(col_remove_regex) & col_remove_regex != '') {
-    tb <- rename_with(tb, ~str_remove(., col_remove_regex))
-  }
-  # Ensure all columns are characters
-  mutate(tb, across(everything(), ~as.character(.)))
+    # Ensure all columns are characters
+    mutate(tb, across(everything(), ~as.character(.)))
 }
+
 
 get_sample_info <- function(sample_id, value, config, sampletable = NA) {
     if ('data.frame' %in% class(sampletable)) { 
