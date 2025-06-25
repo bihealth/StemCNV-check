@@ -43,19 +43,27 @@ test_that("read_sampletable", {
         expect_equal(expected_tb)
 
     # Also test xlsx with comments
-    test_path('../data/sample_table.xlsx') %>%
-        read_sampletable() %>%
-        # this removes the "spec_tbl_df" class that readr adds
-        # see here: https://www.tidyverse.org/blog/2018/12/readr-1-3-1/
-        .[] %>%
-        expect_equal(expected_tb)
-
     test_path('../data/sample_table_example.xlsx') %>%
         read_sampletable() %>%
-        # this removes the "spec_tbl_df" class that readr adds
-        # see here: https://www.tidyverse.org/blog/2018/12/readr-1-3-1/
         .[] %>%
         expect_equal(expected_tb)
+    
+    # xlsx test file
+    expected_tb2 <- expected_tb %>%
+        mutate(
+            Sample_Name = c(
+                "Cellline-A MasterBank", "Cellline-A WorkingBank", "Cellline-B MasterBank", "Cellline-B-1 clone1"
+            ),
+            Test_col = c("Cellline-A-WB,Cellline-B-MB", "Cellline-B-MB", "0", NA_character_)
+        ) %>%
+        select(
+            Array_Name, Sample_Name, Test_col, Sex, Reference_Sample, Regions_of_Interest, Sample_Group, 
+            Chip_Name, Chip_Pos, Sample_ID
+        )        
+    test_path('../data/sample_table.xlsx') %>%
+        read_sampletable() %>%
+        .[] %>%
+        expect_equal(expected_tb2)
     
     # test that regex name change works, use tmp file instead of fake filesystem
     tmp_file <- tempfile(fileext='.tsv')

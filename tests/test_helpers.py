@@ -118,6 +118,9 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
         return_type='list_withopt'
     )
+    # Test that xlsx file with comments on top work
+    fs.add_real_file('tests/data/sample_table_example.xlsx', read_only=True)
+    assert expected_dict == helpers.read_sample_table("tests/data/sample_table_example.xlsx", return_type='list_withopt')
 
 
 @patch('stemcnv_check.helpers.importlib.resources.files')
