@@ -65,6 +65,10 @@ read_sampletable <- function(filename, col_remove_regex = NA) {
                 ifelse(is.na(.), '', as.character(.)),
                 '^#')
             ))
+        if (str_detect(colnames(tb)[1], "^#")) {
+            colnames(tb) <-  as.character(tb[1,])
+            tb <- tb[-1,]
+        }
     } else stop(paste('Unsupported file format:', filename))
     
     # Optional removal/editing of columns with a regex
