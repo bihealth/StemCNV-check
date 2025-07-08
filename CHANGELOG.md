@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 Note: change log is only added with version 0.5.1
 
+## [0.5.2] - 2025-07-08
+
+### Fixed
+
+- Adapted to and pinned vembrane version to >=2.1,<3 (fixes penncnv input errors)
+- Fixed sampletable parsing if xlsx file with comment lines on top was used
+
+### Changed
+
+- Updated defaults dendrogram plotting in report
+
 ## [0.5.1] - 2025-05-06
 
 ### Added
