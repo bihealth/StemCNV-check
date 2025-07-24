@@ -1,52 +1,31 @@
 probe_filter_setting	CNV_caller	CNV_type_match	seqnames_match	size_min	size_max	vcf_filters_excluded	estimated_precision	bracket_description
-standard	CBS	gain	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 53
-standard	PennCNV	gain	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 7
-standard	combined-call	gain	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.2	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 5
-standard	CBS	loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.03571428571428571	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 56
-standard	PennCNV	loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.5	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 2
-standard	combined-call	loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.3333333333333333	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: 1000-12000; CNV_filter_set: none; n_calls: 9
-standard	CBS	gain	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 52
-standard	PennCNV	gain	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.4	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 10
-standard	combined-call	gain	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 6
-standard	CBS	loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.019230769230769232	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 52
-standard	PennCNV	loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 7
-standard	combined-call	loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.5	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: 12000-27000; CNV_filter_set: none; n_calls: 18
-standard	CBS	gain	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 23
-standard	PennCNV	gain	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.5	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 12
-standard	combined-call	gain	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 2
-standard	CBS	loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.045454545454545456	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 22
-standard	PennCNV	loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 2
-standard	combined-call	loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.6428571428571429	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: 27000-45000; CNV_filter_set: none; n_calls: 14
-standard	CBS	gain	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 20
-standard	PennCNV	gain	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.2222222222222222	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 9
-standard	combined-call	gain	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.6	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 5
-standard	CBS	loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.23529411764705882	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 17
-standard	PennCNV	loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.25	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 4
-standard	combined-call	loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.8181818181818182	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: 45000-84000; CNV_filter_set: none; n_calls: 11
-standard	CBS	gain	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.14285714285714285	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 14
-standard	PennCNV	gain	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.6153846153846154	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 13
-standard	combined-call	gain	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	1	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 7
-standard	CBS	loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.18181818181818182	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 11
-standard	PennCNV	loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.2	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 10
-standard	combined-call	loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.875	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: >=84000; CNV_filter_set: none; n_calls: 16
-standard	CBS	gain	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 82
-standard	PennCNV	gain	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 32
-standard	combined-call	gain	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.07692307692307693	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 13
-standard	CBS	gain	[0-9]+	-Inf	Inf	NA	0	CNV_caller: CBS; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 208
-standard	PennCNV	gain	[0-9]+	-Inf	Inf	NA	0.03571428571428571	CNV_caller: PennCNV; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 56
-standard	combined-call	gain	[0-9]+	-Inf	Inf	NA	0	CNV_caller: combined-call; CNV_type: gain; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 28
-standard	CBS	loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.08695652173913043	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 46
-standard	PennCNV	loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.11764705882352941	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 17
-standard	combined-call	loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.15	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 20
-standard	CBS	loss	[0-9]+	-Inf	Inf	NA	0.0875	CNV_caller: CBS; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 160
-standard	PennCNV	loss	[0-9]+	-Inf	Inf	NA	0.2	CNV_caller: PennCNV; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 35
-standard	combined-call	loss	[0-9]+	-Inf	Inf	NA	0.15384615384615385	CNV_caller: combined-call; CNV_type: loss; chromosomes: auto; size: any; CNV_filter_set: any exclusion; n_calls: 13
-standard	CBS	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.023809523809523808	CNV_caller: CBS; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: none; n_calls: 42
-standard	PennCNV	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: PennCNV; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: none; n_calls: 6
-standard	combined-call	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.3333333333333333	CNV_caller: combined-call; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: none; n_calls: 3
-standard	CBS	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	0	CNV_caller: CBS; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 4
-standard	PennCNV	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	NA	CNV_caller: PennCNV; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 0
-standard	combined-call	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	NA	CNV_caller: combined-call; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: StemCNV-check flagged; n_calls: 0
-standard	CBS	gain|loss	X|Y	-Inf	Inf	NA	0.14285714285714285	CNV_caller: CBS; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: any exclusion; n_calls: 7
-standard	PennCNV	gain|loss	X|Y	-Inf	Inf	NA	0	CNV_caller: PennCNV; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: any exclusion; n_calls: 6
-standard	combined-call	gain|loss	X|Y	-Inf	Inf	NA	NA	CNV_caller: combined-call; CNV_type: gain|loss; chromosomes: sex; size: any; CNV_filter_set: any exclusion; n_calls: 0
+standard	CBS	gain|loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.01834862385321101	CNV_caller: CBS; chromosomes: auto; size: 1000-12000; CNV flag status: Reliable; n_calls: 109
+standard	PennCNV	gain|loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.1111111111111111	CNV_caller: PennCNV; chromosomes: auto; size: 1000-12000; CNV flag status: Reliable; n_calls: 9
+standard	combined-call	gain|loss	[0-9]+	1000	12000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.2857142857142857	CNV_caller: combined-call; chromosomes: auto; size: 1000-12000; CNV flag status: Reliable; n_calls: 14
+standard	CBS	gain|loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.009615384615384616	CNV_caller: CBS; chromosomes: auto; size: 12000-27000; CNV flag status: Reliable; n_calls: 104
+standard	PennCNV	gain|loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.23529411764705882	CNV_caller: PennCNV; chromosomes: auto; size: 12000-27000; CNV flag status: Reliable; n_calls: 17
+standard	combined-call	gain|loss	[0-9]+	12000	27000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.375	CNV_caller: combined-call; chromosomes: auto; size: 12000-27000; CNV flag status: Reliable; n_calls: 24
+standard	CBS	gain|loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.022222222222222223	CNV_caller: CBS; chromosomes: auto; size: 27000-45000; CNV flag status: Reliable; n_calls: 45
+standard	PennCNV	gain|loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.42857142857142855	CNV_caller: PennCNV; chromosomes: auto; size: 27000-45000; CNV flag status: Reliable; n_calls: 14
+standard	combined-call	gain|loss	[0-9]+	27000	45000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.5625	CNV_caller: combined-call; chromosomes: auto; size: 27000-45000; CNV flag status: Reliable; n_calls: 16
+standard	CBS	gain|loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.10810810810810811	CNV_caller: CBS; chromosomes: auto; size: 45000-84000; CNV flag status: Reliable; n_calls: 37
+standard	PennCNV	gain|loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.23076923076923078	CNV_caller: PennCNV; chromosomes: auto; size: 45000-84000; CNV flag status: Reliable; n_calls: 13
+standard	combined-call	gain|loss	[0-9]+	45000	84000	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.75	CNV_caller: combined-call; chromosomes: auto; size: 45000-84000; CNV flag status: Reliable; n_calls: 16
+standard	CBS	gain|loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.16	CNV_caller: CBS; chromosomes: auto; size: >=84000; CNV flag status: Reliable; n_calls: 25
+standard	PennCNV	gain|loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.43478260869565216	CNV_caller: PennCNV; chromosomes: auto; size: >=84000; CNV flag status: Reliable; n_calls: 23
+standard	combined-call	gain|loss	[0-9]+	84000	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.9130434782608695	CNV_caller: combined-call; chromosomes: auto; size: >=84000; CNV flag status: Reliable; n_calls: 23
+standard	CBS	gain|loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.03125	CNV_caller: CBS; chromosomes: auto; size: any; CNV flag status: Unclear; n_calls: 128
+standard	PennCNV	gain|loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.04081632653061224	CNV_caller: PennCNV; chromosomes: auto; size: any; CNV flag status: Unclear; n_calls: 49
+standard	combined-call	gain|loss	[0-9]+	-Inf	Inf	min_size|min_probes|min_density	0.12121212121212122	CNV_caller: combined-call; chromosomes: auto; size: any; CNV flag status: Unclear; n_calls: 33
+standard	CBS	gain|loss	[0-9]+	-Inf	Inf	NA	0.03804347826086957	CNV_caller: CBS; chromosomes: auto; size: any; CNV flag status: Not reliable; n_calls: 368
+standard	PennCNV	gain|loss	[0-9]+	-Inf	Inf	NA	0.0989010989010989	CNV_caller: PennCNV; chromosomes: auto; size: any; CNV flag status: Not reliable; n_calls: 91
+standard	combined-call	gain|loss	[0-9]+	-Inf	Inf	NA	0.04878048780487805	CNV_caller: combined-call; chromosomes: auto; size: any; CNV flag status: Not reliable; n_calls: 41
+standard	CBS	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.023809523809523808	CNV_caller: CBS; chromosomes: sex; size: any; CNV flag status: Reliable; n_calls: 42
+standard	PennCNV	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0	CNV_caller: PennCNV; chromosomes: sex; size: any; CNV flag status: Reliable; n_calls: 6
+standard	combined-call	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density|probe_gap|high_probe_dens	0.3333333333333333	CNV_caller: combined-call; chromosomes: sex; size: any; CNV flag status: Reliable; n_calls: 3
+standard	CBS	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	0	CNV_caller: CBS; chromosomes: sex; size: any; CNV flag status: Unclear; n_calls: 4
+standard	PennCNV	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	NA	CNV_caller: PennCNV; chromosomes: sex; size: any; CNV flag status: Unclear; n_calls: 0
+standard	combined-call	gain|loss	X|Y	-Inf	Inf	min_size|min_probes|min_density	NA	CNV_caller: combined-call; chromosomes: sex; size: any; CNV flag status: Unclear; n_calls: 0
+standard	CBS	gain|loss	X|Y	-Inf	Inf	NA	0.14285714285714285	CNV_caller: CBS; chromosomes: sex; size: any; CNV flag status: Not reliable; n_calls: 7
+standard	PennCNV	gain|loss	X|Y	-Inf	Inf	NA	0	CNV_caller: PennCNV; chromosomes: sex; size: any; CNV flag status: Not reliable; n_calls: 6
+standard	combined-call	gain|loss	X|Y	-Inf	Inf	NA	NA	CNV_caller: combined-call; chromosomes: sex; size: any; CNV flag status: Not reliable; n_calls: 0
