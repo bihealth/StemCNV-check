@@ -171,7 +171,7 @@ test_that('get_SNV_table', {
             ref_GenCall_Score = NA_real_,
             SNV_category = c('hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = c('reportable', 'reportable', 'critical', 'reportable', 'critical') %>%
+            SNV_label = c('Reportable de-novo', 'Reportable de-novo', 'Critical de-novo', 'Reportable de-novo', 'Critical de-novo') %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
@@ -201,7 +201,10 @@ test_that('get_SNV_table', {
             ref_GenCall_Score = NA_real_,
             SNV_category = c('ROI-overlap', 'ROI-overlap', 'hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = c('critical', 'critical', 'reportable', 'reportable', 'critical', 'reportable', 'critical') %>%
+            SNV_label = paste(
+                c('Critical', 'Critical', 'Reportable', 'Reportable', 'Critical', 'Reportable', 'Critical'),
+                'de-novo'
+            )%>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
@@ -220,7 +223,7 @@ test_that('get_SNV_table', {
             ref_GenCall_Score = NA_real_,
             SNV_category = c(rep('other', 5), 'ROI-overlap', 'hotspot-gene') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = c(rep('de-novo SNV', 5), 'critical', 'reportable') %>%
+            SNV_label = c(rep('de-novo SNV', 5), 'Critical de-novo', 'Reportable de-novo') %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
@@ -244,8 +247,8 @@ test_that('get_SNV_table', {
             ) %>%
                 factor(levels = names(defined_labels$SNV_categories)),
             SNV_label = c(
-                'de-novo SNV', rep('reportable', 4), 'de-novo SNV',
-                'reportable', 'reportable', 'critical', 'reportable', 'critical'
+                'de-novo SNV', rep('Reportable de-novo', 4), 'de-novo SNV',
+                'Reportable de-novo', 'Reportable de-novo', 'Critical de-novo', 'Reportable de-novo', 'Critical de-novo'
             ) %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
@@ -265,7 +268,7 @@ test_that('get_SNV_table', {
             ref_GenCall_Score = NA_real_,
             SNV_category = c('hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = rep('critical', 5) %>% factor(levels = names(defined_labels$SNV_labels)),
+            SNV_label = rep('Critical de-novo', 5) %>% factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
     get_SNV_table(sample_SNV_tb, empty_ref_gr, SNV_hotspot_table, test_config, defined_labels) %>%

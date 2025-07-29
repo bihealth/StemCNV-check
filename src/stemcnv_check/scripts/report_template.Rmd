@@ -688,11 +688,11 @@ paste0(
         defined_labels$SNV_labels, \(x, name) str_glue(' - {name}: {x}')
         ), collapse = '\n\n'
     ),
-    '\n\nThe following categories are assinged as "critical" or "reportable":\n\n',
+    '\n\nThe following categories are assinged as "Critical" or "Reportable" (de-novo):\n\n',
     paste(imap(
         c(
-            setNames(config$settings$SNV_analysis$critical_SNV, rep('critical', length(config$settings$SNV_analysis$critical_SNV))),
-            setNames(config$settings$SNV_analysis$reportable_SNV, rep('reportable', length(config$settings$SNV_analysis$reportable_SNV)))
+            setNames(config$settings$SNV_analysis$critical_SNV, rep('Critical de-novo', length(config$settings$SNV_analysis$critical_SNV))),
+            setNames(config$settings$SNV_analysis$reportable_SNV, rep('Reportable de-novo', length(config$settings$SNV_analysis$reportable_SNV)))
         ),\(x, name) str_glue(' - {name}: {x}')
         ), collapse = '\n\n'
     ),
@@ -711,11 +711,11 @@ if (is.na(ref_id)) {
 }
 
 SNV_table_output(
-    SNV_table %>% filter(SNV_label != 'reference genotype'), 
+    SNV_table %>% filter(SNV_label != 'Reference genotype'), 
     roi_gr, snv_hotspot_tb, config, report_config, defined_labels, params$out_format #, caption
 )
 
-ref_snv <- SNV_table %>% filter(SNV_label == 'reference genotype')
+ref_snv <- SNV_table %>% filter(SNV_label == 'Reference genotype')
 
 if (nrow(ref_snv) > 0) {
     cat('## Table of reference SNVs\n\n')
@@ -791,10 +791,10 @@ paste(
 
 if (!is.na(ref_id)) {
     label_SNVs <- SNV_table %>%
-        filter(SNV_label != 'reference genotype') %>%
+        filter(SNV_label != 'Reference genotype') %>%
         mutate(
             sample_id = sample_id,
-            color = ifelse(SNV_label == 'critical', 'red', 'orange')
+            color = ifelse(SNV_label == 'Critical de-novo', 'red', 'orange')
         )
 } else {
     label_SNVs <- SNV_table %>% mutate(color = 'red', sample_id = sample_id) %>% filter(SNV_label == 'dummy')

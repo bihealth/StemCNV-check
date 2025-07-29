@@ -38,11 +38,11 @@ SNV_categories:
 
 # possible labels for SNVs
 SNV_labels:
-    critical: "SNV with likely critical significance on hiPSC line"
-    reportable: "SNV with possible significance on hiPSC line"
-    unreliable critical/reportable: "SNV with likely or possible significance on hiPSC line, but unreliable signal"
+    Critical de-novo: "SNV with likely critical significance on hiPSC line"
+    Reportable de-novo: "SNV with possible significance on hiPSC line"
+    Unreliable critical/reportable: "SNV with likely or possible significance on hiPSC line, but unreliable signal"
     de-novo SNV: "SNV with de-novo status, but no clear functional impact"
-    reference genotype: "SNV already detected in the reference sample"
+    Reference genotype: "SNV already detected in the reference sample"
 
 ## The following lists are primarily used by the check_config functions
 # Possible/Defined QC measures on sample level

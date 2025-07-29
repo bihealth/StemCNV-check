@@ -180,14 +180,14 @@ get_SNV_table <- function(
                 factor(levels = names(defined_labels$SNV_categories)),
             
             SNV_label = case_when(
-                GT == ref_GT                                                   ~ 'reference genotype',
+                GT == ref_GT                                                   ~ 'Reference genotype',
                 SNV_category %in% c(subconfig$critical_SNV, subconfig$reportable_SNV) & 
                     (
                         GenCall_Score < subconfig$flag_GenCall_minimum |
                         ref_GenCall_Score < subconfig$flag_GenCall_minimum
-                    )                                                          ~ 'unreliable critical/reportable',
-                SNV_category %in% subconfig$critical_SNV                       ~ 'critical',
-                SNV_category %in% subconfig$reportable_SNV                     ~ 'reportable',
+                    )                                                          ~ 'Unreliable critical/reportable',
+                SNV_category %in% subconfig$critical_SNV                       ~ 'Critical de-novo',
+                SNV_category %in% subconfig$reportable_SNV                     ~ 'Reportable de-novo',
                 TRUE                                                           ~ 'de-novo SNV'
             ) %>%
                  factor(levels = names(defined_labels$SNV_labels)),
@@ -372,11 +372,12 @@ get_SNV_QC_table <- function(sample_id, sample_SNV_tb, ref_SNP_gr, SNV_table, us
     }
     
     # number of reportable & critical SNVs
+    #FIXME: pull label names from definition file
     snv_qc_tb$reportable_SNVs <- SNV_table %>%
-        filter(SNV_label == 'reportable') %>%
+        filter(SNV_label == 'Reportable de-novo') %>%
         nrow()
     snv_qc_tb$critical_SNVs <- SNV_table %>%
-        filter(SNV_label == 'critical') %>%
+        filter(SNV_label == 'Critical de-novo') %>%
         nrow()
     
     # post filter SNPs

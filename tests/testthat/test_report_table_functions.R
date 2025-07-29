@@ -467,10 +467,10 @@ test_that("SNV_table_output", {
     SNV_table <- bind_rows(
         SNV_table %>% mutate(
             SNV_category = c('hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match'),
-            SNV_label = c('reportable', 'reportable', 'critical', 'reportable', 'critical')
+            SNV_label = c('Reportable de-novo', 'Reportable de-novo', 'Critical de-novo', 'Reportable de-novo', 'Critical de-novo')
         ),
         SNV_table %>% mutate(
-            SNV_label = c('unreliable critical/reportable', rep('reportable', 4)),
+            SNV_label = c('Unreliable critical/reportable', rep('Reportable de-novo', 4)),
             SNV_category = c('ROI-overlap', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
             ROI_hits = c('DDX11L1', rep(NA, 4))
         )
