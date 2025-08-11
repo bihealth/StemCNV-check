@@ -1,5 +1,8 @@
 list_name	mapping	hotspot	call_type	description	description_doi	check_score
 StemCNV-check SNV hotspots	gene_name::mutation	BCOR::	any	Source: Rouhani et al. 2022 {1}	10.1038/s41588-022-01147-3	
+StemCNV-check SNV hotspots	gene_name::mutation	EGFR::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
+StemCNV-check SNV hotspots	gene_name::mutation	PATZ1::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
+StemCNV-check SNV hotspots	gene_name::mutation	CDK12::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
 StemCNV-check SNV hotspots	gene_name::mutation	OGG1::Arg154His	any	Source: Bruner et al. 2000 {1}, Rouhani et al. 2022 {2}	10.1038/35002510, 10.1038/s41588-022-01147-3	
 StemCNV-check SNV hotspots	gene_name::mutation	TP53::Gly245Ser	any	Source: Merkle et al. 2017 {1}, ISSCR guidelines {2}	10.1038/nature22312, 10.1038/s41596-021-00591-5.	
 StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg248Trp	any	Source: Merkle et al. 2017 {1}, ISSCR guidelines {2}	10.1038/nature22312, 10.1038/s41596-021-00591-5.	

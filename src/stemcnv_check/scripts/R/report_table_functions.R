@@ -652,7 +652,7 @@ SNV_table_output <- function (
         dt <- tb %>%
             mutate(
                 CNV_type = 'any',
-                across(c(Chromosome, SNV_label, SNV_category), as.factor),
+                across(c(Chromosome, SNV_label, SNV_category, GT, ref_GT), as.factor),
                 across(c(ROI_hits, HGVS.p, gene_name, Impact, Annotation), \(col) {
                     mappings <- highlight_mappings[[cur_column()]]
                     ifelse(
