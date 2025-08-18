@@ -29,8 +29,8 @@ config <- list(
               Annotation_regex = NULL,
               include_all_ROI_overlaps = TRUE
             ),
-            critical_SNV = list('ROI-overlap', 'hotspot-match'),
-            reportable_SNV = list('hotspot-gene', 'protein-ablation'),
+            critical_SNV = list('hotspot-match'),
+            reportable_SNV = list('ROI-overlap', 'hotspot-gene', 'protein-ablation'),
             protein_ablation_annotations = list(
                 Impact = list('HIGH'),
                 Annotation_regex = NULL
@@ -202,7 +202,7 @@ test_that('get_SNV_table', {
             SNV_category = c('ROI-overlap', 'ROI-overlap', 'hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
             SNV_label = paste(
-                c('Critical', 'Critical', 'Reportable', 'Reportable', 'Critical', 'Reportable', 'Critical'),
+                c('Reportable', 'Reportable', 'Reportable', 'Reportable', 'Critical', 'Reportable', 'Critical'),
                 'de-novo'
             )%>%
                 factor(levels = names(defined_labels$SNV_labels)),
@@ -223,7 +223,7 @@ test_that('get_SNV_table', {
             ref_GenCall_Score = NA_real_,
             SNV_category = c(rep('other', 5), 'ROI-overlap', 'hotspot-gene') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = c(rep('de-novo SNV', 5), 'Critical de-novo', 'Reportable de-novo') %>%
+            SNV_label = c(rep('de-novo SNV', 5), 'Reportable de-novo', 'Reportable de-novo') %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)

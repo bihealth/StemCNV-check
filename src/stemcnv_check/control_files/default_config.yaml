@@ -341,9 +341,9 @@ settings:
     # List of SNV categories that are considered critical or reportable.
     # Allowed values: {SNV_categories_names}
     critical_SNV:
-      - 'ROI-overlap'
       - 'hotspot-match'
     reportable_SNV:
+      - 'ROI-overlap'
       - 'hotspot-gene'
       - 'protein-ablation'
     # SNVs that can fully remove protein function are summarised in the "protein-ablation" category (generally HIGH impact)
