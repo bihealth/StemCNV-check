@@ -236,7 +236,43 @@ load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
     
     tb <- str_replace(filename, '__inbuilt__', config$snakedir) %>%
         fix_rel_filepath(config) %>%
-        read_tsv(show_col_types = FALSE) 
+        read_tsv(show_col_types = FALSE) %>%
+        # Reformat to the 'old' hotspot table format
+        mutate(orig_order = row_number()) %>%
+        group_by(list_name, hotspot, mapping, call_type, check_score, general_comment) %>%
+        mutate(
+            citation = ifelse(
+                is.na(doi),
+                citation,
+                paste0(citation, '{', 1:dplyr::n(), '}' )
+            ),
+            citation_comment = case_when(
+                is.na(citation_comment) & dplyr::n() > 1, 'Sources', 
+                is.na(citation_comment), 'Source', 
+                TRUE ~ citation_comment
+            ),
+        ) %>%
+        group_by(list_name, hotspot, mapping, call_type, check_score, general_comment, citation_comment) %>%
+        summarise(
+            description = paste0(unique(citation_comment), ': ', paste(citation, collapse = ', ')),
+            description_doi = paste(doi, collapse = ', '), 
+            orig_order = min(orig_order),
+        ) %>%
+        arrange(orig_order) %>%
+        summarise(
+            description = paste0(description, collapse = '\\n'),
+            description_doi = paste(description_doi, collapse = ', '),
+            description = ifelse(
+                is.na(unique(general_comment)), 
+                description,
+                paste0(unique(general_comment), '\\n', description)
+            ),
+            description_doi = ifelse(description_doi == 'NA', NA_character_, description_doi),
+            orig_order = min(orig_order)
+        ) %>%
+        ungroup() %>%
+        arrange(orig_order) %>%
+        select(-general_comment, -orig_order)
     
     # str_glue with argument injection only works properly with named arguments that aren't numbers
     description_html_pattern <- str_replace_all(

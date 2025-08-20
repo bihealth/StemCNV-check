@@ -282,12 +282,15 @@ settings:
       whitelist_hotspot_genes: True
       # These genelists are used to mark genes with high impact
       # Gene lists files are tabular (tsv) and need the following columns:
-      # list_name, hotspot, mapping, call_type, check_score, description, description_doi
-      # list_name, hotspot, mapping, call_type & check_score need to be filled out
-      # description & description_doi will be used to display extra info in the report
-      # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
-      # call_type can be 'any', 'gain', 'loss' or 'LOH'
-      stemcell_hotspot_list: '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
+      # - list_name, hotspot, mapping, call_type, check_score, general_comment, citation_comment, citation, doi
+      # The columns `list_name`, `hotspot`, `mapping`, `call_type` & `check_score` need to be filled out.
+      # The `mapping` column can only one of these values: 'gene_name', 'gband', and 'position'. It describes what the 
+      #  `hotspot` column contains.
+      # The `call_type` column can only one of these values: 'any', 'gain', 'loss' or 'LOH'.
+      # The columns `citation` and `doi` should only contain a single value each, if multiple citations are needed, they 
+      #   should be included as separate lines (long table format).multiple
+      # The `general_comment` should be the same for each combination of `hotspot`, `mapping`, `call_type` & `check_score`
+      stemcell_hotspot_list: '__inbuilt__/supplemental-files/CNV-stemcell-hotspots.tsv'
       cancer_gene_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
       # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
       # File path for dosage sensitivity score file is defined in global_settings

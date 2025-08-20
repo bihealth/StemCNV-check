@@ -1,19 +1,20 @@
-list_name	mapping	hotspot	call_type	description	description_doi	check_score
-StemCNV-check SNV hotspots	gene_name::mutation	BCOR::	any	Source: Rouhani et al. 2022 {1}	10.1038/s41588-022-01147-3	
-StemCNV-check SNV hotspots	gene_name::mutation	EGFR::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
-StemCNV-check SNV hotspots	gene_name::mutation	PATZ1::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
-StemCNV-check SNV hotspots	gene_name::mutation	CDK12::	any	Source: Avior et al. 2020 {1}	10.1016/j.stem.2020.11.013	
-StemCNV-check SNV hotspots	gene_name::mutation	OGG1::Arg154His	any	Source: Bruner et al. 2000 {1}, Rouhani et al. 2022 {2}	10.1038/35002510, 10.1038/s41588-022-01147-3	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Gly245Ser	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg248Trp	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg273Gly	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Gly245Cys	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg175His	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Pro151Ser	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg181His	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg248Gln	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::Arg267Trp	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	TP53::His193Arg	any	Source: Merkle et al. 2017 {1}	10.1038/nature22312	
-StemCNV-check SNV hotspots	gene_name::mutation	ATM::Leu752Pro	any	Source: Gore et al. 2011 {1}	10.1038/nature09805	
-StemCNV-check SNV hotspots	gene_name::mutation	NTRK1::Pro392Ser	any	Source: Gore et al. 2011 {1}	10.1038/nature09805	
-StemCNV-check SNV hotspots	gene_name::mutation	NTRK3::Gln148Arg	any	Source: Gore et al. 2011 {1}	10.1038/nature09805	
+list_name	hotspot	mapping	call_type	check_score	general_comment	citation_comment	citation	doi
+StemCNV-check SNV hotspots	ATM::Leu752Pro	gene_name::mutation	any	NA		Source	Gore et al. 2011	10.1038/nature09805
+StemCNV-check SNV hotspots	BCOR::	gene_name::mutation	any	NA		Source	Rouhani et al. 2022	10.1038/s41588-022-01147-3
+StemCNV-check SNV hotspots	CDK12::	gene_name::mutation	any	NA		Source	Avior et al. 2020	10.1016/j.stem.2020.11.013
+StemCNV-check SNV hotspots	EGFR::	gene_name::mutation	any	NA		Source	Avior et al. 2020	10.1016/j.stem.2020.11.013
+StemCNV-check SNV hotspots	NTRK1::Pro392Ser	gene_name::mutation	any	NA		Source	Gore et al. 2011	10.1038/nature09805
+StemCNV-check SNV hotspots	NTRK3::Gln148Arg	gene_name::mutation	any	NA		Source	Gore et al. 2011	10.1038/nature09805
+StemCNV-check SNV hotspots	OGG1::Arg154His	gene_name::mutation	any	NA		Source	Bruner et al. 2000	10.1038/35002510
+StemCNV-check SNV hotspots	OGG1::Arg154His	gene_name::mutation	any	NA		Source	Rouhani et al. 2022	10.1038/s41588-022-01147-3
+StemCNV-check SNV hotspots	PATZ1::	gene_name::mutation	any	NA		Source	Avior et al. 2020	10.1016/j.stem.2020.11.013
+StemCNV-check SNV hotspots	TP53::Arg175His	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Arg181His	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Arg248Gln	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Arg248Trp	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Arg267Trp	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Arg273Gly	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Gly245Cys	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Gly245Ser	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::His193Arg	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312
+StemCNV-check SNV hotspots	TP53::Pro151Ser	gene_name::mutation	any	NA		Source	Merkle et al. 2017	10.1038/nature22312

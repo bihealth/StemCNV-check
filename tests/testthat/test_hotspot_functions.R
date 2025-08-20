@@ -149,7 +149,7 @@ test_that('parse inbuilt tables', {
                     'exclude_gene_type_regex' = c(),
                     'include_only_these_gene_types' = c('lncRNA', 'miRNA', 'protein_coding'),
                     'whitelist_hotspot_genes' = TRUE,
-                    'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv',
+                    'stemcell_hotspot_list' = '__inbuilt__/supplemental-files/CNV-stemcell-hotspots.tsv',
                     'cancer_gene_list' = '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv',
                     'dosage_sensitive_gene_name_fixes' = '__inbuilt__/supplemental-files/gene-names-mapping-dosage-sensitivity.tsv'
                 ),
