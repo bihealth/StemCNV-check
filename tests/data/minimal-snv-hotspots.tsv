@@ -1,7 +1,7 @@
 list_name	mapping	hotspot	call_type	check_score	general_comment	citation_comment	citation	doi
 test SNV hotspots	gene_name::mutation	dummy_4.4::	any				desc	doiA
 test SNV hotspots	gene_name::mutation	dummy_2.1::Pro200Glu	any				desc	doiA
-test SNV hotspots	gene_name::mutation	dummy_2.1::Pro200Glu	any				 	doiB
+test SNV hotspots	gene_name::mutation	dummy_2.1::Pro200Glu	any				dummy	doiB
 test SNV hotspots	gene_name::mutation	dummy_2.1::Ala100Val	any				desc	doiB
 test SNV hotspots	gene_name::mutation	dummy_3.2::Ala100Val	any				desc	doiC
 test SNV hotspots	gene_name::mutation	dummy_hotspot::Leu20Val	any				desc	

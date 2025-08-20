@@ -247,8 +247,8 @@ load_hotspot_table <- function(config, table = 'stemcell_hotspot') {
                 paste0(citation, '{', 1:dplyr::n(), '}' )
             ),
             citation_comment = case_when(
-                is.na(citation_comment) & dplyr::n() > 1, 'Sources', 
-                is.na(citation_comment), 'Source', 
+                n_distinct(citation[is.na(citation_comment)]) > 1 ~ 'Sources', 
+                is.na(citation_comment) ~ 'Source', 
                 TRUE ~ citation_comment
             ),
         ) %>%

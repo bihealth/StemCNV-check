@@ -64,16 +64,16 @@ test_that("format_hotspots_to_badge", {
     
     expected <- c(
         '-', 
-        '<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
+        '<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1}, dummy{2}">1q21</span>', 
         '1q21', 
         '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 15&#013;Something: Dummy{1}">dummyC</span>', 
         paste0(
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 10&#013;',
-            'Sources: dummy{1}&#013;Something: else{2}">1p36</span>',
+            'Source: dummy{1}&#013;Something: else{2}">1p36</span>',
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;',
-            'Sources: dummy">DDX11L1</span>'
+            'Source: dummy">DDX11L1</span>'
         ),
-        '1p36<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>',
+        '1p36<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 30&#013;Source: dummy">DDX11L1</span>',
         'A; B; C'
     )
     expect_equal(
@@ -512,7 +512,7 @@ test_that("SNV_table_output", {
         dplyr::rename(Chromosome = seqnames, Position = start) %>%
         mutate(
             across(c(GT, ref_GT), as.factor),
-            desc = c('desc{1},{2}', 'desc', rep('SNV hotspot gene (see hotspot coverage)', 3), rep(NA, 5)),
+            desc = c('Sources: desc{1}, dummy{2}', 'Source: desc', rep('SNV hotspot gene (see hotspot coverage)', 3), rep(NA, 5)),
             SNV = paste0(Chromosome, ':', format(Position, big.mark = '.', decimal.mark = ','), ':', REF, '>', ALT),
             ROI_hits = ifelse(1:dplyr::n() == 10, "<span class=\"badge badge-red\" title=\"ROI&#013;DDX11L1\">DDX11L1</span>", ROI_hits),
             HGVS.p = ifelse(
