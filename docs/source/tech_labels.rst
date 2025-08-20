@@ -1,5 +1,5 @@
 
-**Evaluation settings. Labelling system and filters.**
+Evaluation settings. Labelling system and filters.
 ===========================
 
 CNV labels

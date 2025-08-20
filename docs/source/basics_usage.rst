@@ -1,17 +1,29 @@
-Running the analysis for the first time
-============
 
-Before the first analysis sample table and config file need to be set up. Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file.
+Basic Usage
+^^^^^^^^^^^
+
+Essentially: 
+
+::include:: ../../README.md
+
+First analysis
+============
+Before the first analysis sample table and config file need to be set up (see above). Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file.
 
 It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
 
-Once the config file is properly set up and the necessary static files are generated, you can run the StemCNV-check workflow with simple command: ``stemcnv-check``
+Config file settings
+============
 
-*Reminder for WSL users:* as before you may need to limit the memory usage of the workflow
-and use this command or a variation instead: ``stemcnv-check run --memory-mb=6000``
+Setting analysis parameters or changing them requires editing the text in the generated default config file. Start by opening the config.yaml in text editor. Then type in or change the necessary parameters. 
+
+The default config file (config.yaml) defines all settings for the analysis and inherits from the inbuilt default.
+
+Adjust the config file so that all entries marked as ``“#REQUIRED”`` are filled in.
+
 
 Continuing from previous steps and running multiple projects
-============
+------------------------------------------------
 
 If you have already completed some or all steps of the initial installation setup, you do not need to repeat them. 
 However, if you restart the terminal (WSL) window, this will also always return you to the home directory. 

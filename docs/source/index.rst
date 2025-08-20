@@ -1,50 +1,35 @@
 
 StemCNV-check Manual
-===========================
+^^^^^^^^^^^^^^^^^^^^
 
-StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
+This is the manual for StemCNV-check, a tool written to simplify copy number variation (CNV) analysis of SNP array data, 
+specifically for quality control of (pluripotent) stem cell lines.  
+StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to html report generation for all 
+defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings 
+are defined through a yaml config file.
 
-**StemCNV-check applications include:**
 
-- Quality control of hPSC genetic integrity based on CNV detection in SNP-array data 
-- Detection of loss of heterozygosity
-- Detection of CNVs/SNPs responsible for changes in amino acid sequence
-- Identification of hPSC line and detection of swaps or cross-contamination based on comparison to reference samples,  analysis based on samples SNP distance which indicates hPSC line identity. This allows sample identification and detection of swaps  or cross-contamination 
+**StemCNV-check features include:**
 
-- Evaluation of SNPs in coding regions of interest, detect  on/off target genomic changes generated after genetic engineering procedures.
-
-StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
-
-**StemCNV-check provides:**
-
-• Automated CNV calling and annotation, with improved quality of calls over other tools
-• CNV scoring, filtering and labeling (based on Check-Score and other config file options) 
-• Sample comparison based on genotypes (sample identity compared to reference and other samples based on SNP distance)
-• SNV analysis (de-novo, impact estimation)
-• Easily readable report in html format
+- Quality control of hPSC genomic integrity based on CNV detection in SNP-array data 
+    - Detection of CNVs and loss of heterozygosity
+    - Comparison to reference sample
+    - Extensive CNV annotation, including ranking by Check-Score 
+- Comparison of SNVs against reference and annotation of changes in amino acid sequence
+- Comparison of sample identity based on SNP genotypes
+    - This allows sample identification and detection of swaps  or cross-contamination
+- Easily readable report in html format
+    - All results summarised in a single report
+    - Summary overview of quality metrics
+    - Guided interpretation of results and links to relevant resources
 
 **Requirements:**
 
-- linux environment (or WSL on windows) 
-- working conda (or mamba) 
+StemCNV-check requires a linux environment due to dependencies on open source packages, 
+for windows users WSL (Windows Subsystem for Linux) is recommended. 
+Easy installation is possible through the bioconda repository. 
+We are working towards native support for all major operating systems for our bioconda release.
 
-
-Workflow overview
-=============
-
-- Raw data processing     
-- CNV calling and processing 
-- CNV scoring and evaluation 
-- SNP & SNV analysis 
-- Report generation 
-    
-.. image:: workflow.png
-   :width: 600
-
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Contents:
 
 
 Table of Contents
@@ -60,33 +45,34 @@ Table of Contents
     :caption: Getting started 
     :name: stemcnv_install
 
-    introduction
-    installation
-    example_data
+    basics_nonlinux
+    basics_installation
+    basics_usage
+    basics_output_files
+    
  
 .. toctree::
-    :maxdepth: 2
-    :caption: Tutorial
-    :name: run_stemcnv
+    :maxdepth: 1
+    :caption: Tutorials
+    :name: stemcnv_tutorials
     
-    running
-    setup_project
-    sample_table
-    config
-    output_files
-    report_analysis
-    
+    tut_example_data
+    tut_report_analysis
+    tut_project_setup    
 
 .. toctree::
     :maxdepth: 2
-    :caption: FAQ
-    :name: troubles_stemcnv
+    :caption: Troubleshooting
+    :name: stemcnv_issues
 
-    trouble_shooting 
+    issues_intro
+    issues_faq
 
 .. toctree::
     :maxdepth: 2
-    :caption: Settings and advanced features  
-    :name: advanced_stemcnv
+    :caption: Technical documentation
+    :name: stemcnv_technical
     
-    labels
+    tech_cmd_line
+    tech_config
+    tech_labels

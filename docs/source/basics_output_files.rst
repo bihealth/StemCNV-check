@@ -1,4 +1,4 @@
-Output
+Output files
 ============
 
 StemCNV-check will produce the following output files for each sample, when run with default settings:
