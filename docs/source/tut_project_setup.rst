@@ -50,36 +50,48 @@ Filling in the sample table with your data
 - **Required Columns**: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
 
 Specific explanations for columns:
- - Sample_ID:
-       The folder and samples names for samples are derived from this entry. All entries *must* be unique.
-       To prevent issues with filenames only alphanumeric characters (all letters and number) and the characters -_
-       (dash and underscore) are allowed. Include bank ID when possible, only: - or _, do not use special characters: (), {}, /, \, ~,*, & Name has to be UNIQUE.
-       This column has auto-formatting enabled, so that the IDs will work with the CNV-pipeline:
 
-       - red entries are either duplicate or contain not-allowed characters (/ and .\)
+  - Sample_ID
 
-       - orange entries contain characters that the pipeline will remove (since they can cause issues if used in file names):  :,;()[]{}!?* and <space>
- - Chip_Name and Chip_Pos:
-       These entries must match the Sentrix name (usually a 12 digit number) and position (usually R..C..) on the Illumina array
- - Array_Name
-       The name of the array used for the sample. This needs to match one of the arrays defined in the config under `array_definition`
- - Sex
-       The sex of the sample is needed for analysis and mandatory. Allowed: f[emale]/m[ale] (not case sensitive)
- - Reference_Sample
-       This column should refer to the (exact) Sample_ID of reference sample (i.e. a parental fibroblast line or master bank)
-      If there is no usable or applicable reference sample the entry should be empty
- - Regions_of_Interest
-       Definition of regions for which plots are always generated in the report (i.e. gene edited sites)
-       The syntax for regions of interest is `NAME|region`, the `NAME|` part is optional and mainly useful for
-       labeling or describing the region.
-       The `{region}` part is mandatory and can be one of the following:
-       1) Position, "chrN:start-end": `chrN` can be i.e. 'chr3' or just '3', start and end are coordinates (which are genome build specific!)
-       2) Genomic band, i.e. "4q21.3": a cytogenetic band, both full bands (q21) and subbands (q21.3) are allowed
-       3) Gene symbol, i.e. "TP53": The gene name (or symbol) needs to exactly match the reference annotation (UCSC gtf)
-       Multiple regions for a single sample should all be in one column entry and be separated by a `;`
- - Sample_Group
-       This column can be used for annotation samples is used by default to select samples for clustering by SNPs.
+    The folder and file names for samples are derived from this entry. All entries *must* be unique. 
+    To prevent issues with filenames only alphanumeric characters (all letters and number) and the characters ``-`` 
+    and ``_``(dash and underscore) are allowed by default.
 
+  - Chip_Name and Chip_Pos
+
+    These entries must match the Sentrix name (usually a 12 digit number) and position (usually ``R..C..``) on the Illumina array
+
+  - Array_Name
+
+    The name of the array used for the sample. This needs to match one of the arrays defined in the config under ``array_definition``
+
+  - Sex
+
+    The sex of the sample is needed for analysis and mandatory. Allowed values are: ``f``, ``female``, ``m`` and ``male`` (not case sensitive)
+
+  - Reference_Sample
+
+    This column should refer to the (exact) Sample_ID of reference sample (i.e. a parental fibroblast line or master bank),
+    if there is no usable or applicable reference sample the entry should be empty (i.e. for fibroblast samples).   
+    Reference samples are assumed to be the clonal "parents" of a sample. 
+
+  - Regions_of_Interest
+
+    This column can define sample specific regions of interest (i.e. gene edited sites), if none exist ic can be left 
+    empty but still must be included in the samplesheet.  
+    The syntax for regions of interest is ``NAME|region``, the ``NAME|`` part is optional and mainly useful for 
+    labeling or describing the region.  
+    The ``region`` part is mandatory and can be one of the following:  
+    1) Position: "chrN:start-end": `chrN` can be i.e. 'chr3' or just '3',
+       start and end are coordinates (which are genome build specific!)
+    2) Genomic band: i.e. "4q21.3": a cytogenetic band, both full bands (q21) and subbands (q21.3) are allowed 
+    3) Gene symbol: i.e. "TP53": The gene name (or symbol) needs to exactly match the reference annotation (UCSC gtf)
+    Multiple regions for a single sample should all be in one column entry and be separated by a ``;``
+
+  - Sample_Group
+
+    This column can be used for annotation of similar samples.  
+    By default all samples with the same entry will be included in sample comparison based on SNP clustering.
 
 								
 .. list-table::  Example Sample table
@@ -190,7 +202,7 @@ setup-files command.
 - **data_path**: the output of StemCNV-check will be written to this path
 - **log_path**:  output folder, stemcnv-check will write log filesthe log files of StemCNV-check to this path
 
-.. code:: bash
+.. code:: yaml
 
    array_definition:
         GSAMD-24v3-0:
@@ -211,14 +223,6 @@ setup-files command.
    reports:
         StemCNV-check-report:
           file_type: 'html'
-
-
-
-**Advanced options**
-
-The config file created by this command will only include the absolute necessary settings to run the workflow. If
-you are interested in setting additional parameters or changing the content of the report, you can add this flag
---config-details medium to the command (also available with ‘advanced’ or ‘complete’ instead of ‘medium’)
 
 
 
@@ -273,3 +277,4 @@ You are now ready to run the StemCNV-check workflow for your project!
 .. code-block:: bash
 
    stemcnv-check run
+

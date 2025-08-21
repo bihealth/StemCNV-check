@@ -25,16 +25,16 @@ array_definition: {} ###!strip:4
 #!    csv_manifest_file: ''              #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
 #!    # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
 #!    # defaults to: '{{cache}}/array_definitions/{{array_name}}/PennCNV-PFB_{{genome}}.pfb'
-#!    penncnv_pfb_file: '__cache-default__'      #REQUIRED, Auto-generatable
+#!    penncnv_pfb_file: '__cache-default__'      #STATIC, Auto-generatable
 #!    # PennCNV GC model file, containing GC content values, calculated by PennCNV
 #!    # defaults to: '{{cache}}/array_definitions/{{array_name}}/PennCNV-GCmodel_{{genome}}.gcmodel'
-#!    penncnv_GCmodel_file: '__cache-default__'  #REQUIRED, Auto-generatable
+#!    penncnv_GCmodel_file: '__cache-default__'  #STATIC, Auto-generatable
 #!    # bed file with windows of very high array density, calculated by stemcnv-check
 #!    # defaults to: '{{cache}}/array_definitions/{{array_name}}/density_{{genome}}.bed'
-#!    array_density_file: '__cache-default__'    #REQUIRED, Auto-generatable
+#!    array_density_file: '__cache-default__'    #STATIC, Auto-generatable
 #!    # bed file with windows of probes gaps on the array
 #!    # defaults to: '{{cache}}/array_definitions/{{array_name}}/gaps_{{genome}}.bed'
-#!    array_gaps_file: '__cache-default__'       #REQUIRED, Auto-generatable
+#!    array_gaps_file: '__cache-default__'       #STATIC, Auto-generatable
     
 # Folder in which raw data files (.idat) can be found
 # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)

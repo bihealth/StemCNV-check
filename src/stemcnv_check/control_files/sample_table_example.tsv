@@ -3,7 +3,7 @@
 # Any number of additional columns can be added to the sample table as well, unless referred to in the config they will be ignored.
 # Specific explanations for columns:
 # - Sample_ID:		
-#       The folder and samples names for samples are derived from this entry. All entries *must* be unique. 
+#       The folder and file names for samples are derived from this entry. All entries *must* be unique. 
 #       To prevent issues with filenames only alphanumeric characters (all letters and number) and the characters -_
 #       (dash and underscore) are allowed.
 # - Chip_Name and Chip_Pos:

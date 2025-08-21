@@ -2,41 +2,91 @@
 Basic Usage
 ^^^^^^^^^^^
 
-Essentially: 
+.. caution::Under construction
+    This page is still under construction and has not been finalised yet
 
-::include:: ../../README.md
-
-First analysis
-============
-Before the first analysis sample table and config file need to be set up (see above). Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file.
-
-It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
-
-Config file settings
-============
-
-Setting analysis parameters or changing them requires editing the text in the generated default config file. Start by opening the config.yaml in text editor. Then type in or change the necessary parameters. 
-
-The default config file (config.yaml) defines all settings for the analysis and inherits from the inbuilt default.
-
-Adjust the config file so that all entries marked as ``“#REQUIRED”`` are filled in.
+This section explains the basics of how to use StemCNV-check once it is installed *without* going into much detail.  
+If you want detailed instructions for running an :ref:`example dataset <tut_example_data>` or setting up a 
+:ref:`new project from scratch <tut_project_setup>`, please take a look our tutorials.
 
 
-Continuing from previous steps and running multiple projects
-------------------------------------------------
+Before running StemCNV-check in any project, you will need to setup and fill out the sample table and config file 
+specific for that project and then create rge array specific static data.  
+It is generally recommended to keep each project and it's associated files in a separate folder. 
+Additionally, StemCNV-check will by default always look for a "sample_table.tsv" (or .xlsx) and a "config.yaml" file.
+However, different files can also be used (i.e. to compare the results of different settings), but then need to be 
+passed via the ``--sample-table`` or ``--config`` command line options, which work for all StemCNV-check commands.
 
-If you have already completed some or all steps of the initial installation setup, you do not need to repeat them. 
-However, if you restart the terminal (WSL) window, this will also always return you to the home directory. 
-To make sure that you are in the correct directory for the following steps, each section assumes you start (again) in
-the home directory. You can restart your WSL window or use cd ~ to get back to the home directory. 
-If you follow the recommended instructions the stemcnv-check command will always be available in your terminal
-(through the base environment of conda), but if you use the version for experienced users you will need to activate
-your stemcnv-check conda every time you start a new terminal window: conda activate stemcnv-check.
+Setting up the sample-sheet and config files
+--------------------------------------------
 
-If you want to run your own data analysis project(s) with StemCNV-check, it is recommended to create a new
-directory for each project. These directories can be located anywhere on your system, you can create them in the
-home directory (of WSL for windows) with the following command: mkdir {project_name} . You can also use
-any directory/folder in your normal Windows/MacOS system, however in that case you will need to either open
-the (WSL) terminal in that directory or change to if normally starting WSL (using cd ). On windows open WSL
-in a specific folder can be done by right-clicking in the folder and selecting ‘Open in Terminal’ or ‘Open in WSL’
-(potentially listed under ‘Show more Options’).
+You can create (empty and minimalistic) examples for these files with the following command:
+
+.. code-block::bash
+    stemcnv-check setup-files
+
+
+The **sample table** describes all samples you want to analyse in a given project. It can be expanded later in a project 
+to add more samples, without affecting the primary analysis of older samples (though some comparisons may be updated).  
+The following columns of the sample table are required for running StemCNV-check:
+- Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
+The first 5 of these (Sample_ID - Sex) are required for all samples, Reference_Sample is used to track the origin of a 
+sample (i.e. originating fibroblast or master bank) and should be used where possible, the last two columns can be filled optionally.
+The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol,
+which are ignored by StemCNV-check), explaining the columns in more details. Our :ref:`project setup tutorial <tut_project_setup>` 
+also contains more in-depth instructions and explanations about the sample table.
+
+The **config file** contain all settings for StemCNV-check. By default, the config file created by the ``setup-files`` 
+command only has the minimum number of entries that are required or recommended for analysis. All other settings are 
+instead taken from inbuilt defaults. However, you can use the ``--config-details`` option to include more settings.  
+All entries in the config file, that need to be filled before StemCNV-check can be run are marked with a ``#REQUIRED”`` comment. 
+These include specifically the file paths to array manifest files (describing the array probes) and the input and output 
+file paths the pipeline should use:
+- array_definition / ``ArrayName`` / genome_version
+    StemCNV-check can operate on both hg38 and hg19. The provided array manifest files (specifically ``.bpm`` and ``.csv``) need to match this. 
+- array_definition / ``ArrayName`` / bpm_manifest_file, csv_manifest_file, egt_cluster_file: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array 
+    The array manifest files, usually available from Illumina or the laboratory performing the array analysis.
+- raw_data_folder
+    The path to the input directory under which the raw data file (.idat) can be found. 
+    This folder should contain subfolders that match the Chip_Name column in the sample table (containing the array chip IDs)
+- data_path, log_path
+    The output folders where StemCNV-check will generate its output. By default these will be two folders 
+    (``data`` and ``logs``) in the same directory where StemCNV-check is executed.
+
+
+Generating array static data
+----------------------------
+
+StemCNV-check requires some array specific additional files that are separate from the array manifests, but are also 
+*static*, i.e. they only need be created once. Some of these files require information that is only accesible after 
+pre-processing at least one sample, so you need a filled out config and sampletable first.
+StemCNV-check has an inbuilt workflow to create these files that also saves these files independently from the 
+project, so they can be re-used later (see :ref:`file caching <tech_cache>`). This requires that the same ``ArrayName`` 
+is used in the sample table (and config) file across different projects.
+In addition, the same workflow will also download other required, like the genome reference files.
+
+The workflow to create all static files and prepare StemCNV-check can be started with this command:
+
+.. code-block::bash
+    stemcnv-check make-staticdata
+
+
+.. tip::
+    If you also run other bioinformatics analysis, you may already have genome ``fasta`` and ``gtf`` files on your system.
+    In this case, you can configure StemCNV-check to use those file instead of downloading new ones. This needs to be set
+    in the ``global_settings`` part of the config, which is included from ``--config-details medium`` and above.
+
+
+Starting StemCNV-check analysis
+-------------------------------
+
+After config and sample-table have been set up and the static data for an array has been created, the StemCNV-check 
+workflow can be started with this commandÖ
+
+.. code-block::bash
+    stemcnv-check run
+
+.. tip::
+    StemCNV-check is built on snakemake and can also utilise all of snakemake's advanced features. 
+    You can forward command like options to snakemake by separating them with a ``--``. This way you can for example 
+    make use of snakemake executors that can interface with HPC scheduling systems: ``stemcnv-check run -- --executor slurm``

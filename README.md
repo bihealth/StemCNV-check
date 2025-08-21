@@ -24,8 +24,9 @@ For now, only installation 'from source' is possible:
 StemCNV-check requires a sample table and a config file to run. Example files can be created using `stemcnv-check setup-files`.
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed:
-- Required columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample
-- Optional (reserved) columns: Regions_of_Interest
+- Columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
+- The first 5 of these (Sample_ID - Sex) are required for all samples, Reference_Sample is used to track the origin of a 
+  sample (i.e. originating fibroblast or master bank) and should be used where possible, the last two columns can be filled optionally.
 - See the `sample_table_example.tsv` file (or the sample_table created bye the setup-files command) for a description of individual columns
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  

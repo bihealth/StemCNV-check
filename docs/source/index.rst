@@ -5,8 +5,8 @@ StemCNV-check Manual
 This is the manual for StemCNV-check, a tool written to simplify copy number variation (CNV) analysis of SNP array data, 
 specifically for quality control of (pluripotent) stem cell lines.  
 StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to html report generation for all 
-defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings 
-are defined through a yaml config file.
+defined samples with a single command. Before this one command, samples need to be defined in a (tabular) sample table, 
+the workflow settings through a yaml config file and array specific static data needs to be generated once.
 
 
 **StemCNV-check features include:**
@@ -30,7 +30,8 @@ for windows users WSL (Windows Subsystem for Linux) is recommended.
 Easy installation is possible through the bioconda repository. 
 We are working towards native support for all major operating systems for our bioconda release.
 
-
+.. caution::Under construction
+    This documentation is still under construction and not all parts have been finalised yet
 
 Table of Contents
 ^^^^^^^^^^^^^^^^^
@@ -67,12 +68,15 @@ Table of Contents
 
     issues_intro
     issues_faq
+    issues_support
 
 .. toctree::
     :maxdepth: 2
     :caption: Technical documentation
     :name: stemcnv_technical
     
+    tech_workflow
     tech_cmd_line
+    tech_cache
     tech_config
     tech_labels

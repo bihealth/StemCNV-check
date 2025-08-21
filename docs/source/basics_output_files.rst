@@ -1,11 +1,13 @@
 Output files
 ============
 
+.. caution::Under construction
+    This page is still under construction and has not been finalised yet
+
 StemCNV-check will produce the following output files for each sample, when run with default settings:
 
-- ``data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz``  
-The filtered, processed and annotated SNP data of the array in vcf format
-
+- ``data_path/{sample}/{sample}.annotated-SNP-data.{filter}-filter.vcf.gz``
+  The filtered, processed and annotated SNP data of the array in vcf format
 - ``data_path/{sample}/{sample}.CNV_calls.CBS.vcf.gz``  
   The CNV calls for the sample from the CBS (Circular Binary Segmentation) algorithm in vcf format
 - ``data_path/{sample}/{sample}.CNV_calls.PennCNV.vcf.gz``  
@@ -30,7 +32,6 @@ The filtered, processed and annotated SNP data of the array in vcf format
   plots of most/all CNVs and sample comparison. The default 'StemCNV-check-report' only contains plots for the top20 
   calls or calls above a user defined Check_Score threshold. A fully self-contained report can easily be enabled in the config.yaml. 
   The content of either the default or any additional reports can also be fine-tuned through the config.yaml file.
-
 - ``data_path/{sample}/{sample}.StemCNV-check-report-html_images``  
   Folder containing all images included in the html report. 
 
