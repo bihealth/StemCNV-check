@@ -1,3 +1,5 @@
+.. _issues-intro:
+
 Troubleshooting errors
 ======================
 
@@ -11,7 +13,7 @@ which is then started for the second part, which internally uses snakemake to ma
 Once the second part starts snakemake will first write "Building DAG of jobs..." and the continuous progress with individual 
 steps to the terminal.
 
-- **Errors before workflow execution by snakemake**
+**Errors before workflow execution by snakemake**
 
 The most likely source of errors before the workflow starts are formatting issues or values outside allowed configuration
 in the sample table or config file. In these cases StemCNV-check should tell you what problems exist, so that you can fix them.
@@ -19,7 +21,7 @@ Please read these error messages carefully and adjust the files accordingly.
 Any error messages including or originating from the yaml (parser) packages also indicate a problem with the config file.
 
 
-- **Errors during workflow execution by snakemake**
+**Errors during workflow execution by snakemake**
 
 If the workflow fails during execution, snakemake automatically reports which step failed. If this happens there is most 
 likely an unforseen issue with the workflow. To help us fix such issues, please make sure to include the corresponding 

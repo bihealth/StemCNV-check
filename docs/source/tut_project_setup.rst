@@ -1,3 +1,4 @@
+.. _tut-project-setup:
 
 Setting up a project
 ^^^^^^^^^^^^^^^^^^^^
@@ -20,7 +21,7 @@ Empty example files for the sample table and config can be created with this com
 
 
 Setting up the sample table
-============
+===========================
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed.
 **Excel or tsv** formats are supported.
@@ -45,7 +46,7 @@ You can also use your own Excel file, if the following criteria are met:
     'Sample_ID for pipeline', 'Chip_Name (Sentrix Barcode)', 'Chip_Pos (Sentrix Position)'
 
 Filling in the sample table with your data
-----------
+------------------------------------------
 
 - **Required Columns**: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
 
@@ -82,10 +83,11 @@ Specific explanations for columns:
     The syntax for regions of interest is ``NAME|region``, the ``NAME|`` part is optional and mainly useful for 
     labeling or describing the region.  
     The ``region`` part is mandatory and can be one of the following:  
-    1) Position: "chrN:start-end": `chrN` can be i.e. 'chr3' or just '3',
+    1) Position: "chrN:start-end": ``chrN`` can be i.e. ``chr3`` or just ``3``,
        start and end are coordinates (which are genome build specific!)
     2) Genomic band: i.e. "4q21.3": a cytogenetic band, both full bands (q21) and subbands (q21.3) are allowed 
     3) Gene symbol: i.e. "TP53": The gene name (or symbol) needs to exactly match the reference annotation (UCSC gtf)
+    
     Multiple regions for a single sample should all be in one column entry and be separated by a ``;``
 
   - Sample_Group
@@ -165,7 +167,7 @@ Specific explanations for columns:
 
 
 Setting up the config file
-============
+==========================
 
 The default config file (config.yaml) defines all settings for the analysis and inherits from the inbuilt default.
   
@@ -227,7 +229,7 @@ setup-files command.
 
 
 Static files generation
-============
+=======================
 
 This step takes place after the  sample data for that array is available, sample table and the config file have been set up.
 
@@ -235,7 +237,7 @@ This step takes place after the  sample data for that array is available, sample
 
 .. code:: bash
 
-   stemcnv-check make-staticdata [-s <sample_table>] [-c <config_file>]
+   stemcnv-check make-staticdata
 
 
 *Notes:* This step will also include **download of fasta and gtf** file for the reference genome build.**

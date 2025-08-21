@@ -1,5 +1,10 @@
+.. _tech-cmd-line:
+
 Command line options
 ^^^^^^^^^^^^^^^^^^^^
 
-.. caution::Under construction
+.. admonition:: Under construction
+
     This page is still under construction and has not been finalised yet
+
+The ``stemcnv-check`` command has the following options.

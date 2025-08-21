@@ -1,3 +1,5 @@
+.. _tech-cache:
+
 File caching
 ^^^^^^^^^^^^
 

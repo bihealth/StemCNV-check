@@ -1,3 +1,4 @@
+.. _issues-common:
 
 Common issues and solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,6 +13,7 @@ terminal window, in which the workflow was running. In this case the snakemake w
 until the improperly removed previous lock is removed. This can be done using this command: 
 
 .. code-block:: bash
+
     stemcnv-check run -- --unlock
 
 If you need to shut down your computer but the workflow ist still running you can interrupt it by using ``Ctrl+C`` key 
@@ -38,6 +40,7 @@ primarily estimated, so you may want to allow for some buffer (i.e. if your VM c
 to StemCNV-check.). An example command would then be:
 
 .. code-block:: bash
+
     stemcnv-check run --memory-mb=7500
 
 
@@ -71,6 +74,7 @@ but possibly not through the proxy that allows internet access (i.e. "your_insti
 entered if they are separated by commas. This can be done with the following line:
 
 .. code:: bash
+
     export no_proxy=$no_proxy,localhost,{intranet.domain,your_institute.com}
 
 
@@ -83,11 +87,3 @@ You can make these changes either manually by using a text editor like nano (``n
     echo "export ftp_proxy=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export PIP_PROXY=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export no_proxy=$no_proxy,localhost,{intranet.domain,your_institute.com}" >> ~/.bashrc
-
-
-
-FAQ
-^^^
-
-.. caution::Under construction
-    This section is still under construction and has not been finalised yet

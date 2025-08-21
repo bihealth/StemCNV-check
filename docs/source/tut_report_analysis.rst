@@ -1,15 +1,14 @@
-2
+.. _tut-report-analysis:
+
 Report sections       
 ^^^^^^^^^^^^^^^
 
-- Sample Overview 
-
-
-   - Sample information
-   - QC metrics 
-- CNV calling
-- SNV analysis
-- Sample comparison
+    - Sample Overview
+       - Sample information
+       - QC metrics 
+    - CNV calling
+    - SNV analysis
+    - Sample comparison
 
 1. Sample overview 
 ==================
@@ -141,7 +140,7 @@ Can be changed by user.
 SNP pairwise distance to refrenrece is based on the array platform, for GSA array (~700k probes) it is [500, 5000]. 
 
 
-Sample QC explanation  
+Sample QC explanation
 ---------------------
 
 - Reportable calls CNV

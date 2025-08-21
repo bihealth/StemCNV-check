@@ -1,7 +1,10 @@
+.. _issues-support:
+
 Reporting issues
 ^^^^^^^^^^^^^^^^
 
-.. caution::Under construction
+.. admonition:: Under construction
+
     This page is still under construction and has not been finalised yet
     
 

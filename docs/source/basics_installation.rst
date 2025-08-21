@@ -1,9 +1,12 @@
+.. _basics-installation:
+
 Installation
 ^^^^^^^^^^^^
 
 .. tip::
-    If you are familiar using scientific software on Linux and/or are a windows user, it is strongly recommended to
-    read through the :ref:`Basics for non-linux Users <basics_nonlinux>` section first.  
+
+    If you are not familiar with using scientific software on Linux and/or are a windows user, it is strongly 
+    recommended to read through the :ref:`Basics for non-linux Users <basics-nonlinux>` section first.  
     This will also explain how to setup WSL (Windows Subsystem for Linux) on Windows.
 
 Ths section contains step-by-step instructions for setting up StemCNV-check. All commands should be run in a linux 
@@ -14,6 +17,7 @@ Installation of Conda
 ======================
 
 .. note:: 
+
     Conda is software that facilitates the distribution and installation of primarily scientific software with the 
     ability to control which specific versions are used. StemCNV-check utilises this for almost all steps of the 
     workflow and as such depends on a working conda setup. In principle any conda setup can be used, but for anyone 
@@ -49,6 +53,7 @@ To install `StemCNV-check from bioconda <https://anaconda.org/bioconda/stemcnv-c
     conda install bioconda::stemcnv-check
    
 .. note:: 
+
     If you are an experienced conda user, you can of course create a specific environment for StemCNV-check.
 
 Install the development version from github
@@ -56,31 +61,49 @@ Install the development version from github
 
 Alternatively to bioconda, one can perform the following steps to install and setup up the development version of StemCNV-check.
 
-**Clone the StemCNV-check git repository**
+- Clone the StemCNV-check git repository
 
 .. code:: bash
 
    git clone https://github.com/bihealth/StemCNV-check.git
 
-**Set up conda environment for StemCNV-check. Install dependencies**
-   
-   - for WSL (on Windows): ``conda install python=3.12 "gcc_linux-64<14" apptainer fuse-overlayfs``
-   - for Linux:            ``conda install python=3.12``
+- Set up conda environment for StemCNV-check and install dependencies
 
-For experienced users of conda, or those who use conda for other projects should prefer to use a specific environment only for StemCNV-check:  
+  - for WSL (on Windows)
 
-- Create conda environment: ``conda create -n stemcnv-check python=3.12; conda activate stemcnv-check``
-- Change into the StemCNV-check directory: ``cd StemCNV-check``
-- Install StemCNV-check and its dependencies with pip: ``pip install -e .``
+    .. code-block:: bash
+
+      conda install python=3.12 "gcc_linux-64<14" apptainer fuse-overlayfs
+
+  - for Linux
+
+    .. code-block:: bash
+
+      conda install python=3.12
+
+.. tip::
+  If you also use conda for other projects, you may prefer to use a specific environment only for StemCNV-check:
+  ``conda create -n stemcnv-check python=3.12; conda activate stemcnv-check``
+
+
+- Change into the StemCNV-check directory:
+
+  .. code-block:: bash
+
+    cd StemCNV-check
+
+- Install StemCNV-check and its dependencies with pip:
+
+  .. code-block:: bash
+
+    pip install -e .
+
+**Updating the developement version**
 
 As long as you are in the StemCNV-check directory you can update the development version of StemCNV-check with this 
-command:   ``git pull; pip install -e .`` 
+command:
 
+.. code-block:: bash
 
-
-
-
-
-
-
-
+  git pull
+  pip install -e .

@@ -1,3 +1,4 @@
+.. _tech-labels:
 
 Assigned labels and filters
 ===========================
@@ -17,11 +18,11 @@ CNV labels
 
 Possible/Defined filters applied to CNV calls (vcf style)
 **vcf_filters:**
-    - probe_gap
-    - high_probe_dens
-    - min_size
-    - min_probes
-    - min_density
+ - probe_gap
+ - high_probe_dens
+ - min_size
+ - min_probes
+ - min_density
 
 - All CNV calls are given a label based on their check score, filters and reference match.
 - The labels described here are always available, but can be changed or new labels can be added.
@@ -109,7 +110,7 @@ Possible/Defined filters applied to CNV calls (vcf style)
      - Probe coverage of segment has considerable gap (min. 33% depending on probe number - see config)
 
 SNV labels
----------
+----------
 
 **SNV_labels**:
 
