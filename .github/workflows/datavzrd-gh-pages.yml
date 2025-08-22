@@ -38,15 +38,14 @@ jobs:
           auto-activate-base: false
 
       - name: Generate datavzrd pages
+        shell: bash -el {0}
         run: datavzrd src/docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifac@v3
         with:
-          name: datavzrd-hotspots-pages
           path: datavzrd-hotspots-pages
 
-      # - name: Upload artifact
-      #   uses: actions/upload-pages-artifact@v3
 
   # Deployment job
   deploy:
