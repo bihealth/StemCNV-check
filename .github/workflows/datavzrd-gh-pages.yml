@@ -42,7 +42,7 @@ jobs:
         run: datavzrd src/docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
 
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifac@v3
+        uses: actions/upload-pages-artifact@v3
         with:
           path: datavzrd-hotspots-pages
 
