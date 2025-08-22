@@ -2,12 +2,12 @@
 name: StemCNV-check hPSC hotspots
 datasets:
   CNV-hotspots:
-    path: "../../src/stemcnv_check/supplemental-files/CNV-stemcell-hotspots.tsv"
+    path: "src/stemcnv_check/supplemental-files/CNV-stemcell-hotspots.tsv"
     separator: "\t"
     headers: 1
     offer-excel: true
   SNV-hotspots:
-    path: "../../src/stemcnv_check/supplemental-files/SNV-stemcell-hotspots.tsv"
+    path: "src/stemcnv_check/supplemental-files/SNV-stemcell-hotspots.tsv"
     separator: "\t"
     headers: 1
     offer-excel: true
