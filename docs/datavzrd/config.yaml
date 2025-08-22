@@ -1,0 +1,105 @@
+---
+name: StemCNV-check hPSC hotspots
+datasets:
+  CNV-hotspots:
+    path: "src/stemcnv_check/supplemental-files/CNV-stemcell-hotspots.tsv"
+    separator: "\t"
+    headers: 1
+    offer-excel: true
+  SNV-hotspots:
+    path: "src/stemcnv_check/supplemental-files/SNV-stemcell-hotspots.tsv"
+    separator: "\t"
+    headers: 1
+    offer-excel: true
+max-in-memory-rows: 20000
+views:
+  SNV-hotspots:
+    dataset: SNV-hotspots
+    desc: |
+      ## StemCNV-check hPSC SNV hotspots
+      This table contains genes and their common point mutations in hPSCs (human pluripotent stem cells) as used by StemCNV-check.
+      Each row in the table describes a gene and if known a specific point mutation, and gives a link to the relevant publication.
+    page-size: 20
+    render-table:
+      columns:
+        list_name:
+          display-mode: hidden
+        hotspot:
+          label: "Gene name"
+          display-mode: normal
+          plot:
+            pills:
+              separator: "::"
+              merge: false
+        mapping:
+          display-mode: hidden
+        call_type:
+          display-mode: hidden
+        check_score:
+          display-mode: hidden
+        general_comment:
+          display-mode: hidden
+        citation_comment:
+          display-mode: hidden
+        citation:
+          optional: false
+          display-mode: normal
+        doi:
+          display-mode: normal
+          link-to-url: 
+            doi:
+                url: "https://dx.doi.org/{value}"          
+
+  CNV-hotspots:
+    hidden: false
+    dataset: CNV-hotspots
+    desc: |
+      ## StemCNV-check hPSC CNV hotspots
+      This table contains genomic bands and genes with common CNVs in hPSCs (human pluripotent stem cells) as used by StemCNV-check.
+      Each set of rows in the table describes a genomic band or gene, and gives one link per row for the relevant publications.
+    page-size: 50
+    render-table:
+      columns:
+        list_name:
+          display-mode: hidden
+        hotspot:
+          label: "Gene name"
+          display-mode: normal
+          plot:
+            heatmap:
+              scale: ordinal
+              clamp: false
+              color-scheme: category20
+          plot-view-legend: false
+        mapping:
+          display-mode: hidden
+        call_type:
+          display-mode: normal
+          plot:
+            heatmap:
+              scale: ordinal
+              domain:
+                - gain
+                - loss
+              range:
+                - "#1a9850"
+                - "#f46d43"              
+        check_score:
+          display-mode: normal
+          plot:
+            heatmap:
+              type: quantitative
+        general_comment:
+          display-mode: normal
+          ellipsis: 60
+        citation_comment:
+          display-mode: normal
+        citation:
+          optional: false
+          display-mode: normal
+        doi:
+          display-mode: normal
+          link-to-url: 
+            doi:
+                url: "https://dx.doi.org/{value}"
+webview-controls: false
