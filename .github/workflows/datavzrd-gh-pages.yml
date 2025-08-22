@@ -39,7 +39,7 @@ jobs:
 
       - name: Generate datavzrd pages
         shell: bash -el {0}
-        run: datavzrd src/docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
+        run: datavzrd docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
