@@ -28,20 +28,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Set up Miniforge
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          toolchain: stable
-          override: true
-
-      - name: Install yte
-        run: pip install yte
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          activate-environment: datavzrd
+          channels: conda-forge
+          environment-file: .github/envs/datavzrd.yaml
+          miniforge-version: latest
+          auto-activate-base: false
 
       - name: Generate datavzrd pages
-        run: cargo run src/docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
+        run: datavzrd src/docs/datavzrd/config.yaml --output datavzrd-hotspots-pages
 
       - uses: actions/upload-artifact@v4
         with:
