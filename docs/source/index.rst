@@ -43,7 +43,6 @@ Table of Contents
     :maxdepth: 2
     :caption: Contents:
 
-
 .. toctree::
     :maxdepth: 2
     :caption: Getting started 
@@ -52,18 +51,16 @@ Table of Contents
     basics_nonlinux
     basics_installation
     basics_usage
-    basics_output_files
 
- 
 .. toctree::
     :maxdepth: 1
     :caption: Tutorials
     :name: stemcnv_tutorial
 
     tut_example_data
+    tut_project_setup 
     tut_report_analysis
-    tut_project_setup    
-
+   
 .. toctree::
     :maxdepth: 2
     :caption: Troubleshooting
@@ -79,6 +76,7 @@ Table of Contents
     :name: stemcnv_technical
     
     tech_workflow
+    basics_output_files
     tech_cmd_line
     tech_cache
     tech_config
