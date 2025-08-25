@@ -39,6 +39,13 @@ If you prefer to use an xlsx (Excel) file for the sample table it can be created
 .. code-block:: bash
     stemcnv-check setup-files --sampletable-format xlsx
 
+
+.. tip::
+
+    StemCNV-check will by default always look for a "sample_table.tsv" (or .xlsx) and a "config.yaml" file.
+    However,  files with different names differentcan also be used (i.e. to compare the results of different settings), but then need to be passed via the ``--sample-table`` or ``--config`` command line options, which work for all StemCNV-check commands.
+
+
 Sample Table
 ------------
 
@@ -111,6 +118,12 @@ The workflow to create all static files and prepare StemCNV-check can be started
     stemcnv-check make-staticdata
 
 
+.. tip::
+
+    If you also run other bioinformatics analysis, you may already have genome ``fasta`` and ``gtf`` files on your system.
+    In this case, you can configure StemCNV-check to use those files instead of downloading new ones. This needs to be set
+    in the ``global_settings`` part of the config, which is included from ``--config-details medium`` and above.
+
 Starting the StemCNV-check analysis
 -------------------------------
 
@@ -120,22 +133,6 @@ workflow can be started with this command:
 .. code-block:: bash
 
     stemcnv-check run
-
-
-
-
-
-.. tip::
-
-    StemCNV-check will by default always look for a "sample_table.tsv" (or .xlsx) and a "config.yaml" file.
-    However,  files with different names differentcan also be used (i.e. to compare the results of different settings), but then need to be passed via the ``--sample-table`` or ``--config`` command line options, which work for all StemCNV-check commands.
-
-
-.. tip::
-
-    If you also run other bioinformatics analysis, you may already have genome ``fasta`` and ``gtf`` files on your system.
-    In this case, you can configure StemCNV-check to use those files instead of downloading new ones. This needs to be set
-    in the ``global_settings`` part of the config, which is included from ``--config-details medium`` and above.
 
 
 .. tip::
