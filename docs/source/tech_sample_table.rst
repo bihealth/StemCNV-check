@@ -1,5 +1,7 @@
-Setting up the sample table
-===========================
+.. _tech-sample-table:
+
+Sample table options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed.
 **Excel or tsv** formats are supported.
