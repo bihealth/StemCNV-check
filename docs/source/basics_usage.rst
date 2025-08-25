@@ -12,31 +12,41 @@ If you want detailed instructions for running an :ref:`example dataset <tut-exam
 :ref:`new project from scratch <tut-project-setup>`, please take a look our tutorials.
 
 **For setting up an analysis project requires:**
+
 - array raw data files of samples to be included in analysis
-- manifest and cluster files of the specific array used: egt_cluster_file, bpm_manifest_file, csv_manifest_file (optional)
+- manifest and cluster files of the specific array used: *egt_cluster_file, bpm_manifest_file, csv_manifest_file (optional)*
 - config file
 - sample table
 
 | It is generally recommended to keep each analysis project and it's associated files in a separate folder.
-| Before running StemCNV-check, you will need to create and fill out a **sample-table** and **config file** 
-in the project folder and then create static data for the specific SNP array used.  
+|
+| Before running StemCNV-check, you will need to create and fill out a **sample-table** and **config file** in the project folder and then create static data for the specific SNP array used.  
 
 Create a project folder using the following command
+
 .. code-block:: bash
+
     mkdir <project name>
+
 
 Setting up the sample-table and config files
 ============================================
 On the comand line change into the project folder:
+
 .. code-block:: bash
+
     cd <path to project folder>
 
 Empty example files for the *sample table* and *config file* can then be created with this command:
+
 .. code-block:: bash
+
     stemcnv-check setup-files
 
 If you prefer to use an xlsx (Excel) file for the sample table it can be created by using:
+
 .. code-block:: bash
+
     stemcnv-check setup-files --sampletable-format xlsx
 
 
