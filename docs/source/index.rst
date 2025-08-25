@@ -6,23 +6,18 @@ StemCNV-check Manual
 
     This documentation is still under construction and not all parts have been finalised yet
 
-This is the manual for StemCNV-check, a tool written to simplify copy number variation (CNV) analysis of SNP array data, 
-specifically for quality control of (pluripotent) stem cell lines. 
-
-StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to html report generation for all 
-defined samples with a single command. Before this one command, samples need to be defined in a (tabular) sample table, 
-the workflow settings through a yaml config file and array specific static data needs to be generated once.
-
+This is the manual for StemCNV-check, a tool developed to simplify copy number variation (CNV) analysis using SNP array data, 
+specifically for quality control of human pluripotent stem cells (hPSC). 
 
 **StemCNV-check features include:**
 
 - Quality control of hPSC genomic integrity based on CNV detection in SNP-array data
 
-  - Detection of CNVs and loss of heterozygosity
-  - Comparison to reference sample
+  - Detection of CNVs and loss of heterozygosity (LOH)
+  - Comparison to a reference sample
   - Extensive CNV annotation, including ranking by Check-Score
 
-- Comparison of SNVs against reference and annotation of changes in amino acid sequence
+- Comparison of single nuleotid variants (SNV) against a reference and annotation of changes in amino acid sequence
 - Comparison of sample identity based on SNP genotypes
 - Easily readable report in html format
 
@@ -30,13 +25,14 @@ the workflow settings through a yaml config file and array specific static data 
   - Summary overview of quality metrics
   - Guided interpretation of results and links to relevant resources
 
+StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up to html report generation for all 
+defined samples with a single command. Before this one command, samples need to be defined in a (tabular) sample table, 
+the workflow settings through a yaml config file and array specific static data needs to be generated once.
 
 Requirements
 ------------
 
-StemCNV-check requires a linux environment due to dependencies on open source packages, 
-for windows users WSL (Windows Subsystem for Linux) is recommended. 
-Easy installation is possible through the bioconda repository. 
+StemCNV-check can run on Linux and Windows systems. On Windows it requires the Windows Subsystem for Linux (WSL) due to dependencies on open source packages. Easy installation is possible through the bioconda repository. 
 We are working towards native support for all major operating systems for our bioconda release.
 
 
