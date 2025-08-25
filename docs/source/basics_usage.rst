@@ -55,8 +55,8 @@ Sample Table
 |
 | The first 5 columns (Sample_ID - Sex) are required to be filled out for each sample. The columns *Reference_Sample* (used to define the sample to compare with i.e. originating fibroblast or parental cell line) and *Sample_Group* (used for identity comparison) are optional and can be left blank.
 |
-| The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol,
-which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table. 
+| The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol, which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table.
+|
 | For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <tut-project-setup>` .
 
 Config File
@@ -99,6 +99,7 @@ An example configuration that assumes the sub folders "cluster-manifest-data" (c
       StemCNV-check-report:
         file_type: 'html'
 
+For more in-depth instructions and explanations about the config file see :ref:`Sample Table reference <tut-project-setup>` .
 
 Generating array static data
 ----------------------------
@@ -140,3 +141,7 @@ workflow can be started with this command:
     StemCNV-check is built on snakemake and can also utilise all of snakemake's advanced features. 
     You can forward command like options to snakemake by separating them with a ``--``. This way you can for example 
     make use of snakemake executors that can interface with HPC scheduling systems: ``stemcnv-check run -- --executor slurm``
+
+| After the analysis finised successfully reports can be found in the foder defind in the config file ``data_path`` 
+| eg.: ``./data/{sample name}/{sample name}.StemCNV-check-report.html``
+
