@@ -6,11 +6,9 @@ Basics for non-linux Users
 StemCNV-check is developed and primarily tested on Linux. Nonetheless, we aim to make it available for users on other 
 operating systems as well. These instructions are primarily intended for users inexperienced with the command line 
 usage and include step-by-step instructions for setting up and running StemCNV-check. 
-Specifically, it contains instructions for using StemCN-check on Windows, where first an installation of WSL 
-(Windows Subsystem for Linux) needs to be done. StemCNV-check has been tested to run on WSL using these instructions 
-and a standard PC or laptop.
+Specifically, it contains instructions for using StemCN-check on Windows, where first WSL (Windows Subsystem for Linux) needs to be installed. StemCNV-check has been tested to run on WSL using these instructions and a standard PC or laptop.
 
-StemCNV-check is not officially supported on MacOS. However, it may be possible to run StemCNV-check on
+.. note:: StemCNV-check is not officially supported on MacOS. However, it may be possible to run StemCNV-check on
 MacOS, if the given macOS system supports the bioconda channel (which should be the case for x86_64 and ARM64
 processors, but NOT for newer hardware with the M1 processors). If you do try this, most installation commands
 (except conda) will have to be done with (home)brew instead of the WSL/linux specific apt-get commands.
@@ -41,7 +39,7 @@ Accessing and editing files
 
 When running your own data you will also need to edit the sample table and config file.
 The sample table can either be a tabular text file (.tsv) or an Excel file (.xlsx), the config file is a text based yaml file (.yaml).
-In principle, you can use any program to edit these files. 
+In principle, you can use any text editor program to edit these files. 
 
 - For quick edits inside the terminal you can use i.e. the ‘nano’ program.
 
@@ -55,11 +53,11 @@ In principle, you can use any program to edit these files.
 
 - To edit the text based files you can use the windows notepad or any other text editor. 
 
-  More advanced editors like Notepad++ will also highlight the syntax of the config file, which makes it easier to read and edit.
+  More advanced editors like `Notepad++ <https://notepad-plus-plus.org/>`_ or `Visual Studio Code <https://code.visualstudio.com/>`_ will also highlight the syntax of the config file, which makes it easier to read and edit.
 
 - When using an excel file as sample table be careful of auto-formatting changing any values. 
 
-  Also, the first sheet needs to contain the sample table and nothing else. All filled will be read by StemCNV-check.
+  Also, the first sheet needs to contain the sample table and nothing else.
 
 
 Should you encounter any issues or have questions, please first consult the section on :ref:`troubleshooting <issues-common>` 
@@ -74,8 +72,8 @@ especially if you encounter any problems.
 
 In short:
 
-- Open PowerShell or Windows Command Prompt in administrator mode by right-clicking and selecting "Run as administrator" 
-- Enter
+- Open PowerShell or Windows Command Prompt (cmd) in administrator mode by right-clicking the respective entry in the start menu and selecting "Run as administrator" 
+- In the terminal enter the following command
 
   .. code-block:: bash
 
