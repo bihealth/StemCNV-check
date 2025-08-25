@@ -92,10 +92,10 @@ An example configuration that assumes the sub folders "cluster-manifest-data" (c
 
     array_definition:
        GSAMD-24v3-0:  
-        genome_version: hg19
+        genome_version: 'hg19'
         bpm_manifest_file: '../cluster-manifest-data/GSAMD-24v3/gh19/GSAMD-24v3-0-EA_20034606_A1.bpm'              
         egt_cluster_file: '../cluster-manifest-data/GSAMD-24v3/gh19/GSAMD_24v3-0_A1-LAB-2235HiQ-Samples.egt'    
-        csv_manifest_file: '../cluster-manifest-data/GSAMD-24v3/gh19/GSAMD-24v3-0-EA_20034606_A1.bpm'
+        csv_manifest_file: '../cluster-manifest-data/GSAMD-24v3/gh19/GSAMD-24v3-0-EA_20034606_A1.csv'
         penncnv_pfb_file: '__cache-default__'
         penncnv_GCmodel_file: '__cache-default__'
         array_density_file: '__cache-default__'
