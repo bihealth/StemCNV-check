@@ -6,9 +6,11 @@ Basics for non-linux Users
 StemCNV-check is developed and primarily tested on Linux. Nonetheless, we aim to make it available for users on other 
 operating systems as well. These instructions are primarily intended for users inexperienced with the command line 
 usage and include step-by-step instructions for setting up and running StemCNV-check. 
-Specifically, it contains instructions for using StemCN-check on Windows, where first WSL (Windows Subsystem for Linux) needs to be installed. StemCNV-check has been tested to run on WSL using these instructions and a standard PC or laptop.
+Specifically, it contains instructions for using StemCNV-check on Windows, where first WSL (Windows Subsystem for Linux) needs to be installed. StemCNV-check has been tested to run on WSL using these instructions and a standard PC or laptop.
 
-.. note:: StemCNV-check is not officially supported on MacOS. However, it may be possible to run StemCNV-check on
+.. note:: 
+
+StemCNV-check is not officially supported on MacOS. However, it may be possible to run StemCNV-check on
 MacOS, if the given macOS system supports the bioconda channel (which should be the case for x86_64 and ARM64
 processors, but NOT for newer hardware with the M1 processors). If you do try this, most installation commands
 (except conda) will have to be done with (home)brew instead of the WSL/linux specific apt-get commands.
@@ -22,12 +24,15 @@ This manual contains code snippets for copying and executing directly. They look
 
     echo "Hello World"
 
-.. tip:: To paste commands into a linux terminal use ‘Ctrl+Shift+V’ - or in WSL a right click - since ‘Ctrl+V’ does not 
-  work in a linux/WSL terminal.
+.. tip:: 
+
+To paste commands use:
+    - into a linux terminal use ‘Ctrl+Shift+V’ 
+    - in WSL a right click - since ‘Ctrl+V’ does not work in a linux/WSL terminal.
 
 In some cases there are also ``code examples`` in the text. The same formatting may be used examples of values to enter into files.
 
-.. tip:: Some examples code block may also contain placeholders or optional parameters, this is inidcated by square and 
+.. tip:: Some examples code block may also contain placeholders or optional parameters, this is indicated by square and 
   curly brackets respectively:
 
   - ``[optional]`` indicates an optional parameter that can be omitted.
@@ -41,7 +46,7 @@ When running your own data you will also need to edit the sample table and confi
 The sample table can either be a tabular text file (.tsv) or an Excel file (.xlsx), the config file is a text based yaml file (.yaml).
 In principle, you can use any text editor program to edit these files. 
 
-- For quick edits inside the terminal you can use i.e. the ‘nano’ program.
+- For quick edits inside the terminal you can use i.e. the ‘nano’ program for editing:
 
   .. code-block:: bash
   
