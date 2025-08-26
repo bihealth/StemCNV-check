@@ -1,0 +1,6 @@
+name: datavzrd
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - datavzrd >=2.58

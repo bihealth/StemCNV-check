@@ -14,7 +14,7 @@ source(test_path('../../src/stemcnv_check/scripts/R/vcf_io_functions.R'))
 # - [x] parse_cnv_vcf
 # - [x] get_fix_section
 # - [x] get_gt_section
-# - [x] write_cnv_vcf (incl. static header)
+# - [x] write_cnv_vcf (incl. vcf header)
 # - [x] fix_header_lines
 
 snp_vcfr <- read.vcfR(test_path('../data/minimal_probes.vcf'), verbose = F) 
@@ -274,7 +274,7 @@ test_that('parse_cnv_vcf', {
 })
 
 
-# write_cnv_vcf <- function(cnv_tb, out_vcf, sample_sex, tool_name, fullconfig, snp_vcf_meta, command_desc, target_style) 
+# write_cnv_vcf <- function(cnv_tb, out_vcf, sample_sex, tool_name, fullconfig, defined_labels, snp_vcf_meta, command_desc, target_style) 
 test_that('write_cnv_vcf', {
     fullconfig <- list(
         settings = list(
@@ -285,6 +285,8 @@ test_that('write_cnv_vcf', {
                   filter.minprobes = 5,
                   filter.minlength = 1000,
                   filter.mindensity.Mb = 10, #snps per Mb
+                  min.perc.gap_area = 0.33,
+                  density.quantile.cutoff = 0.99,
                   tool.overlap.greatest.call.min.perc = 50,
                   tool.overlap.min.cov.sum.perc = 60,
                   min.reciprocal.coverage.with.ref = 50
@@ -301,6 +303,7 @@ test_that('write_cnv_vcf', {
         'female',
         'combined_calls',
         fullconfig,
+        defined_labels,
         snp_vcfr@meta,
         'StemCNV-check test description',
         'UCSC'

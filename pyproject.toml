@@ -20,7 +20,7 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: R"
+    "Programming Language :: R",
 ]
 dynamic = ["version", "optional-dependencies"]
 dependencies = [
@@ -37,7 +37,9 @@ dependencies = [
     "XlsxWriter ~=3.2",
     # Config validation & comparison
     "pydantic ~=2.8", 
-    "deepdiff ~=8.0"
+    "deepdiff ~=8.0",
+    # resource detection
+    "psutil ~=7.0.0",
 ]
 
 [project.urls]
@@ -74,7 +76,7 @@ testpaths = [
 norecursedirs = [
     "docs",
     "*.egg-info",
-    ".git"
+    ".git",
 ]
 filterwarnings = [
     "error",

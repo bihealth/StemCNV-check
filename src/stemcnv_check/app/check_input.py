@@ -92,7 +92,7 @@ def check_sample_table(args):
         if mismatch:
             raise SampleConstraintError(f"The '{constraint}' values for these samples do not fit the expected constraints: " + ', '.join(mismatch))
 
-    # Check that all Array_Name values are defined in config, the example files WILL not pass this check
+    # Check that all Array_Name values are defined in config, the example files will NOT pass this check
     array_names = set(sample_data_df['Array_Name'])
     array_names_not_config = [array for array in array_names if array not in config['array_definition']]
     if array_names_not_config:

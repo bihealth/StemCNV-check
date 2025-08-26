@@ -630,8 +630,8 @@ SNV_table_output <- function (
             'Position of the SNV/SNP',
             'SNV/SNP in the format "Chr:Pos:REF>ALT"',
             'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
-            paste0('Designation label for the SNV/SNP (', paste(defined_labels$SNV_labels, collapse = ', '), ')'),
-            paste0('Evaluation category for the SNV/SNP (', paste(defined_labels$SNV_category_labels, collapse = ', '), ')'),
+            paste0('Designation label for the SNV/SNP (', paste(names(defined_labels$SNV_labels), collapse = ', '), ')'),
+            paste0('Evaluation category for the SNV/SNP (', paste(names(defined_labels$SNV_categories), collapse = ', '), ')'),
             'Reference allele of the SNV/SNP',
             'Alternative allele of the SNV/SNP',
             'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
@@ -652,7 +652,7 @@ SNV_table_output <- function (
         dt <- tb %>%
             mutate(
                 CNV_type = 'any',
-                across(c(Chromosome, SNV_label, SNV_category), as.factor),
+                across(c(Chromosome, SNV_label, SNV_category, GT, ref_GT), as.factor),
                 across(c(ROI_hits, HGVS.p, gene_name, Impact, Annotation), \(col) {
                     mappings <- highlight_mappings[[cur_column()]]
                     ifelse(

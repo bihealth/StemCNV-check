@@ -326,22 +326,11 @@ repo_excl_filters <- ifelse(
     config$evaluation_settings$CNV_call_labels$`Reportable de-novo`$not_allowed_vcf_filters %>% paste(collapse = ', ')
 )
 
-snv_cat_desc <- list(
-    'ROI-overlap' = ' - overlaps with a sample specific region of interest',
-    'hotspot-match' = ' - overlaps with a known stemcell hotspot SNV',
-    'hotspot-gene' = ' - overlaps with a gene that has known stemcell SNV hotspots',
-    'protein-ablation' = ' - SNV that (likely) fully disrupts the protein function (i.e by frameshift or truncation)',
-    'protein-changing' = ' - causes changes the protein sequence (i.e. point mutations)',
-    'other' = ' - effect on protein can not be determined'
-)
-
 paste0(
     'These summary tables are meant to serve as a quick overview of the quality of an hPSC sample. ',
-    'The first table contains QC metrics primarily related to data quality (affected by both the DNA used and the array ',
+    'This first table contains QC metrics primarily related to the SNP data quality (affected by both the DNA used and the array ',
     'run itself), this table will also display values from the reference sample if possible. The second table contains ',
-    'QC metrics related to the potentially problematic CNVs and SNVs identified in only the primary sample. ',
-    'Note that without a reference sample all detected variants are considered "de-novo", even if most are likely from ',
-    'the original donor germline.\n\n',
+    'QC metrics related to the potentially problematic CNVs and SNVs identified in only the analysed sample.\n\n',
     'Coloring of all fields is based on (usually) two thresholds defined in the config file (under the evaluation_settings section), ',
     'one for a signalling (yellow) level, and one for a more serious warning (orange) or even critical (red) level. ',
     'Only certain values are potentially considered critical and are marked by bold text in the table, ',
@@ -354,23 +343,35 @@ summary_tables <- read_excel(
 ) %>%
     summary_table(sample_headers, config, defined_labels, params$out_format)
 
-#TODO set headers / table names
-# ? caption
-# ? first col name >> inside fucntion
-# ? text
 summary_tables[[1]]
+toolconfig <- config$settings$CNV_processing$call_processing
 
 paste0(
-    'For assigning SNVs (as determined by the Chip Array) as critical or reportable, the SNV genotype needs to differs ',
-    'from the reference sample (if one is defined) and it needs to match specific criteria:\n\n',
+    'This table sums up all variant findings from the analysed sample, which were flagged as critical or reportable.\n\n',
+    'Note that in contrast to general SNP probes on the array, only those single variants that actually show an ',
+    ' alternative allele and affect a protein are considered SNVs by StemCNV-check.',
+    ifelse(
+        is.na(ref_id),
+        paste0(
+            '\n\nImportant: as this sample does not have a defined reference sample, all variants are treated as ',
+            '"de-novo", even if most likely originate from the original donor germline.\n\n '
+        ),
+        ' Variants that match the genotype of assigned reference sample are never considered critical or reportable.\n\n'
+    ),
+    'The following criteria are used to assign SNVs as critical or reportable:\n\n',
     'Critical SNVs:\n\n', 
-    paste(sapply(config$settings$SNV_analysis$critical_SNV, \(x){snv_cat_desc[[x]]}), collapse = '\n\n'), 
+    paste(sapply(
+        config$settings$SNV_analysis$critical_SNV, \(x) str_glue(' - {x}: ', defined_labels$SNV_categories[[x]])
+        ), collapse = '\n\n'
+    ),
     '\n\nReportable SNVs:\n\n',
-    paste(sapply(config$settings$SNV_analysis$reportable_SNV, \(x){snv_cat_desc[[x]]}), collapse = '\n\n'),
+    paste(sapply(
+        config$settings$SNV_analysis$reportable_SNV, \(x) str_glue(' - {x}: ', defined_labels$SNV_categories[[x]])
+        ), collapse = '\n\n'
+    ),
     '\n\n',
-    'All CNV calls are given a single label designation which takes into account a minimum Check_Score threshold, ',
-    'overlap with a reference call and certain call filter flags (i.e. calls below minimum size, or having a probe ',
-    'coverage gap). The defined call labels are:\n\n',
+    'For copy number variants (CNVs) the assigned label designation takes into account a minimum Check_Score threshold, ',
+    'overlap with a reference call and certain call filter flags (see below). The defined call label criteria are:\n\n',
     paste(imap(
         config$evaluation_settings$CNV_call_labels, \(x, name) {
             str_glue('
@@ -380,6 +381,12 @@ paste0(
                    Match to CNV in reference sample: {ifelse(x$reference_match, "required", "not allowed")}'                
             ) %>% str_replace_all('\\n', '\n\n')
         }), collapse = '\n\n'
+    ),
+    #Add explanations for each CNV filter from labels def file
+    '\n\nThe defined CNV filter flags are:\n\n',
+    paste(imap(
+        defined_labels$vcf_filters, \(x, name) str_glue('- {name}: ', x)
+        ), collapse = '\n\n'
     )
 ) %>% collapsible_html_text('Sample QC explanations')
 
@@ -667,19 +674,33 @@ snc_qc_tb <- params$inputs$snv_analysis %>%
 ```{r SNV.table, eval = include.section('SNV.table'), results='asis'}
 cat('## Table of de-novo SNVs\n\n')
 
-paste(
-    'This table lists all SNVs/SNPs detected by the Chip Array which are different from the reference genome and',
-    'are annotated as at least protein changing. The "SNV label" further categorizes the SNVs into critical,',
-    'unreliable critical (due to missing reference or bad quality calls), protein changing, and reference genotype.\n\n',
-    'The table allows sorting and filtering the SNPs by various criteria, default is sorting by the `SNV Label`.',
+paste0(
+    'This table lists all SNVs detected by the Chip Array which are different from the reference genome and ',
+    'are annotated as at least protein changing. Due to their potential impact these are now called "SNVs" rather than ',
+    '"SNPs", independent of their actual (unknown) frequency in the population.\n\n',
+    'All SNVs are categorised into one of the following categories (shown in the hidden SNV category column):\n\n',
+    paste(imap(
+        defined_labels$SNV_categories, \(x, name) str_glue(' - {name}: {x}')
+        ), collapse = '\n\n'
+    ),
+    '\n\nThe "SNV label" further categorizes the SNVs into:\n\n',
+    paste(imap(
+        defined_labels$SNV_labels, \(x, name) str_glue(' - {name}: {x}')
+        ), collapse = '\n\n'
+    ),
+    '\n\nThe following categories are assinged as "Critical" or "Reportable" (de-novo):\n\n',
+    paste(imap(
+        c(
+            setNames(config$settings$SNV_analysis$critical_SNV, rep('Critical de-novo', length(config$settings$SNV_analysis$critical_SNV))),
+            setNames(config$settings$SNV_analysis$reportable_SNV, rep('Reportable de-novo', length(config$settings$SNV_analysis$reportable_SNV)))
+        ),\(x, name) str_glue(' - {name}: {x}')
+        ), collapse = '\n\n'
+    ),
+    '\n\nThe table allows sorting and filtering the SNVs by various criteria, default is sorting by the `SNV Label`.',
     'Hovering over the column headers gives explanations for each column and the "Column visibility" button can be',
-    'used to show (or hide) columns.',    
-    'I.e. the "Critical reason" column, which contains a text label showing why an SNV is labelled critical.',
-    'This information is displayed by the color highlights of these columns:\n\n',
-    ' - "ROI Hits", displaying overlap with sample specific annotation\n\n',
-    ' - "HGVS.p", specific mutation in the protein, which may overlap with a known stemcell hotspot (see also next tab)\n\n',
-    ' - "Gene Name", hits in genes that have known hotspots for stem cells, see also the next "SNV hotspot coverage" tab\n\n',
-    ' - "Annotation" and "Impact", specific effect of the SNP on the gene based on mehari\n\n'    
+    'used to show (or hide) columns. Each SNV genotype (GT) is shown in vcf format: each allele is represented by a ',
+    'single number, separated by a forward slash. A 0 indicates the reference allele, a 1 indicates the ',
+    'alternate allele. A dot (.) indicates that the genotype could not be determined.'    
 ) %>% collapsible_html_text('SNV table explanations')
 
 if (is.na(ref_id)) {
@@ -690,11 +711,11 @@ if (is.na(ref_id)) {
 }
 
 SNV_table_output(
-    SNV_table %>% filter(SNV_label != 'reference genotype'), 
+    SNV_table %>% filter(SNV_label != 'Reference genotype'), 
     roi_gr, snv_hotspot_tb, config, report_config, defined_labels, params$out_format #, caption
 )
 
-ref_snv <- SNV_table %>% filter(SNV_label == 'reference genotype')
+ref_snv <- SNV_table %>% filter(SNV_label == 'Reference genotype')
 
 if (nrow(ref_snv) > 0) {
     cat('## Table of reference SNVs\n\n')
@@ -770,10 +791,10 @@ paste(
 
 if (!is.na(ref_id)) {
     label_SNVs <- SNV_table %>%
-        filter(SNV_label != 'reference genotype') %>%
+        filter(SNV_label != 'Reference genotype') %>%
         mutate(
             sample_id = sample_id,
-            color = ifelse(SNV_label == 'critical', 'red', 'orange')
+            color = ifelse(SNV_label == 'Critical de-novo', 'red', 'orange')
         )
 } else {
     label_SNVs <- SNV_table %>% mutate(color = 'red', sample_id = sample_id) %>% filter(SNV_label == 'dummy')

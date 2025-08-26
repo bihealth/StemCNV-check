@@ -95,7 +95,7 @@ rule run_gtc2vcf_vcf:
             DATAPATH, f"{wildcards.sample_id}", f"{wildcards.sample_id}.gencall.{get_static_input("genome_version")(wildcards)}.gtc"
         ),
     output:
-        vcf = pipe(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
+        vcf = pipe_or_temp_function(os.path.join(DATAPATH,"{sample_id}","{sample_id}.unprocessed.vcf")),
         stats = os.path.join(DATAPATH, "{sample_id}", "extra_files", "{sample_id}.gencall-stats.txt")
     threads: get_tool_resource("gtc2vcf", "threads")
     resources:

@@ -28,8 +28,13 @@
 ##FORMAT=<ID=ROI,Number=1,Type=String,Description="Overlapping ROI sites">
 ##FORMAT=<ID=PREC_EST,Number=1,Type=Float,Description="Estimated precision for this call">
 ##FORMAT=<ID=PREC_DESC,Number=1,Type=String,Description="Data basis for precision esimate">
-##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call  in reference sample (min 5000% reciprocal overlap)">
+##FORMAT=<ID=REFCOV,Number=1,Type=Float,Description="Percentage of segment with matching call  in reference sample (min 50% reciprocal overlap)">
 ##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=min_size,Description="CNV call below minimum size (<1000bp)">
+##FILTER=<ID=min_probes,Description="CNV call from <5 probes">
+##FILTER=<ID=min_density,Description="CNV call with <10 probes/Mb">
+##FILTER=<ID=high_probe_dens,Description="Probe density of segment is higher than 99% of the array">
+##FILTER=<ID=probe_gap,Description="Probe coverage of segment has considerable gap (min. 33% depending on probe number - see config)">
 ##ALT=<ID=CNV:LOH,Description="Loss of heterozygosity, same as run of homozygosity">
 ##StemCNV-check test description
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test_sample

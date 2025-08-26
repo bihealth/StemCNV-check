@@ -3,6 +3,7 @@ suppressMessages(require(GenomeInfoDb))
 suppressMessages(require(tidyverse))
 suppressMessages(require(readxl))
 suppressMessages(require(plyranges))
+suppressMessages(library(yaml))
 `%!in%` <- Negate(`%in%`)
 
 get_defined_labels <- function(config) {
@@ -64,6 +65,10 @@ read_sampletable <- function(filename, col_remove_regex = NA) {
                 ifelse(is.na(.), '', as.character(.)),
                 '^#')
             ))
+        if (str_detect(colnames(tb)[1], "^#")) {
+            colnames(tb) <-  as.character(tb[1,])
+            tb <- tb[-1,]
+        }
     } else stop(paste('Unsupported file format:', filename))
     
     # Optional removal/editing of columns with a regex

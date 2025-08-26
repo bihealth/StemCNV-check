@@ -6,6 +6,7 @@ sample_labels:
     high concern: red
 
 # Default labels for CNVs (more can be added by users)
+#FIXME: add descriptions, maybe fully move this here from the config?
 CNV_labels:
     # This is used to count critical CNVs & LOHs
     - Critical de-novo
@@ -15,36 +16,35 @@ CNV_labels:
     - Reference genotype
     - Excluded call
 
-# possible labels for SNVs
-SNV_labels:
-    - critical
-    - reportable
-    - unreliable impact
-    - de-novo SNV
-    - reference genotype
-
 # Label for CNVs merged from multiple callers
 combined_cnvs: 'combined-call'
 
-## The following lists are primarily used by the check_config functions
 # Possible/Defined FILTERs applied to CNV calls (vcf style)
-# FIXME: create vcf headers from this list?
 vcf_filters:
-    - probe_gap
-    - high_probe_dens 
-    - min_size 
-    - min_probes
-    - min_density
+    min_size: "CNV call below minimum size (<{toolconfig$filter.minlength}bp)"
+    min_probes: "CNV call from <{toolconfig$filter.minprobes} probes"
+    min_density: "CNV call with <{toolconfig$filter.mindensity} probes/Mb"
+    high_probe_dens: "Probe density of segment is higher than {round(100*toolconfig$density.quantile.cutoff, 1)}% of the array"
+    probe_gap: "Probe coverage of segment has considerable gap (min. {round(100*toolconfig$min.perc.gap_area, 1)}% depending on probe number - see config)"
 
-# Possible/Defined categories for SNVs, each category can be assigned critical or reportable
-SNV_category_labels:
-    - ROI-overlap
-    - hotspot-match
-    - hotspot-gene
-    - protein-ablation
-    - protein-changing
-    - other
+# Possible/Defined categories for SNVs, each category can be assigned as critical or reportable
+SNV_categories:
+    ROI-overlap: "SNV overlapping a sample specific regions of interest"
+    hotspot-match: "SNV matching a known stemcell hotspot mutation (see also SNV hotspot coverage)"
+    hotspot-gene: "SNV in a gene with known iPSC hotspots (see also SNV hotspot coverage)"
+    protein-ablation: "SNV (likely) fully disrupting protein function (i.e. frameshift, stop gain, stop loss)"
+    protein-changing: "SNV causing a change the protein sequence (i.e. missense, inframe)"
+    other: "SNV with other unclear or undetermined effect on protein function"
 
+# possible labels for SNVs
+SNV_labels:
+    Critical de-novo: "SNV with likely critical significance on hiPSC line"
+    Reportable de-novo: "SNV with possible significance on hiPSC line"
+    Unreliable critical/reportable: "SNV with likely or possible significance on hiPSC line, but unreliable signal"
+    de-novo SNV: "SNV with de-novo status, but no clear functional impact"
+    Reference genotype: "SNV already detected in the reference sample"
+
+## The following lists are primarily used by the check_config functions
 # Possible/Defined QC measures on sample level
 sample_qc_measures:
     - call_rate
