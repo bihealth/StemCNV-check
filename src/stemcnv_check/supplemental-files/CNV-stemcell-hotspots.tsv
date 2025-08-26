@@ -1,0 +1,236 @@
+list_name	hotspot	mapping	call_type	check_score	general_comment	citation_comment	citation	doi
+StemCNV-check curated stem cell aberrations	1p36.13	gband	gain	10	Important genes in this region: CROCC		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	1p36.33	gband	gain	10	Important genes in this region: OR4F5		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	1p31	gband	loss	10	Important genes in this region: ITGB3BP; ROR1; EFCAB7		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	1q21.3	gband	gain	10	Important genes in this region: LCE3C		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	1q21.3	gband	gain	10	Important genes in this region: LCE3C		Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	1q21.3	gband	gain	10	Important genes in this region: LCE3C	general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q21.3	gband	gain	10	Important genes in this region: LCE3C	general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	1q25	gband	gain	3			Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	1q25	gband	gain	3		general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q25	gband	gain	3		general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	1q31	gband	gain	3			Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	1q31	gband	gain	3		general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q31	gband	gain	3		general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	1q31.3	gband	loss	10	Important genes in this region: FOXD3		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	1q31.3	gband	loss	10	Important genes in this region: FOXD3	general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q31.3	gband	loss	10	Important genes in this region: FOXD3	general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	1q32	gband	gain	3			Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	1q32	gband	gain	3		general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q32	gband	gain	3		general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	1q41	gband	gain	3			Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	1q41	gband	gain	3		general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	1q41	gband	gain	3		general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	2p11.2	gband	gain	10	Important genes in this region: IGKV1-5; IGKV4-1; IGKV2-24; IGKC		Martins Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	2p11.2	gband	gain	10	Important genes in this region: IGKV1-5; IGKV4-1; IGKV2-24; IGKC		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	3p14.2	gband	loss	10	Important genes in this region: FHIT		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	3p14.2	gband	loss	10	Important genes in this region: FHIT	general Chr.3 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	3p13	gband	loss	10	Important genes in this region: EIF4E3		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	3p13	gband	loss	10	Important genes in this region: EIF4E3	general Chr.3 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	4p16.3	gband	loss	10	Important genes in this region: FAM53A		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	4q13.2	gband	loss	10			Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	4q35.1	gband	loss	10	Important genes in this region: ING2		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	6p21.32	gband	gain	10	Important genes in this region: HLA-DRB5		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	6p21.32	gband	loss	10	Important genes in this region: HLA-DRB5		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	6p21.32	gband	loss	10	Important genes in this region: HLA-DRB5		Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	6q21	gband	gain	10	Important genes in this region: FYN		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	7q21.11	gband	gain	10	Important genes in this region: SEAM3E		Kang et al. 2015	10.1371/journal.pone.0131128
+StemCNV-check curated stem cell aberrations	7q21.11	gband	gain	10	Important genes in this region: SEAM3E	general Chr.7 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	7q31.32	gband	gain	10	Important genes in this region: CADPS2		Kang et al. 2015	10.1371/journal.pone.0131128
+StemCNV-check curated stem cell aberrations	7q31.32	gband	gain	10	Important genes in this region: CADPS2	general Chr.7 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	7q34	gband	loss	10	Important genes in this region: MGAM		Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	7q34	gband	loss	10	Important genes in this region: MGAM	general Chr.7 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	7q35	gband	gain	10	Important genes in this region: AP4M1; OR2A5		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	7q35	gband	gain	10	Important genes in this region: AP4M1; OR2A5	general Chr.7 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	11q11	gband	loss	10	Important genes in this region: OR4C11; OR4P4; OR4S2		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	14q22.1	gband	gain	10	Important genes in this region: NIN		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	14q22.1	gband	gain	10	Important genes in this region: NIN	general Chr.14 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	14q23.2	gband	gain	10	Important genes in this region: KCNH5; RHOJ3; GPHB5		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	14q23.2	gband	gain	10	Important genes in this region: KCNH5; RHOJ3; GPHB5	general Chr.14 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	14q23.3	gband	gain	10	Important genes in this region: FUT8		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	14q23.3	gband	gain	10	Important genes in this region: FUT8	general Chr.14 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	14q32.32	gband	gain	10	Important genes in this region: IGHM; IGHD; IGHV3-23; IGHG3; IGHV4-31		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	14q32.32	gband	gain	10	Important genes in this region: IGHM; IGHD; IGHV3-23; IGHG3; IGHV4-31	general Chr.14 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	14q32.33	gband	gain	10	Important genes in this region: JAG2		Yamamoto et al. 2022	10.1093/stcltm/szac014
+StemCNV-check curated stem cell aberrations	14q32.33	gband	gain	10	Important genes in this region: JAG2	general Chr.14 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	15q11.2	gband	gain	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	15q11.2	gband	gain	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	15q11.2	gband	gain	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1	general Chr.15 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	15q11.2	gband	loss	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	15q11.2	gband	loss	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	15q11.2	gband	loss	10	Important genes in this region: OR4M2; OR4N4; LOC650137; LOC283755; A26B1	general Chr.15 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q12	gband	gain	10	Important genes in this region: HER2		Yamamoto et al. 2022	10.1093/stcltm/szac014
+StemCNV-check curated stem cell aberrations	17q12	gband	gain	10	Important genes in this region: HER2	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q12	gband	gain	10	Important genes in this region: HER2	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	17q12	gband	gain	10	Important genes in this region: HER2	general Chr.17q reference	Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	17q21.1	gband	loss	10	Important genes in this region: CASC3		Martins-Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	17q21.1	gband	loss	10	Important genes in this region: CASC3	general Chr.17q21-qter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	17q21.1	gband	loss	10	Important genes in this region: CASC3	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q21.1	gband	loss	10	Important genes in this region: CASC3	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	17q21.1	gband	loss	10	Important genes in this region: CASC3	general Chr.17q reference	Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	17q21.31	gband	gain	10	Important genes in this region: TBX2; BRCA1; WNT3; WNT9B		Lee et al. 2015	10.1016/j.celrep.2014.12.050
+StemCNV-check curated stem cell aberrations	17q21.31	gband	gain	10	Important genes in this region: TBX2; BRCA1; WNT3; WNT9B		Mus et al. 2020	10.1002/gcc.22931
+StemCNV-check curated stem cell aberrations	17q21.31	gband	gain	10	Important genes in this region: TBX2; BRCA1; WNT3; WNT9B	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q21.31	gband	gain	10	Important genes in this region: TBX2; BRCA1; WNT3; WNT9B	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	17q21.31	gband	gain	10	Important genes in this region: TBX2; BRCA1; WNT3; WNT9B	general Chr.17q reference	Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	17q23.1	gband	gain	10	Important genes in this region: PTRH2		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	17q23.1	gband	gain	10	Important genes in this region: PTRH2	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q23.1	gband	gain	10	Important genes in this region: PTRH2	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	17q23.1	gband	gain	10	Important genes in this region: PTRH2	general Chr.17q reference	Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	17q25	gband	gain	10	Important genes in this region: BIRC5		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	17q25	gband	gain	10	Important genes in this region: BIRC5		Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	17q25	gband	gain	10	Important genes in this region: BIRC5	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	17q25	gband	gain	10	Important genes in this region: BIRC5	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	17q25	gband	gain	10	Important genes in this region: BIRC5	general Chr.17q reference	Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	18q21	gband	loss	3		18q21-qter deletion	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	18q21	gband	loss	3		18q21-qter deletion	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	18q21	gband	loss	3		18q21-qter deletion	Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	18q21	gband	loss	3		general Chr.18q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	18q22	gband	loss	3		18q21-qter deletion	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	18q22	gband	loss	3		18q21-qter deletion	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	18q22	gband	loss	3		18q21-qter deletion	Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	18q22	gband	loss	3		general Chr.18q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	18q23	gband	loss	3		18q21-qter deletion	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	18q23	gband	loss	3		18q21-qter deletion	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	18q23	gband	loss	3		18q21-qter deletion	Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	18q23	gband	loss	3		general Chr.18q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	19p12	gband	loss	10			Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	19q13.32	gband	gain	10	Important genes in this region: ERCC2		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	20q11.1	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	20q11.1	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	20q11.1	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	20q11.1	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Werbowetski-Ogilvie et al. 2009	10.1038/nbt.1516
+StemCNV-check curated stem cell aberrations	20q11.2	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	20q11.2	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	20q11.2	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	20q11.2	gband	gain	10	Important genes in this region: HM13; ID1; TPTE; TPX2		Werbowetski-Ogilvie et al. 2009	10.1038/nbt.1516
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Avery et al. 2013	10.1016/j.stemcr.2013.10.005
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Jo et al. 2020	10.1038/s41598-020-75657-7
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Nguyen et al. 2014	10.1093/molehr/gat077
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Werbowetski-Ogilvie et al. 2009	10.1038/nbt.1516
+StemCNV-check curated stem cell aberrations	20q11.21	gband	gain	10	Important genes in this region: ID1; POFUT1; TPX2; KIF3B; PDRG1; HM13; DEFB115-116;118-119;121;123-124; REM1; ID12; COX4I24; BCL2L12; DEFB115–119; DEFB121; DEFB123; DEFB124; COX4I2; BCL2L1; TPX2; MYLK2; FKHL18; DUSP15; TTLL9; PDRG1; XKR7; C20orf160; HCK; TM9SF4; TSPYL3; PLAGL2; ASXL1; C20orf112; COMMD7		Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	22q11.21	gband	loss	10	Important genes in this region: HIC2; PI4KAP2		Närvä et al. 2010	10.1038/nbt.1618
+StemCNV-check curated stem cell aberrations	22q11.21	gband	loss	10	Important genes in this region: HIC2; PI4KAP2	general Chr. 22 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	22q11.22	gband	gain	10	Important genes in this region: GLV2-23; IGLV2-18; IGLV2-11; IGLV2-14; IGLV3-25; IGLV3-22; IGLV3-21; IGLV3-16; IGLV3-12; IGLV3-19; IGLV4-3		Närvä et al. 2010	10.1038/nbt.1617
+StemCNV-check curated stem cell aberrations	22q11.22	gband	gain	10	Important genes in this region: GLV2-23; IGLV2-18; IGLV2-11; IGLV2-14; IGLV3-25; IGLV3-22; IGLV3-21; IGLV3-16; IGLV3-12; IGLV3-19; IGLV4-3	general Chr. 22 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	22q11.23	gband	loss	10	Important genes in this region: GSTT1		Wu et al 2008	10.1634/stemcells.2007-0993
+StemCNV-check curated stem cell aberrations	22q11.23	gband	loss	10	Important genes in this region: GSTT1	general Chr. 22 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	22q13.2	gband	loss	10	Important genes in this region: SCUBE1		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	22q13.2	gband	loss	10	Important genes in this region: SCUBE1	general Chr. 22q13-qter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	22q13.2	gband	loss	10	Important genes in this region: SCUBE1	general Chr. 22 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Avery et al. 2013	10.1016/j.stemcr.2013.10.005
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Jo et al. 2020	10.1038/s41598-020-75657-7
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Markouli et al. 2019	10.1016/j.stemcr.2019.05.005
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Martins Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Merkle et al. 2022	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Nguyen et al. 2014	10.1093/molehr/gat077
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Werbowetski-Ogilvie et al. 2009	10.1038/nbt.1516
+StemCNV-check curated stem cell aberrations	BCL2L1	gene_name	gain	30	Located on: 20q11.21		Zhang et al. 2019	10.1016/j.stemcr.2019.01.013
+StemCNV-check curated stem cell aberrations	CFHR4	gene_name	gain	30	Located on: 1q31.3		Martins-Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	CFHR4	gene_name	gain	30	Located on: 1q31.3	general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	CFHR4	gene_name	gain	30	Located on: 1q31.3	general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Avery et al. 2013	10.1016/j.stemcr.2013.10.005
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Jo et al. 2020	10.1038/s41598-020-75657-7
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Markouli et al. 2019	10.1016/j.stemcr.2019.05.005
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Martins Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Merkle et al. 2022	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Nguyen et al. 2014	10.1093/molehr/gat077
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Salomonis 2016	10.1016/j.stemcr.2016.05.006
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Spits et al 2008	10.1038/nbt.1510
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Werbowetski-Ogilvie et al. 2009	10.1038/nbt.1516
+StemCNV-check curated stem cell aberrations	DNMT3B	gene_name	gain	30	Located on: 20q11.21		Zhang et al. 2019	10.1016/j.stemcr.2019.01.013
+StemCNV-check curated stem cell aberrations	FGFRL1	gene_name	loss	30	Located on: 4p16.3		Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31		Keller et al. 2021	10.1101/2021.05.22.445238
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Ben-David et al. 2014	10.1038/ncomms5825
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Herszfeld et al. 2006	10.1038/nbt1197
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Mayshar et al. 2010	10.1016/j.stem.2010.07.017
+StemCNV-check curated stem cell aberrations	GDF3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Na et al. 2014	10.1007/s13238-014-0073-9
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12p11-pter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12p11-pter reference	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12 reference	Ben-David et al. 2014	10.1038/ncomms5825
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12 reference	Herszfeld et al. 2006	10.1038/nbt1197
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12 reference	Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12p reference	Mayshar et al. 2010	10.1016/j.stem.2010.07.017
+StemCNV-check curated stem cell aberrations	KRAS	gene_name	gain	30	Located on: 12p12.1	general Chr.12p reference	Na et al. 2014	10.1007/s13238-014-0073-9
+StemCNV-check curated stem cell aberrations	MCL1	gene_name	gain	30	Located on: 1q21.2		Price et al 2021	10.1016/j.devcel.2021.07.019
+StemCNV-check curated stem cell aberrations	MCL1	gene_name	gain	30	Located on: 1q21.2	general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	MCL1	gene_name	gain	30	Located on: 1q21.2	general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1		Krivec et al. 2024	10.1038/s41419-024-07236-x
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1		Merkle et al. 2022	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1		Stavish et al. 2023	10.1101/2023.09.21.558777
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1		Stavish et al. 2024	10.1016/j.stemcr.2024.06.003
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1	general Chr.1q reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	MDM4	gene_name	gain	30	Located on: 1q32.1	general Chr.1q reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31		Keller et al. 2021	10.1101/2021.05.22.445238
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Ben-David et al. 2014	10.1038/ncomms5825
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Herszfeld et al. 2006	10.1038/nbt1197
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Mayshar et al. 2010	10.1016/j.stem.2010.07.017
+StemCNV-check curated stem cell aberrations	NANOG	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Na et al. 2014	10.1007/s13238-014-0073-9
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31		Keller et al. 2021	10.1101/2021.05.22.445238
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Ben-David et al. 2014	10.1038/ncomms5825
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Herszfeld et al. 2006	10.1038/nbt1197
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Mayshar et al. 2010	10.1016/j.stem.2010.07.017
+StemCNV-check curated stem cell aberrations	NANOGP1	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Na et al. 2014	10.1007/s13238-014-0073-9
+StemCNV-check curated stem cell aberrations	PMAIP1	gene_name	loss	30	Located on: 18q21.32		Halliwell et al. 2020	10.1038/s41580-020-00292-z
+StemCNV-check curated stem cell aberrations	PMAIP1	gene_name	loss	30	Located on: 18q21.32		Zhang et al. 2019	10.1016/j.stemcr.2019.01.013
+StemCNV-check curated stem cell aberrations	PUF60	gene_name	loss	30	Located on: 8q24.4		Martins-Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	RPRM	gene_name	loss	30	Located on: 2q23		Kanchan 2020	10.1016/j.scr.2020.101803
+StemCNV-check curated stem cell aberrations	SALL3	gene_name	loss	30	Located on: 18q23		Lei et al. 2024	10.1016/j.stemcr.2024.03.001
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31		Keller et al. 2021	10.1101/2021.05.22.445238
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31		Tosca et al. 2015	10.1186/s13039-015-0133-8
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Amps et al. 2012	10.1038/nbt.2051
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p11-pter reference	Baker et al. 2016	10.1016/j.stemcr.2016.10.003
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Ben-David et al. 2014	10.1038/ncomms5825
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Herszfeld et al. 2006	10.1038/nbt1197
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12 reference	Lefort et al. 2008	10.1038/nbt.1509
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Mayshar et al. 2010	10.1016/j.stem.2010.07.017
+StemCNV-check curated stem cell aberrations	SLC2A3	gene_name	gain	30	Located on: 12p13.31	general Chr.12p reference	Na et al. 2014	10.1007/s13238-014-0073-9
+StemCNV-check curated stem cell aberrations	SOX21	gene_name	gain	30	Located on: 13q21.32-q34		Mus et al. 2020	10.1002/gcc.22931
+StemCNV-check curated stem cell aberrations	SUZ12	gene_name	gain	30	Located on: 17q11.2		Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	SUZ12	gene_name	gain	30	Located on: 17q11.2	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	SUZ12	gene_name	gain	30	Located on: 17q11.2	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	TOP1MT	gene_name	loss	30	Located on: 8q24.4		Martins-Taylor et al. 2011	10.1038/nbt.1890
+StemCNV-check curated stem cell aberrations	TP53	gene_name	loss	30	Located on: 17p13.1		Amir et al. 2016	10.1002/stem.2550
+StemCNV-check curated stem cell aberrations	UTP6	gene_name	gain	30	Located on: 17q11.2		Kilpinen et al. 2017	10.1038/nature22403
+StemCNV-check curated stem cell aberrations	UTP6	gene_name	gain	30	Located on: 17q11.2	general Chr.17 reference	Assou et al 2020	10.1016/j.stemcr.2019.12.004
+StemCNV-check curated stem cell aberrations	UTP6	gene_name	gain	30	Located on: 17q11.2	general Chr.17 reference	Merkle et al 2017	10.1016/j.stem.2022.01.011
+StemCNV-check curated stem cell aberrations	ZIC2	gene_name	gain	30	Located on: 13q21.32-q34		Mus et al. 2020	10.1002/gcc.22931

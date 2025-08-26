@@ -7,7 +7,7 @@ from loguru import logger as logging
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import load_config, make_apptainer_args, get_cache_dir, get_cache_array_definition
 
-def run_stemcnv_check_workflow(args):
+def run_stemcnv_check_workflow(args, is_wsl):
 
     config = load_config(args)
     cache_path = get_cache_dir(args, config)
@@ -49,7 +49,8 @@ def run_stemcnv_check_workflow(args):
         f'configfile={args.config}',
         f'target={args.target}',
         f'cache_path={cache_path}',
-        f'verbose_level={args.verbose}'
+        f'verbose_level={args.verbose}',
+        f'is_wsl={is_wsl}',
     ]
     if args.collate_date:
         argv += [f'collate_date={args.collate_date}']
@@ -57,6 +58,8 @@ def run_stemcnv_check_workflow(args):
     argv += [
         '--cores', str(args.local_cores)
     ]
+    if args.memory_mb:
+        argv += ["--resources", f"mem_mb={args.memory_mb}"]
 
     if args.snake_options:
         argv += args.snake_options

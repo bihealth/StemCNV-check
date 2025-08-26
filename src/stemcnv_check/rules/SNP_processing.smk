@@ -8,7 +8,7 @@ rule filter_snp_vcf:
     input:
         os.path.join(DATAPATH, "{sample_id}", "{sample_id}.unprocessed.vcf"),
     output:
-        pipe(os.path.join(
+        pipe_or_temp_function(os.path.join(
             DATAPATH,
             "{sample_id}",
             "{sample_id}.processed-SNP-data.{filter}-filter.vcf",

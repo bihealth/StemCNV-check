@@ -12,7 +12,7 @@ static-data/*
 *.Rproj
 .idea/
 
-#local docs
+#Local docs
 docs/_build/*
 docs/datavzrd/example-report/*
 

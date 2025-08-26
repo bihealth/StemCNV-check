@@ -1,7 +1,9 @@
-list_name	hotspot	mapping	call_type	check_score	description	description_doi
-test-list	DDX11L1	gene_name	any	30	Sources: dummy	
-test-list	dummyC	gene_name	gain	15	Something: Dummy{1}	doi
-test-list	chr1:40000-50000	position	any	10	dummy	
-test-list	1p36	gband	loss	10	Sources: dummy{1}\nSomething: else{2}	doi, doi2
-test-list	1p35.2	gband	any	12	dummy	
-test-list	1q21	gband	gain	10	Sources: dummy{1},dummy{2}	doi, doi2
+list_name	hotspot	mapping	call_type	check_score	general_comment	citation_comment	citation	doi
+test-list	DDX11L1	gene_name	any	30			dummy	
+test-list	dummyC	gene_name	gain	15		Something	Dummy	doi
+test-list	chr1:40000-50000	position	any	10	general		dummy	
+test-list	1p36	gband	loss	10			dummy	doi
+test-list	1p36	gband	loss	10		Something	else	doi2
+test-list	1p35.2	gband	any	12			dummy	
+test-list	1q21	gband	gain	10			dummy	doi
+test-list	1q21	gband	gain	10			dummy	doi2

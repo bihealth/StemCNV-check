@@ -147,6 +147,7 @@ write_cnv_vcf(
     get_sample_info(sample_id, 'sex', snakemake$config, sampletable),
     'combined_calls',
     config,
+    defined_labels,
     snp_vcf_meta,
     vcf_info_text,
     target_chrom_style

@@ -61,6 +61,7 @@ read_PennCNV <- function(filename, sample_id, sample_sex, target_style) {
 penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test') { 
     # Config settings
     tool_config <- config$settings$PennCNV
+    defined_labels <- get_defined_labels(config)
     
     #get SNP input vcf (with filters)
     snp_vcf <- read.vcfR(input_files[['vcf']], verbose = F) 
@@ -103,6 +104,7 @@ penncnv_calls_to_vcf <- function(input_files, out_vcf, config, sample_id = 'test
         sample_sex,
         'PennCNV',
         config,
+        defined_labels,
         snp_vcf_meta,
         vcf_info_text,
         target_style

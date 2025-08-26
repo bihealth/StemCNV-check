@@ -83,6 +83,8 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
     # Get settings
     sample_sex <- get_sample_info(sample_id, "sex", config)
     tool_config <- config$settings$CBS
+    defined_labels <- get_defined_labels(config)
+    
     # Get SNP data
     snp_vcf <- read.vcfR(input_vcf, verbose = F) 
     snp_vcf_meta <- snp_vcf@meta
@@ -124,6 +126,7 @@ get_CBS_CNV_vcf <- function(input_vcf, out_vcf, config, sample_id = 'test') {
         sample_sex,
         'CBS',
         config,
+        defined_labels,
         snp_vcf_meta,
         vcf_info_text,
         target_style

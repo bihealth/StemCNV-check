@@ -64,16 +64,16 @@ test_that("format_hotspots_to_badge", {
     
     expected <- c(
         '-', 
-        '<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1},dummy{2}">1q21</span>', 
+        '<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 10&#013;Sources: dummy{1}, dummy{2}">1q21</span>', 
         '1q21', 
         '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 15&#013;Something: Dummy{1}">dummyC</span>', 
         paste0(
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 10&#013;',
-            'Sources: dummy{1}&#013;Something: else{2}">1p36</span>',
+            'Source: dummy{1}&#013;Something: else{2}">1p36</span>',
             '<span class="badge badge-red" title="test-list&#013;Check_Score contribution: 30&#013;',
-            'Sources: dummy">DDX11L1</span>'
+            'Source: dummy">DDX11L1</span>'
         ),
-        '1p36<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 30&#013;Sources: dummy">DDX11L1</span>',
+        '1p36<span class="badge badge-orange" title="test-list&#013;Check_Score contribution: 30&#013;Source: dummy">DDX11L1</span>',
         'A; B; C'
     )
     expect_equal(
@@ -467,10 +467,10 @@ test_that("SNV_table_output", {
     SNV_table <- bind_rows(
         SNV_table %>% mutate(
             SNV_category = c('hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match'),
-            SNV_label = c('reportable', 'reportable', 'critical', 'reportable', 'critical')
+            SNV_label = c('Reportable de-novo', 'Reportable de-novo', 'Critical de-novo', 'Reportable de-novo', 'Critical de-novo')
         ),
         SNV_table %>% mutate(
-            SNV_label = c('unreliable impact', rep('reportable', 4)),
+            SNV_label = c('Unreliable critical/reportable', rep('Reportable de-novo', 4)),
             SNV_category = c('ROI-overlap', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
             ROI_hits = c('DDX11L1', rep(NA, 4))
         )
@@ -478,8 +478,8 @@ test_that("SNV_table_output", {
         mutate(
             ref_GT = NA, # function will output ligcal NA vector
             ref_GenCall_Score = NA_real_,
-            SNV_category = factor(SNV_category, levels = defined_labels$SNV_category_labels),
-            SNV_label = factor(SNV_label, levels = defined_labels$SNV_labels),
+            SNV_category = factor(SNV_category, levels = names(defined_labels$SNV_categories)),
+            SNV_label = factor(SNV_label, levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
     
@@ -489,8 +489,8 @@ test_that("SNV_table_output", {
         'Position of the SNV/SNP',
         'SNV/SNP in the format "Chr:Pos:REF>ALT"',
         'ID of the SNV/SNP from the illumina array.\\nNote: rsIDs may not always be reliable',
-        paste0('Designation label for the SNV/SNP (', paste(defined_labels$SNV_labels, collapse = ', '), ')'),
-        paste0('Evaluation category for the SNV/SNP (', paste(defined_labels$SNV_category_labels, collapse = ', '), ')'),
+        paste0('Designation label for the SNV/SNP (', paste(names(defined_labels$SNV_labels), collapse = ', '), ')'),
+        paste0('Evaluation category for the SNV/SNP (', paste(names(defined_labels$SNV_categories), collapse = ', '), ')'),
         'Reference allele of the SNV/SNP',
         'Alternative allele of the SNV/SNP',
         'Genotype of the SNV/SNP for 2 Allels: 0 stands for the reference allele, 1 for the alternative allele',
@@ -511,7 +511,8 @@ test_that("SNV_table_output", {
     expected_dt <- SNV_table  %>%
         dplyr::rename(Chromosome = seqnames, Position = start) %>%
         mutate(
-            desc = c('desc{1},{2}', 'desc', rep('SNV hotspot gene (see hotspot coverage)', 3), rep(NA, 5)),
+            across(c(GT, ref_GT), as.factor),
+            desc = c('Sources: desc{1}, dummy{2}', 'Source: desc', rep('SNV hotspot gene (see hotspot coverage)', 3), rep(NA, 5)),
             SNV = paste0(Chromosome, ':', format(Position, big.mark = '.', decimal.mark = ','), ':', REF, '>', ALT),
             ROI_hits = ifelse(1:dplyr::n() == 10, "<span class=\"badge badge-red\" title=\"ROI&#013;DDX11L1\">DDX11L1</span>", ROI_hits),
             HGVS.p = ifelse(

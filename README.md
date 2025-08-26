@@ -1,23 +1,39 @@
-# Readme
+[![CI](https://github.com/bihealth/StemCNV-check/actions/workflows/ci.yml/badge.svg)](https://github.com/bihealth/StemCNV-check/actions/workflows/ci.yml)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/stemcnv-check/README.html)
+[![MIT license](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+# StemCNV-check
 
 ## About
 
 StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
-StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file. 
-
-StemCNV-check requires a linux environment (or WSL on windows) and a working conda (or mamba) installation. Follow the recommended instructions to install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html).
+StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
 
 ## Installation
 
-StemCNV-check will be made available through the bioconda channel in the future. 
+StemCNV-check requires a linux environment (or WSL on windows) and a working conda (or mamba) installation. 
+Follow the recommended instructions to install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html).
 
-For now, only installation 'from source' is possible:
+Further runtime dependencies (conda environments and docker containers) will be pulled automatically by 
+snakemake when running stemcnv-check.
+
+
+### Stable versions, recommeded
+
+It is recommended to install StemCNV-check through the bioconda channel. If you do not use conda for other things 
+omitting the environment name and installing into your base environment may be an option.
+
+`conda install stemcnv-check [-n stemcnv-check]`
+
+
+### Development version, install from source
+
+Alternatively, installation 'from source' is also possible:
 
 1. Clone this git repository
 2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12, then activate it
    - Note: on some systems like WSL you may also need: `apptainer` and `gcc_linux-64` (<14 for recent datrie issue)
-3. Install dependencies and the stemcnv-check script using pip `pip install -e .`. For development, use `pip install -e .[all]`
-4. All further runtime dependencies (conda environments and docker containers) will be pulled automatically by snakemake when running the analysis
+3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`. For development, use `pip install -e .[all]`
 
 ## Setup
 

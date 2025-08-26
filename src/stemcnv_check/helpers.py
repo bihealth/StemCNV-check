@@ -161,12 +161,14 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
 
 
 def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
-    # max_number_samples = None
 
-    def check_collected_ids(add_ids, max_n=clustering_config['max_number_samples']):
+    def check_collected_ids(add_ids, max_n):
         # remove the original sample_id
         if sample_id in add_ids:
             add_ids.remove(sample_id)
+        # remove duplicates, but keep order
+        add_ids = list(OrderedDict.fromkeys(add_ids))
+
         # If any collected ids don't exist, fail
         if not set(add_ids).issubset(sample_data_df.index):
             not_found = set(add_ids) - set(sample_data_df.index)
@@ -181,18 +183,27 @@ def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
                 wrong_array.add(id)
         if wrong_array:
             logging.warning(
-                f"Samples {', '.join(wrong_array)} do not belong to the same array as {sample_id}. "
-                f"They will be excluded from the SNP clustering."
+                f"Samples {', '.join(wrong_array)} do not belong to the same array as {sample_id} ({sample_array}). "
+                f"They will be excluded from SNP clustering."
             )
             add_ids = [id for id in add_ids if id not in wrong_array]
 
-        n_current_ids = len(ids)
-        n_new_ids = len(add_ids)
-        if max_n and (n_current_ids + n_new_ids) > max_n:
+        # Check that the number of samples is not too large, only count _new_ additions
+        n_postmerge = len(ids | set(add_ids))
+        skip_ids = []
+        if max_n and len(ids) >= max_n:
+            skip_ids = add_ids[:]
+            add_ids = []
+        elif max_n and n_postmerge > max_n:
+            max_add = max_n - len(ids)
+            add_ids, skip_ids = add_ids[:max_add], add_ids[max_add:]
+
+        if skip_ids:
             logging.warning(
-                f"Too many samples for SNP clustering ({len(add_ids)}), only the first {max_n} will be used."
+                f"Too many samples for SNP clustering of {sample_id} ({n_postmerge}), only the first {max_n} will be used.",
+                once=True
             )
-            add_ids = add_ids[:(max_n - n_current_ids)]
+            logging.warning(f"Skipping: {', '.join(skip_ids)}")
 
         return add_ids
 
@@ -202,14 +213,17 @@ def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
         ids.add(sample_data_df['Reference_Sample'].loc[sample_id])
 
     # sample_ids as is
-    checked_ids = check_collected_ids(clustering_config['sample_ids'])
+    checked_ids = check_collected_ids(clustering_config['sample_ids'], clustering_config['max_number_samples'])
     ids.update(checked_ids)
 
     # 'id_columns' entry: take all sample_ids from '[column]'
     for col in clustering_config['id_columns']:
         if col not in sample_data_df.columns:
             raise ConfigValueError('Config for SNP clustering refers to non-existing column: ' + col)
-        checked_ids = check_collected_ids([id for id in sample_data_df[col].loc[sample_id].split(',') if id])
+        checked_ids = check_collected_ids(
+            [id for id in sample_data_df[col].loc[sample_id].split(',') if id],
+            clustering_config['max_number_samples']
+        )
         ids.update(checked_ids)
 
     # 'match_columns' entries: take all sample_ids with the same value in '[column]'
@@ -219,7 +233,10 @@ def collect_SNP_cluster_ids(sample_id, clustering_config, sample_data_df):
         match_val = sample_data_df[col].loc[sample_id]
         # Only actually use truthy values (not empty strings or NAs)
         if match_val:
-            checked_ids = check_collected_ids(sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]].to_list())
+            checked_ids = check_collected_ids(
+                sample_data_df.set_index(col)['Sample_ID'].loc[[match_val]].to_list(),
+                clustering_config['max_number_samples']
+            )
             ids.update(checked_ids)
 
     return ids
@@ -249,27 +266,34 @@ def config_extract(entry_kws, config, def_config):
     return subconfig
 
 
-def load_config(args, inbuilt_defaults=True):
+def load_config(args, inbuilt_defaults=True, use_global_config=True):
     yaml = ruamel_yaml.YAML(typ='safe')
     with open(args.config) as f:
         config = yaml.load(f)
 
     # Use the global array definition block, if it exists: update with user-defined values
-    if not args.no_cache:
+    if not args.no_cache and use_global_config:
         # check whether a global array definition file exists in the cache and load it
-        # if it doesn't exist or doesn't contain the array definition block, return the config as is
         cache_array_defs = get_cache_array_definition(get_cache_dir(args, config))
         if cache_array_defs:
             with open(cache_array_defs, 'r') as f:
                 global_array_config = yaml.load(f)
 
-            if 'array_definition' not in global_array_config:
-                pass
-            # Merge the configs, with the user-defined values taking precedence
-            elif 'array_definition' not in config or not config['array_definition']:
-                config['array_definition'] = global_array_config['array_definition']
-            else:
-                config['array_definition'] = deep_update(global_array_config['array_definition'], config['array_definition'])
+            # Only continue if global config contains the array definition block                
+            if 'array_definition' in global_array_config:
+                # Subset the global config to use only those arrays also used in the current sampletable
+                used_arrays = read_sample_table(args.sample_table, args.column_remove_regex)['Array_Name'].unique()
+                for array in list(global_array_config['array_definition'].keys()):
+                    if array not in used_arrays:
+                        global_array_config['array_definition'].pop(array)
+                # Now merge the configs, with the user-defined values taking precedence
+                if 'array_definition' not in config or not config['array_definition']:
+                    config['array_definition'] = global_array_config['array_definition']
+                else:
+                    config['array_definition'] = deep_update(
+                        global_array_config['array_definition'],
+                        config['array_definition']
+                    )
 
     # Update inbuilt default config with all previously defined values
     if inbuilt_defaults:
@@ -386,7 +410,7 @@ def get_global_file(type, genome_version, global_settings, cache_path, fill_wild
             outfname = os.path.join(
                 cache_path,
                 'mehari-db',
-                "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst"
+                "mehari-data-txs-{genome}-ensembl-and-refseq-{MEHARI_DB_VERSION}.bin.zst"
             )
     elif type == 'dosage_scores':
         config_entry = global_settings['dosage_sensitivity_scores']

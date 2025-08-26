@@ -118,6 +118,9 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
         importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'sample_table_example.tsv'),
         return_type='list_withopt'
     )
+    # Test that xlsx file with comments on top work
+    fs.add_real_file('tests/data/sample_table_example.xlsx', read_only=True)
+    assert expected_dict == helpers.read_sample_table("tests/data/sample_table_example.xlsx", return_type='list_withopt')
 
 
 @patch('stemcnv_check.helpers.importlib.resources.files')
@@ -292,7 +295,7 @@ def array_config():
     )
 
 
-def test_load_config(user_config, default_config, array_config, fs):
+def test_load_config(user_config, default_config, array_config, sample_table_minimal, fs):
 
     fs.create_file('config.yaml', contents=user_config)
     fs.create_file(
@@ -316,7 +319,11 @@ def test_load_config(user_config, default_config, array_config, fs):
     assert config_from_defaults == helpers.load_config(fake_args)
 
     # Test loading of array definition from present global config
+    # This needs to check sample table for used arrays
     fs.create_file('/path/to/cache/global_array_definitions.yaml', contents=array_config)
+    fs.create_file('sample_table.tsv', contents=sample_table_minimal)
+    fake_args.sample_table = 'sample_table.tsv'
+    fake_args.column_remove_regex = None
     array_block = {'array_definition': {'ExampleArray': {'key': 'value', 'key_file': 'filepath'}}}
     config_from_defaults.update(array_block)
     assert config_from_defaults == helpers.load_config(fake_args)
@@ -350,7 +357,7 @@ def test_config_extract(caplog):
     assert '"cat : nested : key3" is not a valid config entry or has been deprecated' == caplog.records[-1].message
 
 
-def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
+def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs, caplog):
     sampletable = fs.create_file('sample_table.tsv', contents=sample_table_extra_cols)
     sample_data_df = helpers.read_sample_table('sample_table.tsv')
 
@@ -429,25 +436,35 @@ def test_collect_SNP_cluster_ids(sample_table_extra_cols, fs):
             {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': [], 'max_number_samples': 20},
             sample_data_df
         )
-    #FIXME: add checks for log messages to the next 2 tests
 
     # Test exclusion of samples from a different array
     sampletable.set_contents(
         sample_table_extra_cols +
         "DifferentArray\tCellline-X-MB\t0\tMale\tCellline-X\t\tExampleCellines\t773456789000\tR01C03\tCellline-X-MB"
     )
+    sample_data_df2 = helpers.read_sample_table('sample_table.tsv')
     assert set(all_ids[1:]) == helpers.collect_SNP_cluster_ids(
         'Cellline-A-MB',
         {'match_columns': ['Sample_Group'], 'id_columns': [], 'sample_ids': [], 'max_number_samples': 20},
-        sample_data_df
+        sample_data_df2
     )
+    assert (caplog.records[-1].message == 
+        "Samples Cellline-X-MB do not belong to the same array as Cellline-A-MB (ExampleArray). "
+        "They will be excluded from SNP clustering."
+    )
+
     # test with max_number_samples
+    # Added in Order: reference sample {NA} -> sample_ids {ids[3]} -> id_columns {ids[1,2]} -> match_columns
     assert {all_ids[3], all_ids[1]} == helpers.collect_SNP_cluster_ids(
         'Cellline-A-MB',
         {'match_columns': [], 'id_columns': ['Test_col'], 'sample_ids': ['Cellline-B-1-cl1'], 'max_number_samples': 2},
         sample_data_df
     )
-
+    logrecords = caplog.records[-2:]
+    assert [rec.message for rec in logrecords] == [
+        "Too many samples for SNP clustering of Cellline-A-MB (3), only the first 2 will be used.",
+        "Skipping: Cellline-B-MB"
+    ]
 
 
 def test_get_cache_dir(caplog, fs):
@@ -539,7 +556,7 @@ def test_get_global_file(fs):
         'fasta': os.path.join(cache, 'fasta', 'homo_sapiens', f'{ENSEMBL_RELEASE}_{{genome}}', 'Homo_sapiens.{genome}.dna.primary_assembly.fa.gz'),
         'gtf': os.path.join(cache, 'static-data', 'gencode.{genome}.v45.gtf.gz'),
         'genome_info': os.path.join(cache, 'static-data', 'UCSC_{genome}_chromosome-info.tsv'),
-        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-{MEHARI_DB_VERSION}.bin.zst")
+        'mehari_txdb': os.path.join(cache, 'mehari-db', "mehari-data-txs-{genome}-ensembl-and-refseq-{MEHARI_DB_VERSION}.bin.zst")
     }
     # fasta and mehari need specific format versions!
     genome_format = defaultdict(
