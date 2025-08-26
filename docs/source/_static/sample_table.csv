@@ -1,0 +1,7 @@
+Sample_ID,Chip_Name,Chip_Pos,Array_Name,Sex,Reference_Sample,Regions_of_Interest,Sample_Group,Coriell_ID
+HG001,2.07522E+11,R09C02,ExampleArray,female,,,,NA12878
+HG002,2.07522E+11,R05C02,ExampleArray,male,,,,NA24385
+HG004,2.07522E+11,R07C02,ExampleArray,female,,,,NA24143
+HG005,2.07522E+11,R01C02,ExampleArray,male,HG006,,,NA24631
+HG006,2.07522E+11,R03C02,ExampleArray,male,,,,NA24694
+HG007,2.07522E+11,R11C02,ExampleArray,female,,,,NA24695
