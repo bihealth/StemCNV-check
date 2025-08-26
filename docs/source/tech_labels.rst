@@ -1,10 +1,10 @@
-.. _tech-labels:
-
 Assigned labels and filters
 ===========================
 
 .. caution::Under construction
     This page is still under construction and has not been finalised yet
+
+.. _tech-cnv-labels:
 
 CNV labels
 ----------
@@ -108,6 +108,8 @@ Possible/Defined filters applied to CNV calls (vcf style)
      -
      - X
      - Probe coverage of segment has considerable gap (min. 33% depending on probe number - see config)
+
+.. _tech-snv-labels:
 
 SNV labels
 ----------

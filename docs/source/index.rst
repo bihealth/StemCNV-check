@@ -1,10 +1,7 @@
+.. _index:
 
 StemCNV-check Manual
 ^^^^^^^^^^^^^^^^^^^^
-
-.. admonition:: Under construction
-
-    This documentation is still under construction and not all parts have been finalised yet
 
 This is the manual for StemCNV-check, a tool developed to simplify copy number variation (CNV) analysis using SNP array data, 
 specifically for quality control of human pluripotent stem cells (hPSC). 
@@ -29,40 +26,45 @@ StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) 
 defined samples with a single command. Before this one command, samples need to be defined in a (tabular) sample table, 
 the workflow settings through a yaml config file and array specific static data needs to be generated once.
 
+.. admonition:: Under construction
+
+    This documentation is still under construction and not all parts have been finalised yet
+
+
 Requirements
 ------------
 
 StemCNV-check can run on Linux and Windows systems. On Windows it requires the Windows Subsystem for Linux (WSL) due to dependencies on open source packages. Easy installation is possible through the bioconda repository. 
 We are working towards native support for all major operating systems for our bioconda release.
 
+StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however 12-16GB RAM are recommended.
+Running StemCNV-check with fewer resources may work, but has not been extensively tested.
 
 Table of Contents
 ^^^^^^^^^^^^^^^^^
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Contents:
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Getting started 
-    :name: stemcnv_install
-
-    basics_nonlinux
-    basics_installation
-    basics_usage
+* :ref:`index`
 
 .. toctree::
     :maxdepth: 1
-    :caption: Tutorials
-    :name: stemcnv_tutorial
+    :caption: Introduction
 
-    tut_example_data
-    tut_project_setup 
-    tut_report_analysis
-   
+    intro_workflow
+    intro_quickstart
+
 .. toctree::
     :maxdepth: 2
+    :caption: Step-by-step instructions
+    :name: stemcnv_install
+
+    steps1_nonlinux
+    steps2_installation
+    steps3_basic_usage
+    steps5_report_analysis
+    steps_ext_project_setup    
+
+.. toctree::
+    :maxdepth: 1
     :caption: Troubleshooting
     :name: stemcnv_issues
 
@@ -71,13 +73,12 @@ Table of Contents
     issues_support
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Technical documentation
     :name: stemcnv_technical
-    
-    tech_workflow
-    basics_output_files
+
+    tech_output_files
+    tech_cache    
     tech_cmd_line
-    tech_cache
     tech_config
     tech_labels

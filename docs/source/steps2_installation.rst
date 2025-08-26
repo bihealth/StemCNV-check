@@ -1,4 +1,4 @@
-.. _basics-installation:
+.. _steps2-installation:
 
 Installation
 ^^^^^^^^^^^^
@@ -9,7 +9,7 @@ terminal, including WSL (Windows Subsystem for Linux) on Windows.
 .. tip::
 
     If you are not familiar with using scientific software on Linux and/or are a Windows user, it is strongly 
-    recommended to read through the :ref:`Basics for non-linux Users <basics-nonlinux>` section first.  
+    recommended to read through the :ref:`Basics for non-linux Users <steps1-basics-nonlinux>` section first.  
     This will also explain how to setup WSL (Windows Subsystem for Linux) on Windows.
 
 Installation of Conda
@@ -31,8 +31,7 @@ In short, use these commands:
     bash Miniforge3-$(uname)-$(uname -m).sh
 
 | During the installation follow instructions and suggestions that are displayed in the terminal. When the istaller askes if it should update the shell profile to the allow automatic initialisation of conda, answer/type: `yes` instead of the default no. In all other cases the default answers should let you continue.
-| After successful installation of conda WSL has to be restarted (close and reopen the window) or reload the updated 
-.bashrc of WSL using the command: ``source ~/.bashrc``
+| After successful installation of conda WSL has to be restarted (close and reopen the window) or reload the updated .bashrc of WSL using the command: ``source ~/.bashrc``
 
 
 Installation of StemCNV-check
@@ -40,8 +39,17 @@ Installation of StemCNV-check
 
 It is recommended to install StemCNV-check with conda through the bioconda channel. 
 
+StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however 12-16GB RAM are recommended.
+
+.. tip::
+  
+  If your are using WSL, by default the WSL system will only have access to half of the available RAM on your computer.
+  You can change this memory size in the *WSL settings*, but remember that Windows generally also requires up to 4GB of RAM 
+  for itself. StemCNV-check will automatically detect the available RAM in WSL and restrict itself to that.
+
+
 Install the latest released version through conda (**recommended**)
-------------------------------------------
+-------------------------------------------------------------------
 
 To install `StemCNV-check from bioconda <https://anaconda.org/bioconda/stemcnv-check>`_, run this command:
 
@@ -52,10 +60,7 @@ To install `StemCNV-check from bioconda <https://anaconda.org/bioconda/stemcnv-c
 
 
 Install the development version from github (**only for developers**)
--------------------------------------------
-.. note:: 
-
-    If you are an experienced conda user, you can of course create a specific environment for StemCNV-check.
+---------------------------------------------------------------------
 
 Alternatively to bioconda, one can perform the following steps to install and setup up the development version of StemCNV-check.
 

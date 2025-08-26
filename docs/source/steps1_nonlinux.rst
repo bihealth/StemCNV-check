@@ -1,4 +1,4 @@
-.. _basics-nonlinux:
+.. _steps1-basics-nonlinux:
 
 Basics for non-linux Users
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -8,12 +8,10 @@ operating systems as well. These instructions are primarily intended for users i
 usage and include step-by-step instructions for setting up and running StemCNV-check. 
 Specifically, it contains instructions for using StemCNV-check on Windows, where first WSL (Windows Subsystem for Linux) needs to be installed. StemCNV-check has been tested to run on WSL using these instructions and a standard PC or laptop.
 
-.. note:: 
+.. caution:: StemCNV-check is not officially supported on MacOS. 
 
-StemCNV-check is not officially supported on MacOS. However, it may be possible to run StemCNV-check on
-MacOS, if the given macOS system supports the bioconda channel (which should be the case for x86_64 and ARM64
-processors, but NOT for newer hardware with the M1 processors). If you do try this, most installation commands
-(except conda) will have to be done with (home)brew instead of the WSL/linux specific apt-get commands.
+  However, it may be possible to run StemCNV-check on MacOS, if the given macOS system supports the bioconda channel 
+  (which should be the case for x86_64 and ARM64 processors, but *NOT* for newer hardware with the M1 processors).
 
 Code examples and text highlights 
 =================================
@@ -58,7 +56,8 @@ In principle, you can use any text editor program to edit these files.
 
 - To edit the text based files you can use the windows notepad or any other text editor. 
 
-  More advanced editors like `Notepad++ <https://notepad-plus-plus.org/>`_ or `Visual Studio Code <https://code.visualstudio.com/>`_ will also highlight the syntax of the config file, which makes it easier to read and edit.
+  More advanced editors like `Notepad++ <https://notepad-plus-plus.org/>`_ or `Visual Studio Code <https://code.visualstudio.com/>`_ 
+  will also highlight the syntax of the config file, which makes it easier to read and edit.
 
 - When using an excel file as sample table be careful of auto-formatting changing any values. 
 

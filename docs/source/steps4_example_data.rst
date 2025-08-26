@@ -1,4 +1,4 @@
-.. _tut-example-data:
+.. _steps4-example-data:
 
 Running the example dataset
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

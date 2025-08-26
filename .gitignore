@@ -14,8 +14,10 @@ static-data/*
 
 #local docs
 docs/_build/*
+docs/datavzrd/example-report/*
 
 #Misc
+archive_local/*
 .git/*
 **/*.pyc
 **/__pycache__

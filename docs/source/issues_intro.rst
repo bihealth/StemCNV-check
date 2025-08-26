@@ -1,6 +1,6 @@
 .. _issues-intro:
 
-Troubleshooting errors
+StemCNV-check errors
 ======================
 
 .. caution::Under construction

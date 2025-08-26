@@ -1,17 +1,13 @@
-.. _basics-usage:
+.. _steps3-basic-usage:
 
 Basic Usage
 ^^^^^^^^^^^
 
-.. admonition:: Under construction
-
-    This page is still under construction and has not been finalised yet
-
 This section explains the basics of how to use StemCNV-check once it is installed *without* going into much detail.  
-If you want detailed instructions for running an :ref:`example dataset <tut-example-data>` or setting up a 
-:ref:`new project from scratch <tut-project-setup>`, please take a look our tutorials.
+If you want detailed instructions for running an :ref:`example dataset <steps4-example-data>` or setting up a 
+:ref:`new project from scratch <steps-ext-project-setup>`, please take a look our tutorials.
 
-**For setting up an analysis project requires:**
+**Setting up a StemCNV-check analysis project requires:**
 
 - array raw data files of samples to be included in analysis
 - manifest and cluster files of the specific array used: *egt_cluster_file, bpm_manifest_file, csv_manifest_file (optional)*
@@ -26,16 +22,17 @@ Create a project folder using the following command
 
 .. code-block:: bash
 
-    mkdir <project name>
+    mkdir {project_name}
 
 
 Setting up the sample-table and config files
 ============================================
+
 On the comand line change into the project folder:
 
 .. code-block:: bash
 
-    cd <path to project folder>
+    cd {project_name}
 
 Empty example files for the *sample table* and *config file* can then be created with this command:
 
@@ -53,7 +50,9 @@ If you prefer to use an xlsx (Excel) file for the sample table it can be created
 .. tip::
 
     StemCNV-check will by default always look for a "sample_table.tsv" (or .xlsx) and a "config.yaml" file.
-    However,  files with different names differentcan also be used (i.e. to compare the results of different settings), but then need to be passed via the ``--sample-table`` or ``--config`` command line options, which work for all StemCNV-check commands.
+    However, files with different names can also be used (i.e. to compare the results of different settings), 
+    but then need to be passed via the ``--sample-table`` or ``--config`` command line options, 
+    which work for all StemCNV-check commands.
 
 
 Sample Table
@@ -67,18 +66,20 @@ Sample Table
 |
 | The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol, which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table.
 |
-| For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <tut-project-setup>` .
+| For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <steps-ext-sampletable>`.
 
 Config File
 -----------
 The **config file** contains all settings of StemCNV-check. By default, the config file created by the ``setup-files`` 
-command only has the minimum number of entries that are required for for running an analysis project. These entries that need to be filled in are marked with a ``#REQUIRED”`` comment. All other (optional) settings are instead taken from inbuilt defaults. 
+command only has the minimum number of entries that are required for for running an analysis project. These entries that 
+need to be filled in are marked with a ``#REQUIRED”`` comment. All other (optional) settings are instead taken from inbuilt defaults. 
 
 These include specifically the file paths to array manifest files (describing the array probes) and the input and output 
 file paths the pipeline should use:
 
 - **'ExampleArray'** should to be renamed to the actual array name
 - **genome_version:** can be set to hg38/GRCh38 or hg19/GRCh37. 
+
 Please note that the Illumina bpm and csv manifest files are also specific to a certain genome version, usually files for hg19 end in ‘A1’ and those for hg38 end in ‘A2’ (the egt cluster file is not specific and can be used for any genome version)
 
 - **egt_cluster_file**: the illumina cluster file (.egt) for the array platform, available from Illumina or the provider running the array
@@ -109,7 +110,7 @@ An example configuration that assumes the sub folders "cluster-manifest-data" (c
       StemCNV-check-report:
         file_type: 'html'
 
-For more in-depth instructions and explanations about the config file see :ref:`Sample Table reference <tut-project-setup>` .
+For more in-depth instructions and explanations about the config file see :ref:`Sample Table reference <steps-ext-config>` .
 
 Generating array static data
 ----------------------------
@@ -136,7 +137,7 @@ The workflow to create all static files and prepare StemCNV-check can be started
     in the ``global_settings`` part of the config, which is included from ``--config-details medium`` and above.
 
 Starting the StemCNV-check analysis
--------------------------------
+-----------------------------------
 
 After config file and sample-table have been set up and the static data for an array has been created, the StemCNV-check 
 workflow can be started with this command:
@@ -149,7 +150,7 @@ workflow can be started with this command:
 .. tip::
 
     StemCNV-check is built on snakemake and can also utilise all of snakemake's advanced features. 
-    You can forward command like options to snakemake by separating them with a ``--``. This way you can for example 
+    You can forward command line options to snakemake by separating them with a ``--``. This way you can for example 
     make use of snakemake executors that can interface with HPC scheduling systems: ``stemcnv-check run -- --executor slurm``
 
 | After the analysis finised successfully reports can be found in the foder defind in the config file ``data_path`` 
