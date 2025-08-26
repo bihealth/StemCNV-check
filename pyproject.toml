@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools >= 68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -53,7 +53,7 @@ stemcnv-check = "stemcnv_check.__main__:main"
 [tool.setuptools.dynamic]
 version = {attr = "stemcnv_check.version.__version__"}
 
-[tool.setuptools.dynamic.optional-dependencies.docs]
+[tool.setuptools.dynamic.optional-dependencies.doc]
 file = ["docs/requirements.txt"]
 
 [tool.setuptools.dynamic.optional-dependencies.test]

@@ -1,2 +1,4 @@
 Sphinx==8.2.3
 sphinx-rtd-theme==3.0.2
+docutils~=0.21
+sphinxcontrib-text-styles==0.2.0

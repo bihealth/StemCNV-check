@@ -72,4 +72,4 @@ jobs:
       with:
         docs-folder: "docs/"
         # Fail doc build test on any warning from sphinx
-        build-command: make html SPHINXOPTS="-W"
+        build-command: make html SPHINXOPTS+="-W"

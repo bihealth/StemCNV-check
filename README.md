@@ -33,7 +33,8 @@ Alternatively, installation 'from source' is also possible:
 1. Clone this git repository
 2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12, then activate it
    - Note: on some systems like WSL you may also need: `apptainer` and `gcc_linux-64` (<14 for recent datrie issue)
-3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`. For development, use `pip install -e .[all]`
+3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`. For development, use `pip install -e .`
+   - Note: To install all development dependencies (for testing and building the documentation) use `pip install -e .[dev,test,doc]` 
 
 ## Setup
 

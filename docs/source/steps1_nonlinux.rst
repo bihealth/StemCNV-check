@@ -22,11 +22,12 @@ This manual contains code snippets for copying and executing directly. They look
 
     echo "Hello World"
 
-.. tip:: 
+.. tip::
 
-To paste commands use:
-    - into a linux terminal use ‘Ctrl+Shift+V’ 
-    - in WSL a right click - since ‘Ctrl+V’ does not work in a linux/WSL terminal.
+    To paste commands use:
+
+        - into a linux terminal use ‘Ctrl+Shift+V’ 
+        - in WSL a right click - since ‘Ctrl+V’ does not work in a linux/WSL terminal.
 
 In some cases there are also ``code examples`` in the text. The same formatting may be used examples of values to enter into files.
 

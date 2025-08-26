@@ -16,15 +16,15 @@ Report sections
 .. image:: _static/report_analysis/sample_info.png
    :width: 600
 
-
 **Sample information**
 
 - Contains information from the sample table about the sample named by sample_id: Sex, Reference_Sample, Array_Name, Chip_Name, Chip_Pos
 
 - Reference sample is the sample for comparison, it is a precursor cell line or earliest progenitor cell line for this sample with iPSC clone. It is defined by the sample id in the sample table. 
 
-   .. image:: _static/report_analysis/sample_table.png
-      :width: 600
+.. image:: _static/report_analysis/sample_table.png
+  :width: 600
+
 The sample table with all samples specifies the sample id and the reference for analysis of each sample. A sample table is used as input for running StemCNV-check.
 
 
@@ -50,8 +50,8 @@ QC measures
 .. image:: _static/report_analysis/qc_metrics.png
    :width: 600                                
                                           
- .. image:: _static/report_analysis/coloring.png
-   :width: 500
+.. image:: _static/report_analysis/coloring.png
+    :width: 500
 
 
 Data QC explanation 
@@ -75,11 +75,14 @@ Data QC explanation
 - **SNP Pairwise distance to reference:** absolute GT distance between a sample and its reference. It reflects the similarity between the two cell lines. The smaller the distance (number of different SNPs) the smaller the phylogenetic distance (higher genetic relation between the samples).
 
 - **Total calls CNV:** number of CNVs detected.
- | **CNVs** (copy number variation) are increases or decreases in chromosomal copies for a given region in the genome;
+
+  | **CNVs** (copy number variation) are increases or decreases in chromosomal copies for a given region in the genome;
+
 - **Total calls LOH:** number of LOH regions detected 
- | **LOH (loss of heterozygosity):** a region that no longer has two different alleles has a LOH;
- | **Homozygosity:** a locus can duplicate one chromosome and transpose it to the other chromosome;
- | **Hemizygosity:** a region can be deleted entirely, leaving only one chromosomal copy;
+
+  | **LOH (loss of heterozygosity):** a region that no longer has two different alleles has a LOH;
+  | **Homozygosity:** a locus can duplicate one chromosome and transpose it to the other chromosome;
+  | **Hemizygosity:** a region can be deleted entirely, leaving only one chromosomal copy;
 
 - **Loss Gain Log2 ratio** 
 
@@ -243,17 +246,17 @@ Interpreting BAF and LRR charts
 - **B allele frequency (BAF)** is the proportion of the B allele signal relative to the total signal for a SNP. In other words, BAF is a normalized measure of the allelic intensity ratio of two alleles (normalized representation of how often B allele is called). 
 
 - **The Log R Ratio (LRR)** is a normalized measure of the total signal intensity for two alleles of the SNP (signal intensity - log R ratio).
- | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
- | LRR deviation from an average of 0 **indicates a gain or a loss.**
+  | Log R Ratio is a metric that normalises signal intensity for CNV analysis. It represents the number of copies relative to the normal reference sample.  
+  | LRR deviation from an average of 0 **indicates a gain or a loss.**
 
-   .. image:: _static/report_analysis/lor.png
-      :width: 300
+.. image:: _static/report_analysis/lor.png
+   :width: 300
 
 **Normal, heterozygous samples**: three distinct bands are seen. Homozygous calls are at the top (1.0) and bottom (0.0) of the chart, representing the BB and AA calls, respectively. The middle band at 0.5 represents AB, 50% of BAF in the genotype. 
 When the middle band is missing while the bands at 1.0 and 0.0 remain, there is a loss of heterozygosity (LOH) BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
 
 - **Loss of heterozygosity (LOH)**: the middle band is missing while the bands at 1.0 and 0.0 remain. BAF of 1.0 can mean either a homozygous genotype of BB or a hemizygous genotype of B [-].
-| The combination of LRR and BAF can be used to infer copy number changes in the genome. BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.
+  | The combination of LRR and BAF can be used to infer copy number changes in the genome. BAF charts alone can not distinguish copy neutral LOH from deletion events. That’s why it is necessary to look at the Log ratio chart simultaneously.
 
 
 .. image:: _static/report_analysis/loh_ref.png
@@ -301,7 +304,7 @@ All SNVs are categorised into one of the following categories (shown in the hidd
 - **hotspot-gene**: SNV in a gene with known iPSC hotspots (see also SNV hotspot coverage)
 - **protein-ablation**: SNV (likely) fully disrupting protein function (i.e. frameshift, stop gain, stop loss)
 - **protein-changing**: SNV causing a change the protein sequence (i.e. missense, inframe)
-other: SNV with other unclear or undetermined effect on protein function
+- other: SNV with other unclear or undetermined effect on protein function
 
 The “SNV label” further categorizes the SNVs into:
 
@@ -333,18 +336,16 @@ The following criteria are used to assign SNVs as critical or reportable:
 ====================
 
 Genome overview
---------
+---------------
+
 This section provides a whole chromosome overview of the sample. 
 CNV calls (filtered based on the config settings) are shown on chromosomes as coloured stripes 
 
-.. role:: red
-   :red:`red for losses`
+- :text-red:`red for losses`
 
-.. role:: grey
-   :grey:`grey for LOH`
+- :text-gray:`grey for LOH`
 
-.. role:: green 
-   :green:`green for gains`
+- :text-green:`green for gains`
    
 .. image:: _static/report_analysis/genome_overview.png
    :width: 1000
@@ -354,7 +355,8 @@ CNV calls (filtered based on the config settings) are shown on chromosomes as co
 
 
 Dendrogram, clustering based on SNP analysis 
---------
+--------------------------------------------
+
 Sample identities can be compared based on the dendrogram built on the SNP genotypes.
 
 .. image:: _static/report_analysis/dendrogram.png
@@ -363,7 +365,7 @@ Sample identities can be compared based on the dendrogram built on the SNP genot
 .. image:: _static/report_analysis/dendrogram2.png
    :width: 800
 
- The dendrogram is built using the manhattan distance between samples, counting both alleles from Probes that are not quality in every included sample. Accordingly, the distance between two samples is the sum of the absolute differences between the two alleles at each SNP (also shown in the table below) after QC filters. Samples that are very close together are likely identical or clonally related. Sample selection as well as color and shape labels are controlled by the config file.
+The dendrogram is built using the manhattan distance between samples, counting both alleles from Probes that are not quality in every included sample. Accordingly, the distance between two samples is the sum of the absolute differences between the two alleles at each SNP (also shown in the table below) after QC filters. Samples that are very close together are likely identical or clonally related. Sample selection as well as color and shape labels are controlled by the config file.
 
 **The user can indicate reference samples as a list of sample_ids to calculate the distances by typing them in the config file under section ‘SHP_clustering’, ‘sample_ids’.**
 

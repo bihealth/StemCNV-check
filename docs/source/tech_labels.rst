@@ -16,13 +16,12 @@ CNV labels
     - Reference genotype
     - Excluded call
 
-Possible/Defined filters applied to CNV calls (vcf style)
-**vcf_filters:**
- - probe_gap
- - high_probe_dens
- - min_size
- - min_probes
- - min_density
+Possible/Defined filters applied to CNV calls (vcf style) **vcf_filters:**
+  - probe_gap
+  - high_probe_dens
+  - min_size
+  - min_probes
+  - min_density
 
 - All CNV calls are given a label based on their check score, filters and reference match.
 - The labels described here are always available, but can be changed or new labels can be added.
