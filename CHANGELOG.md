@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 Note: change log is only added with version 0.5.1
 
+## [1.0.0] - TBD
+
+### Added
+
+- Documentation
+- CI tests for building docs
+- Hotspot tables hosted via github-pages
+
+### Changed
+
+- SNV labels: ROI-overlap is now reportable (from critical)
+- Updated format and references for stem-cell hotspot lists (CNVs and SNVs)
+
+## [0.5.4] - 2025-08-11
+
+### Changed
+
+- Updated stem-cell hotspot lists (CNVs and SNVs)
+
+
+## [0.5.3] - 2025-07-29
+
+### Changed
+
+- Updated precision estimation reference data
+- Update CNV labels
+
+
 ## [0.5.2] - 2025-07-08
 
 ### Fixed
