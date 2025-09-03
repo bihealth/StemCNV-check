@@ -5,7 +5,7 @@ Basic Usage
 
 This section explains the basics of how to use StemCNV-check once it is installed *without* going into much detail.  
 If you want detailed instructions for running an :ref:`example dataset <steps4-example-data>` or setting up a 
-:ref:`new project from scratch <steps-ext-project-setup>`, please take a look our tutorials.
+:ref:`new project from scratch <steps-ext-project-setup>`, please take a look our respective step-by-step instructions.
 
 **Setting up a StemCNV-check analysis project requires:**
 
@@ -14,9 +14,10 @@ If you want detailed instructions for running an :ref:`example dataset <steps4-e
 - config file
 - sample table
 
-| It is generally recommended to keep each analysis project and it's associated files in a separate folder.
-|
-| Before running StemCNV-check, you will need to create and fill out a **sample-table** and **config file** in the project folder and then create static data for the specific SNP array used.  
+It is generally recommended to keep each analysis project and it's associated files in a separate folder.
+
+Before running StemCNV-check, you will need to create and fill out a **sample-table** and **config file** in the 
+project folder and then create static data for the specific SNP array used.  
 
 Create a project folder using the following command
 
@@ -58,15 +59,20 @@ If you prefer to use an xlsx (Excel) file for the sample table it can be created
 Sample Table
 ------------
 
-| The **sample table** describes all samples you want to analyse in a given project. It can be expanded later in a project to add more samples, without affecting the primary analysis of older samples (though some comparisons may be updated). The following columns of the sample table are required for running StemCNV-check:
-|
-| *Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group*
-|
-| The first 5 columns (Sample_ID - Sex) are required to be filled out for each sample. The columns *Reference_Sample* (used to define the sample to compare with i.e. originating fibroblast or parental cell line) and *Sample_Group* (used for identity comparison) are optional and can be left blank.
-|
-| The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol, which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table.
-|
-| For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <steps-ext-sampletable>`.
+The **sample table** describes all samples you want to analyse in a given project. 
+It can be expanded later in a project to add more samples, without affecting the primary analysis of older samples 
+(though some comparisons may be updated). The following columns of the sample table are required for running StemCNV-check:
+
+*Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group*
+
+The first 5 columns (Sample_ID - Sex) are required to be filled out for each sample. 
+The columns *Reference_Sample* (used to define the sample to compare with i.e. originating fibroblast or parental cell line) 
+and *Sample_Group* (used for identity comparison) are optional and have be left blank, if no fitting values can be entered.
+
+The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol, 
+which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table.
+
+For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <steps-ext-sampletable>`.
 
 Config File
 -----------

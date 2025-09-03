@@ -3,12 +3,18 @@
 Extended project setup
 ^^^^^^^^^^^^^^^^^^^^^^
 
-| Before the first analysis sample table and config file need to be set up. Unless otherwise specified, stemcnv-check defaults to look for a "sample_table.tsv" (or .xlsx) and "config.yaml" file. To use ample table and config files with different names differentcan (i.e. to compare the results of different settings), the command line options ``--sample-table`` or ``--config`` can be used.
-|
-| It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
-|
-| Empty example files for the sample table and config can be created with this command:
-| ``stemcnv-check setup-files``
+Before the first analysis sample table and config file need to be set up. Unless otherwise specified, StemCNV-check 
+defaults to look for a ``sample_table.tsv`` (or ``sample_table.xlsx``) and `config.yaml` file. 
+To use sample table and config files with different names different (i.e. to compare the results of different settings), 
+the command line options ``--sample-table`` or ``--config`` can be used.
+
+It is recommended to start by **creating a separate folder** for your project. This folder should include raw data folder, config.yaml and sample table files.
+
+Empty example files for the sample table and config can be created with this command: 
+
+.. code:: bash
+
+    stemcnv-check setup-files
 
 
 .. _steps-ext-config:
@@ -90,7 +96,7 @@ Setting up the sample table
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed.
 **Excel or tsv** formats are supported.
 
-The defualt format of the sample table is tsv. If you prefer to use an xlsx file here you can create an example by using:
+The default format of the sample table is tsv. If you prefer to use an xlsx file here you can create an example by using:
 
 ``stemcnv-check setup-files --sampletable-format xlsx``
 
@@ -144,8 +150,8 @@ Filling in the sample table with your data
 
   - Regions_of_Interest
 
-    This column can define sample specific regions of interest (i.e. gene edited sites), if none exist ic can be left 
-    empty but still must be included in the samplesheet.  
+    This column can define sample specific regions of interest (i.e. gene edited sites), if none exist it can be left 
+    empty but still must be included in the sample sheet.  
     The syntax for regions of interest is ``NAME|region``, the ``NAME|`` part is optional and mainly useful for 
     labeling or describing the region.  
     The ``region`` part is mandatory and can be one of the following:
@@ -267,7 +273,7 @@ To create the array specific files, follow these steps:
     If you already have a genome reference fasta on your system you can also use that, 
     instead of downloading a second one. To do so you need to provide the path to the fasta file for the corresponding 
     genome version in the 'global_settings' block of the config file. This section will only be included in the config 
-    if you use at least the ``--config-details medium`` flag for the setup-files command. Other files like gtf can also
+    if you use at least the ``--config-details medium`` flag for the setup-files command.
 
 This command will also print out the paths to the generated array specific files. You can either copy these paths your 
 project specific config file to use a complete array definition, or you can simply remove the array definition block 

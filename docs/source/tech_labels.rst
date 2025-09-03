@@ -70,7 +70,7 @@ Possible/Defined filters applied to CNV calls (vcf style) **vcf_filters:**
      - None
      - CNV call that does not match minimal quality requirements (close to "noise")
 
-**Label for CNVs amerged from multiple callers** - combined_cnvs: 'combined-call'
+**Label for CNVs merged from multiple callers** - combined_cnvs: 'combined-call'
 
 .. list-table::  Exclusion filter
    :widths: 20 30 10 10 30

@@ -16,7 +16,7 @@ until the improperly removed previous lock is removed. This can be done using th
 
     stemcnv-check run -- --unlock
 
-If you need to shut down your computer but the workflow ist still running you can interrupt it by using ``Ctrl+C`` key 
+If you need to shut down your computer but the workflow it is still running you can interrupt it by using ``Ctrl+C`` key 
 combination in the respective terminal window. On Linux this means "keyboard interrupt" and will instruct the workflow 
 to abort. The abortion process is not instantaneous and may take a few moments to stop all running processes.
 

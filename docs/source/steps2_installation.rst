@@ -101,7 +101,7 @@ Alternatively to bioconda, one can perform the following steps to install and se
 
     pip install -e .
 
-**Updating the developement version**
+**Updating the development version**
 
 As long as you are in the StemCNV-check directory you can update the development version of StemCNV-check with this 
 command:
