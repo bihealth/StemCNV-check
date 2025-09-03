@@ -3,47 +3,44 @@
 Running the example dataset
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
   
-We provide an example data set, based on samples form Genome in a Bottle samples, that can be used to test the setup.
+We provide an `example data set <https://zenodo.org/records/16962381>`_, based on samples form Genome in a Bottle samples, 
+that can be used to test the setup.
+
+Please note that the Genome in a Bottle samples are *not* pluripotent stem cells, so interpretation of the data is not really possible.
   
 Obtain the example data
 =======================
 
-.. caution::
-    The test data is currently only available via github. Therefore this instruction set assumes you have 
-    cloned the StemCNV-check repository from github (to do so, follow the installation instructions for the 
-    github/developement verion until the ``git clone ...`` command).  
-    We will make the test data available as a data resource in the future.
-
-Test data can be downloaded via git LFS and StemCNV-check can be run with the following commands. 
-
-
-- Install git-lfs: 
+The example input data can be downloaded from `zenodo <https://zenodo.org/records/16962381/files/example_input_data.zip?download=1>`_,
+or directly on the command line:
   
   .. code-block:: bash
   
-    sudo apt-get update
-    sudo apt-get install git-lfs
-  
-- Download the test data:
+    wget https://zenodo.org/records/16962381/files/example_input_data.zip
+    unzip example_input_data.zip
 
-  If you are not already in the folder for StemCNV-check repository go there. 
-  Then download the actual example files (~300Mb):
-
-  .. code-block:: bash
-
-    cd StemCNV-check
-    git lfs fetch
-    git lfs checkout
+If you download the data through the web-browser make sure to unzip it also. 
+Even when using WSl, it is recommended to leave all StemCNV-check files on the linux file system to improve performance.
 
   
 Run the example data
 ====================
 
-- First change into the example_data folder, then start the preparation of the static data for the example
+.. note::
+
+    Working with the example data requires, that you have :ref:`installed StemCNV-check <steps2-installation>`.
+
+The example data fileset contains all necessary input files as well as a fully filled in sample table and config file, 
+so you can proceed to generation of static data and data analysis right away:
+
+
+- Make sure you have an open terminal, located in unpacked the example data folder containing the config.yaml and sample table files.
+  If you used the above commands to download the files from the command line this should already be the case.
+
+- Start the preparation of the static data for the example data
 
   .. code-block:: bash
 
-    cd example_data
     stemcnv-check make-staticdata
   
   .. note:: 
@@ -55,7 +52,7 @@ Run the example data
     detail when creating example files.
 
   .. tip::
-    If StemCNV-check encouters issues automatically download files, please see the Troubleshooting section 
+    If StemCNV-check encounters issues automatically download files, please see the Troubleshooting section 
     for potential solutions to common issues.
 
 - Finally start the StemCNV-check workflow for the example data: 
@@ -63,3 +60,8 @@ Run the example data
   .. code-block:: bash
 
     stemcnv-check run
+
+After performing all these steps you should have complete output for all 6 samples in the ``data`` folder.
+
+You can also download the `example output data <https://zenodo.org/records/16962381/files/example_output_data_v1.0.zip?download=1>`_, 
+created with StemCNV-check version 1.0, to compare them with your newly generated files.

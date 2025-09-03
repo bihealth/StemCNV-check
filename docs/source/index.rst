@@ -60,6 +60,7 @@ Table of Contents
     steps1_nonlinux
     steps2_installation
     steps3_basic_usage
+    steps4_example_data
     steps5_report_analysis
     steps_ext_project_setup    
 
