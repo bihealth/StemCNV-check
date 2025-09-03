@@ -1,9 +1,6 @@
 Assigned labels and filters
 ===========================
 
-.. caution::Under construction
-    This page is still under construction and has not been finalised yet
-
 .. _tech-cnv-labels:
 
 CNV labels
@@ -106,8 +103,8 @@ Each SNV is first assigned to a category based on annotation and overlap with hP
 
 SNVs are then assigned a label based on their category, reference match and genotype quality:
 
-.. list-table::  SNV labels
-   :widths: 12 12 12 12 50
+.. list-table::
+   :widths: 12 20 12 12
    :header-rows: 1
 
    * - SNV Label
