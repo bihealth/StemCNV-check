@@ -3,9 +3,6 @@
 StemCNV-check errors
 ======================
 
-.. caution::Under construction
-    This page is still under construction and has not been finalised yet
-
 The StemCNV-check tool runs in two parts. 
 
 First it parses the sample table and config files and prepares the actual analysis,

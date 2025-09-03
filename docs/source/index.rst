@@ -26,10 +26,6 @@ StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) 
 defined samples with a single command. Before this one command, samples need to be defined in a (tabular) sample table, 
 the workflow settings through a yaml config file and array specific static data needs to be generated once.
 
-.. admonition:: Under construction
-
-    This documentation is still under construction and not all parts have been finalised yet
-
 
 Requirements
 ------------
