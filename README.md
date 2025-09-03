@@ -33,15 +33,17 @@ Alternatively, installation 'from source' is also possible:
 1. Clone this git repository
 2. *optional, but recommended* Create a new enviroment, i.e. conda create -n stemcnv-check python=3.12, then activate it
    - Note: on some systems like WSL you may also need: `apptainer` and `gcc_linux-64` (<14 for recent datrie issue)
-3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`. For development, use `pip install -e .[all]`
+3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`. For development, use `pip install -e .`
+   - Note: To install all development dependencies (for testing and building the documentation) use `pip install -e .[dev,test,doc]` 
 
 ## Setup
 
 StemCNV-check requires a sample table and a config file to run. Example files can be created using `stemcnv-check setup-files`.
 
 The sample table (default: sample_table.tsv) is a tab-separated file describing all samples to be analyzed:
-- Required columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample
-- Optional (reserved) columns: Regions_of_Interest
+- Columns: Sample_ID, Chip_Name, Chip_Pos, Array_Name, Sex, Reference_Sample, Regions_of_Interest, Sample_Group
+- The first 5 of these (Sample_ID - Sex) are required for all samples, Reference_Sample is used to track the origin of a 
+  sample (i.e. originating fibroblast or master bank) and should be used where possible, the last two columns can be filled optionally.
 - See the `sample_table_example.tsv` file (or the sample_table created bye the setup-files command) for a description of individual columns
 
 The config file (default: config.yaml) defines all settings for the analysis and inherits from the inbuilt default.  

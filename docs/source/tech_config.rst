@@ -1,0 +1,547 @@
+.. _tech-config:
+
+Config file options
+^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: Under construction
+
+    This page is still under construction and will contain more details in the future.
+
+
+The config file has the following options: see comments for explanations.
+These defaults will always be used if not changed in the config file used during command invocation.
+
+.. code-block:: yaml
+
+    # Multiple arrays can be defined here, but arrays defined in global config saved in the cache are also available.
+    #   This file will take precedence over the global config, unless the file names here can not be used.
+    # Each array needs all required entries, but the `stemcnv-check make-staticdata` command will generate files 
+    #   marked as auto-generatable. By default both the files and an update to a global array definition file will be
+    #   written into the cache directory (unless --no-cache is used). By default this file is at 
+    #   ~/.cache/stemcnv-check/global_array_definitions.yaml
+    # Once the array definitions are in the global file, you need to either delete the 'array_definition' block here 
+    #   or also update it with the information written out by `stemcnv-check make-staticdata` (which is the same as the 
+    #   entry written into the global array definition config), since this config takes precedence over the global file.
+    # If no global config was used during the `make-staticdata` run, i.e. due to the --no-cache flag the array definitions 
+    #   will instead be written to a local file, i.e. 'ExampleArray_config.yaml' in the current working directory. 
+    #   In this case you will need to copy the contents of that file into this one, or alternatively into a global array 
+    #   definition file, that can still be created.
+    array_definition:
+      # This 'ExampleArray' *should* to be renamed to the actual array name
+      ExampleArray:  
+        genome_version: hg38               #REQUIRED, options: hg38/GRCh38, hg19/GRCh37
+        # beadpool manifest file (.bpm) from Illumina, needs to match both the SNP array used and 
+        # the desired genome version (usually filenames end with 'A1.bpm' for hg19 and 'A2.bpm' for hg38)
+        bpm_manifest_file: ''              #REQUIRED
+        # cluster file (.egt) from Illumina, matching the SNP array used, independent of genome version
+        egt_cluster_file: ''               #REQUIRED
+        # manifest file (.csv) from Illumina, matching the SNP array used and the genome version as .bpm
+        csv_manifest_file: ''              #RECOMMENDED (can be left empty, but this will make most InDel probes unusable)
+        # PennCNV pfb file, describing the SNPs (derived from vcf/manifest files)
+        # defaults to: '{{cache}}/array_definitions/{{array_name}}/PennCNV-PFB_{{genome}}.pfb'
+        penncnv_pfb_file: '__cache-default__'      #STATIC, Auto-generatable
+        # PennCNV GC model file, containing GC content values, calculated by PennCNV
+        # defaults to: '{{cache}}/array_definitions/{{array_name}}/PennCNV-GCmodel_{{genome}}.gcmodel'
+        penncnv_GCmodel_file: '__cache-default__'  #STATIC, Auto-generatable
+        # bed file with windows of very high array density, calculated by stemcnv-check
+        # defaults to: '{{cache}}/array_definitions/{{array_name}}/density_{{genome}}.bed'
+        array_density_file: '__cache-default__'    #STATIC, Auto-generatable
+        # bed file with windows of probes gaps on the array
+        # defaults to: '{{cache}}/array_definitions/{{array_name}}/gaps_{{genome}}.bed'
+        array_gaps_file: '__cache-default__'       #STATIC, Auto-generatable
+        
+    # Folder in which raw data files (.idat) can be found
+    # Important! idat files should be grouped in a subfolder per array-chip (sentrix_name)
+    raw_data_folder: '' #REQUIRED, Note: gencall has a hard time following links
+    # Output folder, where stemcnv-check will write results
+    data_path: data     #REQUIRED
+    # Output folder, where stemcnv-check will write log files
+    log_path: logs      #REQUIRED
+
+    evaluation_settings:
+      # All CNV calls are given a label based on their check score, filters and reference match.
+      # The labels described here are always available, but can be changed or new labels can be added
+      # If not other category fits (which should not occur with default settings), 
+      #  then the last defined "Exclude call" label will always be assigned
+      # Possible values for the "not_allowed_vcf_filters" list are: {vcf_filters}
+      CNV_call_labels:
+        Critical de-novo:
+          minimum_check_score: 55
+          not_allowed_vcf_filters: ['high_probe_dens', 'probe_gap', 'min_size', 'min_probes', 'min_density']
+          reference_match: FALSE
+        Reportable de-novo:
+          minimum_check_score: 55
+          not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
+          reference_match: FALSE
+        de-novo call:
+          minimum_check_score: 0
+          not_allowed_vcf_filters: ['min_size', 'min_probes', 'min_density']
+          reference_match: FALSE
+        Reference genotype:
+          minimum_check_score: 0
+          not_allowed_vcf_filters: []
+          reference_match: TRUE
+        Excluded call:
+          minimum_check_score: 0
+          not_allowed_vcf_filters: []
+          reference_match: FALSE
+      
+      # Each sample QC measure defined in StemCNV-check is categorised as one of: {sample_labels_names}
+      # The last two categories are mutually exclusive, and the last one is only used for specific measures (defined by the 'use_last_level' list).
+      # In the report the color codes for the categories are: {sample_labels_values}
+      # For each of the sample QC measures, two thresholds for maximum values are defined:
+      # These determine the transition from the 1st to 2nd, or the 2nd to 3rd/last category.
+      # If both thresholds are the same value, the 2nd category is skipped and the 1st and 3rd/last are directly adjacent.
+      summary_stat_warning_levels:   
+        call_rate: [0.99, 0.99] #Note: callrate uses *minimum* thresholds, not maximum
+        # SNP_pairwise_distance_to_reference is the absolute GT distance between a sample and it's reference
+        # Note that the expected baseline difference strongly depends on the array platform
+        # and may need to be adjusted. These values are based on the GSA array (~700k probes)
+        SNP_pairwise_distance_to_reference: [500, 5000]
+        loss_gain_log2ratio: [2, 4]
+        total_calls_CNV: [10, 50]
+        total_calls_LOH: [30, 75]
+        reportable_calls_CNV: [5, 10]
+        reportable_calls_LOH: [5, 10]
+        critical_calls_CNV: [1, 1]
+        critical_calls_LOH: [1, 1]
+        reportable_SNVs: [5, 10]
+        critical_SNVs: [1, 1]
+        # CNVs/LOHs gievn one these labels are not counted for QC measures
+        # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+        # Default labels: {CNV_labels}
+        call_count_excl_labels: ['Excluded call'] # Fully ignore calls with any of these labels 
+        # These measures use last QC category and are also bolded in the html summary table
+        use_last_level:
+          - call_rate
+          - computed_gender
+          - SNP_pairwise_distance_to_reference
+          - critical_SNVs
+          - critical_calls_CNV
+          - critical_calls_LOH
+          
+      collate_output:
+        # xlsx or tsv output files can be generated
+        file_format: xlsx
+        # These columns from the sampletable will be included in the collated summary overview table
+        summary_extra_sampletable_cols: 
+          - Reference_Sample
+        # Selection of CNVs for the summary table based on call labels
+        cnv_collate_call_selection:
+          # If defined, only CNVs with one of the "whitelist" call labels will be included
+          # If defined, no CNVs with one of the "blacklist" call labels will be included
+          # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+          # Default labels: {CNV_labels}
+          whitelist_call_label: []
+          blacklist_call_label:
+              - Excluded call
+    
+    
+    global_settings:
+      # By default all conda environments and apptainer images are stored to a common cache
+      # This default location can also be overwritten by the '--cache-path' cmd-line flag or disabled by '--no-cache'
+      cache_dir: '~/.cache/stemcnv-check'
+      # Mehari transcript database file, either '__cache-default__' or a path for the bin.zst database file
+      # defaults to "{{cache_dir}}/mehari-db/mehari-data-txs-{{genome}}-ensembl-{mehari_db_version}.bin.zst
+      hg19_mehari_transcript_db: '__cache-default__'
+      hg38_mehari_transcript_db: '__cache-default__' 
+      # Dosage sensitivity predicitions, as described in Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
+      # Either '__cache-default__' or a path to the dosage sensitivity data file
+      # defaults to "{{cache_dir}}/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz"
+      dosage_sensitivity_scores: '__cache-default__'
+      # Fasta file for the genome sequence, either '__default-ensemble__' or a path to the genome fasta file
+      # '__default-ensemble__' will download the genome fasta file from ensembl ftp servers
+      # Note: fasta files can be compressed, but *only* with bgzip!
+      # defaults to "{{cache_dir}}/fasta/homo_sapiens/{ensembl_release}_{{genome}}/Homo_sapiens.{{genome}}.dna.primary_assembly.fa.gz"
+      hg19_genome_fasta: '__default-ensemble__'
+      hg38_genome_fasta: '__default-ensemble__'
+      # Gene annotation of the genome in gtf format, either '__default-gencode__' (Gencode v45 files) or a path to the gtf file
+      # defaults to "{{cache_dir}}/static-data/gencode.{{genome}}.v45.gtf.gz"
+      hg19_gtf_file: '__default-gencode__'
+      hg38_gtf_file: '__default-gencode__'
+      # tabular files with chromosome and gband details, derived from UCSC information via make-staticdata
+      # defaults to "{{cache_dir}}/static-data/UCSC_{{genome}}_chromosome-info.tsv"
+      hg19_genomeInfo_file: '__default-UCSC__'
+      hg38_genomeInfo_file: '__default-UCSC__'
+    
+    
+    settings:
+      # Select tools to use
+      # Currently implemented tools (=valid options): PennCNV, CBS
+      CNV.calling.tools:
+        - PennCNV
+        - CBS
+      probe_filter_sets:
+        # Each section here defines a set of SNP probe filters
+        # each set can be applied to individual or all steps of the pipeline, but using only one set is recommended
+        # SNP probes filters are applied as (soft) filters to the SNP vcf file.
+        # - GenTrainScore: Illumina score on clustering on probe intensities, usually stable between samples (& partially chips)
+        # - GenCallScore: Illumina score on Genotype call reliability, usually somewhat stable between samples
+        # - Position.duplicates: many SNP arrays have some genomic positions covered with multiple probes. Multiple data 
+        #                        points at the same position are problematic for CNV calling due to signal/noise issues.
+        #                        These probes can all be kept, all removed, or a single probe per position with highest GC|GT can be kept
+        # - Pseudoautosomal: Handling probes in the pseudo-autosomal (PAR1, PAR2) and X-translocated (XTR) regions on the X and Y chromosomes
+        #                    These regions are identical or very similar between X and Y and always behave as if diploid,
+        #                    which can cause issues on haploid male samples. They can also be generally more problematic to interpret.
+        # Additionally:
+        # - SNPs on the Y chromosome are always (soft)filtered for female samples
+        # - SNPs without properly defined REF & ALT alleles are hard-filtered (i.e. removed from the vcf). 
+        #   The latter mainly occurs if the manifest csv is omitted, which causes Indel-probes to be improperly defined.
+        #
+        # We recommend to use these filter settings:
+        standard:
+          GenTrainScore: 0.15
+          GenCallScore:  0.15
+          Position.duplicates: highest-GenCall # keep|remove|highest-GenCall|highest-GenTrain
+          Pseudoautosomal: remove-male # keep|remove|remove-male
+    
+      # Default filter set to use for all tools
+      default_probe_filter_set: standard
+    
+      PennCNV:
+        # Specific probe filter set for PennCNV, '_default_' uses `default_probe_filter_set
+        probe_filter_settings: '_default_'
+        enable_LOH_calls: True
+        # Neighbouring CNVs of the same state that are merged if
+        # a) the gap between them is <= 'merge.gap.absolute' [bp] or <= 'merge.gap.snps' [SNPs] or if 
+        # b) they would touch/overlap after increasing their size each by 'call.extension.percent' [%]
+        # Any chain of neighbouring CNVs meeting these conditions becomes a single call
+        call.merging:
+          merge.gap.absolute: 500
+          merge.gap.snps: 10
+          call.extension.percent: 60
+          maximum.gap.allowed: 500000
+        # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
+        # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+        filter.minprobes: 5
+        filter.minlength: 1000
+        filter.mindensity.Mb: 10 #snps per Mb
+    
+      CBS:
+        # Specific probe filter set for CBS, '_default_' uses `default_probe_filter_set
+        probe_filter_settings: '_default_'
+        # undo.SD split value for CBS
+        undo.SD.val: 1
+        # Neighbouring CNVs of the same state that are merged if
+        # a) the gap between them is <= 'merge.distance' [bp] or <= 'merge.gap.snps' [SNPs] or if 
+        # b) they would touch/overlap after increasing their size each by 'call.extension.percent' [%]
+        # Any chain of neighbouring CNVs meeting these conditions becomes a single call
+        call.merging:
+          merge.gap.absolute: 500
+          merge.gap.snps: 10
+          call.extension.percent: 60
+          maximum.gap.allowed: 500000
+        # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
+        # [snps] >= min.snp & [length] >= min.length & [density, snps/Mb] >= min.snp.density
+        filter.minprobes: 5
+        filter.minlength: 1000
+        filter.mindensity.Mb: 10 #snps per Mb
+            
+        # LRR thresholds for identifying CBS segments as gain/loss on autosomes
+        LRR.loss: -0.25      #CN1
+        LRR.loss.large: -1.1 #CN0
+        LRR.gain: 0.2        #CN3
+        LRR.gain.large: 0.75 #CN4+
+        # LRR thresholds for sex chromosomes
+        LRR.male.XorY.loss:      -0.5   #CN0
+        LRR.male.XorY.gain:       0.28  #CN2
+        LRR.male.XorY.gain.large: 0.75  #CN3+
+        LRR.female.X.loss:       -0.05  #CN1
+        LRR.female.XX.loss:      -0.9   #CN0
+        LRR.female.X.gain:        0.5   #CN3
+        LRR.female.X.gain.large:  1.05  #CN4+
+    
+      # Values used by `stemcnv-check make-staticdata` to generate density and gap bed files
+      array_attribute_summary:
+        density.windows: 100000    #window size for probe density calculation (100kb)
+        min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
+    
+      CNV_processing:
+        call_processing:
+          # SNP probe counts may change with merging of calls from different tools
+          # therefore a single probe_filter_settings needs to be used as reference here
+          probe_filter_settings: '_default_'
+          # Prefiltering of calls is done (after merging of nearby calls) as follows:
+          # vcf filters / CNV call filters are applied to calls (after merging of nearby calls) as follows:
+          filter.minprobes: 5
+          filter.minlength: 1000
+          filter.mindensity.Mb: 10 #snps per Mb
+          
+          ## Calls from multiple tools are combined if they match
+          # This is the minimum coverage the largest single call in an combined group needs to have.
+          # keep this >=50 to prevent formation/acceptance of chains of overlapping calls
+          tool.overlap.greatest.call.min.perc: 50
+          # This is minimum for the median of coverage percentages from all tool in any merged group
+          tool.overlap.min.cov.sum.perc: 60
+          ## Reference comparison
+          min.reciprocal.coverage.with.ref: 50
+          ## Probe gap flagging of calls
+          # Values to determine 'call_has_probe_gap' based on coverage percentage with gap areas (from array attribute
+          # summary) and log2 number of unique probe positions. The two values represent slope and intercept of
+          # slope * percent_gap_area + gap_intercept ~ log2(uniq_snp_positions), calls above that line "have gaps"
+          # These defaults mean that calls with larger % gap area need fewer unique probes to be flagged as "having a gap"
+          # Specifically, calls with 33% gap need >=373 probes, 50% >=91 probes, 75% >= 12 probes, 85% >= 5 probes to be flagged
+          gap_area.uniq_probes.rel: [-12, 12.5] # slope, intercept
+          min.perc.gap_area: 0.33
+          ## HighDensity flagging of calls
+          # Calls that have a probe density which is higher than the top {{density.quantile.cutoff}} [%] of the array windows
+          # (calculated from array attribute summary) are flagged as having "high SNP density"
+          density.quantile.cutoff: 0.99
+
+        gene_overlap:
+          # These options determine which genes are read from the gtf file
+          exclude_gene_type_regex: []
+          # Example: ['artifact', 'IG_.*', 'TR_.*', '(un|_)processed_pseudogene']
+          include_only_these_gene_types: ['lncRNA', 'miRNA', 'protein_coding']
+          whitelist_hotspot_genes: True
+          # These genelists are used to mark genes with high impact
+          # Gene lists files are tabular (tsv) and need the following columns:
+          # list_name, hotspot, mapping, call_type, check_score, description, description_doi
+          # list_name, hotspot, mapping, call_type & check_score need to be filled out
+          # description & description_doi will be used to display extra info in the report
+          # mapping can be 'gene_name', 'gband', and 'position' and should describe the hotspot
+          # call_type can be 'any', 'gain', 'loss' or 'LOH'
+          stemcell_hotspot_list: '__inbuilt__/supplemental-files/genelist-stemcell-hotspots.tsv'
+          cancer_gene_list: '__inbuilt__/supplemental-files/genelist-cancer-drivers.tsv'
+          # also available: '__inbuilt__/supplemental-files/genelist-cancer-hotspots.tsv'
+          # File path for dosage sensitivity score file is defined in global_settings
+          dosage_sensitive_gene_name_fixes: '__inbuilt__/supplemental-files/gene-names-mapping-dosage-sensitivity.tsv'
+    
+        # Scoring for CNV and LOH calls
+        # scoring combines a Size based contribution with scores for overlapping annotated regions
+        Check_score_values:
+          # stemcell_hotspot & cancer_gene scores need to be defined in the respective tables
+          # CNVs/LOHs get the summed scored of each overlapping annotated gene or region (gband/position)
+          # genes are only scored _once_ per call, i.e. a gene with both stemcell_hotspot and cancer_gene match will only 
+          # contribute the higher of the two annotated scores. 
+          
+          # Dosage sensivity predicition is a based on Collins et. al. 2022 (doi:10.1016/j.cell.2022.06.036)
+          # CNV loss calls overlapping a gene with pHaplo score >= threshold are scored with the 'dosage_sensitive_gene' score
+          # CNV gain calls are respectively scored for the pTriplo score
+          pHaplo_threshold: 0.86
+          pTriplo_threshold: 0.94
+          dosage_sensitive_gene: 5
+          # Genes without any score from the hotspot lists or dosage sensivity are scored as 'any_other_gene'
+          any_other_gene: 0.2
+          # Calls overlapping any sample defined ROI get this one-time score
+          any_roi_hit: 50
+          # These values determine how the base Check-Score is calculated from size & CN.
+          # The formula used is: copy_factor * log(size) * log(size) - flat_decrease
+          # The copy_factor changes based on the CN of the call (number of lost/gained copies)
+          # copy_factor for CN 1 and 3
+          single_copy_factor: 0.333
+          # copy_factor for CN 0 and 4
+          double_copy_factor: 0.5
+          # copy_factor for CN 2 (LOH)
+          neutral_copy_factor: 0.275
+          flat_decrease: 15      
+          # Note: male sex chromosomes have baseline CN=1, and generally use the 1-copy factor unless CN>2
+        # This file contains precision estimations based on benchmarking data
+        precision_estimation_file: '__inbuilt__/supplemental-files/precision_estimates.tsv'
+    
+      SNV_analysis:
+        probe_filter_settings: "_default_" # "_default_", Filterset name, or "none". Note: None will even include chrY on female samples
+        snv_hotspot_table: '__inbuilt__/supplemental-files/SNV-stemcell-hotspots.tsv'
+        flag_GenCall_minimum: 0.2
+        # Only variants matching at least one of the following criteria are included in SNV analysis 
+        # This means that i.e. intron or synonymous variants in SNV hotspot genes are NOT included in the output files 
+        # Underlying annotations are derived from mehari, specifically from the terms defined by http://www.sequenceontology.org 
+        variant_selection:
+          Impact: [HIGH, MODERATE]      
+          Annotation_regex: ~
+          # This will include ALL variants in any ROI region, regardless of annotation
+          include_all_ROI_overlaps: TRUE
+        # List of SNV categories that are considered critical or reportable.
+        # Allowed values: {SNV_category_labels}
+        critical_SNV:
+          - 'ROI-overlap'
+          - 'hotspot-match'
+        reportable_SNV:
+          - 'hotspot-gene'
+          - 'protein-ablation'
+        # SNVs that can fully remove protein function are summarised in the "protein-ablation" category (generally HIGH impact)
+        protein_ablation_annotations:
+          # The 'HIGH' impact category generally contains these variant annotations/groups:      
+          # - stop_gained
+          # - start_lost
+          # - stop_lost
+          # - frameshift_variant
+          # - splice_acceptor_variant
+          # - splice_donor_variant  
+          Impact: ['HIGH']
+          Annotation_regex: ~
+        # SNVs impacting protein sequence, but not generally removing protein function are summarised as "protein-changing"
+        protein_change_annotations:
+          Impact: []
+          # The missense_variant and (conservative|disruptive)_inframe_(deletion|insertion) annotations are in the 'MODERATE' impact category
+          Annotation_regex: 'missense_variant|inframe'
+        
+        # These settings determine which samples are used for the SNP clustering & dendrogram
+        SNP_clustering:
+            # Sample-IDs from the sample table, these will be added to the clustering of every sample
+            sample_ids: []
+            # Column names of the sample table, these are assumed to contain (comma separated) Sample-IDs
+            id_columns: []
+            # Column names of the sample table, Samples are used for clustering if they have the same value in any of these columns
+            match_columns: ['Chip_Name', 'Sample_Group']
+            # Maximum number of samples to include in the dendrogram. Note: calculation of clustering (done per sample)
+            # takes more time for each additional sample included
+            max_number_samples: 20
+    
+      vcf_output:
+        # Which chromosome style to use in the vcf file ("1" vs "chr1")  
+        chrom_style: 'UCSC' # "keep-original", UCSC, or NCBI / Ensembl
+    
+
+    reports:
+      # Any number of reports can be defined, the default is 'StemCNV-check-report'
+      # All reports inherit from the default settings, but can overwrite specific parts
+      StemCNV-check-report:
+        file_type: 'html'         #REQUIRED
+
+    #   Any number of reports can be defined, the default is 'StemCNV-check-report'.
+    #   file_type (html or pdf) needs to be defined for each one.
+    #   Note: report generation is optimised for html format, and pdf reports may have issues, especially with larger tables
+    #
+    #  StemCNV-check-full-report:
+    #    file_type: 'html'         #REQUIRED
+    #    call.data.and.plots:
+    #      _default_:
+    #        # How many plots to show at least, this strongly influences the filesize of the report
+    #        min_number_plots: 100
+    #        include.gene.table.details: 'All'
+    
+    #  # These reduced settings works reasonably well for pdf
+    #  StemCNV-check-report-pdf:
+    #    file_type: 'pdf'          #REQUIRED
+    #    exclude_sections: [ QC.settings, QC.PennCNV, QC.CBS, QC.GenCall ]
+    #    call.data.and.plots:
+    #      include.call.table: FALSE
+    
+      #These are the default settings from which all reports inherit
+      _default_:
+    
+        # individual sections can be included (whitelist) or excluded (blacklist) from report.
+        # Default is special '__all__' for include, but a list of specific sections can also be used
+        include_sections: '__all__'
+        exclude_sections: []
+        # Availbale sections (Note that tool specific ones also depend on pipeline settings):
+        # {report_sections}
+    
+        # (Additional) List of columns from the sample_table that are included in the "Sample Information" table
+        sample.info.extra.cols: ['Chip_Name', 'Chip_Pos']
+        
+        # CNV calls can, based on the assigned call label, be:
+        # - fully removed from the report, incl all tables and plots (this option)
+        # - selected for the de-novo & reference genotype CNV tables (following section)
+        # - selected for the genome_overview plots (last section)
+        # Possible labels include the (default) CNV_call_labels defined above, as well as additional labels
+        # Default labels: {CNV_labels}
+        # Call labels for the 'de-novo CNV calls' table
+        CNV_call_labels_removed: 
+          - 'Excluded call'
+          
+        call.data.and.plots:
+          # Default and specific settings for each section of plots (denovo, reference_gt, regions_of_interest)
+          # The specific sections inherit from the default, but can overwrite all or individual values
+          _default_: &default_plot_settings
+            # How many plots to fully incorporate into the report at minimum
+            # Note: Plots are still generated for all CNV calls, but any exceeding this number will only be saved
+            # separate from the html report and linked from there. Increasing this number increases the report file size.
+            min_number_plots: 20
+            # Calls with one of these call lables will be included regardless of the minimum number
+            always_include_CNVs: []
+            # Include plots, table of individual calls and table of genes
+            include.plot: True
+            include.hotspot.table: True
+            include.gene.table.details: 'Call' # Choice of: None|Call|All
+            # Minimum relative size of (each) flanking region compared to call
+            plot.flanking.region.relative: 2
+            # Minimum size of total plot region
+            plot.region.minsize: 2000000
+          denovo:
+            <<: *default_plot_settings
+            # Call labels for the 'de-novo CNV calls' table
+            call_labels_include:
+              - 'Critical de-novo'
+              - 'Reportable de-novo'
+              - 'de-novo call'
+            always_include_CNVs:
+              - 'Critical de-novo'
+              - 'Reportable de-novo' 
+          reference_gt:
+            <<: *default_plot_settings
+            # Call labels for the 'Reference genotype CNV calls' table
+            call_labels_include:
+              - Reference genotype
+          regions_of_interest:
+            <<: *default_plot_settings
+            plot.region.minsize: 100000
+    
+    #     # Report settings for the SNV analysis block
+    #     SNV_analysis:
+    #       # Which critical SNV reasons should use red (instead of orange) highlights  
+    #       SNV_categories_with_red_highlight:
+    #         - 'ROI-match'
+    #         - 'hotspot-match'
+    
+        # Settings for the Sample comparison / SNP dendrogram sections
+        SNP_comparison:
+          # Selection of sample table columns, to determine shape and color of the samples in the dendrogram.
+          # Note: You can also use any column from the sample table, incl optional ones you added yourself
+          dendrogram.color.by: 'Chip_Name'
+          dendrogram.shape.by: 'Sample_Group'
+          
+        genome_overview:
+            # Call labels for the overview plots
+            call_labels_overview:
+              - 'Critical de-novo'
+              - 'Reportable de-novo'
+              - 'de-novo call'
+              - 'Reference genotype'
+            # Include the reference sample in the genome overview plots
+            show_reference: True
+
+    # These constraints define which sample_ids, sentrix_pos (Chip_Pos) and sentrix_name (Chip_Name) are valid
+    # Edit at your own risk!: if sample_ids to not match this constraint, they will not be run and errors might not be intuitive
+    wildcard_constraints:
+      sample_id: "[a-zA-Z0-9-_]+"
+      sentrix_pos: 'R[0-9]{2}C[0-9]{2}'
+      sentrix_name: '[0-9]+'
+    
+    # These settings are used to define the resources snakemake allocates for each tool
+    tools:
+      _default_:
+        threads: 1
+        memory: 2000 # "2000MB"
+        runtime: "1h"
+        partition: 'medium'
+      GenCall:
+        threads: 4
+        memory: 8000 # "8000MB"
+        runtime: "4h"
+    #   gtc2vcf:
+    #     memory: 1000 # "2000MB"
+    #     runtime: "1h"
+    #   filter_snp_vcf:
+    #     memory: 1000 # "2000MB"
+    #     runtime: "1h"
+    #   mehari:
+    #     memory: 1000 # "2000MB"
+    #     runtime: "1h"
+      CBS:
+        memory: 4000 # "4000MB"
+        runtime: "30m"  
+      CNV.process:
+        memory: 4000 # "4000MB"
+        runtime: "30m"
+      PennCNV:
+        memory: 1000 # "500MB"
+        runtime: "30m"
+      SNV_analysis:
+        threads: 2
+        memory: 20000 # "2000MB"  
+        runtime: "4h"
+      knitr:
+        memory: 10000 # "10000MB"
+        runtime: "1h"
