@@ -1,5 +1,6 @@
 [![CI](https://github.com/bihealth/StemCNV-check/actions/workflows/ci.yml/badge.svg)](https://github.com/bihealth/StemCNV-check/actions/workflows/ci.yml)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/stemcnv-check/README.html)
+[![read-the-dcos](https://app.readthedocs.org/projects/stemcnv-check-read-the-docs/badge/?version=latest)](https://stemcnv-check-read-the-docs.readthedocs.io/)
 [![MIT license](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 # StemCNV-check
@@ -8,6 +9,11 @@
 
 StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
 StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
+
+## Documentation
+
+Please consult our [documentation](https://stemcnv-check-read-the-docs.readthedocs.io/) on read-the-docs for detailed instructions on
+installation, usage, interpretation, trouble shooting and technical implementation of StemCNV-check.
 
 ## Installation
 
