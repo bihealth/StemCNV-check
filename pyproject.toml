@@ -45,7 +45,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/bihealth/StemCNV-check"
 Issues = "https://github.com/bihealth/StemCNV-check/issues"
-Documentation = "https://stemcnv-check-read-the-docs.readthedocs.io"
+Documentation = "https://stemcnv-check.readthedocs.io"
 
 [project.scripts]
 stemcnv-check = "stemcnv_check.__main__:main"
