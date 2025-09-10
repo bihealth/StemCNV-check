@@ -5,5 +5,9 @@ channels:
   - nodefaults
 dependencies:
   - python = 3.12
+  - pip
   - pip:
-    - -r python-requirements.txt
+    - vcfpy~=0.13.8
+    - loguru~=0.7.2
+# Does not work since snakemake will copy this yaml file to the --prefix folder
+#    - -r python-requirements.txt
