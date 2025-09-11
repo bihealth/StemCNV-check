@@ -3,6 +3,8 @@
 Common issues and solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. _issues-common-locked:
+
 Snakemake: Directory cannot be locked
 =====================================
 
@@ -19,6 +21,8 @@ until the improperly removed previous lock is removed. This can be done using th
 If you need to shut down your computer but the workflow it is still running you can interrupt it by using ``Ctrl+C`` key 
 combination in the respective terminal window. On Linux this means "keyboard interrupt" and will instruct the workflow 
 to abort. The abortion process is not instantaneous and may take a few moments to stop all running processes.
+
+.. _issues-common-memory:
 
 Unclear crashes & memory overload in a VM or WSL
 ================================================
@@ -43,6 +47,8 @@ to StemCNV-check.). An example command would then be:
 
     stemcnv-check run --memory-mb=7500
 
+
+.. _issues-common-network:
 
 Downloads / Internet connection not working
 ===========================================

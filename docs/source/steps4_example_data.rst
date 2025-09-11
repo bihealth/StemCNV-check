@@ -20,7 +20,7 @@ or directly on the command line:
     unzip example_input_data.zip
 
 If you download the data through the web-browser make sure to unzip it also. 
-Even when using WSl, it is recommended to leave all StemCNV-check files on the linux file system to improve performance.
+Even when using WSL, it is recommended to leave all StemCNV-check files on the linux file system to improve performance.
 
   
 Run the example data
@@ -52,7 +52,7 @@ so you can proceed to generation of static data and data analysis right away:
     detail when creating example files.
 
   .. tip::
-    If StemCNV-check encounters issues automatically download files, please see the Troubleshooting section 
+    If StemCNV-check encounters issues automatically download files, please see the :ref:`Troubleshooting section <issues-common-network>` 
     for potential solutions to common issues.
 
 - Finally start the StemCNV-check workflow for the example data: 

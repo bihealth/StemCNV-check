@@ -7,7 +7,7 @@ Command line options
 
     This page is still under construction and will contain more detailed information in the future
 
-``stemcnv-check`` has 3 differemt subcommands:
+``stemcnv-check`` has 3 different subcommands:
 
   - ``setup-files``: Create example files for project setup
   - ``make-staticdata``: Create static data for SNP array

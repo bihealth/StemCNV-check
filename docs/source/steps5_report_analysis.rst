@@ -3,13 +3,11 @@
 Report interpretation  
 ^^^^^^^^^^^^^^^^^^^^^
 
-These tutorial section enable users to navigate the html report assembled by StemCNV-check and interpret the results. 
-For a better understanding we suggest the simultaneous reading of this tutorial and the example report here provided: 
-`download link <TODO>`_
+These tutorial section enable users to navigate the html report assembled by StemCNV-check and interpret the results.
 
 **Generalities**
 
-html report can be navigated using the interactive index shown on the left side.
+The html report can be navigated using the interactive index shown on the left side.
 
 .. image:: _static/report_analysis/html_navbar.png
    :width: 200 
@@ -318,12 +316,19 @@ We suggest to:
   Documenting the reason for rejection is important for maintaining transparency and traceability in the analysis.
 
 
-Examples of customized analysis interpretation:
+Examples of customized analysis interpretation, where calls may not be validated:
 
-call is not validated due to too: few probes in the area, probe gap, BAF unclear, LRR unclear, sex chromosome (less reliable calls), etc.   
+- few probes in the area
+- gap in prob coverage (StemCNV-check highlights this)
+- pattern in BAF unclear
+- LRR signal shift unclear
+- calls on sex chromosome may often be less reliable calls   
 
-.. image:: _static/report_analysis/bugs_baf.png
+.. figure:: _static/report_analysis/bugs_baf.png
    :width: 950
+    
+   Examples of a probe coverage gap or an uncharacteristic BAF pattern.   
+
 
 3. SNV analysis
 ===============
@@ -342,6 +347,7 @@ SNVs detected in the sample are listed according to SNV label (see :ref:`technic
 and thus potential biological impact.
 
 The table displays detailed information for each variant, including:
+
 - Chromosome location
 - Nucleotide change
 - Genotype (compared to the reference sample)
@@ -374,10 +380,10 @@ This view is especially useful for validating large CNVs, which may appear as re
 
 **Example:**
 
-.. image:: _static/report_analysis/loh_chromosome.png
+.. figure:: _static/report_analysis/loh_chromosome.png
    :width: 1000
 
-In this example, a large de novo LOH can be validated using the full chromosome overview.
+   In this example, a large de novo LOH can be validated using the full chromosome overview.
 
 Identity comparison 
 -------------------

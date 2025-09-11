@@ -72,7 +72,7 @@ and *Sample_Group* (used for identity comparison) are optional and have be left 
 The sample table file created by the ``setup-files`` command contains comments (lines starting with a hash ``#`` symbol, 
 which are ignored by StemCNV-check), explaining the columns in more details. These can be removed from the sample table.
 
-For more in-depth instructions and explanations about the sample table see :ref:`Sample Table reference <steps-ext-sampletable>`.
+For more in-depth instructions and explanations about the sample table see :ref:`Sample Table setup details <steps-ext-sampletable>`.
 
 Config File
 -----------
@@ -116,7 +116,7 @@ An example configuration that assumes the sub folders "cluster-manifest-data" (c
       StemCNV-check-report:
         file_type: 'html'
 
-For more in-depth instructions and explanations about the config file see :ref:`Sample Table reference <steps-ext-config>` .
+For more in-depth instructions and explanations about the config file see :ref:`config file setup details <steps-ext-config>` .
 
 Generating array static data
 ----------------------------

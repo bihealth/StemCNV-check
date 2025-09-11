@@ -33,7 +33,8 @@ Requirements
 StemCNV-check can run on Linux and Windows systems. On Windows it requires the Windows Subsystem for Linux (WSL) due to dependencies on open source packages. Easy installation is possible through the bioconda repository. 
 We are working towards native support for all major operating systems for our bioconda release.
 
-StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however 12-16GB RAM are recommended.
+StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however at least 12-16GB RAM are recommended, 
+and more resources can efficiently be used to process more samples in parallel.
 Running StemCNV-check with fewer resources may work, but has not been extensively tested.
 
 Table of Contents

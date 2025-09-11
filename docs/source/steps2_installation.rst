@@ -39,7 +39,7 @@ Installation of StemCNV-check
 
 It is recommended to install StemCNV-check with conda through the bioconda channel. 
 
-StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however 12-16GB RAM are recommended.
+StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however at least 12-16GB RAM are recommended.
 
 .. tip::
   
@@ -99,7 +99,7 @@ Alternatively to bioconda, one can perform the following steps to install and se
 
   .. code-block:: bash
 
-    pip install -e .
+    pip install -e .[docs,dev,test]
 
 **Updating the development version**
 

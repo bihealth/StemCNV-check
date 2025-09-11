@@ -14,7 +14,9 @@ from the development version on `github <https://github.com/bihealth/StemCNV-che
     conda install bioconda::stemcnv-check
 
 StemCNV-check requires at least 8GB of RAM and 4 CPU cores with default settings, however more is recommended and 
-parallelization through snakemake can efficiently utilize more resources form more powerful machines.
+parallelization through snakemake can efficiently utilize more resources on more powerful machines.
+
+Once installation is done you can also use our :ref:`example dataset <steps4-example-data>`, to test StemCNV-check.
 
 Setup
 -----
