@@ -7,13 +7,36 @@
 
 ## About
 
-StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, specifically for quality control of (pluripotent) stem cell lines. 
-StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and the workflow settings are defined through a yaml file.
+StemCNV-check is a tool written to simplify copy number variation (CNV) analysis of SNP array data, 
+specifically for quality control of (pluripotent) stem cell lines.  
+
+StemCNV-check uses snakemake to run the complete analysis from raw data (.idat) up report generation 
+for all defined samples with a single command. Samples need to be defined in a (tabular) sample table and 
+the workflow settings are defined through a yaml file.
+
+## Features
+
+StemCNV-check allows generation of read-to-analyse reports from raw SNP-array data in a single command, where possible 
+hPSC samples are always compared to a (parental) reference sample and results are annotated with additional information 
+to ease interpretation of the data. The report contains and summarises all intermediate analysis steps:
+
+- Summary of quality measures for the sample, including comparison to predefined thresholds
+- Sorted list of CNV calls, split by de-novo and reference matching calls
+  - Sorting uses the Check-Score from our upcoming manuscript and combines contributions from CNV size and copynumber 
+    as well as additions from annotation from overlapping [stem cell hotspots](https://bihealth.github.io/StemCNV-check/CNV-hotspots/index_1.html),
+    cancer driver genes, predicted dosage sensitive genes and other gene annotations.
+  - The top CNVs have detailed images and tables listing overlapping features and genes with link-outs to further resources
+  - Sample specific regions of interest are also displayed in a separate section reargdless of CNV status with full details
+- Sorted list of SNVs that affect protein sequences, split by de-novo and reference matching variants
+  - Sorting takes known [stem cell hotspots](https://bihealth.github.io/StemCNV-check/SNV-hotspots/index_1.html), sample
+    specific regions of interest, SNP quality and severity of predicted protein changes
+- Gnome wide overview plots for visual inspection of large aberrations, including side-by-side comparison to reference sample
+- Sample identity comparison based on clustering by SNP-genotypes
 
 ## Documentation
 
 Please consult our [documentation](https://stemcnv-check.readthedocs.io/) on read-the-docs for detailed instructions on
-installation, usage, interpretation, trouble shooting and technical implementation of StemCNV-check.
+installation, usage, interpretation, troubleshooting and technical implementation of StemCNV-check.
 
 ## Installation
 
@@ -41,6 +64,7 @@ Alternatively, installation 'from source' is also possible:
    - Note: on some systems like WSL you may also need: `apptainer` and `gcc_linux-64` (<14 for recent datrie issue)
 3. Install python dependencies and stemcnv-check itself using pip `pip install -e .`.
    - Note: To install all development dependencies (for testing and building the documentation) use `pip install -e .[dev,test,doc]` 
+
 
 ## Setup
 

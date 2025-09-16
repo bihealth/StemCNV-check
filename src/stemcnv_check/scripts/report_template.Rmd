@@ -536,6 +536,10 @@ cat('## de-novo CNV calls {.tabset .tabset-pills}\n\n')
 paste(
     'This section describes all de-novo CNV calls, meaning calls without a match in the reference sample.',
     'The table allows sorting and filtering the calls by various criteria, default is sorting by Check-Score.',
+    'The Check-Score is described on our upcoming manuscript and combines contributions from CNV size and copynumber ',
+    'as well as additions from annotation from overlapping ',
+    '<a href="https://bihealth.github.io/StemCNV-check/CNV-hotspots/index_1.html">stem cell hotspots</a>, ',
+    'cancer driver genes, predicted dosage sensitive genes and other gene annotations.\n\n',    
     'Hovering over the column headers gives explanations for each column and the "Column visibility" button can be',
     'used to change the default selection of visible columns.\n\n',
     'The section immediately below the table contains details for each CNV call, including a plot of the CNV region,',
@@ -696,6 +700,8 @@ paste0(
         ),\(x, name) str_glue(' - {name}: {x}')
         ), collapse = '\n\n'
     ),
+    '\n\nA complete, up-to-date list of all stem cell SNV hotspots is also available ',
+    '<a href="https://bihealth.github.io/StemCNV-check/SNV-hotspots/index_1.html">online</a>.',
     '\n\nThe table allows sorting and filtering the SNVs by various criteria, default is sorting by the `SNV Label`.',
     'Hovering over the column headers gives explanations for each column and the "Column visibility" button can be',
     'used to show (or hide) columns. Each SNV genotype (GT) is shown in vcf format: each allele is represented by a ',

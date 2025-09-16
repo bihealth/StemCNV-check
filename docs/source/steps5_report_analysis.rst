@@ -222,8 +222,7 @@ You can customize which columns are displayed using the **“Column visibility�
 
 Additional highlights include:
 
-- Stem cell hotspots, cancer-related, or dosage-sensitive genes overlapping a CNV are clearly marked to indicate potential biological impact.
-- CNVs overlapping defined ROI are labelled as “reportable”, based on their final Check-Score.
+- `Stem cell hotspots <https://bihealth.github.io/StemCNV-check/CNV-hotspots/index_1.html>`_, cancer-related, or dosage-sensitive genes overlapping a CNV are clearly marked to indicate potential biological impact.
 - Hovering over any column header displays a brief tooltip with a description of that column’s content.
 
 **Example:**
@@ -351,7 +350,8 @@ The table displays detailed information for each variant, including:
 - Chromosome location
 - Nucleotide change
 - Genotype (compared to the reference sample)
-- Overlap with hotspot genes or Regions of Interest (ROIs)
+- Overlap with `hotspot genes <https://bihealth.github.io/StemCNV-check/SNV-hotspots/index_1.html>`_ or 
+  sample specific regions of interest (ROIs)
 - Affected gene
 - Predicted impact on protein translation
 
