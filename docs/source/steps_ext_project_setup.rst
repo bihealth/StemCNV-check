@@ -28,7 +28,7 @@ The default config file (config.yaml) created by this commands defines all setti
 inherits other settings from the inbuilt default. By using the command line option ``--config-details`` an extended 
 config template containing more options can be generated. Possible parameters are ``medium``, ``advanced`` or ``complete``. 
 **Altering these advanced parameters is not recommend for standard use as they can change analysis outcome!**
-| The complete config is described in the :ref:`technical detail section <tech_config>`
+| The complete config is described in the :ref:`technical detail section <tech-config>`
   
 **Edit the config file** so that all entries marked as ``“#REQUIRED”`` are filled in.
   

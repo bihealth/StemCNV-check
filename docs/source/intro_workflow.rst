@@ -30,11 +30,11 @@ The main steps of the workflow are:
   - Result summary
   - Report generation 
 
-.. image:: _static/intro/workflow.png
+.. figure:: _static/intro/workflow.png
    :width: 600px
    :align: center
 
-    Simplified graphic overview of the StemCNV-check workflow for a single sample
+   Simplified graphic overview of the StemCNV-check workflow for a single sample
 
 The **raw data processing** step includes the conversion of raw idat files into the gtc format and then into vcf files.
 These vcf files are then extended with **SNP probe filters** to remove low quality probes and probes with known issues and 
