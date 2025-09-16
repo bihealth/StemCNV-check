@@ -222,7 +222,6 @@ test_that("Annotate CNV check scores", {
     CNV_single_copy_score <- function(len) { 0.333 * log(len) * log(len) - 15 }
     LOH_size_score <- function(len) { 0.275 * log(len) * log(len) - 15 }
     config$settings$CNV_processing$Check_score_values <- list(
-        'any_roi_hit' = 50,
         'any_other_gene' = 0.2,
         'single_copy_factor' = 0.333,
         'double_copy_factor' = 0.5,
@@ -276,16 +275,16 @@ test_that("Annotate CNV check scores", {
         mutate(
             # Test scenarios:
             Check_Score = c(
-                # ROI (50) + 1 other gene w/o hotspot 
-                CNV_single_copy_score(1501) + 50 + 0.2, 
+                # 1 other gene w/o hotspot 
+                CNV_single_copy_score(1501) + 0.2, 
                 # cancer gene (5)
                 CNV_single_copy_score(4001) + 5, 
                 # hotspot + dosage gene (30 & 7)
                 CNV_single_copy_score(10001) + 30 + 7,
                 # CN4, hotspot gene (15)
                 CNV_double_copy_score(55001) + 15, 
-                # ROI hit (50) + dosage gene (7)
-                CNV_single_copy_score(5001) + 50 + 7,
+                # dosage gene (7)
+                CNV_single_copy_score(5001) +  7,
                 # 2 hotspots (30 & 10) + 1 other gene
                 CNV_single_copy_score(10001) + 30 + 10 + 0.2,
                 # no genes

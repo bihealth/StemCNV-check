@@ -144,8 +144,7 @@ settings:
     Check_score_values:
       pHaplo_threshold: float_le1_ge0
       pTriplo_threshold: float_le1_ge0
-      dosage_sensitive_gene: float_ge0  
-      any_roi_hit: float_ge0
+      dosage_sensitive_gene: float_ge0
       any_other_gene: float_ge0
       single_copy_factor: float_ge0
       double_copy_factor: float_ge0

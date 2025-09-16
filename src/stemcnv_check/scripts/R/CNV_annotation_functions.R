@@ -158,9 +158,7 @@ annotate_cnv.check.score <- function(tb, stemcell_hotspots_gr, dosage_sensitive_
                     CNV_type %in% c('gain', 'loss')                       ~ cn1_3 * log(width) * log(width) - flat,
                     # LOH == CN2
                     CNV_type == 'LOH'                                     ~   cn2 * log(width) * log(width) - flat
-                ) + 
-                # Base score for any ROI hit
-                ifelse(!is.na(ROI_hits), check_scores$any_roi_hit, 0) +
+                ) +
                 # Scores for each hotspot hit/dosage gene/cancer gene (cumulative, even if its the same gene)
                 (stemcell_hotspots_gr %>% as_tibble() %>%
                     filter(hotspot %in% unlist(str_split(stemcell_hotspot, '\\|'))) %>%

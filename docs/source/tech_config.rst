@@ -323,8 +323,6 @@ These defaults will always be used if not changed in the config file used during
           dosage_sensitive_gene: 5
           # Genes without any score from the hotspot lists or dosage sensivity are scored as 'any_other_gene'
           any_other_gene: 0.2
-          # Calls overlapping any sample defined ROI get this one-time score
-          any_roi_hit: 50
           # These values determine how the base Check-Score is calculated from size & CN.
           # The formula used is: copy_factor * log(size) * log(size) - flat_decrease
           # The copy_factor changes based on the CN of the call (number of lost/gained copies)
