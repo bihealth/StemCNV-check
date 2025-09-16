@@ -22,6 +22,36 @@ If you need to shut down your computer but the workflow it is still running you 
 combination in the respective terminal window. On Linux this means "keyboard interrupt" and will instruct the workflow 
 to abort. The abortion process is not instantaneous and may take a few moments to stop all running processes.
 
+.. _issues-common-reruns:
+
+Old Reports are recreated on addition of new samples
+====================================================
+
+By using the rerun triggers from snakemake StemCNV-check will automatically rerun steps from existing analysis if the 
+settings or input files for any sample have changes. 
+If you observe unexpected or unwanted reruns of the ``SNV_analysis`` and ``knit_report`` steps after adding new 
+samples to an existing project, this is most likely caused by the availability of new samples with a matching ``Sample_Group`` 
+value for the SNP clustering analysis.
+
+To keep using s single StemCNV-check project, where new samples are continuously added, while also preventing the reruns 
+older sample data you can disable the default usage of the ``Sample_Group`` column for SNP clustering. In this case it is 
+also advisable to instead select a fixed set of samples (i.e. common reference lines) that will be added to the SNP 
+clustering analysis of every sample. This can be done by using the following config block (with adjusted sample names):
+
+.. code-block:: yaml
+
+    settings:
+      SNV_analysis:
+        SNP_clustering:
+        # Sample-IDs from the sample table, these will be added to the clustering of every sample
+        sample_ids: 
+            - Common_line_MB1
+            - General_Reference_Sample
+            - ...
+        # Column names of the sample table, Samples are used for clustering if they have the same value in any of these columns
+        match_columns: ['Chip_Name']
+
+
 .. _issues-common-memory:
 
 Unclear crashes & memory overload in a VM or WSL
