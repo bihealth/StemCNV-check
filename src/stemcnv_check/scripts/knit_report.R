@@ -46,6 +46,8 @@ rmarkdown::render(
         gtf_file = snakemake@params$gtf_file,
         ginfo_file = snakemake@params$ginfo_file,
         dosage_file = snakemake@params$dosage_file,
+        array_gaps_file = snakemake@params$array_gaps_file,
+        array_density_file = snakemake@params$array_density_file,
         version = snakemake@params$version,
         verbosity = config$verbose_level,
         log_dir = dirname(snakemake@log[['err']])

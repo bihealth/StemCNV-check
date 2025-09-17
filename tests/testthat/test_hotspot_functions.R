@@ -29,8 +29,7 @@ config <- list(
                 'whitelist_hotspot_genes' = FALSE,
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
                 'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
-            ),
-            'Check_score_values' = list('any_roi_hit' = 50)
+            )
         ),
         'vcf_output' = list(
             'chrom_style' = 'keep-original'
@@ -239,7 +238,7 @@ test_that('get_roi_tb', {
         hotspot = c('DDX11L1', '1q21.1', '1:1000-2000', 'dummyC'),
         mapping = c('gene_name', 'gband', 'position', 'gene_name'),
         call_type = 'any',
-        check_score = 50,
+        check_score = NA_integer_,
         description = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'),
         description_doi = NA_character_,
         description_htmllinks = c('ROI_1: DDX11L1', 'important: 1q21.1', 'edit site: 1:1000-2000', 'mygene: dummyC'), 

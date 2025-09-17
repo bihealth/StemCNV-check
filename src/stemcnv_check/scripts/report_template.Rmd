@@ -21,6 +21,8 @@ params:
   gtf_file: ''
   ginfo_file: ''
   dosage_file: ''
+  array_gaps_file: ''
+  array_density_file: ''
   version: 'unversioned'
   verbosity: 0
   log_dir: ''
@@ -610,13 +612,13 @@ fake_call_tb <- roi_gr %>%
     ) %>%
     select(-list_name, -mapping, -call_type, -description_doi, -check_score) %>%
     annotate_gaps(
-        fix_rel_filepath(config$array_definition[[array]]$array_gaps_file, config),
+        fix_rel_filepath(params$array_gaps_file, config),
         config$settings$CNV_processing$call_processing$min.perc.gap_area, 
         config$settings$CNV_processing$call_processing$gap_area.uniq_probes.rel,
         target_chrom_style
     ) %>%
     annotate_high_density(
-        fix_rel_filepath(config$array_definition[[array]]$array_density_file, config),
+        fix_rel_filepath(params$array_density_file, config),
         config$settings$CNV_processing$call_processing$density.quantile.cutoff,
         target_chrom_style
     ) %>%

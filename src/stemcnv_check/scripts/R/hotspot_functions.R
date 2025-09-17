@@ -354,7 +354,7 @@ get_roi_tb <- function(sample_id, sampletable, config) {
             TRUE ~ 'gene_name'
         ),
         call_type = 'any',
-        check_score = config$settings$CNV_processing$Check_score_values$any_roi_hit,
+        check_score = NA_integer_,
         description = str_extract(roi_regions, '^[^|]+\\|') %>% str_remove('\\|'),
         description_doi = NA_character_,
     ) %>%

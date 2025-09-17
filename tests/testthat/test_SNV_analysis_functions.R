@@ -47,8 +47,7 @@ config <- list(
                 'whitelist_hotspot_genes' = FALSE,
                 'stemcell_hotspot_list' = test_path('../data/minimal-hotspots.tsv'),
                 'cancer_gene_list' = test_path('../data/minimal-hotspots.tsv')
-            ),
-            'Check_score_values' = list('any_roi_hit' = 50)
+            )
         ),
         'vcf_output' = list(
             'chrom_style' = 'keep-original'

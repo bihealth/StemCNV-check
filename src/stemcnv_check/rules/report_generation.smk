@@ -133,6 +133,8 @@ rule knit_report:
         dosage_file=lambda wildcards: get_global_file(
             'dosage_scores', get_static_input('genome_version')(wildcards), config['global_settings'], config['cache_path']
         ),
+        array_gaps_file=get_static_input('array_gaps_file'),
+        array_density_file=get_static_input('array_density_file'),
     resources:
         runtime=get_tool_resource("knitr", "runtime"),
         mem_mb=get_tool_resource("knitr", "memory"),
