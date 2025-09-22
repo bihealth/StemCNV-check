@@ -4,6 +4,11 @@ Report interpretation
 ^^^^^^^^^^^^^^^^^^^^^
 
 These tutorial section enable users to navigate the html report assembled by StemCNV-check and interpret the results.
+For a better understanding we suggest the simultaneous reading of this tutorial and the example report |report_link|.
+
+.. |report_link| raw:: html
+
+    <a href="_static/BIHi001-B_MB01.StemCNV-check-report.html" target="_blank" rel="noopener noreferrer">provided here</a>
 
 **Generalities**
 
