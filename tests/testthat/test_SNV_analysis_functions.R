@@ -30,7 +30,7 @@ config <- list(
               include_all_ROI_overlaps = TRUE
             ),
             critical_SNV = list('hotspot-match'),
-            reportable_SNV = list('ROI-overlap', 'hotspot-gene', 'protein-ablation'),
+            reportable_SNV = list('hotspot-gene', 'protein-ablation'),
             protein_ablation_annotations = list(
                 Impact = list('HIGH'),
                 Annotation_regex = NULL
@@ -198,12 +198,12 @@ test_that('get_SNV_table', {
         mutate(
             ref_GT = NA, # function will output logical NA vector
             ref_GenCall_Score = NA_real_,
-            SNV_category = c('ROI-overlap', 'ROI-overlap', 'hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
+            SNV_category = c('other', 'other', 'hotspot-gene', 'hotspot-gene', 'hotspot-match', 'hotspot-gene', 'hotspot-match') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = paste(
-                c('Reportable', 'Reportable', 'Reportable', 'Reportable', 'Critical', 'Reportable', 'Critical'),
-                'de-novo'
-            )%>%
+            SNV_label = c(
+                'de-novo SNV', 'de-novo SNV',
+                paste(c('Reportable', 'Reportable', 'Critical', 'Reportable', 'Critical'), 'de-novo')
+            ) %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
@@ -220,9 +220,9 @@ test_that('get_SNV_table', {
         mutate(
             ref_GT = NA, # function will output logical NA vector
             ref_GenCall_Score = NA_real_,
-            SNV_category = c(rep('other', 5), 'ROI-overlap', 'hotspot-gene') %>%
+            SNV_category = c(rep('other', 6), 'hotspot-gene') %>%
                 factor(levels = names(defined_labels$SNV_categories)),
-            SNV_label = c(rep('de-novo SNV', 5), 'Reportable de-novo', 'Reportable de-novo') %>%
+            SNV_label = c(rep('de-novo SNV', 6), 'Reportable de-novo') %>%
                 factor(levels = names(defined_labels$SNV_labels)),
         ) %>%
         arrange(SNV_label, SNV_category)
@@ -257,7 +257,7 @@ test_that('get_SNV_table', {
     
     # > changed critical_SNV <> reportable_SNV
     test_config <- config
-    test_config$settings$SNV_analysis$critical_SNV <- c('ROI-overlap', 'hotspot-match', 'hotspot-gene')
+    test_config$settings$SNV_analysis$critical_SNV <- c('hotspot-match', 'hotspot-gene')
     expected_tb <- sample_SNV_tb %>%
         dplyr::rename(Impact = Annotation_Impact) %>%
         select(all_of(outcols)) %>%

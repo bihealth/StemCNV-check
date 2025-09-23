@@ -653,7 +653,7 @@ SNV_table_output <- function (
             mutate(
                 CNV_type = 'any',
                 across(c(Chromosome, SNV_label, SNV_category, GT, ref_GT), as.factor),
-                across(c(ROI_hits, HGVS.p, gene_name, Impact, Annotation), \(col) {
+                across(c(HGVS.p, gene_name, Impact, Annotation), \(col) {
                     mappings <- highlight_mappings[[cur_column()]]
                     ifelse(
                         str_detect(SNV_category, mappings[[1]]) & SNV_category %in% highlight_category,
@@ -668,6 +668,19 @@ SNV_table_output <- function (
                         col
                     )
                 }),
+                # Always highlight ROI overlaps
+                ROI_hits = ifelse(
+                    !is.na(ROI_hits), 
+                    format_hotspots_to_badge(
+                        # Needed for Annotation and Impact; should not break anyhting?
+                        ROI_hits,
+                        CNV_type, 
+                        'red',
+                        highlight_mappings[['ROI_hits']][[2]],
+                        include_hover = highlight_mappings[['ROI_hits']][[3]]
+                    ),
+                    ROI_hits
+                )
             ) %>%
             select(
                 # 0-5

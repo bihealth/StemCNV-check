@@ -82,9 +82,6 @@ Each SNV is first assigned to a category based on annotation and overlap with hP
    * - SNV_category
      - Description
 
-   * - ROI-overlap
-     - SNV overlapping a sample specific regions of interest
-
    * - hotspot-match
      - SNV matching a known stem cell hotspot mutation (see also SNV hotspot coverage)
 

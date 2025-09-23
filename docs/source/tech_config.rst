@@ -352,7 +352,6 @@ These defaults will always be used if not changed in the config file used during
         # List of SNV categories that are considered critical or reportable.
         # Allowed values: {SNV_category_labels}
         critical_SNV:
-          - 'ROI-overlap'
           - 'hotspot-match'
         reportable_SNV:
           - 'hotspot-gene'

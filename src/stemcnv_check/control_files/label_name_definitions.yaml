@@ -29,7 +29,6 @@ vcf_filters:
 
 # Possible/Defined categories for SNVs, each category can be assigned as critical or reportable
 SNV_categories:
-    ROI-overlap: "SNV overlapping a sample specific regions of interest"
     hotspot-match: "SNV matching a known stemcell hotspot mutation (see also SNV hotspot coverage)"
     hotspot-gene: "SNV in a gene with known iPSC hotspots (see also SNV hotspot coverage)"
     protein-ablation: "SNV (likely) fully disrupting protein function (i.e. frameshift, stop gain, stop loss)"
