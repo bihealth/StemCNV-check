@@ -67,7 +67,7 @@ Information displayed is retrieved from “sample table” used as input for run
 
     The example above uses immediate parental control hPSC line as reference of sample analysed. 
     Additionally, for clones derived from gene editing a ROI containing the gene modified is indicated. 
-    Any CNV detected in the ROI will be reported by StemCNV-check.
+    Any CNV detected in the ROI will be marked respectively by StemCNV-check.
 
 
 

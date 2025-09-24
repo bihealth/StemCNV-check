@@ -166,7 +166,6 @@ get_SNV_table <- function(
         # Assign SNV categories & labels (see also: label_name_definitions.yaml)
         mutate(
             SNV_category = case_when(
-                !is.na(ROI_hits)                                               ~ 'ROI-overlap',
                 # SNV_hotspot_table$hotspot does NOT contain the "p." part of the HGVS.p notation
                 paste0(gene_name, '::', str_remove(HGVS.p, '^p.')) %in% 
                     SNV_hotspot_table$hotspot                                  ~ 'hotspot-match',

@@ -344,7 +344,6 @@ settings:
     critical_SNV:
       - 'hotspot-match'
     reportable_SNV:
-      - 'ROI-overlap'
       - 'hotspot-gene'
       - 'protein-ablation'
     # SNVs that can fully remove protein function are summarised in the "protein-ablation" category (generally HIGH impact)

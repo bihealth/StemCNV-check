@@ -426,7 +426,7 @@ test_that("SNV_table_output", {
           Annotation_regex = NULL,
           include_all_ROI_overlaps = TRUE
         ),
-        critical_SNV = list('ROI-overlap', 'hotspot-match'),
+        critical_SNV = list('hotspot-match'),
         reportable_SNV = list('hotspot-gene', 'protein-ablation', 'protein-changing'),
         protein_ablation_annotations = list(
             Impact = list('HIGH'),
@@ -470,8 +470,8 @@ test_that("SNV_table_output", {
             SNV_label = c('Reportable de-novo', 'Reportable de-novo', 'Critical de-novo', 'Reportable de-novo', 'Critical de-novo')
         ),
         SNV_table %>% mutate(
-            SNV_label = c('Unreliable critical/reportable', rep('Reportable de-novo', 4)),
-            SNV_category = c('ROI-overlap', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
+            SNV_label = c('de-novo SNV', rep('Reportable de-novo', 4)),
+            SNV_category = c('other', 'protein-ablation', 'protein-changing', 'protein-ablation', 'protein-changing'),
             ROI_hits = c('DDX11L1', rep(NA, 4))
         )
     ) %>%        
