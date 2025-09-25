@@ -2,8 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-Note: change log is only added with version 0.5.1
-
 ## [1.0.0] - TBD
 
 ### Added
@@ -14,8 +12,13 @@ Note: change log is only added with version 0.5.1
 
 ### Changed
 
-- SNV labels: ROI-overlap is now reportable (from critical)
+- SNV labels & categories: ROI-overlap is not considered anymore
+- ROI overlap does not affect check-score
 - Updated format and references for stem-cell hotspot lists (CNVs and SNVs)
+
+### Fixed
+
+- ROI section in report
 
 ## [0.5.4] - 2025-08-11
 
@@ -68,4 +71,4 @@ Note: change log is only added with version 0.5.1
 
 ## [0.5.0] and before
 
-TBD
+No changelog was kept before v0.5.1
