@@ -61,7 +61,7 @@ rule run_idat2gtc:
     input:
         bpm=get_static_input("bpm_manifest_file"),
         egt=get_static_input("egt_cluster_file"),
-        idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}", "*"),
+        idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}"),
     output:
         marker=os.path.join(DATAPATH,"gtc_{genome}","{sentrix_name}","_done"),
     resources:
@@ -75,13 +75,13 @@ rule run_idat2gtc:
         "../envs/gtc2vcf.yaml"
     shell:
         'bcftools plugin idat2gtc '
-        '-o "$(basename {output.marker})"'         
-        '-b "{input.bpm}" -e "{input.egt}" '        
+        '-o "$(dirname {output.marker})" '
+        '--bpm "{input.bpm}" --egt "{input.egt}" '        
         '--idats "{input.idat_path}" '
         '--preset 3 '
         '> {log.out} '
         '2> {log.err} '
-        '&& [ $(ls $(basename {output.marker})/*.gtc -l | wc -l) -ge 1 ] '
+        '&& [ $(ls $(dirname {output.marker})/*.gtc -l | wc -l) -ge 1 ] '
         '&& touch {output.marker} || exit 1'
 
 
