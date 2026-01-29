@@ -4,4 +4,4 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - bcftools-gtc2vcf-plugin = 1.16
+   - bcftools-gtc2vcf-plugin = 1.22

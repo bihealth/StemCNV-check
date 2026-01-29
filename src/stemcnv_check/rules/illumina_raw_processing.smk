@@ -3,58 +3,86 @@ import os
 localrules:
     relink_gencall,
 
-rule run_gencall:
+# rule run_gencall:
+#     input:
+#         bpm=get_static_input("bpm_manifest_file"),
+#         egt=get_static_input("egt_cluster_file"),
+#         idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}"),
+#     output:
+#         os.path.join(DATAPATH, "gtc_{genome}", "{sentrix_name}", "_done"),
+#     threads: get_tool_resource("GenCall", "threads")
+#     resources:
+#         runtime=get_tool_resource("GenCall", "runtime"),
+#         mem_mb=get_tool_resource("GenCall", "memory"),
+#         partition=get_tool_resource("GenCall", "partition"),
+#     params:
+#         options='--gender-estimate-call-rate-threshold -0.1',
+#         outpath=lambda wildcards: fix_container_path(
+#             os.path.join(DATAPATH, f"gtc_{wildcards.genome}", wildcards.sentrix_name), "data"
+#         ),
+#         bpm=lambda wildcards: fix_container_path(
+#             get_static_input("bpm_manifest_file")(wildcards),
+#             # The get_sample_info function requires the sample_id wildcard, also need to deal with likely duplicated Chip_Names
+#             set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
+#         ),
+#         egt=lambda wildcards: fix_container_path(
+#             get_static_input("egt_cluster_file")(wildcards),
+#             set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
+#         ),
+#         idat_path=lambda wildcards: fix_container_path(
+#             os.path.join(IDAT_INPUT, wildcards.sentrix_name), "rawdata"
+#         ),
+#         logerr=lambda wildcards: fix_container_path(
+#             os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.error.log"),
+#             "logs",
+#         ),
+#         logout=lambda wildcards: fix_container_path(
+#             os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.out.log"), "logs"
+#         ),
+#     log:
+#         err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.error.log"),
+#         out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.out.log"),
+#     container:
+#         # Not sure if we need to use a specific version here
+#         "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
+#     shell:
+#         '/usr/gitc/iaap/iaap-cli/iaap-cli gencall '
+#         '"{params.bpm}" "{params.egt}" "{params.outpath}" '
+#         '--idat-folder "{params.idat_path}" '
+#         '--output-gtc {params.options} '
+#         '-t {threads} '
+#         '> {params.logout} '
+#         '2> {params.logerr} '
+#         '&& [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] '
+#         '&& touch {params.outpath}/_done || exit 1'
+
+
+rule run_idat2gtc:
     input:
         bpm=get_static_input("bpm_manifest_file"),
         egt=get_static_input("egt_cluster_file"),
-        idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}"),
+        idat_path=os.path.join(IDAT_INPUT, "{sentrix_name}", "*"),
     output:
-        os.path.join(DATAPATH, "gtc_{genome}", "{sentrix_name}", "_done"),
-    threads: get_tool_resource("GenCall", "threads")
+        marker=os.path.join(DATAPATH,"gtc_{genome}","{sentrix_name}","_done"),
     resources:
-        runtime=get_tool_resource("GenCall", "runtime"),
-        mem_mb=get_tool_resource("GenCall", "memory"),
-        partition=get_tool_resource("GenCall", "partition"),
-    params:
-        options='--gender-estimate-call-rate-threshold -0.1',
-        outpath=lambda wildcards: fix_container_path(
-            os.path.join(DATAPATH, f"gtc_{wildcards.genome}", wildcards.sentrix_name), "data"
-        ),
-        bpm=lambda wildcards: fix_container_path(
-            get_static_input("bpm_manifest_file")(wildcards),
-            # The get_sample_info function requires the sample_id wildcard, also need to deal with likely duplicated Chip_Names
-            set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
-        ),
-        egt=lambda wildcards: fix_container_path(
-            get_static_input("egt_cluster_file")(wildcards),
-            set(sample_data_df.loc[sample_data_df['Chip_Name'] == wildcards.sentrix_name]['Array_Name'].values).pop()
-        ),
-        idat_path=lambda wildcards: fix_container_path(
-            os.path.join(IDAT_INPUT, wildcards.sentrix_name), "rawdata"
-        ),
-        logerr=lambda wildcards: fix_container_path(
-            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.error.log"),
-            "logs",
-        ),
-        logout=lambda wildcards: fix_container_path(
-            os.path.join(LOGPATH, "GenCall", wildcards.sentrix_name, f"{wildcards.genome}.out.log"), "logs"
-        ),
+        runtime=get_tool_resource("idat2gtc", "runtime"),
+        mem_mb=get_tool_resource("idat2gtc", "memory"),
+        partition=get_tool_resource("idat2gtc", "partition"),
     log:
-        err=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.error.log"),
-        out=os.path.join(LOGPATH, "GenCall", "{sentrix_name}", "{genome}.out.log"),
-    container:
-        # Not sure if we need to use a specific version here
-        "docker://us.gcr.io/broad-gotc-prod/illumina-iaap-autocall:1.0.2-1.1.0-1629910298"
+        err=os.path.join(LOGPATH, "idat2gtc", "{sentrix_name}", "{genome}.error.log"),
+        out=os.path.join(LOGPATH, "idat2gtc", "{sentrix_name}", "{genome}.out.log"),
+    conda:
+        "../envs/gtc2vcf.yaml"
     shell:
-        '/usr/gitc/iaap/iaap-cli/iaap-cli gencall '
-        '"{params.bpm}" "{params.egt}" "{params.outpath}" '
-        '--idat-folder "{params.idat_path}" '
-        '--output-gtc {params.options} '
-        '-t {threads} '
-        '> {params.logout} '
-        '2> {params.logerr} '
-        '&& [ $(ls {params.outpath}/*.gtc -l | wc -l) -ge 1 ] '
-        '&& touch {params.outpath}/_done || exit 1'
+        'bcftools plugin idat2gtc '
+        '-o "$(basename {output.marker})"'         
+        '-b "{input.bpm}" -e "{input.egt}" '        
+        '--idats "{input.idat_path}" '
+        '--preset 3 '
+        '> {log.out} '
+        '2> {log.err} '
+        '&& [ $(ls $(basename {output.marker})/*.gtc -l | wc -l) -ge 1 ] '
+        '&& touch {output.marker} || exit 1'
 
 
 # The iaap-cli will *always* generate filenames derived from the sentrix name & pos
