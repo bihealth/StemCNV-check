@@ -65,6 +65,11 @@ def check_sample_table(args):
     missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
     if missing_refs:
         raise SampleConstraintError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
+    # Give warning is sample is its own reference (Other cyclic references will be caught by snakemake)
+    self_ref = sample_data_df[sample_data_df['Reference_Sample'] == sample_data_df['Sample_ID']]['Sample_ID'].to_list()
+    if self_ref:
+        logging.error("The following samples are marked as their own reference: " + ', '.join(self_ref))
+        raise SampleConstraintError("The following samples are marked as their own reference: " + ', '.join(self_ref))
     # Give warning if sex of reference and sample don't match
     sex_mismatch = [
         f"{s} ({sex})" for s, sex in samples.items() if

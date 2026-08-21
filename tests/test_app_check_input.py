@@ -103,6 +103,11 @@ def test_check_sample_table(minimal_config_block, fs):
     with pytest.raises(SampleConstraintError):
         check_sample_table(args)
 
+    # - self ref
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample3\t\t\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table(args)
+
     # - ref sex mismatch
     sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
