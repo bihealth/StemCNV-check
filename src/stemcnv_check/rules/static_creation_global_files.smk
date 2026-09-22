@@ -60,9 +60,15 @@ rule ucsc_goldenpath_download:
         temp("{DOWNLOAD_DIR}/{genome}.{filename}.txt"),
     wildcard_constraints:
         genome="hg19|hg38",
+    resources:
+        n=lambda wildcards, attempt: attempt
+    retries: 3
     shell:
         """
-        wget 'https://hgdownload.cse.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz' -O {output}.gz 2> /dev/null
+        mirrors=("0dummy" "hgdownload.cse" "hgdownload.soe" "hgdownload.gi" "hgdownload2.gi")
+        echo "Downloading from: ${{mirrors[{resources.n}]}}.ucsc.edu"
+        echo "rsync -avzP rsync://${{mirrors[{resources.n}]}}.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz {output}.gz"
+        rsync -avzP "rsync://${{mirrors[{resources.n}]}}.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz" {output}.gz # 2> /dev/null
         gunzip {output}.gz
         """
 
