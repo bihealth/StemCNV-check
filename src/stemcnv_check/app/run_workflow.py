@@ -1,11 +1,15 @@
 import importlib.resources
 import os
 import ruamel.yaml as ruamel_yaml
+import sys
 
-from snakemake.cli import main
+from snakemake import cli as snake_cli
+from snakemake import logging as snake_logging
+from snakemake.exceptions import CyclicGraphException
 from loguru import logger as logging
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.helpers import load_config, make_apptainer_args, get_cache_dir, get_cache_array_definition
+from stemcnv_check.exceptions import SampleConstraintError
 
 def run_stemcnv_check_workflow(args, is_wsl):
 
@@ -65,4 +69,18 @@ def run_stemcnv_check_workflow(args, is_wsl):
         argv += args.snake_options
 
     logging.debug(f"Running snakemake with this command:\nsnakemake{' '.join(argv)}")
-    return main(argv)
+    snake_logging.setup_logger()
+    try:
+        parser, args = snake_cli.parse_args(argv)
+        success = snake_cli.args_to_api(args, parser)
+    except CyclicGraphException:
+        SampleConstraintError(
+            "Cyclic dependencies between Reference_Sample designations detected: "
+            "Please ensure that Reference_Sample annotations always result in strictly linear relations: "
+            "not allowed would be Sample1 has Sample2 as reference and Sample2 has Sample1."
+        )
+        success = False
+    except Exception as e:
+        snake_cli.print_exception(e)
+        sys.exit(1)
+    sys.exit(0 if success else 1)
