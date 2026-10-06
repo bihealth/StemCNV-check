@@ -251,7 +251,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
     # In all cases the file paths should be absolute,
     # otherwise reusing that global config part from another path would break
     config_out['array_definition'][array_name] = {
-        entry: os.path.abspath(value) if entry.endswith('_file') else value
+        entry: os.path.abspath(value) if entry.endswith('_file') and value else value
         for entry, value in config_out['array_definition'][array_name].items()
     }
 

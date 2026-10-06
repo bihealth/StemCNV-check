@@ -55,27 +55,3 @@ def test_setup_files_config(mock_logging, sample_table_minimal, fs):
                 cache_path='/cache'
             )
         )
-
-
-    # with pytest.raises(FileNotFoundError) as e:
-    #     ret_val = main(['run'])
-    #     assert ret_val != 0
-    #
-    # with pytest.raises(SystemExit) as e:
-    #     main(["--help"])
-    #     assert e.value.code == 0
-    #
-    # fs.create_file(
-    #     'sample_table.tsv',
-    #     contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'
-    #              'default\tSample1\t123456789000\tR01C03\tM\t\t\t\n'
-    # )
-    # fs.create_file('config.yaml', contents='array_definition: {"default" : {}}\n')
-    # fs.create_dir('rundirectory')
-    # default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
-    # allowed_values = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'allowedvalues_config.yaml')
-    # fs.add_real_file(default_config, read_only=True)
-    # fs.add_real_file(allowed_values, read_only=True)
-    #
-    # ret_val = main(['run'])
-    # assert ret_val == 0
