@@ -176,7 +176,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             conda_prefix=cache_path,
                             apptainer_prefix=cache_path,
                             apptainer_args=helpers.make_apptainer_args(
-                                config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points
+                                config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points, sampletable=sample_data_df
                             ),
                         ),
                     )
@@ -217,7 +217,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                     conda_prefix=cache_path,
                     apptainer_prefix=cache_path,
                     apptainer_args=helpers.make_apptainer_args(
-                        config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points
+                        config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points, sampletable=sample_data_df
                     ),
                 )
             )

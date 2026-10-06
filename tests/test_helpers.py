@@ -124,7 +124,7 @@ def test_read_sample_table(sample_table_minimal, sample_table_missing, sample_ta
 
 
 @patch('stemcnv_check.helpers.importlib.resources.files')
-def test_make_singularity_args(mock_resource_files, fs):
+def test_make_singularity_args(mock_resource_files, sample_table_minimal, fs):
     mock_resource_files.return_value = '/fake/snakedir'
     cache_path = '/path/to/cache'
     config = {
@@ -250,13 +250,21 @@ def test_make_singularity_args(mock_resource_files, fs):
         if not os.path.exists(static_file):
             fs.create_file(static_file)
         expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
-        static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
-        expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
+        if global_file != 'dosage_scores':  # independent on genome version
+            static_file = helpers.get_global_file(global_file, 'hg19', config['global_settings'], cache_path)
+            expected_extra += [f"'{static_file}':'/outside/static/{os.path.basename(static_file)}'"]
     expected_extra += [
         "'/relative_array/bpm_manifest.bpm':'/outside/ExampleArray/bpm_manifest.bpm'",
         f"'{cache_path}/array_definitions/ExampleArray/PennCNV-PFB_hg19.pfb':'/outside/ExampleArray/PennCNV-PFB_hg19.pfb'"
     ]
     assert get_expected(expected_extra) == helpers.make_apptainer_args(config, cache_path)
+
+    # Test omission of additional arrays when not included in the sampletable
+    fs.create_file('sample_table_minimal.tsv', contents=sample_table_minimal)
+    sampletable = helpers.read_sample_table('sample_table_minimal.tsv')
+    expected_hg19 = [e for e in expected_extra if '38' not in e]
+    assert get_expected(expected_hg19) == helpers.make_apptainer_args(config, cache_path, sampletable=sampletable)
+
 
 @pytest.fixture
 def user_config():
