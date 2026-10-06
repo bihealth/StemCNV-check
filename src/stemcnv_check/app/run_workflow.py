@@ -5,18 +5,19 @@ import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main
 from loguru import logger as logging
 from stemcnv_check import STEM_CNV_CHECK
-from stemcnv_check.helpers import load_config, make_apptainer_args, get_cache_dir, get_cache_array_definition
+from stemcnv_check.helpers import load_config, read_sample_table, make_apptainer_args, get_cache_dir, get_cache_array_definition
 
 def run_stemcnv_check_workflow(args, is_wsl):
 
     config = load_config(args)
     cache_path = get_cache_dir(args, config)
+    sampletable = read_sample_table(args.sample_table, args.column_remove_regex)
 
     argv = [
         "-s", str(importlib.resources.files(STEM_CNV_CHECK).joinpath('rules', 'StemCNV-check.smk')),
         "--printshellcmds", "--rerun-incomplete",
         "--sdm", "conda", "apptainer",
-        "--apptainer-args", make_apptainer_args(config, cache_path, extra_bind_args=args.bind_points),
+        "--apptainer-args", make_apptainer_args(config, cache_path, extra_bind_args=args.bind_points, sampletable=sampletable),
         ]
     if args.directory:
         argv += ["--directory", args.directory]
