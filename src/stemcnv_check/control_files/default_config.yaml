@@ -9,6 +9,8 @@
 #   will instead be written to a local file, i.e. 'ExampleArray_config.yaml' in the current working directory. 
 #   In this case you will need to copy the contents of that file into this one, or alternatively into a global array 
 #   definition file, that can still be created.
+# If a global config already exists and defines all required arrays, them this section can be fully omitted or
+# defined as `array_definition: {}`
 array_definition: {} ###!strip:4
 #!  # This 'ExampleArray' *should* to be renamed to the actual array name
 #!  ExampleArray:  
@@ -242,7 +244,9 @@ settings:
     density.windows: 100000    #window size for probe density calculation (100kb)
     min.gap.size: 'auto-array' #minimum distance between 2 probes to be considered a gap. Number or 'auto-array'
 
+##!medium
   CNV_processing:
+##!advanced
     call_processing:
       # SNP probe counts may change with merging of calls from different tools
       # therefore a single probe_filter_settings needs to be used as reference here
