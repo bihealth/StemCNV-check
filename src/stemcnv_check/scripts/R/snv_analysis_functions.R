@@ -16,13 +16,22 @@ get_sample_SNV_tb <- function(
     #Note: can we get rsIDs from here also? (they are not consistently used as SNP probe IDs)
     meahri_ann_header <- c(
         'Allele', 'Annotation', 'Annotation_Impact', 'gene_name', 'gene_id', 'Feature_Type', "Feature_ID",
-        'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',        
+        'Transcript_BioType', 'Rank', 'HGVS.g', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',
         # cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length |
         'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
     )
     sample_SNV_tb <- sample_gr %>%
         annotate_roi(roi_tb, gr_genes, gr_info, config) %>%
-        as_tibble() %>%
+        as_tibble()
+    ann_field_counts <- str_count(sample_SNV_tb$ANN, '\\|') %>%
+        na.omit()
+    if (!all(ann_field_counts + 1 == length(meahri_ann_header))) {
+        stop(paste0(
+            'Mehari ANN string does not always conatin the expected number (', length(meahri_ann_header),
+            ') of | separated fields. This invalidates SNP annotations.'
+        ))
+    }
+    sample_SNV_tb <- sample_SNV_tb %>%
         separate(ANN, sep = '\\|', into = meahri_ann_header) %>%
         dplyr::rename(
             GenCall_Score = IGC,
