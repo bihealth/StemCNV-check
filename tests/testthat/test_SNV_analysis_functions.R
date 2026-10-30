@@ -106,6 +106,13 @@ test_that('get_sample_SNV_tb', {
     # test with ROI(s)
     get_sample_SNV_tb(sample_SNP_gr, roi_tb, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config) %>%
         expect_equal(sample_SNV_tb_roi)
+
+    # Test error/stop if ANN string has unexpected number of fields
+    sample_SNP_gr$ANN <- str_replace(sample_SNP_gr$ANN, '\\|\\|', '|||')
+    expect_error(
+        get_sample_SNV_tb(sample_SNP_gr, empty_roi_tb, SNV_hotspot_table, gtf_file, ginfo_file, target_chrom_style, config),
+        "Mehari ANN string does not always conatin the expected number (18) of | separated fields. This invalidates SNP annotations."
+    )
 })
 
 

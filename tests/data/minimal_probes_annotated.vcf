@@ -1,6 +1,6 @@
 ##fileformat=VCFv4.2
 ##INFO=<ID=GenTrain_Score,Number=.,Type=Float,Description="The SNP cluster quality from the GenTrain clustering algorithm">
-##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | Strand | ERRORS / WARNINGS / INFO'">
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | | HGVS.g | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | Strand | ERRORS / WARNINGS / INFO'">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=IGC,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=LRR,Number=1,Type=Float,Description="Log R Ratio">
@@ -32,12 +32,12 @@ chr1	3000	.	G	A	.	PASS	GenTrain_Score=0.8	GT:IGC:LRR:BAF	0/1:0.8:0.85:0.33
 chr1	3250	.	A	C	.	PASS	GenTrain_Score=0.8	GT:IGC:LRR:BAF	0/1:0.8:0.82:1
 chr1	3500	.	T	G	.	PASS	GenTrain_Score=0.8	GT:IGC:LRR:BAF	0/1:0.8:0.8:1
 chr1	3500	DUP	T	G	.	PASS	GenTrain_Score=0.9	GT:IGC:LRR:BAF	0/1:0.9:1.15:0.67
-chr1	3750	.	G	A	.	PASS	GenTrain_Score=0.8;ANN=A|upstream_gene_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|||||||-50|1|	GT:IGC:LRR:BAF	0/1:0.8:0.87:1
-chr1	3999	.	C	T	.	PASS	ANN=T|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1|n.12C>A||12/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.8:0.88:0.67
-chr1	4400	.	T	G	.	PASS	ANN=G|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1|n.23T>G||23/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.8:1.17:1
-chr1	4650	.	G	A	.	PASS	ANN=A|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1|n.34G>A||34/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.5:0.89:0.67
-chr1	4900	.	A	C	.	PASS	ANN=C|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1|n.45A>C||45/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.5:0.89:0.33
-chr1	5150	.	T	G	.	PASS	ANN=A|downstream_gene_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|||||||-50|1|	GT:IGC:LRR:BAF	0/1:0.8:1.19:0
+chr1	3750	.	G	A	.	PASS	GenTrain_Score=0.8;ANN=A|upstream_gene_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding||||||||-50|1|	GT:IGC:LRR:BAF	0/1:0.8:0.87:1
+chr1	3999	.	C	T	.	PASS	ANN=T|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1||n.12C>A||12/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.8:0.88:0.67
+chr1	4400	.	T	G	.	PASS	ANN=G|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1||n.23T>G||23/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.8:1.17:1
+chr1	4650	.	G	A	.	PASS	ANN=A|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1||n.34G>A||34/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.5:0.89:0.67
+chr1	4900	.	A	C	.	PASS	ANN=C|non_coding_transcript_exon_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding|1/1||n.45A>C||45/100|||0|1|	GT:IGC:LRR:BAF	0/1:0.5:0.89:0.33
+chr1	5150	.	T	G	.	PASS	ANN=A|downstream_gene_variant|MODIFIER|dummy_1|HGNC:123|transcript|ENST00000123456|Noncoding||||||||-50|1|	GT:IGC:LRR:BAF	0/1:0.8:1.19:0
 chr1	5399	.	G	A	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:1:0
 chr1	6000	.	A	C	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:2:1
 chr1	6250	.	C	T	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:1:0
@@ -59,10 +59,10 @@ chr1	9700	.	A	C	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-0.88:0
 chr1	9800	.	C	T	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-0.69:1
 chr1	9900	.	T	G	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.08:0
 chr1	9999	.	G	A	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.22:1
-chr1	21999	dummyX	C	T	.	PASS	ANN=T|missense_variant|MODERATE|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2|c.50C>T|p.Pro5Leu|75/1500|15/999|5/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
-chr1	25000	dummy2	T	G	.	PASS	ANN=G|intron_variant|MODIFIER|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2|c.72+1737T>G|p.?||||1737|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
-chr1	30000	dummy3	G	A	.	PASS	ANN=A|stop_gained|HIGH|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|2/2|c.800G>A|p.Pro100Leu|800/1500|302/999|100/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
-chr1	40000	dummy4	A	C	.	PASS	ANN=C|missense_variant|MODERATE|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2|c.1200A>C|p.Pro200Glu|1200/1500|601/999|200/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
+chr1	21999	dummyX	C	T	.	PASS	ANN=T|missense_variant|MODERATE|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2||c.50C>T|p.Pro5Leu|75/1500|15/999|5/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
+chr1	25000	dummy2	T	G	.	PASS	ANN=G|intron_variant|MODIFIER|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2||c.72+1737T>G|p.?||||1737|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
+chr1	30000	dummy3	G	A	.	PASS	ANN=A|stop_gained|HIGH|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|2/2||c.800G>A|p.Pro100Leu|800/1500|302/999|100/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
+chr1	40000	dummy4	A	C	.	PASS	ANN=C|missense_variant|MODERATE|dummy_2.1|HGNC:234|transcript|ENST00000654321|Coding|1/2||c.1200A>C|p.Pro200Glu|1200/1500|601/999|200/333|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
 chr1	52000	dummy5	T	G	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
 chr1	62000	dummy6	G	A	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
 chr1	72000	dummy7	A	C	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.25:1
@@ -77,8 +77,8 @@ chr1	130000	.	A	C	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-1.52:1
 chr1	132500	.	C	T	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-2.79:0
 chr1	135000	.	T	G	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-2.66:1
 chr1	137500	.	G	A	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-2.95:1
-chr1	139999	.	A	AC	.	PASS	ANN=AC|frameshift_variant|HIGH|dummy_hotspot|HGNC:345|transcript|ENST00000654456|Coding||c.100dup|p.LeuAlafsTer23|800/1000|61/333|20/111|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-2.35:0
-chr1	140000	.	C	T	.	PASS	ANN=T|missense_variant|MODERATE|dummy_hotspot|HGNC:345|transcript|ENST00000654456|Coding||c.101C>T|p.Leu20Val|801/1000|62/333|20/111|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-0.74:1
+chr1	139999	.	A	AC	.	PASS	ANN=AC|frameshift_variant|HIGH|dummy_hotspot|HGNC:345|transcript|ENST00000654456|Coding|||c.100dup|p.LeuAlafsTer23|800/1000|61/333|20/111|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-2.35:0
+chr1	140000	.	C	T	.	PASS	ANN=T|missense_variant|MODERATE|dummy_hotspot|HGNC:345|transcript|ENST00000654456|Coding|||c.101C>T|p.Leu20Val|801/1000|62/333|20/111|0|1|	GT:IGC:LRR:BAF	0/1:0.8:-0.74:1
 chr1	142500	.	T	G	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-0.84:0
 chr1	145000	.	G	A	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-0.96:0
 chr1	147500	.	A	C	.	PASS	.	GT:IGC:LRR:BAF	0/1:0.8:-0.63:1
