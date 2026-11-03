@@ -89,15 +89,15 @@ def check_sample_table(args: Namespace):
             logging.error("The following samples are marked as their own reference: " + ', '.join(self_refs))
         if cycles:
             logging.error("The following sample chains result in cyclic references: " + '; '.join(cycles))
-        raise SampleConstraintError("The following samples are marked as their own reference: " + ', '.join(samples))
-    # Give warning if sex of reference and sample don't match
+        raise SampleConstraintError("The following samples are involved with cyclic dependencies: " + ', '.join(samples))
+    # Check if sex of reference and sample match
     sex_mismatch = [
         f"{s} ({sex})" for s, sex in samples.items() if
             sample_data_df.loc[s]['Reference_Sample'] and
             sex[0].lower() != samples[sample_data_df.loc[s]['Reference_Sample']][0].lower()
     ]
     if sex_mismatch:
-        logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+        # logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 
     # This includes the global array definition config
