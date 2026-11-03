@@ -27,7 +27,7 @@ get_sample_SNV_tb <- function(
         na.omit()
     if (!all(ann_field_counts + 1 == length(meahri_ann_header))) {
         stop(paste0(
-            'Mehari ANN string does not always conatin the expected number (', length(meahri_ann_header),
+            'Mehari ANN string does not always contain the expected number (', length(meahri_ann_header),
             ') of | separated fields. This invalidates SNP annotations.'
         ))
     }
