@@ -1,10 +1,11 @@
+import pandas as pd
 import pytest
 import importlib.resources
 import textwrap
 import ruamel.yaml as ruamel_yaml
 from copy import deepcopy
 from unittest.mock import MagicMock
-from src.stemcnv_check.app.check_input import check_config, check_sample_table
+from src.stemcnv_check.app.check_input import check_config, check_sample_table, find_reference_cycles
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.exceptions import ConfigValueError, SampleFormattingError, SampleConstraintError
 
@@ -60,8 +61,42 @@ def prepare_fakefs_config(default_config, update_block, fs):
             fs.create_file(file)
 
 
-def test_check_sample_table(minimal_config_block, fs):
+def test_find_reference_cycles():
+    # All good
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['', 'A', '', 'C']
+    })
+    assert find_reference_cycles(df) == set()
+    # Self reference
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['', 'A', '', 'D']
+    })
+    assert find_reference_cycles(df) == {'D'}
+    # A<>B
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['B', 'A', '', 'C']
+    })
+    assert find_reference_cycles(df) == {'A - B'}
+    # cycle
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['C', 'A', 'B', 'C']
+    })
+    assert find_reference_cycles(df) == {'A - B - C'}
+    # multiple
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['B', 'A', 'C', 'D']
+    })
+    assert find_reference_cycles(df) == {'A - B', 'C', 'D'}
 
+
+def test_check_sample_table(minimal_config_block, fs, caplog):
+
+    caplog.set_level('ERROR')
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(default_config, read_only=True)
 
@@ -119,9 +154,19 @@ def test_check_sample_table(minimal_config_block, fs):
         check_sample_table(args)
 
     # - array name not in config
-    sampletable.set_contents(base_sample_table + 'undefined\tSample3\tChipName\tR01C03\tm\tSample1\t\t\n')
+    sampletable.set_contents(base_sample_table + 'undefined\tSample3\t123456789000\tR01C03\tm\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table(args)
+
+    # cycle & self-ref
+    caplog.clear()
+    sampletable.set_contents(base_sample_table.replace('\t\t\t', '\tSample2\t\t') + 'default\tSample3\t123456789000\tR01C03\tm\tSample3\t\t\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table(args)
+    assert caplog.messages == [
+        'The following samples are marked as their own reference: Sample3',
+        'The following sample chains result in cyclic references: Sample1 - Sample2'
+    ]
 
     # - different array names for one chip_name
     testconfig['array_definition']['default2'] = dict()

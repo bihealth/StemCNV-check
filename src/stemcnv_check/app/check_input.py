@@ -1,7 +1,9 @@
+from argparse import Namespace
 import importlib.resources
 import os
 import re
 import ruamel.yaml as ruamel_yaml
+import pandas as pd
 
 from collections import defaultdict
 from collections.abc import MutableMapping
@@ -26,10 +28,22 @@ def flatten(dictionary, parent_key='', separator=':'):
 # FIXME: scheme validation of hotspot tables!
 # > maybe best to do via snakemake json config?
 
+def find_reference_cycles(df: pd.DataFrame) -> set[str]:
+    # linear A<-B<-C -> {}; A->A -> {'A'}; A<->B (+C->A) -> {'A-B'}; A->B->C->A -> {'A-B-C'}
+    refs = {s: r for s, r in zip(df['Sample_ID'], df['Reference_Sample']) if isinstance(r, str) and r}
+    cyclic = set()
+    for start in refs:
+        chain, cur = [], start
+        while cur in refs and cur not in chain:
+            chain.append(cur); cur = refs[cur]
+        if cur in chain:
+            cyclic.add(' - '.join(sorted(chain[chain.index(cur):])))
+    return cyclic
+
 
 ### Sanity checks ###
 @logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError, ConfigValueError), reraise=True)
-def check_sample_table(args):
+def check_sample_table(args: Namespace):
 
     sample_table_file = args.sample_table
     config_file = args.config
@@ -65,11 +79,17 @@ def check_sample_table(args):
     missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
     if missing_refs:
         raise SampleConstraintError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
-    # Give warning is sample is its own reference (Other cyclic references will be caught by snakemake)
-    self_ref = sample_data_df[sample_data_df['Reference_Sample'] == sample_data_df['Sample_ID']]['Sample_ID'].to_list()
-    if self_ref:
-        logging.error("The following samples are marked as their own reference: " + ', '.join(self_ref))
-        raise SampleConstraintError("The following samples are marked as their own reference: " + ', '.join(self_ref))
+    # Check for cyclic reference definitions (incl self references)
+    cycles = find_reference_cycles(sample_data_df)
+    if cycles:
+        self_refs = {i for i in cycles if ' - ' not in i}
+        cycles -= self_refs
+        samples = sorted(s for cyc in cycles for s in cyc.split(' - '))
+        if self_refs:
+            logging.error("The following samples are marked as their own reference: " + ', '.join(self_refs))
+        if cycles:
+            logging.error("The following sample chains result in cyclic references: " + '; '.join(cycles))
+        raise SampleConstraintError("The following samples are marked as their own reference: " + ', '.join(samples))
     # Give warning if sex of reference and sample don't match
     sex_mismatch = [
         f"{s} ({sex})" for s, sex in samples.items() if
@@ -121,7 +141,7 @@ def check_sample_table(args):
 
 
 @logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
-def check_config(args, minimal_entries_only=False):
+def check_config(args: Namespace, minimal_entries_only: bool = False):
 
     config_file = args.config
     sample_table_file = args.sample_table
