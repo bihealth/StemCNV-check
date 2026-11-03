@@ -160,10 +160,18 @@ def check_config(args: Namespace, minimal_entries_only: bool = False):
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('allowedvalues_config.yaml').open() as f:
         allowed_values = yaml.load(f)
 
+    sampletable_df = helpers.read_sample_table(sample_table_file, args.column_remove_regex)
+
     ## Check required entries
 
     # Files: static-data/*
+    check_arrays = set(sampletable_df['Array_Name'].values)
     for array in config['array_definition'].keys():
+        if array not in sampletable_df['Array_Name'].values:
+            logging.info(f"Skipping checks for unused Array: {array}")
+            continue
+        else:
+            check_arrays -= {array}
         for req in allowed_values['array_definition']['__array'].keys():
             if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
                 infostr = "\nYou can create it by running `stemcnv-check make-staticdata`"
@@ -224,6 +232,8 @@ def check_config(args: Namespace, minimal_entries_only: bool = False):
                     f"for '{genome_version}' genome.\n"
                     f"Illumina manifest files for {genome_version} should end in '{expected_pattern[0:2]}'."
                 )
+    if check_arrays:
+        raise ConfigValueError(f'Missing array definition block for these Arrays referenced in the sample table: {", ".join(check_arrays)}')
 
     # Folders: log, data, raw-input
     # and other settings
@@ -269,7 +279,7 @@ def check_config(args: Namespace, minimal_entries_only: bool = False):
     defined_CNV_categories = set(
         helpers.config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
     )
-    defined_sampletable_cols = helpers.read_sample_table(sample_table_file, args.column_remove_regex).columns
+    defined_sampletable_cols = sampletable_df.columns
 
     check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
     check_functions['labels'] = lambda x, v: x in defined_label_names[v]
