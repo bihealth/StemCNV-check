@@ -31,7 +31,7 @@ minimal_hotspots_positions <- minimal_hotspots %>%
 
 meahri_ann_header <- c(
     'Allele', 'Annotation', 'Annotation_Impact', 'gene_name', 'gene_id', 'Feature_Type', "Feature_ID",
-    'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',        
+    'Transcript_BioType', 'Rank', 'HGVS.g', 'HGVS.c', 'HGVS.p', 'cDNA.pos', 'CDS.pos', 'AA.pos',
     # cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length |
     'Distance', 'Strand', 'errors' # ERRORS / WARNINGS / INFO
 )
@@ -55,6 +55,7 @@ sample_SNV_tb <- suppressMessages(read_tsv(test_path('../data/minimal_probes_ann
     separate(annot_sample, into = c('GT', 'IGC', 'LRR', 'BAF'), sep = ':') %>%
     mutate(
         ANN = str_replace(ANN, '^ANN=', ''),
+        ANN = ifelse(ANN=="", NA_character_, ANN),
         GenTrain_Score = str_replace(GenTrain_Score, '^GenTrain_Score=', '') %>% as.numeric(),
         GT = ifelse(GT == '.', './.', GT),
         across(c(ID, QUAL), ~ifelse(. == '.', NA_character_, .))

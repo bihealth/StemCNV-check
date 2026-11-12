@@ -8,6 +8,7 @@ from stemcnv_check import STEM_CNV_CHECK, ENSEMBL_RELEASE, MEHARI_DB_VERSION
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
 GENOME = config["genome"]
 ARRAY = config["array_name"]
+LOGPATH = config["log_path"]
 # ================================================================
 
 
@@ -41,9 +42,14 @@ rule create_pfb_from_vcf:
         config["penncnv_pfb_file"],
     conda:
         "../envs/general-R.yaml"
+    log:
+       os.path.join(LOGPATH, "array_definitions", ARRAY, "create_pfb_from_vcf.log")
     shell:
         """
 Rscript - << 'EOF'
+log <- file(snakemake@log, 'wt')
+sink(log, append = T)
+sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
 suppressMessages(library(vcfR))
 suppressMessages(library(GenomeInfoDb))
@@ -92,14 +98,16 @@ rule create_gcmodel_file:
         output_path=fix_container_path(config["penncnv_GCmodel_file"], ARRAY, "penncnv_GCmodel_file"),
     container:
         "docker://genomicslab/penncnv"
+    log:
+       os.path.join(LOGPATH, "array_definitions", ARRAY, "create_gcmodel_file.log")
     shell:
         """
         if [[ -f /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt ]]; then
             ln -s /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt {params.download_path}/{GENOME}.gc5Base.txt
         else
-            gunzip -c /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 
+            gunzip -c /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 2> {log}
         fi
-        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {params.input_path} -out {params.output_path}
+        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {params.input_path} -out {params.output_path} 2> {log}
         """
 
 
@@ -116,9 +124,14 @@ rule create_array_info_files:
         genome=config["genome"],
     conda:
         "../envs/general-R.yaml"
+    log:
+       os.path.join(LOGPATH, "array_definitions", ARRAY, "create_array_info_files.log")
     shell:
         """
 Rscript - << 'EOF'
+log <- file(snakemake@log, 'wt')
+sink(log, append = T)
+sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
 suppressMessages(library(plyranges))
 suppressMessages(library(GenomeInfoDb))

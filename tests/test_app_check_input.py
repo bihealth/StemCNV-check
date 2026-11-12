@@ -1,10 +1,11 @@
+import pandas as pd
 import pytest
 import importlib.resources
 import textwrap
 import ruamel.yaml as ruamel_yaml
 from copy import deepcopy
 from unittest.mock import MagicMock
-from src.stemcnv_check.app.check_input import check_config, check_sample_table
+from src.stemcnv_check.app.check_input import check_config, check_sample_table, find_reference_cycles
 from stemcnv_check import STEM_CNV_CHECK
 from stemcnv_check.exceptions import ConfigValueError, SampleFormattingError, SampleConstraintError
 
@@ -60,8 +61,42 @@ def prepare_fakefs_config(default_config, update_block, fs):
             fs.create_file(file)
 
 
-def test_check_sample_table(minimal_config_block, fs):
+def test_find_reference_cycles():
+    # All good
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['', 'A', '', 'C']
+    })
+    assert find_reference_cycles(df) == set()
+    # Self reference
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['', 'A', '', 'D']
+    })
+    assert find_reference_cycles(df) == {'D'}
+    # A<>B
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['B', 'A', '', 'C']
+    })
+    assert find_reference_cycles(df) == {'A - B'}
+    # cycle
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['C', 'A', 'B', 'C']
+    })
+    assert find_reference_cycles(df) == {'A - B - C'}
+    # multiple
+    df = pd.DataFrame({
+        "Sample_ID": ['A', 'B', 'C', 'D'],
+        "Reference_Sample": ['B', 'A', 'C', 'D']
+    })
+    assert find_reference_cycles(df) == {'A - B', 'C', 'D'}
 
+
+def test_check_sample_table(minimal_config_block, fs, caplog):
+
+    caplog.set_level('ERROR')
     default_config = importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files', 'default_config.yaml')
     fs.add_real_file(default_config, read_only=True)
 
@@ -103,6 +138,11 @@ def test_check_sample_table(minimal_config_block, fs):
     with pytest.raises(SampleConstraintError):
         check_sample_table(args)
 
+    # - self ref
+    sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample3\t\t\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table(args)
+
     # - ref sex mismatch
     sampletable.set_contents(base_sample_table + 'default\tSample3\t123456789000\tR01C03\tf\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
@@ -114,9 +154,19 @@ def test_check_sample_table(minimal_config_block, fs):
         check_sample_table(args)
 
     # - array name not in config
-    sampletable.set_contents(base_sample_table + 'undefined\tSample3\tChipName\tR01C03\tm\tSample1\t\t\n')
+    sampletable.set_contents(base_sample_table + 'undefined\tSample3\t123456789000\tR01C03\tm\tSample1\t\t\n')
     with pytest.raises(SampleConstraintError):
         check_sample_table(args)
+
+    # cycle & self-ref
+    caplog.clear()
+    sampletable.set_contents(base_sample_table.replace('\t\t\t', '\tSample2\t\t') + 'default\tSample3\t123456789000\tR01C03\tm\tSample3\t\t\n')
+    with pytest.raises(SampleConstraintError):
+        check_sample_table(args)
+    assert caplog.messages == [
+        'The following samples are marked as their own reference: Sample3',
+        'The following sample chains result in cyclic references: Sample1 - Sample2'
+    ]
 
     # - different array names for one chip_name
     testconfig['array_definition']['default2'] = dict()
@@ -140,11 +190,9 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
     fs.add_real_file(default_config, read_only=True)
     fs.add_real_file(allowed_values, read_only=True)
     fs.add_real_file(defined_labels, read_only=True)
-    fs.create_file(
-        'sample_table.tsv',
-        contents='Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'
-                 'default\nSample1\tChip1\t1\tM\tSample2\t\t\n'
-    )
+    sampletable_contents = 'Array_Name\tSample_ID\tChip_Name\tChip_Pos\tSex\tReference_Sample\tRegions_of_Interest\tSample_Group\n'\
+                           'default\tSample1\tChip1\t1\tM\tSample2\t\t\n'
+    sampletable = fs.create_file('sample_table.tsv', contents=sampletable_contents)
     fake_args = MagicMock(config='config.yaml', sample_table='sample_table.tsv', column_remove_regex=None)
     yaml = ruamel_yaml.YAML()
     testconfig = deepcopy(minimal_config_block)
@@ -155,15 +203,13 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
 
     # Error on missing config or sampletable file
     fake_args.config = 'non_existent_config.yaml'
-    with pytest.raises(FileNotFoundError) as error:
+    with pytest.raises(FileNotFoundError, match='non_existent_config.yaml'):
         check_config(fake_args)
-    assert 'non_existent_config.yaml' in str(error.value)
 
     fake_args.config = 'config.yaml'
     fake_args.sample_table = 'non_existent_sample_table.tsv'
-    with pytest.raises(FileNotFoundError) as error:
+    with pytest.raises(FileNotFoundError, match='non_existent_sample_table.tsv'):
         check_config(fake_args)
-    assert 'non_existent_sample_table.tsv' in str(error.value)
 
     fake_args.sample_table = 'sample_table.tsv'
 
@@ -180,6 +226,12 @@ def test_check_config(minimal_config_block, full_config_block, fs, caplog):
         for dirname in ('data_path', 'log_path', 'raw_data_folder')
     ]
     assert fs.isdir('data') and fs.isdir('logs') and fs.isdir('rawdata')
+
+    # Check for fail if Array from Sampletable is not defined
+    sampletable.set_contents(sampletable_contents.replace('default', 'example'))
+    with pytest.raises(ConfigValueError, match='Missing array definition block for these Arrays referenced in the sample table: example'):
+        check_config(fake_args, minimal_entries_only=True)
+    sampletable.set_contents(sampletable_contents)
 
     # Check for fail on missing required entries
     del testconfig['array_definition']['default']['egt_cluster_file']
@@ -275,15 +327,18 @@ def test_default_config(full_config_block, caplog, fs):
     fs.add_real_file(defined_labels, read_only=True)
     fs.add_real_file(sample_table, read_only=True)
 
-    prepare_fakefs_config(default_config, full_config_block, fs)
+    config = full_config_block.copy()
+    config['array_definition']['ExampleArray'] = config['array_definition']['default'].copy()
+    prepare_fakefs_config(default_config, config, fs)
     fake_args = MagicMock(config='config.yaml', sample_table=sample_table, column_remove_regex=None)
 
     #Ensure that only expected warnings on missing folders are raised
     check_config(fake_args)
     logrecords = caplog.records
-    assert len(logrecords) == 4
+    assert len(logrecords) == 5
     assert [rec.message for rec in logrecords] == [
         "No cache directory will be used, conda and docker images will be stored in snakemake project directory",
+        "Skipping checks for unused Array: default",
         "Entry for required setting 'data_path' is not an existing folder (data)! Creating it now.",
         "Entry for required setting 'log_path' is not an existing folder (logs)! Creating it now.",
         "Entry for required setting 'raw_data_folder' is not an existing folder (rawdata)! Creating it now."

@@ -83,7 +83,8 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             'global_settings': config['global_settings'],
                             'genome': genome_build,
                             'cache_path': cache_path,
-                            'TMPDIR': tmpdir
+                            'TMPDIR': tmpdir,
+                            'log_path': config['log_path'],
                         }
                     ),
                     deployment_settings=DeploymentSettings(
@@ -176,7 +177,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             conda_prefix=cache_path,
                             apptainer_prefix=cache_path,
                             apptainer_args=helpers.make_apptainer_args(
-                                config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points
+                                config, cache_path, not_existing_ok=True, extra_bind_args=args.bind_points, sampletable=sample_data_df
                             ),
                         ),
                     )
@@ -209,6 +210,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             'vcf_input_file': use_vcf,
                             'array_name': array_name,
                             'genomeInfo': helpers.get_global_file('genome_info', genome_build, config['global_settings'], cache_path),
+                            'log_path': config['log_path'],
                         }
                     )
                 ),
@@ -217,7 +219,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                     conda_prefix=cache_path,
                     apptainer_prefix=cache_path,
                     apptainer_args=helpers.make_apptainer_args(
-                        config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points
+                        config, cache_path, tmpdir=tmpdir, not_existing_ok=True, extra_bind_args=args.bind_points, sampletable=sample_data_df
                     ),
                 )
             )
@@ -251,7 +253,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
     # In all cases the file paths should be absolute,
     # otherwise reusing that global config part from another path would break
     config_out['array_definition'][array_name] = {
-        entry: os.path.abspath(value) if entry.endswith('_file') else value
+        entry: os.path.abspath(value) if entry.endswith('_file') and value else value
         for entry, value in config_out['array_definition'][array_name].items()
     }
 
