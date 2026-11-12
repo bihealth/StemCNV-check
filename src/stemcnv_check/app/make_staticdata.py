@@ -83,7 +83,8 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             'global_settings': config['global_settings'],
                             'genome': genome_build,
                             'cache_path': cache_path,
-                            'TMPDIR': tmpdir
+                            'TMPDIR': tmpdir,
+                            'log_path': config['log_path'],
                         }
                     ),
                     deployment_settings=DeploymentSettings(
@@ -209,6 +210,7 @@ def run_staticdata_workflow(args, array_name, is_wsl=False):
                             'vcf_input_file': use_vcf,
                             'array_name': array_name,
                             'genomeInfo': helpers.get_global_file('genome_info', genome_build, config['global_settings'], cache_path),
+                            'log_path': config['log_path'],
                         }
                     )
                 ),
