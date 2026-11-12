@@ -103,7 +103,7 @@ following lines to your .bashrc file in your WSL home directory (i.e. /home/user
     export https_proxy=http://{proxy.your_institute.com}:{port}
     export ftp_proxy=http://{proxy.your_institute.com}:{port}
     export PIP_PROXY=http://{proxy.your_institute.com}:{port}
-
+    export RSYNC_PROXY={proxy.your_institute.com}:{port}
 
 You may also want to exclude certain (intranet) addresses that are reachable through your normal connection, 
 but possibly not through the proxy that allows internet access (i.e. "your_institute.com"). Multiple addresses can be 
@@ -122,4 +122,5 @@ You can make these changes either manually by using a text editor like nano (``n
     echo "export https_proxy=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export ftp_proxy=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export PIP_PROXY=http://{proxy.your_institute.com}:{port}" >> ~/.bashrc
+    echo "export RSYNC_PROXY={proxy.your_institute.com}:{port}" >> ~/.bashrc
     echo "export no_proxy=$no_proxy,localhost,{intranet.domain,your_institute.com}" >> ~/.bashrc
