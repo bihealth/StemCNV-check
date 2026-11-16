@@ -47,7 +47,7 @@ rule create_pfb_from_vcf:
     shell:
         """
 Rscript - << 'EOF'
-log <- file(snakemake@log, 'wt')
+log <- file({log}, 'wt')
 sink(log, append = T)
 sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
@@ -107,7 +107,7 @@ rule create_gcmodel_file:
         else
             gunzip -c /home/user/PennCNV/gc_file/{GENOME}.gc5Base.txt.gz > {params.download_path}/{GENOME}.gc5Base.txt 2> {log}
         fi
-        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {params.input_path} -out {params.output_path} 2> {log}
+        /home/user/PennCNV/cal_gc_snp.pl {params.download_path}/{GENOME}.gc5Base.txt {params.input_path} -out {params.output_path} 2>> {log}
         """
 
 
@@ -129,7 +129,7 @@ rule create_array_info_files:
     shell:
         """
 Rscript - << 'EOF'
-log <- file(snakemake@log, 'wt')
+log <- file({log}, 'wt')
 sink(log, append = T)
 sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
