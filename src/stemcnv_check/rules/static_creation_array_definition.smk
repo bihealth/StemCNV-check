@@ -47,7 +47,7 @@ rule create_pfb_from_vcf:
     shell:
         """
 Rscript - << 'EOF'
-log <- file({log}, 'wt')
+log <- file('{log}', 'wt')
 sink(log, append = T)
 sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
@@ -129,7 +129,7 @@ rule create_array_info_files:
     shell:
         """
 Rscript - << 'EOF'
-log <- file({log}, 'wt')
+log <- file('{log}', 'wt')
 sink(log, append = T)
 sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))

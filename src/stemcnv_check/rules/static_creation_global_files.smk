@@ -66,7 +66,7 @@ rule download_mehari_ensembl_db:
 
 rule ucsc_goldenpath_download:
     output:
-        temp(os.path.join(DOWNLOAD_DIR}, "{genome}.{filename}.txt")),
+        temp(os.path.join(DOWNLOAD_DIR, "{genome}.{filename}.txt")),
     wildcard_constraints:
         genome="hg19|hg38",
     resources:
@@ -83,7 +83,7 @@ rule ucsc_goldenpath_download:
         if ! rsync -avzP --contimeout=60 "rsync://$url" {output}.gz >> {log} 2>&1; then
           echo "Recommended rsync download failed, retrying with wget" >> {log}
           echo "wget 'https://$url' -O {output}.gz" >> {log}
-          wget 'https://${{mirrors[{resources.n}]}}.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz' -O {output}.gz 2>> {log}
+          wget "https://$url" -O {output}.gz 2>> {log}
         fi
         gunzip {output}.gz 2>> {log}
         """
@@ -106,7 +106,7 @@ rule create_genome_info_file:
     shell:
         """
 Rscript - << 'EOF'
-log <- file({log}, 'wt')
+log <- file('{log}', 'wt')
 sink(log, append = T)
 sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
