@@ -112,7 +112,7 @@ test_that('annotate_roi', {
 # 7 - no gaps in CNV
 # Extra tests:
 # - [x] gap overlaps CNV border -> error
-# - [ ] gap fully conatins CNV  -> error
+# - [ ] gap fully contains CNV  -> error
 
 test_that("Annotate CNVs with gaps", {
   gapfile <- test_path('../data/gaps_minimal.bed')

@@ -6,6 +6,7 @@ from stemcnv_check.helpers import get_global_file
 
 GENOME = config["genome"]
 DOWNLOAD_DIR = config["TMPDIR"] if "TMPDIR" in config else tempfile.mkdtemp()
+LOGPATH = config["log_path"]
 
 rule download_gencode_gtf_v45:
     output:
@@ -17,12 +18,14 @@ rule download_gencode_gtf_v45:
             if GENOME == "hg38"
             else "GRCh37_mapping/gencode.v45lift37.basic.annotation.gtf.gz"
         ),
+    log:
+        os.path.join(LOGPATH, "global_files", "gencode_gtf_{genome}.log")
     shell:
-        "wget {params.ftp_base}/{params.release_path} -O {output} 2> /dev/null"
+        "wget {params.ftp_base}/{params.release_path} -O {output} 2> {log}"
 
 rule download_ensmble_fasta:
     output:
-        get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False).removesuffix(".gz")
+        temp(get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False).removesuffix(".gz"))
     params:
         species="homo_sapiens",
         datatype="dna",
@@ -31,6 +34,8 @@ rule download_ensmble_fasta:
         # ftp download may not always work, https always should
         url='https://ftp.ensembl.org/pub/'
     cache: "omit-software"  # save space and time with between workflow caching (see docs)
+    log:
+        os.path.join(LOGPATH, "global_files", "ensembl_fasta_{genome}_download.log")
     wrapper:
         "v5.5.0/bio/reference/ensembl-sequence"
 
@@ -41,6 +46,8 @@ rule bgzip_fasta:
         ).removesuffix(".gz")
     output:
         get_global_file('fasta', GENOME, config['global_settings'], config['cache_path'], False)
+    log:
+        os.path.join(LOGPATH, "global_files", "ensembl_fasta_{genome}_bgzip.log")
     wrapper:
         "v5.5.0/bio/bgzip"
 
@@ -51,19 +58,34 @@ rule download_mehari_ensembl_db:
     wildcard_constraints: 
         genome = 'GRCh37|GRCh38',
         MEHARI_DB_VERSION = '[0-9]+\\.[0-9]+\\.[0-9]+'
+    log:
+        os.path.join(LOGPATH, "global_files", "mehari_db_{genome}_v{MEHARI_DB_VERSION}.log")
     shell:
-        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.MEHARI_DB_VERSION}/$(basename {output}) -O {output}"
+        "wget https://github.com/varfish-org/mehari-data-tx/releases/download/v{wildcards.MEHARI_DB_VERSION}/$(basename {output}) -O {output} 2> {log}"
 
 
 rule ucsc_goldenpath_download:
     output:
-        temp("{DOWNLOAD_DIR}/{genome}.{filename}.txt"),
+        temp(os.path.join(DOWNLOAD_DIR, "{genome}.{filename}.txt")),
     wildcard_constraints:
         genome="hg19|hg38",
+    resources:
+        n=lambda wildcards, attempt: attempt
+    retries: 3
+    log:
+        os.path.join(LOGPATH, "global_files", "ucsc_{genome}_{filename}.log")
     shell:
         """
-        wget 'https://hgdownload.cse.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz' -O {output}.gz 2> /dev/null
-        gunzip {output}.gz
+        mirrors=("0dummy" "hgdownload.soe" "hgdownload.gi" "hgdownload2.gi" "hgdownload.cse")
+        url="${{mirrors[{resources.n}]}}.ucsc.edu/goldenPath/{wildcards.genome}/database/{wildcards.filename}.txt.gz"
+        echo "Downloading from: ${{mirrors[{resources.n}]}}.ucsc.edu" > {log}
+        echo "rsync -avzP --contimeout=60 rsync://$url {output}.gz" >> {log}
+        if ! rsync -avzP --contimeout=60 "rsync://$url" {output}.gz >> {log} 2>&1; then
+          echo "Recommended rsync download failed, retrying with wget" >> {log}
+          echo "wget 'https://$url' -O {output}.gz" >> {log}
+          wget "https://$url" -O {output}.gz 2>> {log}
+        fi
+        gunzip {output}.gz 2>> {log}
         """
 
 
@@ -79,9 +101,14 @@ rule create_genome_info_file:
         # config["genomeInfo"],
     conda:
         "../envs/general-R.yaml"
+    log:
+        os.path.join(LOGPATH, "global_files", "genome_info_{genome}.log")
     shell:
         """
 Rscript - << 'EOF'
+log <- file('{log}', 'wt')
+sink(log, append = T)
+sink(log, append = T, type = 'message')
 suppressMessages(library(tidyverse))
 suppressMessages(library(GenomeInfoDb))
 
@@ -113,10 +140,12 @@ write_tsv(chrominfo, "{output}")
 EOF
         """
 
-rule download_dosage_sensivity_data:
+rule download_dosage_sensitivity_data:
     output: 
         get_global_file('dosage_scores', GENOME, config['global_settings'], config['cache_path'], False)
+    log:
+        os.path.join(LOGPATH, "global_files", "dosage_sensitivity.log")
     shell:
         """
-        wget 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz' -O {output} 2> /dev/null
+        wget 'https://zenodo.org/records/6347673/files/Collins_rCNV_2022.dosage_sensitivity_scores.tsv.gz' -O {output} 2> {log}
         """

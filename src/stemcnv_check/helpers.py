@@ -70,29 +70,43 @@ def read_sample_table(filename, name_remove_regex=None, return_type='dataframe')
         return sample_tb.set_index('Sample_ID', drop=False)
 
 
-def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, extra_bind_args=None):
+def make_apptainer_args(
+        config,
+        cache_path: str | Path,
+        tmpdir: str | None = None,
+        not_existing_ok: bool= False,
+        extra_bind_args: str | list[str] | None = None,
+        sampletable: pd.DataFrame | None = None
+):
     """Collect all outside filepaths that need to be bound inside container"""
 
-    bind_points = [
+    bind_points = {
         (config['data_path'], '/outside/data'),
         (config['raw_data_folder'], '/outside/rawdata'),
         (config['log_path'], '/outside/logs'),
         (importlib.resources.files(STEM_CNV_CHECK), '/outside/snakedir'),
-    ]
+    }
     # When apptainer is used the global files should always be present
-    used_genomes = set(array['genome_version'] for name, array in config['array_definition'].items())
+    used_genomes = set(
+        array['genome_version'] for name, array in config['array_definition'].items()
+        if sampletable is None or name in sampletable['Array_Name'].values
+    )
     for global_file in ('fasta', 'gtf', 'genome_info', 'mehari_txdb', 'dosage_scores'):
         for genome_version in used_genomes:
             static_file = get_global_file(global_file, genome_version, config['global_settings'], cache_path)
-            bind_points.append((static_file, '/outside/static/' + os.path.basename(static_file)))
+            bind_points.add((static_file, '/outside/static/' + os.path.basename(static_file)))
 
     if tmpdir is not None:
-        bind_points.append((tmpdir, '/outside/tmp'))
+        bind_points.add((tmpdir, '/outside/tmp'))
 
     # Apptainer is needed to create some of the array definition files, in these cases "not_existing_ok" should be set to True
     # However, the directory in which the files should be created still need to be linked
     array_base_dirs = {}
     for array in config['array_definition'].keys():
+        # Optionally skip arrays without samples in the sampletable
+        if sampletable is not None and array not in sampletable['Array_Name'].values:
+            logging.debug(f"Skipping array without samples: {array}")
+            continue
         for name, file in config['array_definition'][array].items():
             if name == 'genome_version':
                 continue
@@ -130,11 +144,11 @@ def make_apptainer_args(config, cache_path, tmpdir=None, not_existing_ok=False, 
                             )
                     else:
                         array_base_dirs[array] = file_basedir
-                        bind_points.append(dir_mount)
+                        bind_points.add(dir_mount)
                     continue
                 else:
                     raise FileNotFoundError(f"Array definition file '{file}' does not exist  ({name} for {array}).")
-            bind_points.append((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
+            bind_points.add((file, '/outside/{array}/{fname}'.format(array=array, fname=os.path.basename(file))))
 
     # Sort bind_points to make testing easier (loops over config_dict add them in a non-deterministic order)
     # Also convert them to Path objects and resolve and links (which might not work once inside the container)

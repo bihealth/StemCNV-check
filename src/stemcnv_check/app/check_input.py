@@ -1,7 +1,9 @@
+from argparse import Namespace
 import importlib.resources
 import os
 import re
 import ruamel.yaml as ruamel_yaml
+import pandas as pd
 
 from collections import defaultdict
 from collections.abc import MutableMapping
@@ -26,10 +28,22 @@ def flatten(dictionary, parent_key='', separator=':'):
 # FIXME: scheme validation of hotspot tables!
 # > maybe best to do via snakemake json config?
 
+def find_reference_cycles(df: pd.DataFrame) -> set[str]:
+    # linear A<-B<-C -> {}; A->A -> {'A'}; A<->B (+C->A) -> {'A-B'}; A->B->C->A -> {'A-B-C'}
+    refs = {s: r for s, r in zip(df['Sample_ID'], df['Reference_Sample']) if isinstance(r, str) and r}
+    cyclic = set()
+    for start in refs:
+        chain, cur = [], start
+        while cur in refs and cur not in chain:
+            chain.append(cur); cur = refs[cur]
+        if cur in chain:
+            cyclic.add(' - '.join(sorted(chain[chain.index(cur):])))
+    return cyclic
+
 
 ### Sanity checks ###
 @logging.catch((FileNotFoundError, SampleConstraintError, SampleFormattingError, ConfigValueError), reraise=True)
-def check_sample_table(args):
+def check_sample_table(args: Namespace):
 
     sample_table_file = args.sample_table
     config_file = args.config
@@ -65,14 +79,25 @@ def check_sample_table(args):
     missing_refs = [ref for ref in ref_samples.keys() if ref not in samples.keys()]
     if missing_refs:
         raise SampleConstraintError("These 'Reference_Sample's do not also exist in the 'Sample_ID' column of the samplesheet: " + ', '.join(missing_refs))
-    # Give warning if sex of reference and sample don't match
+    # Check for cyclic reference definitions (incl self references)
+    cycles = find_reference_cycles(sample_data_df)
+    if cycles:
+        self_refs = {i for i in cycles if ' - ' not in i}
+        cycles -= self_refs
+        samples = sorted(s for cyc in cycles for s in cyc.split(' - '))
+        if self_refs:
+            logging.error("The following samples are marked as their own reference: " + ', '.join(self_refs))
+        if cycles:
+            logging.error("The following sample chains result in cyclic references: " + '; '.join(cycles))
+        raise SampleConstraintError("The following samples are involved with cyclic dependencies: " + ', '.join(samples))
+    # Check if sex of reference and sample match
     sex_mismatch = [
         f"{s} ({sex})" for s, sex in samples.items() if
             sample_data_df.loc[s]['Reference_Sample'] and
             sex[0].lower() != samples[sample_data_df.loc[s]['Reference_Sample']][0].lower()
     ]
     if sex_mismatch:
-        logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
+        # logging.error("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
         raise SampleConstraintError("The following samples have a different sex annotation than their Reference_Sample: " + ', '.join(sex_mismatch))
 
     # This includes the global array definition config
@@ -116,7 +141,7 @@ def check_sample_table(args):
 
 
 @logging.catch((FileNotFoundError, ConfigValueError), reraise=True)
-def check_config(args, minimal_entries_only=False):
+def check_config(args: Namespace, minimal_entries_only: bool = False):
 
     config_file = args.config
     sample_table_file = args.sample_table
@@ -135,10 +160,18 @@ def check_config(args, minimal_entries_only=False):
     with importlib.resources.files(STEM_CNV_CHECK).joinpath('control_files').joinpath('allowedvalues_config.yaml').open() as f:
         allowed_values = yaml.load(f)
 
+    sampletable_df = helpers.read_sample_table(sample_table_file, args.column_remove_regex)
+
     ## Check required entries
 
     # Files: static-data/*
+    check_arrays = set(sampletable_df['Array_Name'].values)
     for array in config['array_definition'].keys():
+        if array not in sampletable_df['Array_Name'].values:
+            logging.info(f"Skipping checks for unused Array: {array}")
+            continue
+        else:
+            check_arrays -= {array}
         for req in allowed_values['array_definition']['__array'].keys():
             if req in ('penncnv_pfb_file', 'penncnv_GCmodel_file', 'array_density_file', 'array_gaps_file'):
                 infostr = "\nYou can create it by running `stemcnv-check make-staticdata`"
@@ -199,6 +232,8 @@ def check_config(args, minimal_entries_only=False):
                     f"for '{genome_version}' genome.\n"
                     f"Illumina manifest files for {genome_version} should end in '{expected_pattern[0:2]}'."
                 )
+    if check_arrays:
+        raise ConfigValueError(f'Missing array definition block for these Arrays referenced in the sample table: {", ".join(check_arrays)}')
 
     # Folders: log, data, raw-input
     # and other settings
@@ -244,7 +279,7 @@ def check_config(args, minimal_entries_only=False):
     defined_CNV_categories = set(
         helpers.config_extract(['evaluation_settings', 'CNV_call_labels'], config, default_config).keys()
     )
-    defined_sampletable_cols = helpers.read_sample_table(sample_table_file, args.column_remove_regex).columns
+    defined_sampletable_cols = sampletable_df.columns
 
     check_functions = defaultdict(lambda: lambda x, v: bool(re.match('^'+str(v)+'$', str(x))))
     check_functions['labels'] = lambda x, v: x in defined_label_names[v]
