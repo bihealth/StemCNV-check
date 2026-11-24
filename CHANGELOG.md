@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-11-24
+
+### Added
+
+ - Log file creation for all rules of the make-staticdata worflows.
+ - Samplesheet check now includes a check for cyclic dependencies of Reference_Sample definitons.
+
+### Fixed
+
+ - Fixed SNV hotspot coverage calculation (parsing of the mehari ANN string).
+ - Download from UCSC updated to new default mirrors. Trie to use rsync first and cycles through several mirrors on failure.
+ - `stemcnv-check setup-files` config output with detail level medium is now parsable
+ - Only static data for arrays used in a given sampletable are bound into apptainer
+ - No more empty csv maniest file is written to cache
+
 ## [1.0.0] - 2025-09-25
 
 ### Added
