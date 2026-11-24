@@ -29,6 +29,7 @@ views:
           display-mode: normal
           plot:
             pills:
+              color-scheme: category20
               separator: "::"
               merge: false
         mapping:
